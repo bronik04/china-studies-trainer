@@ -1,0 +1,41 @@
+<!-- Adapted from "China province-level divisions.svg" by SilverStar54, CC BY-SA 4.0. See docs/sources/map.md. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 650" role="img" aria-labelledby="map-title map-description">
+  <title id="map-title">Схематическая карта регионов Китая</title>
+  <desc id="map-description">34 интерактивные области провинциального уровня. Для каждого региона доступен текстовый список.</desc>
+  <g class="map-areas">
+    <path id="xinjiang" data-region-id="xinjiang" tabindex="0" role="button" aria-label="Синьцзян-Уйғурский автономный район, 新疆维吾尔自治区" d="M55 150 210 95 320 125 302 250 230 292 115 265 55 225Z" />
+    <path id="tibet" data-region-id="tibet" tabindex="0" role="button" aria-label="Тибетский автономный район, 西藏自治区" d="M108 300 260 302 338 390 275 510 125 478 76 378Z" />
+    <path id="qinghai" data-region-id="qinghai" tabindex="0" role="button" aria-label="Цинхай, 青海省" d="M258 258 367 232 406 323 338 390 260 302Z" />
+    <path id="gansu" data-region-id="gansu" tabindex="0" role="button" aria-label="Ганьсу, 甘肃省" d="M320 125 420 112 448 168 400 218 422 290 367 232 302 250Z" />
+    <path id="inner-mongolia" data-region-id="inner-mongolia" tabindex="0" role="button" aria-label="Автономный район Внутренняя Монголия, 内蒙古自治区" d="M330 80 535 48 745 84 765 124 650 155 535 132 420 170 420 112Z" />
+    <path id="heilongjiang" data-region-id="heilongjiang" tabindex="0" role="button" aria-label="Хэйлунцзян, 黑龙江省" d="M735 62 860 82 890 168 810 188 758 130Z" />
+    <path id="jilin" data-region-id="jilin" tabindex="0" role="button" aria-label="Гирин, 吉林省" d="M725 148 810 188 792 236 720 222Z" />
+    <path id="liaoning" data-region-id="liaoning" tabindex="0" role="button" aria-label="Ляонин, 辽宁省" d="M688 204 792 236 756 270 692 250Z" />
+    <path id="ningxia" data-region-id="ningxia" tabindex="0" role="button" aria-label="Нинся-Хуэйский автономный район, 宁夏回族自治区" d="M430 182 466 178 470 230 440 236Z" />
+    <path id="shaanxi" data-region-id="shaanxi" tabindex="0" role="button" aria-label="Шэньси, 陕西省" d="M448 218 500 198 525 278 490 330 450 302 422 290Z" />
+    <path id="shanxi" data-region-id="shanxi" tabindex="0" role="button" aria-label="Шаньси, 山西省" d="M522 178 575 180 585 255 525 278 500 198Z" />
+    <path id="hebei" data-region-id="hebei" tabindex="0" role="button" aria-label="Хэбэй, 河北省" d="M580 162 660 160 692 224 638 270 585 255Z" />
+    <path id="beijing" data-region-id="beijing" tabindex="0" role="button" aria-label="Пекин, 北京市" d="M638 162 659 152 673 172 653 187Z" />
+    <path id="tianjin" data-region-id="tianjin" tabindex="0" role="button" aria-label="Тяньцзинь, 天津市" d="M666 182 690 177 696 201 674 208Z" />
+    <path id="shandong" data-region-id="shandong" tabindex="0" role="button" aria-label="Шаньдун, 山东省" d="M638 270 720 260 755 297 687 322 630 304Z" />
+    <path id="henan" data-region-id="henan" tabindex="0" role="button" aria-label="Хэнань, 河南省" d="M525 278 590 264 638 300 602 350 540 340 490 330Z" />
+    <path id="sichuan" data-region-id="sichuan" tabindex="0" role="button" aria-label="Сычуань, 四川省" d="M338 390 430 332 490 360 480 447 395 468 330 430Z" />
+    <path id="chongqing" data-region-id="chongqing" tabindex="0" role="button" aria-label="Чунцин, 重庆市" d="M478 358 512 355 520 416 482 430Z" />
+    <path id="hubei" data-region-id="hubei" tabindex="0" role="button" aria-label="Хубэй, 湖北省" d="M520 350 582 346 610 390 560 425 520 416Z" />
+    <path id="anhui" data-region-id="anhui" tabindex="0" role="button" aria-label="Аньхой, 安徽省" d="M610 330 664 322 680 385 636 404 610 390Z" />
+    <path id="jiangsu" data-region-id="jiangsu" tabindex="0" role="button" aria-label="Цзянсу, 江苏省" d="M680 318 744 310 768 362 702 388 680 385Z" />
+    <path id="shanghai" data-region-id="shanghai" tabindex="0" role="button" aria-label="Шанхай, 上海市" d="M742 390 765 384 775 404 750 414Z" />
+    <path id="zhejiang" data-region-id="zhejiang" tabindex="0" role="button" aria-label="Чжэцзян, 浙江省" d="M685 392 750 414 730 462 660 438Z" />
+    <path id="jiangxi" data-region-id="jiangxi" tabindex="0" role="button" aria-label="Цзянси, 江西省" d="M610 404 660 438 635 490 574 460 560 425Z" />
+    <path id="hunan" data-region-id="hunan" tabindex="0" role="button" aria-label="Хунань, 湖南省" d="M520 418 574 460 548 515 482 488 470 447Z" />
+    <path id="guizhou" data-region-id="guizhou" tabindex="0" role="button" aria-label="Гуйчжоу, 贵州省" d="M418 462 482 488 454 532 390 512 395 468Z" />
+    <path id="yunnan" data-region-id="yunnan" tabindex="0" role="button" aria-label="Юньнань, 云南省" d="M330 430 395 468 390 542 310 568 270 500Z" />
+    <path id="guangxi" data-region-id="guangxi" tabindex="0" role="button" aria-label="Гуанси-Чжуанский автономный район, 广西壮族自治区" d="M390 512 454 532 482 580 422 612 354 574Z" />
+    <path id="guangdong" data-region-id="guangdong" tabindex="0" role="button" aria-label="Гуандун, 广东省" d="M482 520 548 515 610 550 566 592 482 580 454 532Z" />
+    <path id="fujian" data-region-id="fujian" tabindex="0" role="button" aria-label="Фуцзянь, 福建省" d="M635 490 682 482 700 532 650 550 610 520Z" />
+    <path id="hainan" data-region-id="hainan" tabindex="0" role="button" aria-label="Хайнань, 海南省" d="M460 614 510 610 528 638 478 646 448 632Z" />
+    <path id="taiwan" data-region-id="taiwan" tabindex="0" role="button" aria-label="Тайвань, 台湾省" d="M762 442 786 455 782 522 756 544 742 482Z" />
+    <path id="hong-kong" data-region-id="hong-kong" tabindex="0" role="button" aria-label="Гонконг, 香港特别行政区" d="M566 592 585 588 594 605 574 612Z" />
+    <path id="macao" data-region-id="macao" tabindex="0" role="button" aria-label="Макао, 澳门特别行政区" d="M546 600 561 600 565 614 550 618Z" />
+  </g>
+</svg>
