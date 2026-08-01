@@ -18,6 +18,11 @@ body {
   background: #fffdf8;
 }
 
+body,
+button {
+  line-height: 1.5;
+}
+
 button,
 a {
   outline-offset: 3px;
@@ -32,4 +37,81 @@ a:focus-visible {
   width: min(100% - 32px, 1120px);
   margin: 0 auto;
   padding-block: 32px;
+}
+
+.hero {
+  border-bottom: 1px solid #d0d5dd;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+}
+
+.eyebrow {
+  color: #b42318;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 5vw, 2rem);
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.section-heading {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+}
+
+.section-heading p,
+.status-note {
+  color: #475467;
+}
+
+.status-note {
+  border-left: 4px solid #b42318;
+  padding-left: 12px;
+}
+
+.region-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+
+.region-card {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  height: 100%;
+  padding: 16px;
+}
+
+.region-card h3 {
+  font-size: 1.125rem;
+  margin-bottom: 8px;
+}
+
+.region-card p {
+  margin-bottom: 8px;
+}
+
+.region-card p:last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 720px) {
+  .region-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

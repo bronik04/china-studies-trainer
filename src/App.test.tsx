@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-it('shows the application heading', () => {
+it('shows the topic page', () => {
   render(<App />);
 
   expect(
-    screen.getByRole('heading', { name: 'Тренажёр по страноведению Китая' }),
+    screen.getByRole('heading', { name: 'Провинции и столицы Китая' }),
   ).toBeInTheDocument();
 });

@@ -1,7 +1,6 @@
+import { regions } from './content/regions';
+import { TopicSelectionPage } from './features/topic-selection/TopicSelectionPage';
+
 export default function App() {
-  return (
-    <main className="app-shell">
-      <h1>Тренажёр по страноведению Китая</h1>
-    </main>
-  );
+  return <TopicSelectionPage regions={regions} />;
 }
