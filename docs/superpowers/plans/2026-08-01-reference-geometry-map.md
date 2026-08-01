@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Use only `China province-level divisions.svg` by SilverStar54, CC BY-SA 4.0; do not include `/Users/bronik04/Downloads/china.svg` because its provenance is undocumented.
+- Use `@svg-maps/china` (Victor Cazanave, based on MapSVG, CC BY 4.0) for the real geometry of 33 regions. Retain the previously documented SilverStar54 CC BY-SA 4.0 resource only for the interim Taiwan contour. Do not include `/Users/bronik04/Downloads/china.svg` because its provenance is undocumented.
 - Retain real boundaries and four division-type colour categories; remove labels, legend, editor metadata, scripts, fonts and external URLs.
 - Keep exactly 34 paths, each with unique `id` and `data-region-id` equal to `Region.mapAreaId`.
 - Preserve Russian UI, Chinese Unicode, mouse/touch/Enter/Space/Escape, focus, text list, zoom, and offline use.

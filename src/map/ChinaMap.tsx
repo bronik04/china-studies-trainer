@@ -35,10 +35,21 @@ export function ChinaMap({
     const svg = mapRef.current?.querySelector<SVGElement>('svg');
     svg?.style.setProperty('transform', `scale(${zoom})`);
     const areas = mapRef.current?.querySelectorAll<SVGElement>('[data-region-id]');
+    const labelsByMapAreaId = new Map(
+      regions.map((region) => [
+        region.mapAreaId,
+        `${region.nameRu}, ${region.nameZh}`,
+      ]),
+    );
+
     areas?.forEach((area) => {
       area.dataset.selected = String(area.dataset.regionId === selectedRegionId);
+      const label = labelsByMapAreaId.get(area.dataset.regionId ?? '');
+      if (label) {
+        area.setAttribute('aria-label', label);
+      }
     });
-  }, [selectedRegionId, zoom]);
+  }, [regions, selectedRegionId, zoom]);
 
   function selectTarget(target: EventTarget | null) {
     const regionId = getRegionId(target);
@@ -54,11 +65,12 @@ export function ChinaMap({
         <p>Выберите регион на схеме или в списке.</p>
       </div>
       <p className="map-attribution">
-        Адаптировано из карты{' '}
-        <a href="https://commons.wikimedia.org/wiki/File:China_province-level_divisions.svg">
-          SilverStar54
-        </a>{' '}
-        по лицензии{' '}
+        Геометрия 33 регионов: карта{' '}
+        <a href="https://www.npmjs.com/package/@svg-maps/china">@svg-maps/china</a>{' '}
+        (Victor Cazanave, на основе MapSVG) по лицензии{' '}
+        <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.{' '}
+        Контур Тайваня — временная учебная адаптация прежнего локального ресурса,
+        распространяемая по{' '}
         <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
       </p>
       {onZoomChange ? <MapControls zoom={zoom} onZoomChange={onZoomChange} /> : null}

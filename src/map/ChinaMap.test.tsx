@@ -84,3 +84,31 @@ it('renders a named text alternative with 34 region actions', () => {
   ).toBeInTheDocument();
   expect(screen.getAllByRole('listitem')).toHaveLength(34);
 });
+
+it('keeps the map categories needed for the reference colour scheme', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+    />,
+  );
+
+  expect(document.querySelector('#sichuan')).toHaveAttribute(
+    'data-region-kind',
+    'province',
+  );
+  expect(document.querySelector('#beijing')).toHaveAttribute(
+    'data-region-kind',
+    'municipality',
+  );
+  expect(document.querySelector('#xinjiang')).toHaveAttribute(
+    'data-region-kind',
+    'autonomous-region',
+  );
+  expect(document.querySelector('#hong-kong')).toHaveAttribute(
+    'data-region-kind',
+    'sar',
+  );
+});

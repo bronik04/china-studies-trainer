@@ -136,10 +136,25 @@ h1 {
 
 .china-map [data-region-id] {
   cursor: pointer;
-  fill: #fdb022;
   stroke: #ffffff;
   stroke-width: 5;
   transition: fill 120ms ease-out, stroke 120ms ease-out;
+}
+
+.china-map [data-region-kind='province'] {
+  fill: #fdb022;
+}
+
+.china-map [data-region-kind='autonomous-region'] {
+  fill: #12b76a;
+}
+
+.china-map [data-region-kind='municipality'] {
+  fill: #9e77ed;
+}
+
+.china-map [data-region-kind='sar'] {
+  fill: #ee46bc;
 }
 
 .china-map [data-region-id]:hover {
