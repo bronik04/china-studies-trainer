@@ -85,7 +85,7 @@ it('renders a named text alternative with 34 region actions', () => {
   expect(screen.getAllByRole('listitem')).toHaveLength(34);
 });
 
-it('keeps the map categories needed for the reference colour scheme', () => {
+it('retains region types for future exercise logic', () => {
   render(
     <ChinaMap
       regions={regions}

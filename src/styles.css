@@ -136,29 +136,14 @@ h1 {
 
 .china-map [data-region-id] {
   cursor: pointer;
+  fill: #d0d5dd;
   stroke: #ffffff;
-  stroke-width: 5;
+  stroke-width: 2;
   transition: fill 120ms ease-out, stroke 120ms ease-out;
 }
 
-.china-map [data-region-kind='province'] {
-  fill: #fdb022;
-}
-
-.china-map [data-region-kind='autonomous-region'] {
-  fill: #12b76a;
-}
-
-.china-map [data-region-kind='municipality'] {
-  fill: #9e77ed;
-}
-
-.china-map [data-region-kind='sar'] {
-  fill: #ee46bc;
-}
-
 .china-map [data-region-id]:hover {
-  fill: #f79009;
+  fill: #98a2b3;
 }
 
 .china-map [data-region-id][data-selected='true'] {
@@ -167,7 +152,7 @@ h1 {
 }
 
 .china-map [data-region-id]:focus-visible {
-  fill: #f79009;
+  fill: #98a2b3;
   outline: none;
   stroke: #101828;
   stroke-width: 10;
