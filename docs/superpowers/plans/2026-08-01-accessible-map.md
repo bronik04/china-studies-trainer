@@ -153,4 +153,3 @@ Report feat/accessible-map, results, map attribution and known limitation: exerc
 ## Plan self-review
 
 Task 1 covers license, asset sanitation and 34-ID integrity. Task 2 covers selection, keyboard, focus, zoom, announcement and list alternative. Task 3 covers the required manual and automated checks plus review gate.
-

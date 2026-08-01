@@ -1,5 +1,5 @@
 <!-- Adapted from "China province-level divisions.svg" by SilverStar54, CC BY-SA 4.0. See docs/sources/map.md. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 650" role="img" aria-labelledby="map-title map-description">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 650" aria-labelledby="map-title map-description">
   <title id="map-title">Схематическая карта регионов Китая</title>
   <desc id="map-description">34 интерактивные области провинциального уровня. Для каждого региона доступен текстовый список.</desc>
   <g class="map-areas">
