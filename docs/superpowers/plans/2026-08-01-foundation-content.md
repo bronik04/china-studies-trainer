@@ -50,7 +50,7 @@
 
 Expected: master has the documentation baseline; branch output is feat/foundation-content.
 
-- [ ] **Step 2: Write the failing smoke test**
+- [ ] **Step 2: Configure the test runner, then write the failing smoke test**
 
 Create src/App.test.tsx:
 
@@ -74,17 +74,17 @@ Add scripts:
       }
     }
 
-Install React, React DOM, TypeScript, Vite, @vitejs/plugin-react, Vitest, jsdom, Testing Library, @testing-library/jest-dom, ESLint, TypeScript ESLint packages, React ESLint plugins, and tsx.
+Install React, React DOM, TypeScript, Vite, @vitejs/plugin-react, Vitest, jsdom, Testing Library, @testing-library/jest-dom, ESLint, TypeScript ESLint packages, React ESLint plugins, and tsx. Create only the Vitest configuration and src/test/setup.ts in this step; do not create App.tsx before the test has failed.
 
 - [ ] **Step 3: Verify it fails**
 
 Run: npm test -- src/App.test.tsx
 
-Expected: FAIL because App and Vitest jsdom setup do not exist.
+Expected: FAIL because App does not exist; the test runner itself starts correctly.
 
 - [ ] **Step 4: Implement the minimal shell**
 
-Configure Vite/Vitest:
+Complete the Vite/Vitest configuration:
 
     import { defineConfig } from 'vite';
     import react from '@vitejs/plugin-react';
