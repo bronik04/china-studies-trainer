@@ -1,0 +1,18 @@
+{
+  "id": "sichuan",
+  "kind": "province",
+  "nameRu": "Сычуань",
+  "nameZh": "四川省",
+  "pinyin": "Sìchuān shěng",
+  "capitalRu": "Чэнду",
+  "capitalZh": "成都",
+  "mapAreaId": "sichuan",
+  "facts": [
+    {
+      "title": "Кухня",
+      "body": "Сычуань известна кухней с яркими пряными вкусами.",
+      "sourceIds": ["example-educational-source"]
+    }
+  ],
+  "sourceIds": ["example-educational-source"]
+}

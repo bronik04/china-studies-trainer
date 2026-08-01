@@ -1,0 +1,8 @@
+{
+  "id": "find-sichuan-l1",
+  "exerciseType": "find-on-map",
+  "level": 1,
+  "prompt": "Найдите на карте провинцию Сычуань.",
+  "targetRegionId": "sichuan",
+  "feedback": "Сычуань — 四川省. Её административный центр — Чэнду."
+}
