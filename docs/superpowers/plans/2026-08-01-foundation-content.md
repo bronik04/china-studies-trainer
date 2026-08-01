@@ -29,7 +29,7 @@
 | src/content/regions.ts | 34 region records |
 | src/domain/validate-catalog.ts | Pure integrity checker |
 | src/domain/validate-catalog.test.ts | Contract tests |
-| scripts/validate-content.ts | Build-time validation |
+| scripts/validate-content.ts | Build-time validation, added with the first production catalog |
 | src/features/topic-selection/TopicSelectionPage.tsx | Accessible topic page |
 | src/features/topic-selection/TopicSelectionPage.test.tsx | UI regression tests |
 | src/App.tsx, src/main.tsx, src/styles.css | App assembly and styles |
@@ -120,7 +120,7 @@ Add «Настроен клиентский каркас React/TypeScript с а�
 ### Task 2: Content contract and validation
 
 **Files:**
-- Create: src/content/types.ts, src/content/sources.ts, src/domain/validate-catalog.ts, src/domain/validate-catalog.test.ts, scripts/validate-content.ts
+- Create: src/content/types.ts, src/content/sources.ts, src/domain/validate-catalog.ts, src/domain/validate-catalog.test.ts
 
 **Produces:**
 
@@ -161,28 +161,19 @@ Add this government source record:
 
 Before the catalog commit, research an independent, permanent government, educational, academic, museum, or library source that supports names and administrative centres. Add its real URL to sources.ts and docs/sources/sources.md. Do not commit invented URLs or unverified content.
 
-Create scripts/validate-content.ts:
-
-    import { regions } from '../src/content/regions';
-    import { sources } from '../src/content/sources';
-    import { validateCatalog } from '../src/domain/validate-catalog';
-
-    validateCatalog(regions, sources, { expectedRegionCount: 34 });
-    console.info('Проверено регионов: ' + regions.length);
-
 - [ ] **Step 4: Test and commit**
 
 Run: npm test -- src/domain/validate-catalog.test.ts
 
-Expected: PASS. The script runs after regions.ts is added in Task 3.
+Expected: PASS.
 
-    git add src/content/types.ts src/content/sources.ts src/domain/validate-catalog.ts src/domain/validate-catalog.test.ts scripts/validate-content.ts
+    git add src/content/types.ts src/content/sources.ts src/domain/validate-catalog.ts src/domain/validate-catalog.test.ts
     git commit -m "feat: validate educational catalog"
 
 ### Task 3: Sourced catalog of 34 regions
 
 **Files:**
-- Create: src/content/regions.ts, docs/sources/sources.md
+- Create: src/content/regions.ts, docs/sources/sources.md, scripts/validate-content.ts
 - Modify: src/content/sources.ts, src/domain/validate-catalog.test.ts, CHANGELOG.md
 
 **Produces:** readonly Region[] with 34 records, mapAreaId equal to id, facts: [], and both final source IDs.
@@ -221,6 +212,15 @@ Use matching tone-marked pinyin and the four kinds. The UI label is «Админ
 
 - [ ] **Step 3: Document sources and verify**
 
+Create scripts/validate-content.ts:
+
+    import { regions } from '../src/content/regions';
+    import { sources } from '../src/content/sources';
+    import { validateCatalog } from '../src/domain/validate-catalog';
+
+    validateCatalog(regions, sources, { expectedRegionCount: 34 });
+    console.info('Проверено регионов: ' + regions.length);
+
 Create sections named prc-administrative-divisions-2022 and for each researched
 regional-government source. Every section contains its exact published title,
 publisher, permanent URL, date accessed (2026-08-01), the statement «ссылка
@@ -235,7 +235,7 @@ Expected: reports 34 and passes.
 
 Add «Добавлен проверяемый справочник 34 единиц провинциального уровня с реестром источников.» to CHANGELOG.md.
 
-    git add src/content/regions.ts src/content/sources.ts src/domain/validate-catalog.test.ts docs/sources/sources.md CHANGELOG.md
+    git add src/content/regions.ts src/content/sources.ts src/domain/validate-catalog.test.ts scripts/validate-content.ts docs/sources/sources.md CHANGELOG.md
     git commit -m "feat: add sourced region catalog"
 
 ### Task 4: Accessible responsive topic screen
