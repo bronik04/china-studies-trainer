@@ -9,4 +9,12 @@ export const sources = [
     accessedAt: '2026-08-01',
     covers: ['уровни административного деления', '34 единицы провинциального уровня'],
   },
+  {
+    id: 'china-internet-information-center-2003',
+    title: 'Administrative Divisions of China',
+    organization: 'China Internet Information Center',
+    url: 'https://www.china.org.cn/e-Internet/GQ/HTM/1-1.htm',
+    accessedAt: '2026-08-01',
+    covers: ['названия единиц провинциального уровня', 'места размещения правительств'],
+  },
 ] as const satisfies readonly Source[];

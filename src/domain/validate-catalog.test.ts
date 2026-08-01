@@ -1,4 +1,6 @@
 import { validateCatalog } from './validate-catalog';
+import { regions } from '../content/regions';
+import { sources } from '../content/sources';
 
 const source = {
   id: 'example-educational-source',
@@ -79,4 +81,11 @@ it('rejects an unexpected number of regions', () => {
   expect(() =>
     validateCatalog([region], [source], { expectedRegionCount: 34 }),
   ).toThrow(/Ожидалось регионов: 34; получено: 1/);
+});
+
+it('validates all 34 production regions', () => {
+  expect(() =>
+    validateCatalog(regions, sources, { expectedRegionCount: 34 }),
+  ).not.toThrow();
+  expect(regions).toHaveLength(34);
 });
