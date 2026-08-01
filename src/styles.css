@@ -138,7 +138,7 @@ h1 {
   cursor: pointer;
   fill: #d0d5dd;
   stroke: #ffffff;
-  stroke-width: 2;
+  stroke-width: 1;
   transition: fill 120ms ease-out, stroke 120ms ease-out;
 }
 
@@ -148,14 +148,14 @@ h1 {
 
 .china-map [data-region-id][data-selected='true'] {
   fill: #175cd3;
-  stroke: #101828;
+  stroke: #ffffff;
 }
 
 .china-map [data-region-id]:focus-visible {
   fill: #98a2b3;
   outline: none;
   stroke: #101828;
-  stroke-width: 10;
+  stroke-width: 4;
 }
 
 .map-selection {
