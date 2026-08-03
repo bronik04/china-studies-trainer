@@ -247,3 +247,42 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.answer-feedback {
+  border: 2px solid #d0d5dd;
+  border-radius: 8px;
+  margin: 16px 0;
+  padding: 16px;
+}
+
+.answer-feedback[data-result='correct'] {
+  border-color: #087443;
+}
+
+.answer-feedback[data-result='incorrect'] {
+  border-color: #b42318;
+  border-style: dashed;
+}
+
+.answer-feedback-icon {
+  font-size: 24px;
+  line-height: 1;
+  margin: 0 0 8px;
+}
+
+.answer-feedback[data-result='correct'] .answer-feedback-icon {
+  color: #087443;
+}
+
+.answer-feedback[data-result='incorrect'] .answer-feedback-icon {
+  color: #b42318;
+}
+
+.answer-feedback h3 {
+  margin: 0 0 8px;
+}
+
+.answer-feedback h3:focus-visible {
+  outline: 3px solid #175cd3;
+  outline-offset: 2px;
+}
