@@ -185,3 +185,49 @@ it('не выбирает недоступную область', () => {
 
   expect(select).not.toHaveBeenCalled();
 });
+
+it('в неинтерактивном режиме не выбирает область', () => {
+  const select = vi.fn();
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId="sichuan"
+      onSelect={select}
+      onClear={() => {}}
+      interactive={false}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Сычуань, 四川省' }));
+
+  expect(select).not.toHaveBeenCalled();
+});
+
+it('в неинтерактивном режиме убирает области из обхода клавиатурой', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId="sichuan"
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+    />,
+  );
+
+  expect(document.querySelector('#sichuan')).toHaveAttribute('tabindex', '-1');
+  expect(screen.getByRole('button', { name: 'Сычуань (四川省)' })).toBeDisabled();
+});
+
+it('в неинтерактивном режиме всё равно подсвечивает выбранное', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId="sichuan"
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+    />,
+  );
+
+  expect(document.querySelector('#sichuan')).toHaveAttribute('data-selected', 'true');
+});

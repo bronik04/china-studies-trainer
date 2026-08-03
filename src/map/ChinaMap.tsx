@@ -13,6 +13,8 @@ type ChinaMapProps = {
   readonly zoom?: MapZoom;
   readonly onZoomChange?: (zoom: MapZoom) => void;
   readonly answerStates?: Readonly<Record<string, AnswerState>>;
+  /** Ложь — карта только показывает: области не выбираются и не получают фокус. */
+  readonly interactive?: boolean;
 };
 
 /**
@@ -37,6 +39,7 @@ export function ChinaMap({
   zoom = 1,
   onZoomChange,
   answerStates = NO_ANSWER_STATES,
+  interactive = true,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
@@ -54,6 +57,7 @@ export function ChinaMap({
 
     areas?.forEach((area) => {
       area.dataset.selected = String(area.dataset.regionId === selectedRegionId);
+      area.setAttribute('tabindex', interactive ? '0' : '-1');
       const label = labelsByMapAreaId.get(area.dataset.regionId ?? '');
       if (label) {
         area.setAttribute('aria-label', label);
@@ -72,7 +76,7 @@ export function ChinaMap({
         area.removeAttribute('aria-disabled');
       }
     });
-  }, [answerStates, regions, selectedRegionId, zoom]);
+  }, [answerStates, interactive, regions, selectedRegionId, zoom]);
 
   /**
    * Состояние ответа появляется у области только после ответа, а второй ответ
@@ -81,7 +85,7 @@ export function ChinaMap({
    * но не делали ничего.
    */
   function isSelectable(regionId: string): boolean {
-    return answerStates[regionId] === undefined;
+    return interactive && answerStates[regionId] === undefined;
   }
 
   function selectTarget(target: EventTarget | null) {
