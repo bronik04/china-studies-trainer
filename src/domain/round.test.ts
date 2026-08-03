@@ -11,7 +11,7 @@ import {
 
 const OPTIONS = {
   roundId: 'round-1',
-  exerciseType: 'find-on-map',
+  exerciseTypes: ['find-on-map'],
   level: 1,
 } as const;
 
@@ -141,4 +141,57 @@ it('помечает вопросы и попытки признаком рау�
 
   expect(round.questions[0].roundId).toBe('round-7');
   expect(answerCurrent(round, true).attempts[0].roundId).toBe('round-7');
+});
+
+it('чередует типы заданий в смешанном раунде', () => {
+  const round = createRound(regions, {
+    roundId: 'round-1',
+    exerciseTypes: ['find-on-map', 'name-region', 'match-capital'],
+    level: 4,
+    random: createSeededRandom(1),
+  });
+
+  expect(round.questions.slice(0, 4).map((question) => question.exerciseType)).toEqual([
+    'find-on-map',
+    'name-region',
+    'match-capital',
+    'find-on-map',
+  ]);
+});
+
+it('даёт каждому вопросу представление из своего уровня', () => {
+  const round = createRound(regions, {
+    roundId: 'round-1',
+    exerciseTypes: ['find-on-map'],
+    level: 2,
+    random: createSeededRandom(1),
+  });
+
+  expect(round.questions.every((question) => question.representation === 'name-zh')).toBe(
+    true,
+  );
+});
+
+it('не показывает столицу в вопросе «регион — столица»', () => {
+  const round = createRound(regions, {
+    roundId: 'round-1',
+    exerciseTypes: ['match-capital'],
+    level: 4,
+    random: createSeededRandom(1),
+  });
+
+  expect(round.questions.some((question) => question.representation === 'capital')).toBe(
+    false,
+  );
+});
+
+it('не создаёт раунд без типов заданий', () => {
+  expect(() =>
+    createRound(regions, {
+      roundId: 'round-1',
+      exerciseTypes: [],
+      level: 1,
+      random: createSeededRandom(1),
+    }),
+  ).toThrow(/Раунд не создан: не заданы типы заданий/);
 });

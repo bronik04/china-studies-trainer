@@ -1,5 +1,6 @@
 import type { Region } from '../content/types';
 import { shuffle } from './random';
+import { representationsFor, type Representation } from './representations';
 
 export type ExerciseType = 'find-on-map' | 'name-region' | 'match-capital';
 export type Level = 1 | 2 | 3 | 4;
@@ -16,6 +17,7 @@ export type Question = {
   readonly roundId: string;
   readonly regionId: string;
   readonly exerciseType: ExerciseType;
+  readonly representation: Representation;
   readonly level: Level;
 };
 
@@ -39,7 +41,8 @@ export type Round = {
 
 export type RoundOptions = {
   readonly roundId: string;
-  readonly exerciseType: ExerciseType;
+  /** Больше одного типа — смешанный раунд: типы чередуются (EXERCISES.md). */
+  readonly exerciseTypes: readonly ExerciseType[];
   readonly level: Level;
   readonly random: () => number;
 };
@@ -59,13 +62,24 @@ export function createRound(
     throw new Error('Раунд не создан: нет регионов');
   }
 
-  const questions = shuffle(regions, options.random).map((region, index) => ({
-    id: `${index + 1}-${region.id}`,
-    roundId: options.roundId,
-    regionId: region.id,
-    exerciseType: options.exerciseType,
-    level: options.level,
-  }));
+  if (options.exerciseTypes.length === 0) {
+    throw new Error('Раунд не создан: не заданы типы заданий');
+  }
+
+  const questions = shuffle(regions, options.random).map((region, index) => {
+    const exerciseType = options.exerciseTypes[index % options.exerciseTypes.length];
+    const available = representationsFor(options.level, exerciseType);
+    const representation = available[Math.floor(options.random() * available.length)];
+
+    return {
+      id: `${index + 1}-${region.id}`,
+      roundId: options.roundId,
+      regionId: region.id,
+      exerciseType,
+      representation,
+      level: options.level,
+    };
+  });
 
   return { questions, currentIndex: 0, status: 'ready', attempts: [] };
 }
