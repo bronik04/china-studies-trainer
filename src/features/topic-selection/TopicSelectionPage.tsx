@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 import type { Region } from '../../content/types';
+import type { ExerciseType } from '../../domain/round';
+import { EXERCISE_MODES } from '../exercise/exercise-modes';
 
 type TopicSelectionPageProps = {
   readonly regions: readonly Region[];
   readonly children?: ReactNode;
-  readonly onStartRound?: () => void;
+  readonly onStartRound?: (exerciseType: ExerciseType) => void;
 };
 
 export function TopicSelectionPage({
@@ -23,9 +25,18 @@ export function TopicSelectionPage({
         <h1>Провинции и столицы Китая</h1>
         <p>Познакомьтесь с регионами до первого тренировочного раунда.</p>
         {onStartRound ? (
-          <button type="button" className="primary" onClick={onStartRound}>
-            Начать раунд
-          </button>
+          <div className="mode-actions">
+            {Object.values(EXERCISE_MODES).map((mode) => (
+              <button
+                key={mode.exerciseType}
+                type="button"
+                className="primary"
+                onClick={() => onStartRound(mode.exerciseType)}
+              >
+                {mode.title}
+              </button>
+            ))}
+          </div>
         ) : null}
       </header>
       {children}

@@ -25,7 +25,16 @@ it('запускает раунд', () => {
   const start = vi.fn();
   render(<TopicSelectionPage regions={regions} onStartRound={start} />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Начать раунд' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
 
-  expect(start).toHaveBeenCalledOnce();
+  expect(start).toHaveBeenCalledWith('find-on-map');
+});
+
+it('предлагает три режима', () => {
+  const start = vi.fn();
+  render(<TopicSelectionPage regions={regions} onStartRound={start} />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
+
+  expect(start).toHaveBeenCalledWith('match-capital');
 });

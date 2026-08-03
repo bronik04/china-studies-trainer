@@ -8,7 +8,9 @@ import {
   summariseRound,
 } from './domain/progress-rules';
 import { createProgressStore } from './domain/progress-storage';
-import type { Attempt } from './domain/round';
+import type { Attempt, ExerciseType } from './domain/round';
+import { ChoiceExercise } from './features/exercise/ChoiceExercise';
+import { EXERCISE_MODES } from './features/exercise/exercise-modes';
 import { FindOnMapExercise } from './features/exercise/FindOnMapExercise';
 import { RoundResultsPage } from './features/results/RoundResultsPage';
 import { TopicSelectionPage } from './features/topic-selection/TopicSelectionPage';
@@ -35,14 +37,16 @@ export default function App() {
   const [progress, setProgress] = useState(() => store.read());
   const [screen, setScreen] = useState<Screen>('topic');
   const [roundPool, setRoundPool] = useState<readonly Region[]>(regions);
+  const [exerciseType, setExerciseType] = useState<ExerciseType>('find-on-map');
   const [roundId, setRoundId] = useState(newRoundId);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 31));
   const [lastAttempts, setLastAttempts] = useState<readonly Attempt[]>([]);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
 
-  function startRound(pool: readonly Region[]) {
+  function startRound(pool: readonly Region[], type: ExerciseType) {
     setRoundPool(pool);
+    setExerciseType(type);
     setRoundId(newRoundId());
     setSeed(Math.floor(Math.random() * 2 ** 31));
     setScreen('exercise');
@@ -57,9 +61,18 @@ export default function App() {
   }
 
   if (screen === 'exercise') {
-    return (
+    return exerciseType === 'find-on-map' ? (
       <FindOnMapExercise
         regions={roundPool}
+        roundId={roundId}
+        seed={seed}
+        onFinish={finishRound}
+        onExit={() => setScreen('topic')}
+      />
+    ) : (
+      <ChoiceExercise
+        regions={roundPool}
+        mode={EXERCISE_MODES[exerciseType]}
         roundId={roundId}
         seed={seed}
         onFinish={finishRound}
@@ -81,16 +94,22 @@ export default function App() {
           // Список тем на экране обрезан до пяти, а повторять надо все ошибки
           // за последние 14 дней (EXERCISES.md).
           const toRepeat = regionIdsToRepeat(progress.attempts, new Date());
-          startRound(regions.filter((region) => toRepeat.includes(region.id)));
+          startRound(
+            regions.filter((region) => toRepeat.includes(region.id)),
+            exerciseType,
+          );
         }}
-        onNewRound={() => startRound(regions)}
+        onNewRound={() => startRound(regions, exerciseType)}
         onExit={() => setScreen('topic')}
       />
     );
   }
 
   return (
-    <TopicSelectionPage regions={regions} onStartRound={() => startRound(regions)}>
+    <TopicSelectionPage
+      regions={regions}
+      onStartRound={(type) => startRound(regions, type)}
+    >
       <ChinaMap
         regions={regions}
         selectedRegionId={selectedRegionId}

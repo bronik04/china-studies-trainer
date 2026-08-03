@@ -24,7 +24,7 @@ it('shows the interactive map and keeps its selection in the page state', () => 
 it('открывает упражнение и возвращается к теме', () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Начать раунд' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
   expect(screen.getByText('Вопрос 1 из 34')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Прервать раунд' }));
@@ -36,7 +36,7 @@ it('открывает упражнение и возвращается к те�
 it('показывает итог после раунда и возвращает к теме', () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Начать раунд' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
 
   for (let index = 0; index < 34; index += 1) {
     const asked = screen.getByTestId('exercise-target').textContent;
@@ -63,7 +63,7 @@ it('показывает итог после раунда и возвращае�
 it('повторяет все ошибки, а не только показанные пять', () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Начать раунд' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
 
   for (let index = 0; index < 34; index += 1) {
     const asked = screen.getByTestId('exercise-target').textContent;
@@ -89,3 +89,12 @@ it('повторяет все ошибки, а не только показан�
 
   expect(screen.getByText('Вопрос 1 из 34')).toBeInTheDocument();
 }, 30_000);
+
+it('проходит раунд «регион — столица»', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
+
+  expect(screen.getByText('Вопрос 1 из 34')).toBeInTheDocument();
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
