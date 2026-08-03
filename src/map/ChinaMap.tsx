@@ -3,6 +3,8 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import { MapControls, type MapZoom } from './MapControls';
 
+export type AnswerState = 'correct' | 'incorrect' | 'disabled';
+
 type ChinaMapProps = {
   readonly regions: readonly Region[];
   readonly selectedRegionId: string | null;
@@ -10,7 +12,14 @@ type ChinaMapProps = {
   readonly onClear: () => void;
   readonly zoom?: MapZoom;
   readonly onZoomChange?: (zoom: MapZoom) => void;
+  readonly answerStates?: Readonly<Record<string, AnswerState>>;
 };
+
+/**
+ * Литерал `{}` прямо в параметрах создавал бы новый объект на каждый рендер,
+ * и эффект перезапускался бы вхолостую: `answerStates` входит в его зависимости.
+ */
+const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
 
 function getRegionId(target: EventTarget | null): string | null {
   if (!(target instanceof Element)) {
@@ -27,6 +36,7 @@ export function ChinaMap({
   onClear,
   zoom = 1,
   onZoomChange,
+  answerStates = NO_ANSWER_STATES,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
@@ -48,12 +58,25 @@ export function ChinaMap({
       if (label) {
         area.setAttribute('aria-label', label);
       }
+
+      const answerState = answerStates[area.dataset.regionId ?? ''];
+      if (answerState) {
+        area.dataset.answerState = answerState;
+      } else {
+        delete area.dataset.answerState;
+      }
+
+      if (answerState === 'disabled') {
+        area.setAttribute('aria-disabled', 'true');
+      } else {
+        area.removeAttribute('aria-disabled');
+      }
     });
-  }, [regions, selectedRegionId, zoom]);
+  }, [answerStates, regions, selectedRegionId, zoom]);
 
   function selectTarget(target: EventTarget | null) {
     const regionId = getRegionId(target);
-    if (regionId) {
+    if (regionId && answerStates[regionId] !== 'disabled') {
       onSelect(regionId);
     }
   }
@@ -101,6 +124,7 @@ export function ChinaMap({
             <button
               type="button"
               aria-pressed={region.id === selectedRegionId}
+              disabled={answerStates[region.id] === 'disabled'}
               onClick={() => onSelect(region.id)}
             >
               {region.nameRu} <span lang="zh-Hans">({region.nameZh})</span>

@@ -158,6 +158,24 @@ h1 {
   stroke-width: 4;
 }
 
+.china-map [data-region-id][data-answer-state='correct'] {
+  fill: #087443;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.china-map [data-region-id][data-answer-state='incorrect'] {
+  fill: #b42318;
+  stroke: #ffffff;
+  stroke-dasharray: 3 2;
+  stroke-width: 2;
+}
+
+.china-map [data-region-id][data-answer-state='disabled'] {
+  cursor: not-allowed;
+  fill: #eaecf0;
+}
+
 .china-map .map-callout line {
   stroke: #667085;
   stroke-width: 1;

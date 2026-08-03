@@ -112,3 +112,56 @@ it('retains region types for future exercise logic', () => {
     'sar',
   );
 });
+
+it('отмечает область состоянием ответа', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      answerStates={{ sichuan: 'correct', yunnan: 'incorrect' }}
+    />,
+  );
+
+  expect(document.querySelector('#sichuan')).toHaveAttribute(
+    'data-answer-state',
+    'correct',
+  );
+  expect(document.querySelector('#yunnan')).toHaveAttribute(
+    'data-answer-state',
+    'incorrect',
+  );
+  expect(document.querySelector('#hebei')).not.toHaveAttribute('data-answer-state');
+});
+
+it('помечает недоступную область для вспомогательных технологий', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      answerStates={{ tibet: 'disabled' }}
+    />,
+  );
+
+  expect(document.querySelector('#tibet')).toHaveAttribute('aria-disabled', 'true');
+});
+
+it('не выбирает недоступную область', () => {
+  const select = vi.fn();
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={select}
+      onClear={() => {}}
+      answerStates={{ sichuan: 'disabled' }}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Сычуань, 四川省' }));
+
+  expect(select).not.toHaveBeenCalled();
+});
