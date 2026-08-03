@@ -10,6 +10,7 @@ import {
 } from './round';
 
 const OPTIONS = {
+  roundId: 'round-1',
   exerciseType: 'find-on-map',
   level: 1,
 } as const;
@@ -65,6 +66,7 @@ it('записывает верный ответ', () => {
   expect(answered.attempts).toEqual([
     {
       questionId: question.id,
+      roundId: 'round-1',
       regionId: question.regionId,
       exerciseType: 'find-on-map',
       level: 1,
@@ -128,4 +130,15 @@ it('не создаёт раунд без регионов', () => {
   expect(() => createRound([], { ...OPTIONS, random: createSeededRandom(1) })).toThrow(
     /Раунд не создан: нет регионов/,
   );
+});
+
+it('помечает вопросы и попытки признаком раунда', () => {
+  const round = createRound(regions, {
+    ...OPTIONS,
+    roundId: 'round-7',
+    random: createSeededRandom(1),
+  });
+
+  expect(round.questions[0].roundId).toBe('round-7');
+  expect(answerCurrent(round, true).attempts[0].roundId).toBe('round-7');
 });

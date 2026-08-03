@@ -13,6 +13,7 @@ export type QuestionStatus = 'ready' | 'feedback';
 
 export type Question = {
   readonly id: string;
+  readonly roundId: string;
   readonly regionId: string;
   readonly exerciseType: ExerciseType;
   readonly level: Level;
@@ -20,6 +21,7 @@ export type Question = {
 
 export type Attempt = {
   readonly questionId: string;
+  readonly roundId: string;
   readonly regionId: string;
   readonly exerciseType: ExerciseType;
   readonly level: Level;
@@ -36,6 +38,7 @@ export type Round = {
 };
 
 export type RoundOptions = {
+  readonly roundId: string;
   readonly exerciseType: ExerciseType;
   readonly level: Level;
   readonly random: () => number;
@@ -58,6 +61,7 @@ export function createRound(
 
   const questions = shuffle(regions, options.random).map((region, index) => ({
     id: `${index + 1}-${region.id}`,
+    roundId: options.roundId,
     regionId: region.id,
     exerciseType: options.exerciseType,
     level: options.level,
@@ -87,6 +91,7 @@ export function answerQuestion(round: Round, input: AnswerInput): Round {
   const question = currentQuestion(round);
   const attempt: Attempt = {
     questionId: question.id,
+    roundId: question.roundId,
     regionId: question.regionId,
     exerciseType: question.exerciseType,
     level: question.level,

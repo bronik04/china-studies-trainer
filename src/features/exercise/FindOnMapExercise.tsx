@@ -7,6 +7,7 @@ import {
   currentQuestion,
   goToNextQuestion,
   isRoundFinished,
+  type Attempt,
   type Round,
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
@@ -16,19 +17,22 @@ import { answerStatesFor } from './answer-states';
 
 export type FindOnMapExerciseProps = {
   readonly regions: readonly Region[];
+  readonly roundId: string;
   readonly seed: number;
-  readonly onFinish: () => void;
+  readonly onFinish: (attempts: readonly Attempt[]) => void;
   readonly onExit: () => void;
 };
 
 export function FindOnMapExercise({
   regions,
+  roundId,
   seed,
   onFinish,
   onExit,
 }: FindOnMapExerciseProps) {
   const [round, setRound] = useState<Round>(() =>
     createRound(regions, {
+      roundId,
       exerciseType: 'find-on-map',
       level: 1,
       random: createSeededRandom(seed),
@@ -65,7 +69,7 @@ export function FindOnMapExercise({
   function handleNext() {
     const next = goToNextQuestion(round);
     if (isRoundFinished(next)) {
-      onFinish();
+      onFinish(next.attempts);
       return;
     }
 

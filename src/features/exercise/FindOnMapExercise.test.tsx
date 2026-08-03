@@ -8,7 +8,13 @@ const SHORT_POOL = regions.slice(0, 3);
 
 function renderExercise(onFinish = () => {}, pool: readonly Region[] = regions) {
   render(
-    <FindOnMapExercise regions={pool} seed={1} onFinish={onFinish} onExit={() => {}} />,
+    <FindOnMapExercise
+      regions={pool}
+      roundId="round-1"
+      seed={1}
+      onFinish={onFinish}
+      onExit={() => {}}
+    />,
   );
 }
 

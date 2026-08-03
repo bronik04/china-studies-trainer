@@ -18,6 +18,7 @@ type Region = {
 
 type Attempt = {
   questionId: string;
+  roundId: string;         // к какому раунду относится попытка
   regionId: string;
   exerciseType: 'find-on-map' | 'name-region' | 'match-capital';
   level: 1 | 2 | 3 | 4;
