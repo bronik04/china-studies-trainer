@@ -1,0 +1,90 @@
+import type { Region } from '../../content/types';
+import type { RoundSummary } from '../../domain/progress-rules';
+
+export type RoundResultsPageProps = {
+  readonly summary: RoundSummary;
+  readonly regions: readonly Region[];
+  readonly bestAccuracy: number;
+  readonly isProgressSaved: boolean;
+  readonly onRepeatMistakes: () => void;
+  readonly onNewRound: () => void;
+  readonly onExit: () => void;
+};
+
+function formatPercent(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
+/** Время подаётся как факт, без оценки скорости (UI_UX.md). */
+function formatDuration(durationMs: number): string {
+  const totalSeconds = Math.round(durationMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return minutes === 0 ? `${seconds} с` : `${minutes} мин ${seconds} с`;
+}
+
+export function RoundResultsPage({
+  summary,
+  regions,
+  bestAccuracy,
+  isProgressSaved,
+  onRepeatMistakes,
+  onNewRound,
+  onExit,
+}: RoundResultsPageProps) {
+  const reviewRegions = summary.regionIdsToReview.flatMap(
+    (regionId) => regions.find((region) => region.id === regionId) ?? [],
+  );
+
+  return (
+    <main className="app-shell">
+      <header className="hero">
+        <p className="eyebrow">Итог раунда</p>
+        <h1>{formatPercent(summary.accuracy)}</h1>
+        <p>
+          {summary.correct} из {summary.total}
+        </p>
+      </header>
+      <section aria-labelledby="results-heading">
+        <div className="section-heading">
+          <h2 id="results-heading">Что получилось</h2>
+          <p>Личный рекорд: {formatPercent(bestAccuracy)}</p>
+        </div>
+        <p>Время: {formatDuration(summary.durationMs)}</p>
+        {isProgressSaved ? null : (
+          <p className="status-note" role="status">
+            Прогресс не сохранится: хранилище недоступно.
+          </p>
+        )}
+        {reviewRegions.length === 0 ? (
+          <p>Ошибок нет.</p>
+        ) : (
+          <>
+            <h3>Стоит повторить</h3>
+            <ul className="review-list">
+              {reviewRegions.map((region) => (
+                <li key={region.id}>
+                  {region.nameRu} <span lang="zh-Hans">{region.nameZh}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        <div className="results-actions">
+          {reviewRegions.length === 0 ? null : (
+            <button type="button" className="primary" onClick={onRepeatMistakes}>
+              Повторить ошибки
+            </button>
+          )}
+          <button type="button" className="secondary" onClick={onNewRound}>
+            Новый раунд
+          </button>
+          <button type="button" className="secondary" onClick={onExit}>
+            К теме
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}

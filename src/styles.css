@@ -320,3 +320,21 @@ button.secondary:focus-visible {
   outline: 3px solid #175cd3;
   outline-offset: 2px;
 }
+
+.review-list {
+  list-style: none;
+  margin: 8px 0 16px;
+  padding: 0;
+}
+
+.review-list li {
+  border-bottom: 1px solid #d0d5dd;
+  padding: 8px 0;
+}
+
+.results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
