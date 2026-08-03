@@ -98,8 +98,8 @@ export function ChinaMap({
   return (
     <section className="map-section" aria-labelledby="map-heading">
       <div className="section-heading">
-        <h2 id="map-heading">Интерактивная карта</h2>
-        <p>Выберите регион на схеме или в списке.</p>
+        <h2 id="map-heading">{interactive ? 'Интерактивная карта' : 'Карта регионов'}</h2>
+        {interactive ? <p>Выберите регион на схеме или в списке.</p> : null}
       </div>
       <p className="map-attribution">
         Геометрия 33 регионов: карта{' '}
@@ -127,25 +127,36 @@ export function ChinaMap({
         }}
         dangerouslySetInnerHTML={{ __html: mapMarkup }}
       />
-      <p className="map-selection" role="status" aria-live="polite">
-        {selectedRegion
-          ? `Выбрано: ${selectedRegion.nameRu} (${selectedRegion.nameZh})`
-          : 'Регион ещё не выбран.'}
-      </p>
-      <ul className="map-alternative" aria-label="Список регионов карты">
-        {regions.map((region) => (
-          <li key={region.id}>
-            <button
-              type="button"
-              aria-pressed={region.id === selectedRegionId}
-              disabled={!isSelectable(region.id)}
-              onClick={() => onSelect(region.id)}
-            >
-              {region.nameRu} <span lang="zh-Hans">({region.nameZh})</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {/*
+        В упражнении «назови регион» карта только показывает. Назвать
+        подсвеченную область или перечислить регионы здесь — значит выдать
+        ответ, поэтому оба блока заменяются нейтральной подписью.
+      */}
+      {interactive ? (
+        <p className="map-selection" role="status" aria-live="polite">
+          {selectedRegion
+            ? `Выбрано: ${selectedRegion.nameRu} (${selectedRegion.nameZh})`
+            : 'Регион ещё не выбран.'}
+        </p>
+      ) : (
+        <p className="map-selection">На карте подсвечена одна область.</p>
+      )}
+      {interactive ? (
+        <ul className="map-alternative" aria-label="Список регионов карты">
+          {regions.map((region) => (
+            <li key={region.id}>
+              <button
+                type="button"
+                aria-pressed={region.id === selectedRegionId}
+                disabled={!isSelectable(region.id)}
+                onClick={() => onSelect(region.id)}
+              >
+                {region.nameRu} <span lang="zh-Hans">({region.nameZh})</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </section>
   );
 }

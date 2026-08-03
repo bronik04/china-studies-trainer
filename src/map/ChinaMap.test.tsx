@@ -215,7 +215,11 @@ it('в неинтерактивном режиме убирает области
   );
 
   expect(document.querySelector('#sichuan')).toHaveAttribute('tabindex', '-1');
-  expect(screen.getByRole('button', { name: 'Сычуань (四川省)' })).toBeDisabled();
+  expect(
+    [...document.querySelectorAll('[data-region-id]')].every(
+      (area) => area.getAttribute('tabindex') === '-1',
+    ),
+  ).toBe(true);
 });
 
 it('в неинтерактивном режиме всё равно подсвечивает выбранное', () => {
@@ -230,4 +234,48 @@ it('в неинтерактивном режиме всё равно подсв�
   );
 
   expect(document.querySelector('#sichuan')).toHaveAttribute('data-selected', 'true');
+});
+
+it('в неинтерактивном режиме не называет подсвеченный регион', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId="sichuan"
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+    />,
+  );
+
+  expect(screen.queryByText(/Выбрано: Сычуань/)).toBeNull();
+  expect(screen.queryByRole('list', { name: 'Список регионов карты' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Сычуань (四川省)' })).toBeNull();
+});
+
+it('в неинтерактивном режиме объясняет, что на карте есть подсветка', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId="sichuan"
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+    />,
+  );
+
+  expect(screen.getByText('На карте подсвечена одна область.')).toBeInTheDocument();
+});
+
+it('в неинтерактивном режиме не зовёт выбирать регион на карте', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId="sichuan"
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+    />,
+  );
+
+  expect(screen.queryByText('Выберите регион на схеме или в списке.')).toBeNull();
 });
