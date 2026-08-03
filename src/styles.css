@@ -286,3 +286,37 @@ h1 {
   outline: 3px solid #175cd3;
   outline-offset: 2px;
 }
+
+.exercise-progress {
+  color: #475467;
+  font-weight: 600;
+}
+
+button.primary {
+  background: #b42318;
+  border: 2px solid #b42318;
+  border-radius: 8px;
+  color: #fffdf8;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 8px 24px;
+}
+
+button.secondary {
+  background: transparent;
+  border: 2px solid #d0d5dd;
+  border-radius: 8px;
+  color: #1f2937;
+  cursor: pointer;
+  font: inherit;
+  min-height: 44px;
+  padding: 8px 24px;
+}
+
+button.primary:focus-visible,
+button.secondary:focus-visible {
+  outline: 3px solid #175cd3;
+  outline-offset: 2px;
+}
