@@ -21,20 +21,32 @@ it('shows all study forms for Sichuan', () => {
   expect(region).toHaveTextContent('Административный центр: Чэнду (成都)');
 });
 
-it('запускает раунд', () => {
+it('запускает раунд выбранного режима на первом уровне', () => {
   const start = vi.fn();
-  render(<TopicSelectionPage regions={regions} onStartRound={start} />);
+  render(<TopicSelectionPage regions={regions} unlockedLevel={1} onStartRound={start} />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
 
-  expect(start).toHaveBeenCalledWith('find-on-map');
+  expect(start).toHaveBeenCalledWith('find-on-map', 1);
 });
 
-it('предлагает три режима', () => {
+it('не предлагает закрытые уровни', () => {
+  render(
+    <TopicSelectionPage regions={regions} unlockedLevel={2} onStartRound={() => {}} />,
+  );
+
+  expect(screen.getByRole('radio', { name: 'Уровень 2' })).toBeInTheDocument();
+  expect(screen.queryByRole('radio', { name: 'Уровень 3' })).toBeNull();
+});
+
+it('на четвёртом уровне предлагает один смешанный раунд', () => {
   const start = vi.fn();
-  render(<TopicSelectionPage regions={regions} onStartRound={start} />);
+  render(
+    <TopicSelectionPage regions={regions} unlockedLevel={4} onStartRound={start} />,
+  );
 
-  fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Уровень 4' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Смешанный раунд' }));
 
-  expect(start).toHaveBeenCalledWith('match-capital');
+  expect(start).toHaveBeenCalledWith('mixed', 4);
 });

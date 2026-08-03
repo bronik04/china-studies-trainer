@@ -25,7 +25,7 @@ it('открывает упражнение и возвращается к те�
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
-  expect(screen.getByText('Вопрос 1 из 34')).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Прервать раунд' }));
   expect(
@@ -87,7 +87,7 @@ it('повторяет все ошибки, а не только показан�
 
   fireEvent.click(screen.getByRole('button', { name: 'Повторить ошибки' }));
 
-  expect(screen.getByText('Вопрос 1 из 34')).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 }, 30_000);
 
 it('проходит раунд «регион — столица»', () => {
@@ -95,6 +95,58 @@ it('проходит раунд «регион — столица»', () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
 
-  expect(screen.getByText('Вопрос 1 из 34')).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
   expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+it('показывает уровень в ходе раунда', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
+
+  expect(screen.getByText(/уровень 1/)).toBeInTheDocument();
+});
+
+function useMemoryStorage(seed: Record<string, string>): void {
+  const data = new Map(Object.entries(seed));
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: {
+      get length() {
+        return data.size;
+      },
+      clear: () => data.clear(),
+      getItem: (key: string) => data.get(key) ?? null,
+      key: (index: number) => [...data.keys()][index] ?? null,
+      removeItem: (key: string) => void data.delete(key),
+      setItem: (key: string, value: string) => void data.set(key, value),
+    },
+  });
+}
+
+it('открывает уровень по истории, даже если сохранённое поле отстало', () => {
+  const attempts = ['r1', 'r2'].flatMap((roundId) =>
+    Array.from({ length: 10 }, (_, index) => ({
+      questionId: `${index}-q`,
+      roundId,
+      regionId: `region-${index}`,
+      exerciseType: 'find-on-map' as const,
+      level: 1 as const,
+      isCorrect: index < 9,
+      durationMs: 1000,
+      answeredAt: '2026-08-03T10:00:00.000Z',
+    })),
+  );
+  useMemoryStorage({
+    'china-studies-trainer/progress': JSON.stringify({
+      schemaVersion: 1,
+      attempts,
+      masteredRegionIds: [],
+      unlockedLevel: 1,
+    }),
+  });
+
+  render(<App />);
+
+  expect(screen.getByRole('radio', { name: 'Уровень 2' })).toBeInTheDocument();
 });
