@@ -69,9 +69,8 @@ export function ChinaMap({
         <a href="https://www.npmjs.com/package/@svg-maps/china">@svg-maps/china</a>{' '}
         (Victor Cazanave, на основе MapSVG) по лицензии{' '}
         <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.{' '}
-        Контур Тайваня — временная учебная адаптация прежнего локального ресурса,
-        распространяемая по{' '}
-        <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+        Контур Тайваня:{' '}
+        <a href="https://github.com/antvis/china-geojson">china-geojson</a> (AntV).
       </p>
       {onZoomChange ? <MapControls zoom={zoom} onZoomChange={onZoomChange} /> : null}
       <div
