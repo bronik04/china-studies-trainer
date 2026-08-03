@@ -36,13 +36,17 @@ export function createProgressStore(storage: Storage | null): ProgressStore {
     };
   }
 
+  // Параметр не сохраняет сужение типа внутри вложенных функций, поэтому
+  // проверенное хранилище закрепляется в константе.
+  const available = storage;
+
   /**
    * Испорченные или чужие данные не удаляются: DATA_MODEL.md требует
    * сохранить их отдельно, чтобы неудачная миграция ничего не уничтожила.
    */
   function setAside(raw: string): Progress {
-    storage.setItem(BACKUP_KEY, raw);
-    storage.removeItem(PROGRESS_KEY);
+    available.setItem(BACKUP_KEY, raw);
+    available.removeItem(PROGRESS_KEY);
 
     return EMPTY_PROGRESS;
   }
@@ -51,7 +55,7 @@ export function createProgressStore(storage: Storage | null): ProgressStore {
     isAvailable: true,
 
     read() {
-      const raw = storage.getItem(PROGRESS_KEY);
+      const raw = available.getItem(PROGRESS_KEY);
       if (raw === null) {
         return EMPTY_PROGRESS;
       }
@@ -69,14 +73,14 @@ export function createProgressStore(storage: Storage | null): ProgressStore {
 
     write(progress) {
       try {
-        storage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+        available.setItem(PROGRESS_KEY, JSON.stringify(progress));
       } catch {
         // Запись перестала работать во время сеанса: раунд важнее записи.
       }
     },
 
     clear() {
-      storage.removeItem(PROGRESS_KEY);
+      available.removeItem(PROGRESS_KEY);
     },
   };
 }
