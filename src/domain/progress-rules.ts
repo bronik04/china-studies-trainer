@@ -1,6 +1,9 @@
-import type { Attempt } from './round';
+import type { Attempt, Level } from './round';
 
 export const REVIEW_WINDOW_DAYS = 14;
+export const UNLOCK_ACCURACY = 0.8;
+export const UNLOCK_ROUNDS = 2;
+const MAX_LEVEL: Level = 4;
 export const MASTERY_CORRECT_ROUNDS = 3;
 export const MASTERY_MIN_LEVEL = 2;
 export const MAX_REVIEW_TOPICS = 5;
@@ -47,6 +50,33 @@ export function summariseRound(attempts: readonly Attempt[]): RoundSummary {
       .map((attempt) => attempt.regionId)
       .slice(0, MAX_REVIEW_TOPICS),
   };
+}
+
+/**
+ * Уровень открывается, когда два последних завершённых раунда предыдущего
+ * уровня дали вместе не меньше 80% верных ответов (SPEC.md). Цепочка
+ * прерывается на первом уровне, который этого не набрал.
+ */
+export function unlockedLevelFrom(attempts: readonly Attempt[]): Level {
+  let unlocked: Level = 1;
+
+  while (unlocked < MAX_LEVEL) {
+    const ofLevel = attempts.filter((attempt) => attempt.level === unlocked);
+    const rounds = [...groupBy(ofLevel, (attempt) => attempt.roundId).values()];
+    if (rounds.length < UNLOCK_ROUNDS) {
+      return unlocked;
+    }
+
+    const recent = rounds.slice(-UNLOCK_ROUNDS).flat();
+    const correct = recent.filter((attempt) => attempt.isCorrect).length;
+    if (correct / recent.length < UNLOCK_ACCURACY) {
+      return unlocked;
+    }
+
+    unlocked = (unlocked + 1) as Level;
+  }
+
+  return unlocked;
 }
 
 /** Персональный рекорд точности среди прошлых раундов. */

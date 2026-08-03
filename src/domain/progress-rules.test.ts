@@ -5,6 +5,7 @@ import {
   MAX_REVIEW_TOPICS,
   regionIdsToRepeat,
   summariseRound,
+  unlockedLevelFrom,
 } from './progress-rules';
 
 const NOW = new Date('2026-08-03T12:00:00.000Z');
@@ -112,4 +113,65 @@ it('снимает освоенность после ошибки за посл�
   ];
 
   expect(masteredRegionIds(attempts, NOW)).toEqual([]);
+});
+
+function roundOf(roundId: string, level: Level, correct: number, total: number): Attempt[] {
+  return Array.from({ length: total }, (_, index) =>
+    attempt({
+      roundId,
+      level,
+      regionId: `region-${index}`,
+      isCorrect: index < correct,
+    }),
+  );
+}
+
+it('без истории открыт только первый уровень', () => {
+  expect(unlockedLevelFrom([])).toBe(1);
+});
+
+it('не открывает уровень после одного удачного раунда', () => {
+  expect(unlockedLevelFrom(roundOf('r1', 1, 10, 10))).toBe(1);
+});
+
+it('открывает второй уровень после двух раундов с точностью не ниже 80%', () => {
+  const attempts = [...roundOf('r1', 1, 9, 10), ...roundOf('r2', 1, 8, 10)];
+
+  expect(unlockedLevelFrom(attempts)).toBe(2);
+});
+
+it('не открывает уровень при точности ниже 80%', () => {
+  const attempts = [...roundOf('r1', 1, 7, 10), ...roundOf('r2', 1, 8, 10)];
+
+  expect(unlockedLevelFrom(attempts)).toBe(1);
+});
+
+it('смотрит только на два последних раунда уровня', () => {
+  const attempts = [
+    ...roundOf('r1', 1, 0, 10),
+    ...roundOf('r2', 1, 9, 10),
+    ...roundOf('r3', 1, 9, 10),
+  ];
+
+  expect(unlockedLevelFrom(attempts)).toBe(2);
+});
+
+it('открывает уровни по цепочке', () => {
+  const attempts = [
+    ...roundOf('r1', 1, 10, 10),
+    ...roundOf('r2', 1, 10, 10),
+    ...roundOf('r3', 2, 10, 10),
+    ...roundOf('r4', 2, 10, 10),
+  ];
+
+  expect(unlockedLevelFrom(attempts)).toBe(3);
+});
+
+it('не поднимается выше четвёртого уровня', () => {
+  const attempts = ([1, 2, 3, 4] as const).flatMap((level) => [
+    ...roundOf(`a${level}`, level, 10, 10),
+    ...roundOf(`b${level}`, level, 10, 10),
+  ]);
+
+  expect(unlockedLevelFrom(attempts)).toBe(4);
 });
