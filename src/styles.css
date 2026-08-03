@@ -158,6 +158,18 @@ h1 {
   stroke-width: 4;
 }
 
+.china-map .map-callout line {
+  stroke: #667085;
+  stroke-width: 1;
+}
+
+.china-map .map-callout text {
+  fill: #1f2937;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 600;
+}
+
 .map-selection {
   font-weight: 700;
   margin: 16px 0;
