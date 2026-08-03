@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../../content/regions';
 import { TopicSelectionPage } from './TopicSelectionPage';
 
@@ -19,4 +19,13 @@ it('shows all study forms for Sichuan', () => {
   expect(region).toHaveTextContent('四川省');
   expect(region).toHaveTextContent('Sìchuān shěng');
   expect(region).toHaveTextContent('Административный центр: Чэнду (成都)');
+});
+
+it('запускает раунд', () => {
+  const start = vi.fn();
+  render(<TopicSelectionPage regions={regions} onStartRound={start} />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Начать раунд' }));
+
+  expect(start).toHaveBeenCalledOnce();
 });

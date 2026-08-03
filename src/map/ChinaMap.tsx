@@ -66,7 +66,7 @@ export function ChinaMap({
         delete area.dataset.answerState;
       }
 
-      if (answerState === 'disabled') {
+      if (answerState) {
         area.setAttribute('aria-disabled', 'true');
       } else {
         area.removeAttribute('aria-disabled');
@@ -74,9 +74,19 @@ export function ChinaMap({
     });
   }, [answerStates, regions, selectedRegionId, zoom]);
 
+  /**
+   * Состояние ответа появляется у области только после ответа, а второй ответ
+   * на вопрос запрещён (SPEC.md). Поэтому невыбираемы все области с любым
+   * состоянием, включая верную и неверную: иначе они выглядели бы рабочими,
+   * но не делали ничего.
+   */
+  function isSelectable(regionId: string): boolean {
+    return answerStates[regionId] === undefined;
+  }
+
   function selectTarget(target: EventTarget | null) {
     const regionId = getRegionId(target);
-    if (regionId && answerStates[regionId] !== 'disabled') {
+    if (regionId && isSelectable(regionId)) {
       onSelect(regionId);
     }
   }
@@ -124,7 +134,7 @@ export function ChinaMap({
             <button
               type="button"
               aria-pressed={region.id === selectedRegionId}
-              disabled={answerStates[region.id] === 'disabled'}
+              disabled={!isSelectable(region.id)}
               onClick={() => onSelect(region.id)}
             >
               {region.nameRu} <span lang="zh-Hans">({region.nameZh})</span>

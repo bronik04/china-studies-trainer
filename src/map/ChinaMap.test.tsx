@@ -149,6 +149,26 @@ it('помечает недоступную область для вспомог
   expect(document.querySelector('#tibet')).toHaveAttribute('aria-disabled', 'true');
 });
 
+it('не даёт выбрать область, у которой уже есть результат ответа', () => {
+  const select = vi.fn();
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={select}
+      onClear={() => {}}
+      answerStates={{ sichuan: 'correct', yunnan: 'incorrect' }}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Сычуань, 四川省' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Юньнань, 云南省' }));
+
+  expect(select).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Сычуань (四川省)' })).toBeDisabled();
+  expect(document.querySelector('#sichuan')).toHaveAttribute('aria-disabled', 'true');
+});
+
 it('не выбирает недоступную область', () => {
   const select = vi.fn();
   render(

@@ -20,3 +20,15 @@ it('shows the interactive map and keeps its selection in the page state', () => 
 
   expect(screen.getByRole('status')).toHaveTextContent('Выбрано: Сычуань (四川省)');
 });
+
+it('открывает упражнение и возвращается к теме', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Начать раунд' }));
+  expect(screen.getByText('Вопрос 1 из 34')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Прервать раунд' }));
+  expect(
+    screen.getByRole('heading', { name: 'Провинции и столицы Китая' }),
+  ).toBeInTheDocument();
+});
