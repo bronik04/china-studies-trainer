@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import App from './App';
+import { regions } from './content/regions';
 
 it('shows the topic page', () => {
   render(<App />);
@@ -33,22 +34,42 @@ it('открывает упражнение и возвращается к те�
   ).toBeInTheDocument();
 });
 
-it('показывает итог после раунда и возвращает к теме', () => {
-  render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
+/**
+ * Полный раунд проверяется в режиме «регион — столица»: на вопрос
+ * отрисовываются четыре кнопки вместо карты с 34 областями и списка-дублёра.
+ * Проверяемое поведение от режима не зависит, а раунд идёт в разы быстрее.
+ */
+function answerCapital(correct: boolean): void {
+  const asked = screen.getByTestId('exercise-target').textContent;
+  const target = regions.find((region) => region.nameRu === asked)!;
+  const options = screen.getAllByTestId('choice-option');
 
+  fireEvent.click(
+    options.find((option) =>
+      correct
+        ? option.textContent === target.capitalRu
+        : option.textContent !== target.capitalRu,
+    )!,
+  );
+}
+
+function finishRound(correct: boolean): void {
   for (let index = 0; index < 34; index += 1) {
-    const asked = screen.getByTestId('exercise-target').textContent;
-    fireEvent.click(
-      screen.getByRole('button', { name: new RegExp(`^${asked} \\(`) }),
-    );
+    answerCapital(correct);
     fireEvent.click(
       screen.getByRole('button', {
         name: index === 33 ? 'Завершить раунд' : 'Далее',
       }),
     );
   }
+}
+
+it('показывает итог после раунда и возвращает к теме', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
+  finishRound(true);
 
   expect(screen.getByText('100%')).toBeInTheDocument();
   expect(screen.getByText('34 из 34')).toBeInTheDocument();
@@ -58,37 +79,21 @@ it('показывает итог после раунда и возвращае�
   expect(
     screen.getByRole('heading', { name: 'Провинции и столицы Китая' }),
   ).toBeInTheDocument();
-}, 30_000);
+});
+
 
 it('повторяет все ошибки, а не только показанные пять', () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
-
-  for (let index = 0; index < 34; index += 1) {
-    const asked = screen.getByTestId('exercise-target').textContent;
-    const wrong = screen
-      .getAllByRole('button')
-      .find(
-        (button) =>
-          button.textContent?.includes('(') &&
-          !button.textContent.startsWith(`${asked} (`) &&
-          button.closest('.map-alternative') !== null,
-      );
-    fireEvent.click(wrong!);
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: index === 33 ? 'Завершить раунд' : 'Далее',
-      }),
-    );
-  }
+  fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
+  finishRound(false);
 
   expect(screen.getByText('0%')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Повторить ошибки' }));
 
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
-}, 30_000);
+}, 20_000);
 
 it('проходит раунд «регион — столица»', () => {
   render(<App />);
