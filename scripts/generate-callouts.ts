@@ -31,8 +31,17 @@ function makeDecorative(svg: string, regionId: string): string {
   }
 
   const cleaned = match[0]
-    .replace(/\s(data-region-id|tabindex|role|aria-label)="[^"]*"/g, '')
-    .replace('<path', '<path aria-hidden="true" pointer-events="none"');
+    // `aria-hidden` и `pointer-events` снимаются вместе с остальными, чтобы
+    // повторный прогон не дописывал их второй раз.
+    .replace(
+      /\s(data-region-id|tabindex|role|aria-label|aria-hidden|pointer-events)="[^"]*"/g,
+      '',
+    )
+    .replace('<path', '<path aria-hidden="true" pointer-events="none"')
+    // Удаление атрибутов оставляет за собой пустые строки и висячие пробелы,
+    // на которые ругается `git diff --check`.
+    .replace(/[ \t]+$/gm, '')
+    .replace(/\n\s*\n/g, '\n');
 
   return svg.replace(match[0], () => cleaned);
 }

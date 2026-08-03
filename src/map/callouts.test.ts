@@ -93,3 +93,15 @@ it('делает вынесенные контуры декоративными'
     expect(path?.[0]).not.toContain('data-region-id');
   }
 });
+
+/** Генератор запускается повторно, поэтому атрибуты не должны накапливаться. */
+it('не задваивает атрибуты при повторном запуске генератора', () => {
+  for (const target of CALLOUT_TARGETS) {
+    const path = new RegExp(`<path[^>]*\\bid="${target.regionId}"[^>]*>`, 's').exec(
+      mapMarkup,
+    );
+
+    expect(path?.[0].match(/aria-hidden=/g), target.regionId).toHaveLength(1);
+    expect(path?.[0].match(/pointer-events=/g), target.regionId).toHaveLength(1);
+  }
+});
