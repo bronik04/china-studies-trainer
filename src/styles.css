@@ -170,13 +170,7 @@ p {
     min-block-size: 0;
   }
 
-  /*
-   * Высота передаётся по цепочке до самой карты: рамка зума стоит между
-   * секцией и картой, и без неё `block-size: 100%` у карты считался бы от
-   * автоматической высоты рамки.
-   */
-  .round-map .map-section,
-  .round-map .china-map-frame {
+  .round-map .map-section {
     block-size: 100%;
   }
 
@@ -186,12 +180,20 @@ p {
    * `max-inline-size` на случай узкой колонки: там ограничивает уже ширина,
    * и рисунок вписывается сам.
    */
-  .round-map .china-map {
+  /*
+   * Пропорция живёт на рамке, а не на карте: рамка — система координат для
+   * зума, и будь она шире карты, кнопки уезжали бы с бумаги на доску.
+   */
+  .round-map .china-map-frame {
     aspect-ratio: var(--map-aspect);
     block-size: 100%;
     inline-size: auto;
     margin-inline: auto;
     max-inline-size: 100%;
+  }
+
+  .round-map .china-map {
+    block-size: 100%;
   }
 }
 
@@ -296,6 +298,24 @@ p {
 .home-status {
   color: var(--text-on-ground-muted);
   margin: 0;
+}
+
+/*
+ * Карта освоенности — указатель, а не рабочая поверхность: на ней не отвечают,
+ * поэтому ей хватает доли кадра. Без потолка она забирала всю ширину колонки и
+ * выносила кабинет за кадр — 824 px при 720.
+ */
+.home-progress .china-map-frame {
+  aspect-ratio: var(--map-aspect);
+  block-size: min(46dvh, 420px);
+  inline-size: auto;
+  margin-inline: auto;
+  max-inline-size: 100%;
+}
+
+.home-progress .china-map,
+.home-progress .china-map svg {
+  block-size: 100%;
 }
 
 .home-legend {
@@ -417,12 +437,15 @@ p {
     min-block-size: 0;
   }
 
-  .atlas-map .map-section,
-  .atlas-map .china-map-frame {
+  .atlas-map .map-section {
     block-size: 100%;
   }
 
-  .atlas-map .china-map {
+  /*
+   * Пропорция живёт на рамке, а не на карте: рамка — система координат для
+   * зума, и будь она шире карты, кнопки уезжали бы с бумаги на доску.
+   */
+  .atlas-map .china-map-frame {
     aspect-ratio: var(--map-aspect);
     block-size: 100%;
     inline-size: auto;
@@ -430,6 +453,7 @@ p {
     max-inline-size: 100%;
   }
 
+  .atlas-map .china-map,
   .atlas-map .china-map svg {
     block-size: 100%;
   }
@@ -617,13 +641,17 @@ button.text:hover:enabled {
  * Зум живёт в углу самой карты, как в любом атласе. Прежде три кнопки стояли
  * перед картой и весили больше неё.
  */
+/*
+ * Левый нижний угол, а не правый: в правом стоят выноски Гонконга и Макао, и
+ * кнопки накрывали их вместе с выносными линиями. Слева внизу — чистое море.
+ */
 .map-controls {
   bottom: var(--s-3);
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
+  left: var(--s-3);
   position: absolute;
-  right: var(--s-3);
 }
 
 /*
@@ -940,7 +968,13 @@ button.text:hover:enabled {
   padding: var(--s-2) var(--s-3);
 }
 
+/*
+ * Потолок нужен на узком экране, где колонок нет и список не ограничен
+ * высотой ячейки: 34 кнопки подряд выдавливали карту на второй экран. На
+ * широком его перекрывает `min-block-size: 0` в сетке — там высоту задаёт кадр.
+ */
 .region-panel-list .map-alternative {
+  max-block-size: 50dvh;
   min-block-size: 0;
   overflow-y: auto;
 }

@@ -221,8 +221,13 @@ export function ChinaMap({
    * заставил бы читать результат дважды. В «назвать регион» карта не
    * интерактивна, и статичное объяснение подсветки остаётся.
    */
+  /*
+   * `progress` исключён вместе с `fill`: на карте освоенности ничего не
+   * выбирают и не подсвечивают, и строка «На карте подсвечена одна область»
+   * там просто врала бы.
+   */
   const showsSelectionStatus =
-    variant !== 'fill' && (showsBrowseChrome || !interactive);
+    variant === 'reference' && (showsBrowseChrome || !interactive);
 
   return (
     <section
