@@ -1,5 +1,4 @@
 import {
-  validateLandTones,
   validateMapAreaIds,
   validateTargetSizes,
 } from './validate-map';
@@ -42,7 +41,3 @@ it('пропускает область, которой хватает собс�
   expect(() => validateTargetSizes(['xinjiang'], [], [])).not.toThrow();
 });
 
-it('требует тон заливки для каждой области', () => {
-  expect(() => validateLandTones(['sichuan'])).not.toThrow();
-  expect(() => validateLandTones(['atlantis'])).toThrow(/Нет тона заливки/);
-});

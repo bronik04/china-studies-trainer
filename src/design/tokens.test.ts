@@ -17,10 +17,10 @@ const tokens = readTokens();
 const color = (name: string) => resolve(tokens, name);
 
 const LAND_TONES = [
-  '--map-land-1',
-  '--map-land-2',
-  '--map-land-3',
-  '--map-land-4',
+  '--map-kind-province',
+  '--map-kind-autonomous-region',
+  '--map-kind-municipality',
+  '--map-kind-sar',
 ] as const;
 
 /** Все заливки, поверх которых карта когда-либо рисует границу или подпись. */

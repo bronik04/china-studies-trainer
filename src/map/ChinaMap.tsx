@@ -3,7 +3,6 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import { MapControls, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
-import { REGION_PALETTE } from './region-palette';
 
 export type AnswerState = 'correct' | 'incorrect' | 'disabled';
 
@@ -74,13 +73,6 @@ export function ChinaMap({
       const label = labelsByMapAreaId.get(area.dataset.regionId ?? '');
       if (label) {
         area.setAttribute('aria-label', label);
-      }
-
-      // Тон заливки считается по геометрии карты: у соседей он не совпадает
-      // никогда (см. scripts/generate-region-palette.ts).
-      const tone = REGION_PALETTE[area.dataset.regionId ?? '']?.tone;
-      if (tone !== undefined) {
-        area.dataset.landTone = String(tone);
       }
 
       const answerState = answerStates[area.dataset.regionId ?? ''];

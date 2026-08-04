@@ -299,7 +299,7 @@ it('нажатие на увеличенную цель выбирает мел�
   expect(select).toHaveBeenCalledWith('beijing');
 });
 
-it('каждая область карты получает тон заливки', () => {
+it('справочная карта красит области по типу региона', () => {
   const { container } = render(
     <ChinaMap
       regions={regions}
@@ -314,8 +314,9 @@ it('каждая область карты получает тон заливк�
   expect(areas).not.toHaveLength(0);
   for (const area of areas) {
     expect(
-      area.getAttribute('data-land-tone'),
+      area.getAttribute('data-region-kind'),
       area.getAttribute('data-region-id') ?? '',
-    ).toMatch(/^[1-4]$/);
+    ).toMatch(/^(province|autonomous-region|municipality|sar)$/);
   }
+  expect(container.querySelector('[data-land-tone]')).toBeNull();
 });

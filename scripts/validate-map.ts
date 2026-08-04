@@ -8,7 +8,6 @@ import {
   undersizedRegions,
 } from '../src/map/target-size';
 import {
-  validateLandTones,
   validateMapAreaIds,
   validateTargetSizes,
 } from '../src/map/validate-map';
@@ -25,7 +24,6 @@ const hitTargetIds = [...svg.matchAll(/data-hit-region-id="([^"]+)"/g)].map(
 const regionIds = regions.map((region) => region.mapAreaId);
 
 validateMapAreaIds(regionIds, mapAreaIds);
-validateLandTones(regionIds);
 validateTargetSizes(
   regionIds,
   hitTargetIds,

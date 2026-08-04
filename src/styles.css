@@ -242,23 +242,29 @@ button.secondary:hover:enabled {
  */
 .china-map [data-region-id] {
   cursor: pointer;
-  fill: var(--map-land-1);
+  fill: var(--map-kind-province);
   stroke: var(--map-border);
   stroke-width: var(--map-border-width);
   transition: fill var(--duration-instant) var(--ease-out),
-    stroke-width var(--duration-instant) var(--ease-out);
+    stroke var(--duration-calm) var(--ease-out),
+    stroke-width var(--duration-calm) var(--ease-out);
 }
 
-.china-map [data-land-tone='2'] {
-  fill: var(--map-land-2);
+/*
+ * Справочная карта красится по типу единицы. Цвет означает тип, а не
+ * конкретный регион, поэтому по нему нельзя выучить «Синьцзян охряный» и
+ * получить преимущество в игре.
+ */
+.china-map [data-region-kind='autonomous-region'] {
+  fill: var(--map-kind-autonomous-region);
 }
 
-.china-map [data-land-tone='3'] {
-  fill: var(--map-land-3);
+.china-map [data-region-kind='municipality'] {
+  fill: var(--map-kind-municipality);
 }
 
-.china-map [data-land-tone='4'] {
-  fill: var(--map-land-4);
+.china-map [data-region-kind='sar'] {
+  fill: var(--map-kind-sar);
 }
 
 /* Наведение отмечается толщиной границы, а не оттенком: оттенка мало. */
