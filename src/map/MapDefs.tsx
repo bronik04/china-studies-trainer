@@ -14,6 +14,7 @@
 const INCORRECT_PATTERN_ID = 'map-hatch-incorrect';
 const SECOND_TRY_PATTERN_ID = 'map-hatch-second-try';
 const FAILED_PATTERN_ID = 'map-hatch-failed';
+const IN_PROGRESS_PATTERN_ID = 'map-hatch-in-progress';
 
 export function MapDefs() {
   return (
@@ -89,6 +90,21 @@ export function MapDefs() {
             stroke="var(--map-outcome-ink)"
             strokeWidth="1.5"
           />
+        </pattern>
+        {/*
+          Регион в работе на карте освоенности. Шаг тот же, что у «верно со
+          второй попытки», но земля своя: там амбра исхода, здесь охра работы.
+          Образцы делят геометрию, а не заливку, поэтому образец отдельный.
+        */}
+        <pattern
+          id={IN_PROGRESS_PATTERN_ID}
+          width="8"
+          height="8"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect width="8" height="8" fill="var(--map-progress-in-progress)" />
+          <line x1="0" y1="0" x2="0" y2="8" stroke="var(--map-border)" strokeWidth="1" />
         </pattern>
       </defs>
     </svg>

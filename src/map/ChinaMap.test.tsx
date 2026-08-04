@@ -542,3 +542,27 @@ it('на паузе не отвечает, но список и фокус ос�
   expect(button).not.toBeDisabled();
   expect(document.activeElement).toBe(button);
 });
+
+it('в режиме освоенности размечает области состоянием и называет его словом', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="progress"
+      usage="answer"
+      interactive={false}
+      progressStates={{ hunan: 'mastered', hubei: 'in-progress' }}
+    />,
+  );
+
+  const hunan = container.querySelector('[data-region-id="hunan"]')!;
+  const hubei = container.querySelector('[data-region-id="hubei"]')!;
+  const sichuan = container.querySelector('[data-region-id="sichuan"]')!;
+
+  expect(hunan.getAttribute('data-progress-state')).toBe('mastered');
+  expect(hunan.getAttribute('aria-label')).toContain('освоен');
+  expect(hubei.getAttribute('data-progress-state')).toBe('in-progress');
+  expect(sichuan.getAttribute('data-progress-state')).toBe('untouched');
+});

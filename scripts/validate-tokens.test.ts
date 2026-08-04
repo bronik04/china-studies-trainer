@@ -38,6 +38,20 @@ const LAND_TONES = [
 /** Все заливки, поверх которых карта когда-либо рисует границу или подпись. */
 const MAP_FILLS = [...LAND_TONES, '--map-locked', '--map-sea'] as const;
 
+/**
+ * Заливки карты освоенности. В `MAP_FILLS` не входят намеренно: карта
+ * освоенности не интерактивна, выделения и «верного ответа» на ней не бывает,
+ * и требовать контраста между ними и этими заливками значило бы проверять
+ * пару, которой на экране не существует.
+ *
+ * Граница по ним всё равно рисуется, поэтому в проверке границы они есть.
+ */
+const PROGRESS_FILLS = [
+  '--map-progress-mastered',
+  '--map-progress-in-progress',
+  '--map-progress-untouched',
+] as const;
+
 /** Состояния, которые перекрашивают регион целиком. */
 const FILLED_STATES = ['--map-selected', '--map-correct'] as const;
 
@@ -134,7 +148,7 @@ describe('границы и поверхности', () => {
 
 describe('карта', () => {
   it('граница провинции видна на любой заливке (MAP_SPEC.md: не ниже 3:1)', () => {
-    for (const fill of MAP_FILLS) {
+    for (const fill of [...MAP_FILLS, ...PROGRESS_FILLS]) {
       expectAtLeast('--map-border', fill, GRAPHIC_CONTRAST);
     }
   });
