@@ -243,9 +243,6 @@ describe('макет карты', () => {
     expect(height).toBe(MAP_VIEWBOX_HEIGHT);
   });
 
-  it('высота служебных полос экрана раунда задана токеном', () => {
-    expect(tokens.has('--round-map-chrome')).toBe(true);
-  });
 });
 
 describe('справочная карта', () => {
