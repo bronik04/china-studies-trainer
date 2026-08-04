@@ -180,12 +180,20 @@ p {
    * `max-inline-size` на случай узкой колонки: там ограничивает уже ширина,
    * и рисунок вписывается сам.
    */
-  .round-map .china-map {
+  /*
+   * Пропорция живёт на рамке, а не на карте: рамка — система координат для
+   * зума, и будь она шире карты, кнопки уезжали бы с бумаги на доску.
+   */
+  .round-map .china-map-frame {
     aspect-ratio: var(--map-aspect);
     block-size: 100%;
     inline-size: auto;
     margin-inline: auto;
     max-inline-size: 100%;
+  }
+
+  .round-map .china-map {
+    block-size: 100%;
   }
 }
 
@@ -220,9 +228,235 @@ p {
   padding-block-start: var(--s-4);
 }
 
+/*
+ * CC BY требует атрибуции, но не равного веса с ответом: прежде она занимала
+ * три строки внизу справа и весила столько же, сколько сам ответ. Ссылки
+ * внутри сохраняют свой цвет и проверенный контраст.
+ */
 .round-footer .map-attribution {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
   margin: 0;
   max-inline-size: 60ch;
+}
+
+/*
+ * Лента хода занимает колонку вопроса, которая иначе пустует: на 1280×720 под
+ * блоком вопроса оставалось около 490 px из 690.
+ *
+ * Знаки живут в китайском шрифте: `✓ ● ○` есть только в нём (DESIGN_SYSTEM.md).
+ */
+.round-trail {
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--t-family-han);
+  gap: var(--s-1);
+  line-height: 1;
+  margin-block-start: var(--s-5);
+}
+
+.round-trail span[data-mark='ahead'] {
+  color: var(--text-on-ground-muted);
+}
+
+.round-trail span[data-mark='correct'] {
+  color: var(--map-first-try);
+}
+
+.round-trail span[data-mark='wrong'] {
+  color: var(--accent-on-ground);
+}
+
+/*
+ * Узкий экран: высота дороже ленты, а «Вопрос N из M» и так стоит в липком
+ * блоке вопроса.
+ */
+@media (max-width: 1023px) {
+  .round-trail {
+    display: none;
+  }
+}
+
+/* --- Кабинет ------------------------------------------------------------ */
+
+.home-shell h1 {
+  margin-bottom: var(--s-6);
+}
+
+.home-layout {
+  display: grid;
+  gap: var(--s-6);
+}
+
+.home-actions {
+  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.home-status {
+  color: var(--text-on-ground-muted);
+  margin: 0;
+}
+
+/*
+ * Карта освоенности — указатель, а не рабочая поверхность: на ней не отвечают,
+ * поэтому ей хватает доли кадра. Без потолка она забирала всю ширину колонки и
+ * выносила кабинет за кадр — 824 px при 720.
+ */
+.home-progress .china-map-frame {
+  aspect-ratio: var(--map-aspect);
+  block-size: min(46dvh, 420px);
+  inline-size: auto;
+  margin-inline: auto;
+  max-inline-size: 100%;
+}
+
+.home-progress .china-map,
+.home-progress .china-map svg {
+  block-size: 100%;
+}
+
+.home-legend {
+  align-items: center;
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--t-size-caption);
+  gap: var(--s-2);
+  margin-block-start: var(--s-3);
+}
+
+.home-legend span {
+  block-size: var(--s-3);
+  border: var(--border-hair) solid var(--map-border);
+  display: inline-block;
+  inline-size: var(--s-4);
+}
+
+.home-legend span[data-progress-state='mastered'] {
+  background: var(--map-progress-mastered);
+}
+
+.home-legend span[data-progress-state='in-progress'] {
+  background: var(--map-progress-in-progress);
+}
+
+.home-legend span[data-progress-state='untouched'] {
+  background: var(--map-progress-untouched);
+}
+
+.home-other-modes summary {
+  cursor: pointer;
+  min-block-size: var(--target-min);
+  padding-block: var(--s-2);
+}
+
+.home-mode-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * Карта освоенности — предмет, на который смотрят, поэтому она забирает
+ * широкую колонку, а блок действий стоит рядом узкой.
+ */
+@media (min-width: 1024px) {
+  .home-layout {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  }
+}
+
+/* --- Атлас -------------------------------------------------------------- */
+
+.atlas-shell {
+  inline-size: min(100% - 2 * var(--s-4), 1600px);
+  margin-inline: auto;
+  padding-block: var(--s-6);
+}
+
+.atlas-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-block-size: 0;
+}
+
+.atlas-region-card h1 {
+  font-size: var(--t-size-title);
+  margin-bottom: var(--s-1);
+}
+
+.atlas-region-card p {
+  margin-bottom: var(--s-1);
+}
+
+.atlas-footer {
+  align-items: center;
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-5);
+  margin-block-start: var(--s-5);
+  padding-block-start: var(--s-4);
+}
+
+.atlas-footer .map-attribution {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: 0;
+  margin-inline-start: auto;
+  max-inline-size: 48ch;
+}
+
+/*
+ * Тот же порог и та же сетка, что у раунда. Оболочка занимает ровно кадр и
+ * делится на две строки: колонки и подвал. Карта забирает остаток первой.
+ */
+@media (min-width: 1024px) {
+  .atlas-shell {
+    block-size: 100dvh;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .atlas-layout {
+    display: grid;
+    gap: var(--s-5);
+    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+    min-block-size: 0;
+  }
+
+  .atlas-map {
+    min-block-size: 0;
+  }
+
+  .atlas-map .map-section {
+    block-size: 100%;
+  }
+
+  /*
+   * Пропорция живёт на рамке, а не на карте: рамка — система координат для
+   * зума, и будь она шире карты, кнопки уезжали бы с бумаги на доску.
+   */
+  .atlas-map .china-map-frame {
+    aspect-ratio: var(--map-aspect);
+    block-size: 100%;
+    inline-size: auto;
+    margin-inline: auto;
+    max-inline-size: 100%;
+  }
+
+  .atlas-map .china-map,
+  .atlas-map .china-map svg {
+    block-size: 100%;
+  }
 }
 
 .eyebrow {
@@ -338,6 +572,24 @@ button.secondary:hover:enabled {
   border-color: var(--text-on-ground-muted);
 }
 
+/*
+ * Третий вес: переход, а не действие. Нужен там, где рядом уже стоит главная
+ * кнопка и второй прямоугольник спорил бы с ней за внимание.
+ */
+button.text {
+  background: none;
+  border: none;
+  color: var(--accent-on-ground);
+  cursor: pointer;
+  min-height: var(--target-min);
+  padding: 0;
+  text-align: start;
+}
+
+button.text:hover:enabled {
+  text-decoration: underline;
+}
+
 .mode-actions,
 .results-actions {
   display: flex;
@@ -378,14 +630,60 @@ button.secondary:hover:enabled {
   margin-bottom: var(--s-7);
 }
 
+/*
+ * Рамка держит карту и зум в одной системе координат.
+ */
+.china-map-frame {
+  position: relative;
+}
+
+/*
+ * Зум живёт в углу самой карты, как в любом атласе. Прежде три кнопки стояли
+ * перед картой и весили больше неё.
+ */
+/*
+ * Левый нижний угол, а не правый: в правом стоят выноски Гонконга и Макао, и
+ * кнопки накрывали их вместе с выносными линиями. Слева внизу — чистое море.
+ */
 .map-controls {
+  bottom: var(--s-3);
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
-  margin: var(--s-4) 0;
+  left: var(--s-3);
+  position: absolute;
 }
 
-.map-controls button,
+/*
+ * Кнопки лежат на бумаге, а не на доске, и потому рисуются тушью по светлому.
+ * Пара «тушь на бумаге» проверена тестом контраста.
+ */
+.map-controls button {
+  background: var(--surface-paper-bright);
+  border: var(--border-hair) solid var(--line-on-paper);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-paper);
+  cursor: pointer;
+  font: inherit;
+  min-height: var(--target-min);
+  min-width: var(--target-min);
+  padding: var(--s-2) var(--s-3);
+}
+
+.map-controls button:hover:not(:disabled) {
+  border-color: var(--focus-on-paper);
+}
+
+.map-controls button:disabled {
+  color: var(--text-on-paper-muted);
+  cursor: not-allowed;
+}
+
+.map-controls button:focus-visible {
+  outline: var(--border-focus) solid var(--focus-on-paper);
+  outline-offset: 2px;
+}
+
 .map-alternative button {
   background: var(--surface-raised);
   border: var(--border-hair) solid var(--line-on-ground);
@@ -397,12 +695,10 @@ button.secondary:hover:enabled {
   padding: var(--s-2) var(--s-3);
 }
 
-.map-controls button:hover:not(:disabled),
 .map-alternative button:hover:not(:disabled) {
   border-color: var(--focus-on-ground);
 }
 
-.map-controls button:disabled,
 .map-alternative button:disabled {
   color: var(--text-on-ground-muted);
   cursor: not-allowed;
@@ -492,6 +788,24 @@ button.secondary:hover:enabled {
 
 .china-map[data-map-variant='fill'] [data-outcome='failed'] {
   fill: url('#map-hatch-failed');
+}
+
+/*
+ * Карта освоенности только показывает: области не выбираются, курсор обычный.
+ * Второй канал у каждого состояния свой — сплошная заливка, штриховка, пустой
+ * тон, — и та же тройка названа словами в легенде под картой.
+ */
+.china-map[data-map-variant='progress'] [data-region-id] {
+  cursor: default;
+  fill: var(--map-progress-untouched);
+}
+
+.china-map[data-map-variant='progress'] [data-progress-state='mastered'] {
+  fill: var(--map-progress-mastered);
+}
+
+.china-map[data-map-variant='progress'] [data-progress-state='in-progress'] {
+  fill: url('#map-hatch-in-progress');
 }
 
 /*
@@ -626,6 +940,43 @@ button.secondary:hover:enabled {
 /* Пауза показа: список остаётся на месте и в фокусе, но не отвечает. */
 .map-alternative button[aria-disabled='true'] {
   cursor: not-allowed;
+}
+
+/*
+ * Список в атласе прокручивается внутри себя: страница атласа занимает ровно
+ * кадр, и 34 кнопки не должны её растить.
+ */
+.region-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-block-size: 0;
+}
+
+.region-panel-search {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+}
+
+.region-panel-list input {
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground);
+  font: inherit;
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-3);
+}
+
+/*
+ * Потолок нужен на узком экране, где колонок нет и список не ограничен
+ * высотой ячейки: 34 кнопки подряд выдавливали карту на второй экран. На
+ * широком его перекрывает `min-block-size: 0` в сетке — там высоту задаёт кадр.
+ */
+.region-panel-list .map-alternative {
+  max-block-size: 50dvh;
+  min-block-size: 0;
+  overflow-y: auto;
 }
 
 /*

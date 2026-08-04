@@ -95,7 +95,7 @@ export function RoundResultsPage({
             Новый раунд
           </button>
           <button type="button" className="secondary" onClick={onExit}>
-            К теме
+            В кабинет
           </button>
         </div>
       </section>

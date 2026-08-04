@@ -1,4 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { regions } from '../content/regions';
+import { ChinaMap } from './ChinaMap';
 import { MapControls } from './MapControls';
 
 it('requests the next zoom level from the initial view', () => {
@@ -24,4 +26,21 @@ it('resets a magnified map to its initial view', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Сбросить вид' }));
 
   expect(change).toHaveBeenCalledWith(1);
+});
+
+it('стоит внутри коробки карты, а не до неё', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      zoom={1}
+      onZoomChange={() => {}}
+    />,
+  );
+
+  const controls = screen.getByLabelText('Масштаб карты');
+
+  expect(controls.closest('.china-map-frame')).not.toBeNull();
 });

@@ -5,6 +5,10 @@ import type { RegionOutcome } from '../domain/fill-round';
 import { MapControls, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
 import { OUTCOME_LABELS } from './outcome-labels';
+import {
+  PROGRESS_STATE_LABELS,
+  type RegionProgressState,
+} from './region-progress';
 import { isRegionSelectable, type AnswerState } from './region-selection';
 import { RegionAnswerList } from './RegionAnswerList';
 
@@ -28,8 +32,11 @@ type ChinaMapProps = {
   /**
    * `reference` — справочная карта: цвет означает тип региона.
    * `fill` — игровая: все регионы серые, цвет появляется только как исход.
+   * `progress` — карта освоенности в кабинете: цвет означает, что ученик уже
+   * успел с этим регионом.
    */
-  readonly variant?: 'reference' | 'fill';
+  readonly variant?: 'reference' | 'fill' | 'progress';
+  readonly progressStates?: Readonly<Record<string, RegionProgressState>>;
   /**
    * `browse` — карта для разглядывания на экране темы: заголовок, подсказка,
    * строка выбора и список внутри секции. `answer` — карта как поверхность
@@ -60,6 +67,7 @@ type ChinaMapProps = {
  */
 const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
 const NO_OUTCOMES: Readonly<Record<string, RegionOutcome>> = {};
+const NO_PROGRESS_STATES: Readonly<Record<string, RegionProgressState>> = {};
 
 /**
  * Нажатие принимает и сам контур, и увеличенная цель для мелких областей.
@@ -92,6 +100,7 @@ export function ChinaMap({
   variant = 'reference',
   usage = 'browse',
   outcomes = NO_OUTCOMES,
+  progressStates = NO_PROGRESS_STATES,
   highlight = null,
   paused = false,
 }: ChinaMapProps) {
@@ -148,12 +157,26 @@ export function ChinaMap({
         delete area.dataset.outcome;
       }
 
+      /*
+       * Состояние освоенности ставится всем областям сразу: «не тронут» — тоже
+       * состояние, и без него регион остался бы без заливки и без слова.
+       */
+      const progressState =
+        variant === 'progress' ? (progressStates[regionId] ?? 'untouched') : undefined;
+      if (progressState) {
+        area.dataset.progressState = progressState;
+      } else {
+        delete area.dataset.progressState;
+      }
+
       const label = labelsByMapAreaId.get(regionId);
       if (label) {
-        area.setAttribute(
-          'aria-label',
-          outcome ? `${label} — ${OUTCOME_LABELS[outcome]}` : label,
-        );
+        const suffix = outcome
+          ? OUTCOME_LABELS[outcome]
+          : progressState
+            ? PROGRESS_STATE_LABELS[progressState]
+            : null;
+        area.setAttribute('aria-label', suffix ? `${label} — ${suffix}` : label);
       }
 
       if (answerState || outcome || paused) {
@@ -174,9 +197,11 @@ export function ChinaMap({
     interactive,
     outcomes,
     paused,
+    progressStates,
     regions,
     selectedRegionId,
     usage,
+    variant,
     zoom,
   ]);
 
@@ -196,8 +221,13 @@ export function ChinaMap({
    * заставил бы читать результат дважды. В «назвать регион» карта не
    * интерактивна, и статичное объяснение подсветки остаётся.
    */
+  /*
+   * `progress` исключён вместе с `fill`: на карте освоенности ничего не
+   * выбирают и не подсвечивают, и строка «На карте подсвечена одна область»
+   * там просто врала бы.
+   */
   const showsSelectionStatus =
-    variant !== 'fill' && (showsBrowseChrome || !interactive);
+    variant === 'reference' && (showsBrowseChrome || !interactive);
 
   return (
     <section
@@ -214,26 +244,36 @@ export function ChinaMap({
           {interactive ? <p>Выберите регион на схеме или в списке.</p> : null}
         </div>
       ) : null}
-      {onZoomChange ? <MapControls zoom={zoom} onZoomChange={onZoomChange} /> : null}
       <MapDefs />
-      <div
-        className="china-map"
-        data-map-variant={variant}
-        ref={mapRef}
-        onClick={(event) => selectTarget(event.target)}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            onClear();
-            return;
-          }
+      {/*
+        Рамка держит карту и зум в одной системе координат: зум лежит на
+        бумаге, в углу самой карты, а не отдельной полосой перед ней. Раньше
+        три кнопки стояли до карты и весили больше неё.
+      */}
+      <div className="china-map-frame">
+        <div
+          className="china-map"
+          data-map-variant={variant}
+          ref={mapRef}
+          onClick={(event) => selectTarget(event.target)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              onClear();
+              return;
+            }
 
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            selectTarget(event.target);
-          }
-        }}
-        dangerouslySetInnerHTML={{ __html: mapMarkup }}
-      />
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              selectTarget(event.target);
+            }
+          }}
+          dangerouslySetInnerHTML={{ __html: mapMarkup }}
+        />
+        {/* Зум идёт после карты в разметке: сначала предмет, потом управление им. */}
+        {onZoomChange ? (
+          <MapControls zoom={zoom} onZoomChange={onZoomChange} />
+        ) : null}
+      </div>
       {/*
         В упражнении «назови регион» карта только показывает. Назвать
         подсвеченную область или перечислить регионы здесь — значит выдать

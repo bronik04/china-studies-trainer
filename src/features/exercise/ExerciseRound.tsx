@@ -20,6 +20,7 @@ import { RegionAnswerList } from '../../map/RegionAnswerList';
 import { AnswerFeedback } from './AnswerFeedback';
 import { answerStatesFor } from './answer-states';
 import { EXERCISE_MODES } from './exercise-modes';
+import { RoundProgressTrail } from './RoundProgressTrail';
 
 export type ExerciseRoundProps = {
   readonly regions: readonly Region[];
@@ -185,6 +186,10 @@ export function ExerciseRound({
               onNext={handleNext}
             />
           ) : null}
+          <RoundProgressTrail
+            total={round.questions.length}
+            attempts={round.attempts}
+          />
         </div>
         {showsMap ? (
           <div className="round-map">

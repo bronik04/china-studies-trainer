@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { Region } from '../content/types';
 import { TWO_COLUMN_QUERY } from '../design/breakpoints';
 import type { RegionOutcome } from '../domain/fill-round';
+import { searchRegions } from '../features/atlas/region-search';
 import { OUTCOME_LABELS } from './outcome-labels';
 import { regionsWord } from '../content/region-count';
 import {
@@ -34,8 +35,11 @@ export type RegionAnswerListProps = {
   readonly outcomes?: Readonly<Record<string, RegionOutcome>>;
   readonly interactive?: boolean;
   readonly paused?: boolean;
-  /** `inline` — экран темы, `disclosure` — экран раунда. */
-  readonly presentation?: 'inline' | 'disclosure';
+  /**
+   * `inline` — экран темы, `disclosure` — экран раунда, `panel` — атлас:
+   * список с поиском и собственной прокруткой.
+   */
+  readonly presentation?: 'inline' | 'disclosure' | 'panel';
 };
 
 /**
@@ -59,11 +63,19 @@ export function RegionAnswerList({
   presentation = 'inline',
 }: RegionAnswerListProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const [query, setQuery] = useState('');
+  const searchId = useId();
   const rules = { interactive, paused, answerStates, outcomes };
+
+  /*
+   * Фильтр применяется только в панели. В раунде список — равнозначный способ
+   * ответа, и прятать из него варианты значило бы прятать часть ответов.
+   */
+  const shown = presentation === 'panel' ? searchRegions(regions, query) : regions;
 
   const list = (
     <ul className="map-alternative" aria-label="Список регионов карты">
-      {regions.map((region) => {
+      {shown.map((region) => {
         const outcome = outcomes[region.id];
 
         return (
@@ -88,6 +100,30 @@ export function RegionAnswerList({
       })}
     </ul>
   );
+
+  if (presentation === 'panel') {
+    return (
+      <div className="region-panel-list">
+        <label className="region-panel-search" htmlFor={searchId}>
+          Найти регион
+        </label>
+        <input
+          id={searchId}
+          type="search"
+          value={query}
+          autoComplete="off"
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        {shown.length === 0 ? (
+          <p className="status-note" role="status">
+            Ничего не найдено. Попробуйте другое написание — например, пиньинь.
+          </p>
+        ) : (
+          list
+        )}
+      </div>
+    );
+  }
 
   if (presentation === 'inline') {
     return list;
