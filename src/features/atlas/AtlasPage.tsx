@@ -102,10 +102,10 @@ export function AtlasPage({
       </div>
       <footer className="atlas-footer">
         <button type="button" className="secondary" onClick={onExit}>
-          ← В кабинет
+          В кабинет
         </button>
         <button type="button" className="primary" onClick={onTrain}>
-          Тренировать →
+          Тренировать
         </button>
         <MapAttribution />
       </footer>

@@ -2,36 +2,63 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import App from './App';
 import { regions } from './content/regions';
 
-it('shows the topic page', () => {
+/**
+ * Четыре режима живут в кабинете внутри блока «Другие режимы»: на верхнем
+ * уровне стоит единственный главный шаг. Тестам, которым нужен конкретный
+ * режим, блок надо открыть.
+ */
+function openOtherModes(): void {
+  fireEvent.click(screen.getByText(/Другие режимы/));
+}
+
+it('открывается кабинетом, а не свитком со всем сразу', () => {
   render(<App />);
 
   expect(
     screen.getByRole('heading', { name: 'Провинции и столицы Китая' }),
   ).toBeInTheDocument();
+  expect(screen.getByTestId('progress-status')).toHaveTextContent(
+    'Освоено 0 из 34',
+  );
 });
 
-it('shows the interactive map and keeps its selection in the page state', () => {
+it('на кабинете ровно одна главная кнопка', () => {
   render(<App />);
 
-  expect(
-    screen.getByRole('heading', { name: 'Интерактивная карта' }),
-  ).toBeInTheDocument();
+  const primary = screen
+    .getAllByRole('button')
+    .filter((button) => button.classList.contains('primary'));
 
+  expect(primary).toHaveLength(1);
+});
+
+it('ведёт из кабинета в атлас и обратно', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /Открыть атлас/ }));
+  expect(screen.getByTestId('atlas-region-card')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /В кабинет/ }));
+  expect(screen.getByTestId('progress-status')).toBeInTheDocument();
+});
+
+it('атлас держит выбор региона в состоянии приложения', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /Открыть атлас/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Сычуань (四川省)' }));
 
-  expect(screen.getByRole('status')).toHaveTextContent('Выбрано: Сычуань (四川省)');
+  expect(screen.getByTestId('atlas-region-card')).toHaveTextContent('Сычуань');
 });
 
-it('открывает упражнение и возвращается к теме', () => {
+it('главная кнопка кабинета запускает раунд и возвращает обратно', () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
+  fireEvent.click(screen.getByRole('button', { name: /^Начать/ }));
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Прервать раунд' }));
-  expect(
-    screen.getByRole('heading', { name: 'Провинции и столицы Китая' }),
-  ).toBeInTheDocument();
+  expect(screen.getByTestId('progress-status')).toBeInTheDocument();
 });
 
 
@@ -65,26 +92,26 @@ function finishRound(correct: boolean): void {
   }
 }
 
-it('показывает итог после раунда и возвращает к теме', () => {
+it('показывает итог после раунда и возвращает в кабинет', () => {
   render(<App />);
 
+  openOtherModes();
   fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
   finishRound(true);
 
   expect(screen.getByText('100%')).toBeInTheDocument();
   expect(screen.getByText('34 из 34')).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: 'К теме' }));
+  fireEvent.click(screen.getByRole('button', { name: 'В кабинет' }));
 
-  expect(
-    screen.getByRole('heading', { name: 'Провинции и столицы Китая' }),
-  ).toBeInTheDocument();
+  expect(screen.getByTestId('progress-status')).toBeInTheDocument();
 });
 
 
 it('повторяет все ошибки, а не только показанные пять, и говорит об этом', () => {
   render(<App />);
 
+  openOtherModes();
   fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
   finishRound(false);
 
@@ -102,6 +129,7 @@ it('повторяет все ошибки, а не только показан�
 it('проходит раунд «регион — столица»', () => {
   render(<App />);
 
+  openOtherModes();
   fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
 
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
@@ -111,6 +139,7 @@ it('проходит раунд «регион — столица»', () => {
 it('показывает уровень в ходе раунда', () => {
   render(<App />);
 
+  openOtherModes();
   fireEvent.click(screen.getByRole('button', { name: 'Найти на карте' }));
 
   expect(screen.getByText(/уровень 1/)).toBeInTheDocument();
@@ -156,6 +185,8 @@ it('открывает уровень по истории, даже если с�
   });
 
   render(<App />);
+
+  openOtherModes();
 
   expect(screen.getByRole('radio', { name: 'Уровень 2' })).toBeInTheDocument();
 });

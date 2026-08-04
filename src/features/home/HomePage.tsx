@@ -163,7 +163,7 @@ export function HomePage({
             </ul>
           </details>
           <button type="button" className="text" onClick={onOpenAtlas}>
-            Открыть атлас →
+            Открыть атлас
           </button>
         </div>
       </div>

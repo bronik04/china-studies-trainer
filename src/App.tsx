@@ -17,14 +17,14 @@ import { FillMapRound } from './features/exercise/FillMapRound';
 import { ALL_EXERCISE_TYPES } from './features/exercise/exercise-modes';
 import { FillMapResultsPage } from './features/results/FillMapResultsPage';
 import { RoundResultsPage } from './features/results/RoundResultsPage';
-import {
-  TopicSelectionPage,
-  type RoundRequest,
-} from './features/topic-selection/TopicSelectionPage';
-import { ChinaMap } from './map/ChinaMap';
+import { AtlasPage } from './features/atlas/AtlasPage';
+import { HomePage } from './features/home/HomePage';
 import type { MapZoom } from './map/MapControls';
 
-type Screen = 'topic' | 'exercise' | 'results' | 'fill' | 'fill-results';
+/** «mixed» — смешанный раунд четвёртого уровня, где типы заданий чередуются. */
+type RoundRequest = ExerciseType | 'mixed';
+
+type Screen = 'home' | 'atlas' | 'exercise' | 'results' | 'fill' | 'fill-results';
 
 /** Хранилище может быть запрещено политикой браузера — обращение к нему бросает. */
 function readStorage(): Storage | null {
@@ -42,7 +42,7 @@ function newRoundId(): string {
 export default function App() {
   const store = useMemo(() => createProgressStore(readStorage()), []);
   const [progress, setProgress] = useState(() => store.read());
-  const [screen, setScreen] = useState<Screen>('topic');
+  const [screen, setScreen] = useState<Screen>('home');
   const [roundPool, setRoundPool] = useState<readonly Region[]>(regions);
   const [exerciseTypes, setExerciseTypes] = useState<readonly ExerciseType[]>([
     'find-on-map',
@@ -56,8 +56,21 @@ export default function App() {
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
 
-  function startRound(pool: readonly Region[], request: RoundRequest, nextLevel: Level) {
-    setRoundPool(pool);
+  /**
+   * `regionIds === null` — раунд по всем регионам темы. Набор считается здесь,
+   * а не у вызывающего: подпись кнопки и её действие приходят из одного
+   * правила (`nextStep`), и разделять их снова незачем.
+   */
+  function startRound(
+    request: RoundRequest,
+    nextLevel: Level,
+    regionIds: readonly string[] | null,
+  ) {
+    setRoundPool(
+      regionIds === null
+        ? regions
+        : regions.filter((region) => regionIds.includes(region.id)),
+    );
     setExerciseTypes(request === 'mixed' ? ALL_EXERCISE_TYPES : [request]);
     setLevel(nextLevel);
     setRoundId(newRoundId());
@@ -120,7 +133,7 @@ export default function App() {
         roundId={roundId}
         seed={seed}
         onFinish={finishFillRound}
-        onExit={() => setScreen('topic')}
+        onExit={() => setScreen('home')}
       />
     );
   }
@@ -132,7 +145,7 @@ export default function App() {
         regions={regions}
         isProgressSaved={store.isAvailable}
         onNewRound={() => startFillRound(level)}
-        onExit={() => setScreen('topic')}
+        onExit={() => setScreen('home')}
       />
     );
   }
@@ -146,7 +159,7 @@ export default function App() {
         roundId={roundId}
         seed={seed}
         onFinish={finishRound}
-        onExit={() => setScreen('topic')}
+        onExit={() => setScreen('home')}
       />
     );
   }
@@ -163,38 +176,47 @@ export default function App() {
         regionIdsToRepeat={repeatRegionIds}
         onRepeatMistakes={() => {
           startRound(
-            regions.filter((region) => repeatRegionIds.includes(region.id)),
             exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
             level,
+            repeatRegionIds,
           );
         }}
         onNewRound={() =>
           startRound(
-            regions,
             exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
             level,
+            null,
           )
         }
-        onExit={() => setScreen('topic')}
+        onExit={() => setScreen('home')}
       />
     );
   }
 
-  return (
-    <TopicSelectionPage
-      regions={regions}
-      unlockedLevel={unlockedLevelFrom(progress.attempts)}
-      onStartRound={(request, nextLevel) => startRound(regions, request, nextLevel)}
-      onStartFillRound={startFillRound}
-    >
-      <ChinaMap
+  if (screen === 'atlas') {
+    return (
+      <AtlasPage
         regions={regions}
         selectedRegionId={selectedRegionId}
         onSelect={setSelectedRegionId}
         onClear={() => setSelectedRegionId(null)}
         zoom={zoom}
         onZoomChange={setZoom}
+        onExit={() => setScreen('home')}
+        onTrain={() =>
+          startRound('find-on-map', unlockedLevelFrom(progress.attempts), null)
+        }
       />
-    </TopicSelectionPage>
+    );
+  }
+
+  return (
+    <HomePage
+      regions={regions}
+      attempts={progress.attempts}
+      onStartRound={startRound}
+      onStartFillRound={startFillRound}
+      onOpenAtlas={() => setScreen('atlas')}
+    />
   );
 }
