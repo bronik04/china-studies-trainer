@@ -170,7 +170,13 @@ p {
     min-block-size: 0;
   }
 
-  .round-map .map-section {
+  /*
+   * Высота передаётся по цепочке до самой карты: рамка зума стоит между
+   * секцией и картой, и без неё `block-size: 100%` у карты считался бы от
+   * автоматической высоты рамки.
+   */
+  .round-map .map-section,
+  .round-map .china-map-frame {
     block-size: 100%;
   }
 
@@ -378,14 +384,56 @@ button.secondary:hover:enabled {
   margin-bottom: var(--s-7);
 }
 
+/*
+ * Рамка держит карту и зум в одной системе координат.
+ */
+.china-map-frame {
+  position: relative;
+}
+
+/*
+ * Зум живёт в углу самой карты, как в любом атласе. Прежде три кнопки стояли
+ * перед картой и весили больше неё.
+ */
 .map-controls {
+  bottom: var(--s-3);
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
-  margin: var(--s-4) 0;
+  position: absolute;
+  right: var(--s-3);
 }
 
-.map-controls button,
+/*
+ * Кнопки лежат на бумаге, а не на доске, и потому рисуются тушью по светлому.
+ * Пара «тушь на бумаге» проверена тестом контраста.
+ */
+.map-controls button {
+  background: var(--surface-paper-bright);
+  border: var(--border-hair) solid var(--line-on-paper);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-paper);
+  cursor: pointer;
+  font: inherit;
+  min-height: var(--target-min);
+  min-width: var(--target-min);
+  padding: var(--s-2) var(--s-3);
+}
+
+.map-controls button:hover:not(:disabled) {
+  border-color: var(--focus-on-paper);
+}
+
+.map-controls button:disabled {
+  color: var(--text-on-paper-muted);
+  cursor: not-allowed;
+}
+
+.map-controls button:focus-visible {
+  outline: var(--border-focus) solid var(--focus-on-paper);
+  outline-offset: 2px;
+}
+
 .map-alternative button {
   background: var(--surface-raised);
   border: var(--border-hair) solid var(--line-on-ground);
@@ -397,12 +445,10 @@ button.secondary:hover:enabled {
   padding: var(--s-2) var(--s-3);
 }
 
-.map-controls button:hover:not(:disabled),
 .map-alternative button:hover:not(:disabled) {
   border-color: var(--focus-on-ground);
 }
 
-.map-controls button:disabled,
 .map-alternative button:disabled {
   color: var(--text-on-ground-muted);
   cursor: not-allowed;

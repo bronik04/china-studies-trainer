@@ -214,26 +214,36 @@ export function ChinaMap({
           {interactive ? <p>Выберите регион на схеме или в списке.</p> : null}
         </div>
       ) : null}
-      {onZoomChange ? <MapControls zoom={zoom} onZoomChange={onZoomChange} /> : null}
       <MapDefs />
-      <div
-        className="china-map"
-        data-map-variant={variant}
-        ref={mapRef}
-        onClick={(event) => selectTarget(event.target)}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            onClear();
-            return;
-          }
+      {/*
+        Рамка держит карту и зум в одной системе координат: зум лежит на
+        бумаге, в углу самой карты, а не отдельной полосой перед ней. Раньше
+        три кнопки стояли до карты и весили больше неё.
+      */}
+      <div className="china-map-frame">
+        <div
+          className="china-map"
+          data-map-variant={variant}
+          ref={mapRef}
+          onClick={(event) => selectTarget(event.target)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              onClear();
+              return;
+            }
 
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            selectTarget(event.target);
-          }
-        }}
-        dangerouslySetInnerHTML={{ __html: mapMarkup }}
-      />
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              selectTarget(event.target);
+            }
+          }}
+          dangerouslySetInnerHTML={{ __html: mapMarkup }}
+        />
+        {/* Зум идёт после карты в разметке: сначала предмет, потом управление им. */}
+        {onZoomChange ? (
+          <MapControls zoom={zoom} onZoomChange={onZoomChange} />
+        ) : null}
+      </div>
       {/*
         В упражнении «назови регион» карта только показывает. Назвать
         подсвеченную область или перечислить регионы здесь — значит выдать
