@@ -231,6 +231,88 @@ p {
   max-inline-size: 60ch;
 }
 
+/* --- Атлас -------------------------------------------------------------- */
+
+.atlas-shell {
+  inline-size: min(100% - 2 * var(--s-4), 1600px);
+  margin-inline: auto;
+  padding-block: var(--s-6);
+}
+
+.atlas-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-block-size: 0;
+}
+
+.atlas-region-card h1 {
+  font-size: var(--t-size-title);
+  margin-bottom: var(--s-1);
+}
+
+.atlas-region-card p {
+  margin-bottom: var(--s-1);
+}
+
+.atlas-footer {
+  align-items: center;
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-5);
+  margin-block-start: var(--s-5);
+  padding-block-start: var(--s-4);
+}
+
+.atlas-footer .map-attribution {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: 0;
+  margin-inline-start: auto;
+  max-inline-size: 48ch;
+}
+
+/*
+ * Тот же порог и та же сетка, что у раунда. Оболочка занимает ровно кадр и
+ * делится на две строки: колонки и подвал. Карта забирает остаток первой.
+ */
+@media (min-width: 1024px) {
+  .atlas-shell {
+    block-size: 100dvh;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .atlas-layout {
+    display: grid;
+    gap: var(--s-5);
+    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+    min-block-size: 0;
+  }
+
+  .atlas-map {
+    min-block-size: 0;
+  }
+
+  .atlas-map .map-section,
+  .atlas-map .china-map-frame {
+    block-size: 100%;
+  }
+
+  .atlas-map .china-map {
+    aspect-ratio: var(--map-aspect);
+    block-size: 100%;
+    inline-size: auto;
+    margin-inline: auto;
+    max-inline-size: 100%;
+  }
+
+  .atlas-map .china-map svg {
+    block-size: 100%;
+  }
+}
+
 .eyebrow {
   color: var(--accent-on-ground);
   font-size: var(--t-size-caption);
