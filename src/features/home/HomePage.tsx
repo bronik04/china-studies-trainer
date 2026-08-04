@@ -9,7 +9,6 @@ import type { Region } from '../../content/types';
 import { unlockedLevelFrom } from '../../domain/progress-rules';
 import type { Attempt, ExerciseType, Level } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
-import type { MapZoom } from '../../map/MapControls';
 import { SiteFooter } from '../../ui/SiteFooter';
 import { MODE_CARDS } from '../exercise/exercise-modes';
 import { CollectionCard } from './CollectionCard';
@@ -56,7 +55,6 @@ export function HomePage({
 }: HomePageProps) {
   const unlockedLevel = unlockedLevelFrom(attempts);
   const [filter, setFilter] = useState<CollectionFilter>('all');
-  const [zoom, setZoom] = useState<MapZoom>(1);
 
   /*
    * `new Date()` берётся один раз на рендер и передаётся обоим правилам: они
@@ -111,6 +109,9 @@ export function HomePage({
             Карта в герое только показывает: разглядывают и выбирают регион в
             атласе, и второй интерактивной карте на этой же странице
             понадобился бы второй равнозначный список на 34 пункта.
+
+            Зума у неё поэтому нет. Управление показывает `ChinaMap` только
+            интерактивной карте, и передавать сюда `onZoomChange` больше нечем.
           */}
           <ChinaMap
             regions={regions}
@@ -118,8 +119,6 @@ export function HomePage({
             onSelect={() => {}}
             onClear={() => {}}
             interactive={false}
-            zoom={zoom}
-            onZoomChange={setZoom}
           />
           <p className="caption">
             Цвет означает тип единицы, а не конкретный регион: по заливке нельзя

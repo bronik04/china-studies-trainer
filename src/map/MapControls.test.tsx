@@ -44,3 +44,25 @@ it('стоит внутри коробки карты, а не до неё', () 
 
   expect(controls.closest('.china-map-frame')).not.toBeNull();
 });
+
+/*
+ * Карта, которая только показывает, не отдаёт управление собой. Проверка
+ * держит именно `interactive`, а не наличие колбэка: витрина в герое главной
+ * получала `onZoomChange` и вместе с ним три кнопки по 44 px.
+ */
+it('не показывает зум карте, которая только показывает', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+      zoom={1}
+      onZoomChange={() => {}}
+    />,
+  );
+
+  expect(screen.queryByLabelText('Масштаб карты')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Увеличить' })).toBeNull();
+});

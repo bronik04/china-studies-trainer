@@ -113,6 +113,40 @@ describe('границы и поверхности', () => {
     expectAtLeast('--line-on-paper', '--surface-paper', 1.4);
   });
 
+  /*
+   * Линий на доске две, и порог есть только у одной. `--line-on-ground`
+   * разделяет — отбивка списка, черта под шапкой, край панели; разделителю
+   * контраст не предписан. `--line-on-ground-strong` очерчивает управляющий
+   * элемент, и ему WCAG 2.2 (1.4.11) требует 3:1 на обеих поверхностях доски.
+   *
+   * До того как вторая линия появилась, границей кнопок, поля поиска, кнопок
+   * равнозначного списка и фильтра служил разделительный тон: 2.01:1 на доске
+   * и 1.77:1 на поднятой поверхности.
+   */
+  it('граница управляющего элемента видна на обеих поверхностях доски', () => {
+    expectAtLeast('--line-on-ground-strong', '--surface-ground', GRAPHIC_CONTRAST);
+    expectAtLeast('--line-on-ground-strong', '--surface-raised', GRAPHIC_CONTRAST);
+  });
+
+  /*
+   * Обе киновари нужны врозь. `--accent` — цвет цели на бумаге; на доске он
+   * даёт 2.81:1, и черта «вы здесь» в шапке была слабее любой другой линии на
+   * экране. `--accent-on-ground` — тот же смысл для тёмного.
+   */
+  it('акцент на доске годится и в роли черты, и в роли рамки', () => {
+    expectAtLeast('--accent-on-ground', '--surface-ground', GRAPHIC_CONTRAST);
+    expectAtLeast('--accent-on-ground', '--surface-raised', GRAPHIC_CONTRAST);
+  });
+
+  /*
+   * «Верно» знаком на доске: лента хода раунда набирает 34 отметки `✓ ● ○` в
+   * колонке вопроса. Заливкой карты (#356f52) их набирать нельзя — 2.78:1.
+   */
+  it('нефрит для доски читается знаком', () => {
+    expectAtLeast('--state-correct-on-ground', '--surface-ground', TEXT_CONTRAST);
+    expectAtLeast('--state-correct-on-ground', '--surface-raised', TEXT_CONTRAST);
+  });
+
   it('на любой поверхности видно кольцо фокуса', () => {
     const surfaces = [
       '--surface-ground',
