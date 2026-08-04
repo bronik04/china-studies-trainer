@@ -148,6 +148,12 @@
 
   --text-on-ground: var(--c-slate-100);
   --text-on-ground-muted: var(--c-slate-300);
+  /*
+   * Заголовки на доске светлее основного текста. Это бумажный тон, тот же,
+   * что у карты: на длинной странице заголовок читается как надпись мелом, а
+   * не как ещё один абзац потемнее.
+   */
+  --text-on-ground-strong: var(--c-paper-100);
   --text-on-paper: var(--c-ink-900);
   --text-on-paper-muted: var(--c-ink-500);
 
@@ -208,6 +214,14 @@
   --map-progress-mastered: var(--c-jade-500);
   --map-progress-in-progress: var(--c-land-1);
   --map-progress-untouched: var(--c-grey-unplayed);
+
+  /*
+   * Карта коллекции. Вопрос у неё один — где это на карте страны, — поэтому
+   * состояний два: киноварь на том, что входит, закрытый тон на остальном.
+   * Оба тона уже проверены в других ролях, новых значений здесь не заводится.
+   */
+  --map-member: var(--c-cinnabar-600);
+  --map-outside: var(--c-land-locked);
 
   --map-unplayed: var(--c-grey-unplayed);
   --map-first-try: var(--c-jade-500);

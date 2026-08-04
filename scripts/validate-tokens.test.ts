@@ -87,6 +87,12 @@ describe('текст', () => {
 
   it('вспомогательный текст на доске читается', () => {
     expectAtLeast('--text-on-ground-muted', '--surface-ground', TEXT_CONTRAST);
+    expectAtLeast('--text-on-ground-muted', '--surface-raised', TEXT_CONTRAST);
+  });
+
+  it('заголовок на доске читается на обеих её поверхностях', () => {
+    expectAtLeast('--text-on-ground-strong', '--surface-ground', TEXT_CONTRAST);
+    expectAtLeast('--text-on-ground-strong', '--surface-raised', TEXT_CONTRAST);
   });
 
   it('акцент на доске читается', () => {
@@ -270,6 +276,17 @@ describe('макет карты', () => {
     expect(height).toBe(MAP_VIEWBOX_HEIGHT);
   });
 
+});
+
+describe('карта коллекции', () => {
+  it('граница тушью видна и на входящих регионах, и на остальных', () => {
+    expectAtLeast('--map-border', '--map-member', GRAPHIC_CONTRAST);
+    expectAtLeast('--map-border', '--map-outside', GRAPHIC_CONTRAST);
+  });
+
+  it('входящий регион отличим от остальных: в этом весь смысл карты', () => {
+    expectAtLeast('--map-member', '--map-outside', GRAPHIC_CONTRAST);
+  });
 });
 
 describe('справочная карта', () => {

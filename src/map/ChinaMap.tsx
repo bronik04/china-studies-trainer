@@ -4,6 +4,7 @@ import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
 import { MapControls, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
+import { MEMBERSHIP_LABELS } from './membership';
 import { OUTCOME_LABELS } from './outcome-labels';
 import {
   PROGRESS_STATE_LABELS,
@@ -34,9 +35,15 @@ type ChinaMapProps = {
    * `fill` — игровая: все регионы серые, цвет появляется только как исход.
    * `progress` — карта освоенности в кабинете: цвет означает, что ученик уже
    * успел с этим регионом.
+   * `membership` — карта коллекции: цвет означает, входит ли регион в неё.
    */
-  readonly variant?: 'reference' | 'fill' | 'progress';
+  readonly variant?: 'reference' | 'fill' | 'progress' | 'membership';
   readonly progressStates?: Readonly<Record<string, RegionProgressState>>;
+  /**
+   * Регионы коллекции для `variant="membership"`. Пустой список — законное
+   * состояние: у коллекции «Праздник весны» привязки к регионам нет.
+   */
+  readonly memberRegionIds?: readonly string[];
   /**
    * `browse` — карта для разглядывания на экране темы: заголовок, подсказка,
    * строка выбора и список внутри секции. `answer` — карта как поверхность
@@ -68,6 +75,7 @@ type ChinaMapProps = {
 const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
 const NO_OUTCOMES: Readonly<Record<string, RegionOutcome>> = {};
 const NO_PROGRESS_STATES: Readonly<Record<string, RegionProgressState>> = {};
+const NO_MEMBERS: readonly string[] = [];
 
 /**
  * Нажатие принимает и сам контур, и увеличенная цель для мелких областей.
@@ -101,6 +109,7 @@ export function ChinaMap({
   usage = 'browse',
   outcomes = NO_OUTCOMES,
   progressStates = NO_PROGRESS_STATES,
+  memberRegionIds = NO_MEMBERS,
   highlight = null,
   paused = false,
 }: ChinaMapProps) {
@@ -169,13 +178,32 @@ export function ChinaMap({
         delete area.dataset.progressState;
       }
 
+      /*
+       * Как и освоенность, принадлежность ставится всем областям: «не входит»
+       * — тоже ответ на вопрос страницы, и регион без неё остался бы без
+       * заливки и без слова.
+       */
+      const membership =
+        variant === 'membership'
+          ? memberRegionIds.includes(regionId)
+            ? 'member'
+            : 'outside'
+          : undefined;
+      if (membership) {
+        area.dataset.membership = membership;
+      } else {
+        delete area.dataset.membership;
+      }
+
       const label = labelsByMapAreaId.get(regionId);
       if (label) {
         const suffix = outcome
           ? OUTCOME_LABELS[outcome]
           : progressState
             ? PROGRESS_STATE_LABELS[progressState]
-            : null;
+            : membership
+              ? MEMBERSHIP_LABELS[membership]
+              : null;
         area.setAttribute('aria-label', suffix ? `${label} — ${suffix}` : label);
       }
 
@@ -195,6 +223,7 @@ export function ChinaMap({
     answerStates,
     highlight,
     interactive,
+    memberRegionIds,
     outcomes,
     paused,
     progressStates,
@@ -226,8 +255,16 @@ export function ChinaMap({
    * выбирают и не подсвечивают, и строка «На карте подсвечена одна область»
    * там просто врала бы.
    */
+  /*
+   * Вторая ветка требует выбранного региона, а не просто неинтерактивной
+   * карты: «На карте подсвечена одна область» — про подсветку в «назвать
+   * регион», где `selectedRegionId` и есть спрошенный регион. На витрине
+   * главной, где карта тоже только показывает, но не подсвечивает ничего, эта
+   * строка утверждала бы то, чего на экране нет.
+   */
   const showsSelectionStatus =
-    variant === 'reference' && (showsBrowseChrome || !interactive);
+    variant === 'reference' &&
+    (interactive ? showsBrowseChrome : selectedRegionId !== null);
 
   return (
     <section

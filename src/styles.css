@@ -1228,3 +1228,857 @@ button.text:hover:enabled {
   white-space: nowrap;
   width: 1px;
 }
+
+/* --- Шапка и подвал сайта ----------------------------------------------- */
+
+/*
+ * Постоянная навигация появилась вместе с главной-лендингом: поверхностей
+ * стало четыре, и возврат кнопкой из подвала перестал держаться. На экранах
+ * ответа шапки нет — они занимают ровно кадр (см. DECISIONS.md, 2026-08-04).
+ */
+.site-header {
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+}
+
+/*
+ * Колонка шапки совпадает с колонкой страницы: значения те же, что у
+ * `.site-main`, иначе навигация упиралась бы в край экрана, а название
+ * съезжало относительно заголовка под ним.
+ */
+.site-header-inner {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-6);
+  justify-content: space-between;
+  margin: 0 auto;
+  padding-block: var(--s-3);
+  width: min(100% - 2 * var(--s-4), 1440px);
+}
+
+.site-header-mark {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.site-header-name {
+  color: var(--text-on-ground-strong);
+  font-family: var(--t-family-display);
+  font-size: 1.375rem;
+}
+
+.site-header-tagline {
+  color: var(--text-on-ground-muted);
+  font-size: 0.875rem;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+}
+
+/*
+ * Пункты шапки — не кнопки-действия: они меняют поверхность, а не запускают
+ * раунд. Поэтому у них нет рамки и заливки, и `button.primary` их не касается.
+ */
+.site-nav button {
+  background: none;
+  border: none;
+  border-bottom: var(--border-solid) solid transparent;
+  color: var(--text-on-ground);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  min-height: var(--target-min);
+  padding: 0 var(--s-1);
+}
+
+.site-nav button:hover {
+  color: var(--text-on-ground-strong);
+}
+
+/* Открытый раздел помечен и чертой, и `aria-current`: не только цветом. */
+.site-nav button[aria-current='page'] {
+  border-bottom-color: var(--accent);
+  color: var(--text-on-ground-strong);
+}
+
+.site-main {
+  margin: 0 auto;
+  width: min(100% - 2 * var(--s-4), 1440px);
+}
+
+.site-footer {
+  align-items: baseline;
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--t-size-caption);
+  gap: var(--s-3) var(--s-5);
+  justify-content: space-between;
+  margin-top: var(--s-7);
+  padding: var(--s-5) 0;
+}
+
+.site-footer-left {
+  flex: 1 1 24rem;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* --- Главная ------------------------------------------------------------ */
+
+.landing-hero {
+  align-items: center;
+  display: grid;
+  gap: var(--s-7);
+  padding: var(--s-7) 0 var(--s-8);
+}
+
+.landing-hero-text h1 {
+  color: var(--text-on-ground-strong);
+  font-size: var(--t-size-display);
+  margin-bottom: var(--s-4);
+  text-wrap: pretty;
+}
+
+.lead {
+  font-size: var(--t-size-lead);
+  max-width: 46ch;
+  text-wrap: pretty;
+}
+
+.landing-hero-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-5);
+  margin-bottom: var(--s-6);
+}
+
+.landing-hero-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.caption {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: 0;
+}
+
+/*
+ * Секции чередуют две поверхности доски. Отбивка задана только сверху и снизу
+ * самой секции: горизонтальные поля держит `.site-main`, иначе поднятая
+ * секция обрывалась бы по краям текста, а не по краям кадра.
+ */
+.landing-section {
+  padding: var(--s-8) 0;
+}
+
+/*
+ * Поднятая полоса идёт от края до края кадра, а не только под текстом: она
+ * гасит горизонтальное поле `.site-main` и возвращает его себе отступом.
+ * Отрицательное поле и padding берутся из одной переменной — только так они
+ * гасятся точно и полоса не вылезает за кадр на узком экране.
+ *
+ * До 1024 px поля у `.site-main` нет, поэтому гасить нечего.
+ */
+.landing-section.raised {
+  background: var(--surface-raised);
+  border-block: var(--border-hair) solid var(--line-on-ground);
+}
+
+.landing-section h2 {
+  color: var(--text-on-ground-strong);
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-title);
+  font-weight: var(--t-weight-regular);
+  line-height: var(--t-leading-tight);
+  margin: 0 0 var(--s-3);
+}
+
+.landing-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
+}
+
+.landing-section-head p {
+  color: var(--text-on-ground-muted);
+  margin: 0;
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+
+.landing-section-head-split {
+  align-items: baseline;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--s-4) var(--s-7);
+  justify-content: space-between;
+}
+
+.landing-section-lead {
+  color: var(--text-on-ground-muted);
+  margin-bottom: var(--s-5);
+  max-width: 52ch;
+  text-wrap: pretty;
+}
+
+/* --- Карточки режимов --------------------------------------------------- */
+
+.mode-card-grid,
+.collection-grid {
+  display: grid;
+  gap: var(--s-4);
+  grid-template-columns: minmax(0, 1fr);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * Карточка целиком — одна кнопка. Цель нажатия совпадает с тем, что видно, и
+ * целиться в мелкое слово «подробнее» не приходится.
+ */
+.mode-card button,
+.collection-card button {
+  background: var(--surface-paper);
+  border: var(--border-solid) solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-on-paper);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  text-align: start;
+  transition: border-color var(--duration-quick) var(--ease-out);
+  width: 100%;
+}
+
+.mode-card button {
+  gap: var(--s-2);
+  padding: var(--s-5);
+}
+
+.mode-card button:hover:enabled,
+.collection-card button:hover {
+  border-color: var(--accent);
+}
+
+.mode-card button:focus-visible,
+.collection-card button:focus-visible {
+  outline-color: var(--focus-on-paper);
+}
+
+/*
+ * Недоступная карточка не гасится до нечитаемости: причина написана словами
+ * внутри неё, и прочесть её должно быть можно. Отличает такую карточку
+ * пунктирная рамка, а не приглушённый цвет.
+ */
+.mode-card button:disabled {
+  background: none;
+  border-color: var(--line-on-ground);
+  border-style: dashed;
+  color: var(--text-on-ground-muted);
+  cursor: default;
+}
+
+.mode-card-head {
+  align-items: baseline;
+  display: flex;
+  gap: var(--s-4);
+  justify-content: space-between;
+}
+
+.mode-card-mark {
+  color: var(--accent);
+  font-size: 1.875rem;
+  line-height: 1;
+}
+
+.mode-card button:disabled .mode-card-mark {
+  color: var(--text-on-ground);
+}
+
+.mode-card-level {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+}
+
+.mode-card button:disabled .mode-card-level,
+.mode-card button:disabled .mode-card-volume {
+  color: inherit;
+}
+
+.mode-card-title {
+  color: inherit;
+  font-family: var(--t-family-display);
+  font-size: 1.3125rem;
+  line-height: var(--t-leading-tight);
+}
+
+.mode-card button:disabled .mode-card-title {
+  color: var(--text-on-ground);
+}
+
+.mode-card-summary {
+  color: var(--c-ink-700);
+  font-size: 0.9375rem;
+}
+
+.mode-card button:disabled .mode-card-summary {
+  color: inherit;
+}
+
+.mode-card-volume {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+  margin-top: auto;
+  padding-top: var(--s-2);
+}
+
+/* --- Лестница уровней --------------------------------------------------- */
+
+.landing-levels {
+  display: grid;
+  gap: var(--s-7);
+}
+
+.level-ladder {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.level-ladder li {
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  display: grid;
+  gap: var(--s-4);
+  grid-template-columns: var(--s-7) minmax(0, 1fr);
+  padding: var(--s-4) 0;
+}
+
+.level-ladder li:last-child {
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+}
+
+/*
+ * Открытый уровень отличается не только цветом цифры: у закрытого она стоит в
+ * скобках-обводке, у открытого залита киноварью. Цифра сама по себе — второй
+ * канал: порядок ступеней читается и без цвета.
+ */
+.level-ladder-number {
+  color: var(--accent-on-ground);
+  font-family: var(--t-family-display);
+  font-size: 1.75rem;
+  line-height: var(--t-leading-tight);
+}
+
+.level-ladder li[data-open='false'] .level-ladder-number {
+  color: var(--text-on-ground-muted);
+}
+
+.level-ladder-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.level-ladder-body b {
+  color: var(--text-on-ground-strong);
+  font-size: 1.0625rem;
+  font-weight: var(--t-weight-medium);
+}
+
+.level-ladder-body span {
+  color: var(--text-on-ground-muted);
+}
+
+.landing-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.landing-progress .home-legend,
+.landing-progress .home-status {
+  margin: 0;
+}
+
+/* --- Витрина коллекций -------------------------------------------------- */
+
+.collection-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
+}
+
+button.chip {
+  background: transparent;
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground);
+  cursor: pointer;
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-4);
+}
+
+button.chip:hover {
+  border-color: var(--accent-on-ground);
+}
+
+/*
+ * Выбранная группа помечена и заливкой, и `aria-pressed`. Заливка киноварью
+ * здесь не спорит с главным шагом: главный шаг — на другой поверхности и
+ * набран крупнее.
+ */
+button.chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--c-paper-100);
+}
+
+.collection-card button {
+  overflow: hidden;
+}
+
+.collection-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-4);
+}
+
+.collection-card-group {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: var(--t-weight-bold);
+  letter-spacing: var(--t-tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.collection-card-title {
+  font-family: var(--t-family-display);
+  font-size: 1.1875rem;
+  line-height: var(--t-leading-tight);
+}
+
+.collection-card-subtitle {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+}
+
+/* --- Место под фотографию ----------------------------------------------- */
+
+/*
+ * Слота под снимок не бывает «пустого»: он всегда говорит, что здесь будет.
+ * Штриховка — тот же второй канал, что и на карте: слот отличается от готовой
+ * карточки не только тоном.
+ */
+.photo-slot {
+  align-items: center;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--c-paper-300) 0 6px,
+    var(--c-paper-200) 6px 12px
+  );
+  border-bottom: var(--border-hair) solid var(--line-on-paper);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  justify-content: center;
+  padding: var(--s-4);
+  text-align: center;
+  width: 100%;
+}
+
+.photo-slot[data-photo-height='card'] {
+  min-height: 10.5rem;
+}
+
+.photo-slot[data-photo-height='hero'] {
+  border: var(--border-hair) dashed var(--line-on-paper);
+  border-radius: var(--radius-md);
+  min-height: 16rem;
+}
+
+.photo-slot[data-photo-height='thumb'] {
+  border: var(--border-hair) dashed var(--line-on-paper);
+  border-radius: var(--radius-md);
+  min-height: 8rem;
+}
+
+.photo-slot-label {
+  color: var(--text-on-paper);
+  font-size: 0.9375rem;
+}
+
+.photo-slot-note {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+}
+
+/* --- Происхождение содержания ------------------------------------------- */
+
+.landing-provenance {
+  display: grid;
+  gap: var(--s-7);
+}
+
+.rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rule-list li {
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  padding-top: var(--s-3);
+}
+
+/* --- Раздел коллекций --------------------------------------------------- */
+
+.page-head {
+  align-items: end;
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4) var(--s-7);
+  justify-content: space-between;
+  padding: var(--s-7) 0 var(--s-6);
+}
+
+.page-head h1 {
+  color: var(--text-on-ground-strong);
+  font-size: var(--t-size-display);
+  text-wrap: pretty;
+}
+
+.page-head-count {
+  color: var(--text-on-ground-muted);
+  margin: 0;
+}
+
+.group-hint {
+  color: var(--text-on-ground-muted);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* --- Страница коллекции ------------------------------------------------- */
+
+.breadcrumb {
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  gap: var(--s-1);
+  padding: var(--s-4) 0;
+}
+
+.breadcrumb button.text {
+  font-size: inherit;
+  min-height: var(--target-min);
+}
+
+.breadcrumb span[aria-current='page'] {
+  color: var(--text-on-ground);
+}
+
+.collection-layout {
+  display: grid;
+  gap: var(--s-7);
+  padding: var(--s-7) 0 var(--s-8);
+}
+
+.collection-main h1 {
+  color: var(--text-on-ground-strong);
+  font-size: var(--t-size-display);
+  margin-bottom: var(--s-2);
+}
+
+.collection-name-zh {
+  font-size: 1.625rem;
+  margin-bottom: var(--s-1);
+}
+
+.collection-pinyin {
+  color: var(--text-on-ground-muted);
+  margin-bottom: var(--s-5);
+}
+
+.collection-block {
+  margin-top: var(--s-7);
+}
+
+.collection-block h2 {
+  color: var(--text-on-ground-strong);
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-title);
+  font-weight: var(--t-weight-regular);
+  line-height: var(--t-leading-tight);
+  margin: 0 0 var(--s-4);
+}
+
+.photo-grid {
+  display: grid;
+  gap: var(--s-4);
+  grid-template-columns: minmax(0, 1fr);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.photo-grid .caption {
+  margin-top: var(--s-2);
+}
+
+.collection-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/*
+ * Панель на бумаге: карта коллекции и действие по ней лежат на том же
+ * материале, что и сама карта. Панель источников — на доске, за тонкой
+ * рамкой: это сведения о странице, а не её предмет.
+ */
+.paper-panel {
+  background: var(--surface-paper);
+  border-radius: var(--radius-lg);
+  color: var(--text-on-paper);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5);
+}
+
+.outline-panel {
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5);
+}
+
+.panel-title {
+  font-size: var(--t-size-caption);
+  font-weight: var(--t-weight-bold);
+  letter-spacing: var(--t-tracking-eyebrow);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.paper-panel .panel-title {
+  color: var(--text-on-paper-muted);
+}
+
+.outline-panel .panel-title {
+  color: var(--text-on-ground-muted);
+}
+
+.paper-panel .status-note {
+  border-left-color: var(--accent);
+  color: var(--text-on-paper);
+  margin: 0;
+}
+
+.paper-panel button.primary:focus-visible {
+  outline-color: var(--focus-on-paper);
+}
+
+.membership-legend {
+  align-items: center;
+  color: var(--text-on-paper-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--t-size-caption);
+  gap: var(--s-2);
+  margin: 0;
+}
+
+.membership-legend span {
+  block-size: 12px;
+  border: var(--border-hair) solid var(--map-border);
+  display: inline-block;
+  inline-size: 16px;
+}
+
+.membership-legend span[data-membership='member'] {
+  background: var(--map-member);
+}
+
+.membership-legend span[data-membership='outside'] {
+  background: var(--map-outside);
+}
+
+.member-list {
+  display: grid;
+  gap: var(--s-1) var(--s-4);
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * Черновик назван словами, а не значком: «содержание не проверено» — это то,
+ * что читателю нужно знать до того, как он поверит странице.
+ */
+.draft-note {
+  border-left: var(--border-focus) solid var(--accent-on-ground);
+  color: var(--text-on-ground);
+  margin: 0;
+  padding-left: var(--s-3);
+}
+
+.empty-note {
+  color: var(--text-on-ground-muted);
+  margin: 0 0 var(--s-4);
+  max-width: 60ch;
+}
+
+.paper-panel .empty-note {
+  color: var(--text-on-paper-muted);
+  margin-bottom: 0;
+}
+
+/* --- Карта коллекции ---------------------------------------------------- */
+
+/*
+ * Два состояния и ничего больше: вопрос у этой карты один — где это на карте
+ * страны. Слово к заливке даёт `aria-label` области и легенда под картой.
+ */
+.china-map[data-map-variant='membership'] [data-membership='member'] {
+  fill: var(--map-member);
+}
+
+.china-map[data-map-variant='membership'] [data-membership='outside'] {
+  fill: var(--map-outside);
+}
+
+@media (min-width: 720px) {
+  .mode-card-grid,
+  .collection-grid,
+  .photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-main {
+    padding-inline: var(--s-7);
+  }
+
+  .landing-section.raised {
+    margin-inline: calc(-1 * var(--s-7));
+    padding-inline: var(--s-7);
+  }
+
+  .site-header-inner {
+    padding-inline: var(--s-7);
+  }
+
+  .landing-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 45%);
+  }
+
+  /* Лестница слева, карта освоенности справа — она уже лестницы. */
+  .landing-levels {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 40%);
+  }
+
+  /* «Содержание» и «Источники» равнозначны: колонки одинаковые. */
+  .landing-provenance {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mode-card-grid,
+  .collection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .photo-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .collection-layout {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 34%);
+  }
+}
+
+@media (min-width: 1280px) {
+  .collection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* --- Правки раскладки под новые поверхности ----------------------------- */
+
+/*
+ * Крошки выравниваются по центру: у кнопки «Коллекции» цель нажатия 44 px, и
+ * при выравнивании по началу её подпись уезжала на строку ниже разделителей.
+ */
+.breadcrumb {
+  align-items: center;
+}
+
+/*
+ * У карты в герое заголовок остаётся для программ чтения, но не показывается:
+ * секцию он называет через `aria-labelledby`, а на экране спорил бы с
+ * заголовком страницы, стоящим в соседней колонке.
+ */
+.landing-hero-map .section-heading {
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/* Подпись под картой относится к ней, а не к следующему разделу. */
+.landing-hero-map .map-section,
+.landing-progress .map-section,
+.paper-panel .map-section {
+  margin-bottom: 0;
+}
+
+/*
+ * Заголовок раздела не растягивается на все 1440 px: строка длиной в кадр
+ * читается хуже, а счётчик справа должен встать на ту же строку, а не под
+ * ней.
+ */
+.page-head > div:first-child {
+  max-width: 46rem;
+}
+
+/*
+ * Раздел, на который ведёт шапка, принимает фокус, чтобы Tab и читалка экрана
+ * продолжили отсюда. Кольцо ему не рисуется: в поток Tab он не входит, а
+ * «вы здесь» говорит заголовок, вставший в верх кадра. Кольцо вокруг полосы
+ * во весь экран читалось бы как ошибка вёрстки, а не как фокус.
+ */
+.landing-section[tabindex]:focus:not(:focus-visible) {
+  outline: none;
+}

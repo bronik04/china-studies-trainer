@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { collectionById } from './content/collections';
 import { regions } from './content/regions';
 import type { Region } from './content/types';
 import { addAttempts } from './domain/progress';
@@ -18,13 +19,47 @@ import { ALL_EXERCISE_TYPES } from './features/exercise/exercise-modes';
 import { FillMapResultsPage } from './features/results/FillMapResultsPage';
 import { RoundResultsPage } from './features/results/RoundResultsPage';
 import { AtlasPage } from './features/atlas/AtlasPage';
+import { CollectionPage } from './features/collections/CollectionPage';
+import { CollectionsPage } from './features/collections/CollectionsPage';
 import { HomePage } from './features/home/HomePage';
 import type { MapZoom } from './map/MapControls';
+import { SiteHeader, type SiteSection } from './ui/SiteHeader';
 
 /** «mixed» — смешанный раунд четвёртого уровня, где типы заданий чередуются. */
 type RoundRequest = ExerciseType | 'mixed';
 
-type Screen = 'home' | 'atlas' | 'exercise' | 'results' | 'fill' | 'fill-results';
+type Screen =
+  | 'home'
+  | 'atlas'
+  | 'collections'
+  | 'collection'
+  | 'exercise'
+  | 'results'
+  | 'fill'
+  | 'fill-results';
+
+/**
+ * Шапка стоит на поверхностях, где ходят между разделами, и снята с тех, где
+ * отвечают: раунд, итоги и заполнение карты занимают ровно кадр, и полоса в
+ * 76 px отняла бы высоту у карты (UI_UX.md).
+ */
+const SCREENS_WITH_HEADER: readonly Screen[] = [
+  'home',
+  'atlas',
+  'collections',
+  'collection',
+];
+
+/**
+ * Какой пункт шапки отмечен открытым. Главной здесь нет намеренно: «Режимы» —
+ * её раздел, а не отдельная поверхность, и отметка «вы здесь» на нём означала
+ * бы, что из главной уже никуда не уйти.
+ */
+const ACTIVE_SECTION: Partial<Record<Screen, SiteSection>> = {
+  atlas: 'atlas',
+  collections: 'collections',
+  collection: 'collections',
+};
 
 /** Хранилище может быть запрещено политикой браузера — обращение к нему бросает. */
 function readStorage(): Storage | null {
@@ -55,6 +90,72 @@ export default function App() {
   const [fillRound, setFillRound] = useState<FillRound | null>(null);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
+  const [collectionId, setCollectionId] = useState<string | null>(null);
+  /*
+   * Переход на раздел главной из шапки. Прокрутка живёт в эффекте, а не в
+   * обработчике нажатия: раздела ещё нет в документе, пока React не отрисовал
+   * главную. Фокус переводится вместе с прокруткой — иначе Tab после нажатия
+   * продолжился бы от шапки, а читалка экрана промолчала бы о переходе.
+   *
+   * Сам якорь лежит в ссылке, а счётчик только будит эффект: нажатие на
+   * «Режимы», когда главная уже открыта, обязано сработать второй раз, а
+   * состояние с прежним значением эффект бы не перезапустило.
+   */
+  const [anchorRequests, setAnchorRequests] = useState(0);
+  const pendingAnchor = useRef<string | null>(null);
+
+  /*
+   * Новая поверхность открывается сверху. Без этого переход со дна главной в
+   * коллекцию попадал на середину её страницы, и человек видел не заголовок, а
+   * обрывок абзаца.
+   *
+   * Эффект объявлен до якорного намеренно: когда переход как раз и ведёт на
+   * раздел главной, прокрутка наверх обязана случиться раньше, а не отменить
+   * его.
+   */
+  useEffect(() => {
+    if (pendingAnchor.current === null) {
+      window.scrollTo(0, 0);
+    }
+  }, [screen, collectionId]);
+
+  useEffect(() => {
+    const anchorId = pendingAnchor.current;
+    if (anchorId === null) {
+      return;
+    }
+
+    pendingAnchor.current = null;
+    const target = document.getElementById(anchorId);
+    /*
+     * Сначала фокус без прокрутки, потом прокрутка. `focus()` сам подтягивает
+     * элемент в кадр по кратчайшему пути, а раздел выше кадра — и раздел
+     * вставал нижним краем экрана вместо верхнего.
+     */
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView();
+  }, [anchorRequests]);
+
+  function navigate(section: SiteSection) {
+    if (section === 'atlas') {
+      setScreen('atlas');
+      return;
+    }
+
+    if (section === 'collections') {
+      setScreen('collections');
+      return;
+    }
+
+    setScreen('home');
+    pendingAnchor.current = 'modes';
+    setAnchorRequests((count) => count + 1);
+  }
+
+  function openCollection(id: string) {
+    setCollectionId(id);
+    setScreen('collection');
+  }
 
   /**
    * `regionIds === null` — раунд по всем регионам темы. Набор считается здесь,
@@ -193,30 +294,65 @@ export default function App() {
     );
   }
 
-  if (screen === 'atlas') {
-    return (
-      <AtlasPage
-        regions={regions}
-        selectedRegionId={selectedRegionId}
-        onSelect={setSelectedRegionId}
-        onClear={() => setSelectedRegionId(null)}
-        zoom={zoom}
-        onZoomChange={setZoom}
-        onExit={() => setScreen('home')}
-        onTrain={() =>
-          startRound('find-on-map', unlockedLevelFrom(progress.attempts), null)
-        }
-      />
-    );
-  }
+  /*
+   * Дальше идут поверхности с шапкой. Она общая, поэтому стоит здесь, а не
+   * повторяется внутри каждой страницы: иначе «Коллекции» отмечались бы
+   * открытыми в двух местах и однажды разошлись бы.
+   */
+  const unlockedLevel = unlockedLevelFrom(progress.attempts);
+  const collection =
+    collectionId === null ? null : (collectionById(collectionId) ?? null);
+  /*
+   * Неизвестная коллекция возвращает на главную. Отметка в шапке считается по
+   * этому же значению, иначе «Коллекции» остались бы подчёркнутыми над
+   * главной.
+   */
+  const activeScreen: Screen =
+    screen === 'collection' && collection === null ? 'home' : screen;
 
   return (
-    <HomePage
-      regions={regions}
-      attempts={progress.attempts}
-      onStartRound={startRound}
-      onStartFillRound={startFillRound}
-      onOpenAtlas={() => setScreen('atlas')}
-    />
+    <>
+      {SCREENS_WITH_HEADER.includes(activeScreen) ? (
+        <SiteHeader
+          current={ACTIVE_SECTION[activeScreen] ?? null}
+          onNavigate={navigate}
+        />
+      ) : null}
+      {activeScreen === 'atlas' ? (
+        <AtlasPage
+          regions={regions}
+          selectedRegionId={selectedRegionId}
+          onSelect={setSelectedRegionId}
+          onClear={() => setSelectedRegionId(null)}
+          zoom={zoom}
+          onZoomChange={setZoom}
+          onExit={() => setScreen('home')}
+          onTrain={() => startRound('find-on-map', unlockedLevel, null)}
+        />
+      ) : activeScreen === 'collections' ? (
+        <CollectionsPage regions={regions} onOpenCollection={openCollection} />
+      ) : activeScreen === 'collection' && collection !== null ? (
+        <CollectionPage
+          collection={collection}
+          regions={regions}
+          level={unlockedLevel}
+          onOpenCollections={() => setScreen('collections')}
+          onOpenCollection={openCollection}
+          onTrainRegions={(regionIds) =>
+            startRound('find-on-map', unlockedLevel, regionIds)
+          }
+        />
+      ) : (
+        <HomePage
+          regions={regions}
+          attempts={progress.attempts}
+          onStartRound={startRound}
+          onStartFillRound={startFillRound}
+          onOpenAtlas={() => setScreen('atlas')}
+          onOpenCollections={() => setScreen('collections')}
+          onOpenCollection={openCollection}
+        />
+      )}
+    </>
   );
 }
