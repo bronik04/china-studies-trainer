@@ -1,10 +1,16 @@
 import { useEffect, useRef } from 'react';
 import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
+import type { RegionOutcome } from '../domain/fill-round';
 import { MapControls, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
 
 export type AnswerState = 'correct' | 'incorrect' | 'disabled';
+
+export type MapHighlight = {
+  readonly regionId: string;
+  readonly kind: 'miss' | 'reveal';
+};
 
 type ChinaMapProps = {
   readonly regions: readonly Region[];
@@ -16,6 +22,18 @@ type ChinaMapProps = {
   readonly answerStates?: Readonly<Record<string, AnswerState>>;
   /** Ложь — карта только показывает: области не выбираются и не получают фокус. */
   readonly interactive?: boolean;
+  /**
+   * `reference` — справочная карта: цвет означает тип региона.
+   * `fill` — игровая: все регионы серые, цвет появляется только как исход.
+   */
+  readonly variant?: 'reference' | 'fill';
+  readonly outcomes?: Readonly<Record<string, RegionOutcome>>;
+  /**
+   * Что показать поверх заливки. `miss` — вспышка на промахе, `reveal` —
+   * показ региона, который так и не нашли. Виды разные, потому что живут
+   * разное время и означают разное.
+   */
+  readonly highlight?: MapHighlight | null;
 };
 
 /**
@@ -23,6 +41,7 @@ type ChinaMapProps = {
  * и эффект перезапускался бы вхолостую: `answerStates` входит в его зависимости.
  */
 const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
+const NO_OUTCOMES: Readonly<Record<string, RegionOutcome>> = {};
 
 /**
  * Нажатие принимает и сам контур, и увеличенная цель для мелких областей.
@@ -52,6 +71,9 @@ export function ChinaMap({
   onZoomChange,
   answerStates = NO_ANSWER_STATES,
   interactive = true,
+  variant = 'reference',
+  outcomes = NO_OUTCOMES,
+  highlight = null,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
@@ -87,8 +109,29 @@ export function ChinaMap({
       } else {
         area.removeAttribute('aria-disabled');
       }
+
+      const outcome = outcomes[area.dataset.regionId ?? ''];
+      if (outcome) {
+        area.dataset.outcome = outcome;
+      } else {
+        delete area.dataset.outcome;
+      }
+
+      if (highlight !== null && area.dataset.regionId === highlight.regionId) {
+        area.dataset.highlight = highlight.kind;
+      } else {
+        delete area.dataset.highlight;
+      }
     });
-  }, [answerStates, interactive, regions, selectedRegionId, zoom]);
+  }, [
+    answerStates,
+    highlight,
+    interactive,
+    outcomes,
+    regions,
+    selectedRegionId,
+    zoom,
+  ]);
 
   /**
    * Состояние ответа появляется у области только после ответа, а второй ответ
@@ -125,6 +168,7 @@ export function ChinaMap({
       <MapDefs />
       <div
         className="china-map"
+        data-map-variant={variant}
         ref={mapRef}
         onClick={(event) => selectTarget(event.target)}
         onKeyDown={(event) => {

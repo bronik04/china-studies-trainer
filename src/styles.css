@@ -267,6 +267,46 @@ button.secondary:hover:enabled {
   fill: var(--map-kind-sar);
 }
 
+/*
+ * Игровой режим: цвет не должен подсказывать, какой регион перед тобой,
+ * поэтому вся карта стартует одним серым. Селектор с двумя атрибутами
+ * намеренно специфичнее правил типа региона выше.
+ */
+.china-map[data-map-variant='fill'] [data-region-id] {
+  fill: var(--map-unplayed);
+}
+
+.china-map[data-map-variant='fill'] [data-outcome='first-try'] {
+  fill: var(--map-first-try);
+}
+
+.china-map[data-map-variant='fill'] [data-outcome='second-try'] {
+  fill: url('#map-hatch-second-try');
+}
+
+.china-map[data-map-variant='fill'] [data-outcome='failed'] {
+  fill: url('#map-hatch-failed');
+}
+
+/*
+ * Промах вспыхивает киноварью и гаснет. Гашение — переход в правиле области
+ * выше, поэтому при prefers-reduced-motion токен длительности обнуляется и
+ * отметка снимается мгновенно; саму вспышку это не отменяет, её длительность
+ * задаёт таймер в компоненте, а не анимация.
+ */
+.china-map [data-highlight='miss'] {
+  stroke: var(--map-incorrect-mark);
+  stroke-width: var(--map-border-width-strong);
+  transition: none;
+}
+
+/* Показ региона, который не нашли: держится 1.5 с, гаснуть ему незачем. */
+.china-map [data-highlight='reveal'] {
+  stroke: var(--map-border);
+  stroke-width: var(--map-border-width-strong);
+  transition: none;
+}
+
 /* Наведение отмечается толщиной границы, а не оттенком: оттенка мало. */
 .china-map [data-region-id]:hover {
   stroke-width: var(--map-border-width-strong);

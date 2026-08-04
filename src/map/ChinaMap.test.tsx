@@ -320,3 +320,67 @@ it('справочная карта красит области по типу р
   }
   expect(container.querySelector('[data-land-tone]')).toBeNull();
 });
+
+it('в игровом режиме отмечает только закрытые регионы', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+      outcomes={{ sichuan: 'first-try', hunan: 'failed' }}
+    />,
+  );
+
+  expect(
+    container.querySelector('[data-region-id="sichuan"]')?.getAttribute('data-outcome'),
+  ).toBe('first-try');
+  expect(
+    container.querySelector('[data-region-id="hunan"]')?.getAttribute('data-outcome'),
+  ).toBe('failed');
+  expect(
+    container.querySelector('[data-region-id="yunnan"]')?.getAttribute('data-outcome'),
+  ).toBeNull();
+  expect(container.querySelector('.china-map')?.getAttribute('data-map-variant')).toBe(
+    'fill',
+  );
+});
+
+it('отмечает промах и показ разными видами подсветки', () => {
+  const { container, rerender } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+      highlight={{ regionId: 'gansu', kind: 'miss' }}
+    />,
+  );
+
+  expect(
+    container.querySelector('[data-region-id="gansu"]')?.getAttribute('data-highlight'),
+  ).toBe('miss');
+  expect(
+    container.querySelector('[data-region-id="hunan"]')?.getAttribute('data-highlight'),
+  ).toBeNull();
+
+  rerender(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+      highlight={{ regionId: 'hunan', kind: 'reveal' }}
+    />,
+  );
+
+  expect(
+    container.querySelector('[data-region-id="hunan"]')?.getAttribute('data-highlight'),
+  ).toBe('reveal');
+  expect(
+    container.querySelector('[data-region-id="gansu"]')?.getAttribute('data-highlight'),
+  ).toBeNull();
+});
