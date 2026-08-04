@@ -226,9 +226,53 @@ p {
   padding-block-start: var(--s-4);
 }
 
+/*
+ * CC BY требует атрибуции, но не равного веса с ответом: прежде она занимала
+ * три строки внизу справа и весила столько же, сколько сам ответ. Ссылки
+ * внутри сохраняют свой цвет и проверенный контраст.
+ */
 .round-footer .map-attribution {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
   margin: 0;
   max-inline-size: 60ch;
+}
+
+/*
+ * Лента хода занимает колонку вопроса, которая иначе пустует: на 1280×720 под
+ * блоком вопроса оставалось около 490 px из 690.
+ *
+ * Знаки живут в китайском шрифте: `✓ ● ○` есть только в нём (DESIGN_SYSTEM.md).
+ */
+.round-trail {
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--t-family-han);
+  gap: var(--s-1);
+  line-height: 1;
+  margin-block-start: var(--s-5);
+}
+
+.round-trail span[data-mark='ahead'] {
+  color: var(--text-on-ground-muted);
+}
+
+.round-trail span[data-mark='correct'] {
+  color: var(--map-first-try);
+}
+
+.round-trail span[data-mark='wrong'] {
+  color: var(--accent-on-ground);
+}
+
+/*
+ * Узкий экран: высота дороже ленты, а «Вопрос N из M» и так стоит в липком
+ * блоке вопроса.
+ */
+@media (max-width: 1023px) {
+  .round-trail {
+    display: none;
+  }
 }
 
 /* --- Кабинет ------------------------------------------------------------ */
