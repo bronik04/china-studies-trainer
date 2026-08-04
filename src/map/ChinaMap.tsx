@@ -189,7 +189,13 @@ export function ChinaMap({
         подсвеченную область или перечислить регионы здесь — значит выдать
         ответ, поэтому оба блока заменяются нейтральной подписью.
       */}
-      {interactive ? (
+      {/*
+        В игровом режиме карта о выборе не рассказывает: результат хода
+        объявляет экран раунда. Второй `aria-live` на экране означал бы, что
+        после каждого ответа программа чтения читает ещё и «Регион ещё не
+        выбран» — выбор там всегда пуст.
+      */}
+      {variant === 'fill' ? null : interactive ? (
         <p className="map-selection" role="status" aria-live="polite">
           {selectedRegion
             ? `Выбрано: ${selectedRegion.nameRu} (${selectedRegion.nameZh})`

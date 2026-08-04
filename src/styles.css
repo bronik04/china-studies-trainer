@@ -537,3 +537,47 @@ button.secondary:hover:enabled {
   border-bottom: var(--border-hair) solid var(--line-on-ground);
   padding: var(--s-2) 0;
 }
+
+.fill-meta {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-5);
+  margin-bottom: var(--s-2);
+}
+
+.attempt-dots {
+  color: var(--text-on-ground);
+  letter-spacing: 0.15em;
+  margin: 0;
+}
+
+.round-stopwatch {
+  color: var(--text-on-ground-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.fill-status {
+  color: var(--text-on-ground);
+  margin: 0;
+  min-height: var(--t-leading-body);
+}
+
+.fill-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-5);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Текст только для программ чтения с экрана: значок попыток дублируется словами. */
+.visually-hidden {
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

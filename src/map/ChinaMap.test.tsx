@@ -384,3 +384,17 @@ it('отмечает промах и показ разными видами по
     container.querySelector('[data-region-id="gansu"]')?.getAttribute('data-highlight'),
   ).toBeNull();
 });
+
+it('в игровом режиме карта не заводит второй aria-live о выборе', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+    />,
+  );
+
+  expect(screen.queryByRole('status')).toBeNull();
+});
