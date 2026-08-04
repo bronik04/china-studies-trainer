@@ -56,6 +56,118 @@ p {
   padding-bottom: var(--s-5);
 }
 
+/* --- Экран раунда ------------------------------------------------------- */
+
+/*
+ * Экран раунда выходит из меры 1120 px, которой живёт `.app-shell`: та мера
+ * задана для чтения, а здесь главный объект — карта, и ей нужна вся
+ * доступная ширина. Верхняя граница 1600 px: дальше карта упирается в высоту
+ * кадра и перестаёт расти, а колонка вопроса уезжает от неё настолько, что
+ * взгляд между ними уже не переносится.
+ */
+.round-shell {
+  inline-size: min(100% - 2 * var(--s-4), 1600px);
+  margin-inline: auto;
+  padding-block: var(--s-6);
+}
+
+.round-prompt {
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+  margin-bottom: var(--s-4);
+  padding-bottom: var(--s-4);
+}
+
+/*
+ * Узкий экран: блок вопроса липнет к верху, пока ученик прокручивает список
+ * из 34 кнопок. Фон обязателен, иначе список просвечивает сквозь него.
+ */
+@media (max-width: 1023px) {
+  .round-prompt {
+    background: var(--surface-ground);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  /* Липкий блок не должен закрывать карточку ответа при переводе фокуса. */
+  .answer-feedback {
+    scroll-margin-block-start: 9rem;
+  }
+}
+
+/*
+ * Порог 1024, а не обычные для проекта 720: при 720 колонка карты получает
+ * меньше 400 px, карта — меньше 300 px высоты, и две колонки перестают быть
+ * выигрышем. Порог заодно обслуживает масштабирование текста до 200 % —
+ * кадр 1280 px превращается в 640 CSS px, и макет сам становится одной
+ * колонкой. То же значение живёт в src/design/breakpoints.ts.
+ */
+@media (min-width: 1024px) {
+  .round-layout[data-columns='two'] {
+    align-items: start;
+    display: grid;
+    gap: var(--s-5);
+    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  }
+
+  .round-layout[data-columns='one'] {
+    inline-size: min(100%, 640px);
+    margin-inline: auto;
+  }
+
+  .round-prompt-column {
+    position: sticky;
+    top: var(--s-6);
+  }
+}
+
+.round-map .map-section {
+  margin-bottom: 0;
+}
+
+/*
+ * Карта ограничена и шириной колонки, и высотой кадра: 774×569 в единицах
+ * viewBox, поэтому высота всегда 0.735 от ширины, и без второго ограничения
+ * на широком экране она уходила бы за сгиб.
+ *
+ * dvh, а не vh: на мобильных браузерах адресная строка меняет высоту кадра,
+ * и vh даёт карту, которая не помещается.
+ */
+.round-map .china-map {
+  aspect-ratio: var(--map-aspect);
+  inline-size: 100%;
+  margin-inline: auto;
+  max-block-size: calc(100dvh - var(--round-map-chrome));
+  max-inline-size: calc((100dvh - var(--round-map-chrome)) * var(--map-aspect));
+}
+
+.round-map .china-map svg {
+  block-size: 100%;
+}
+
+/*
+ * «Прервать раунд» живёт здесь, а не рядом с ответами. Раньше она стояла под
+ * последним вариантом, в той же колонке и той же форме: промах по ответу
+ * попадал в разрушающее действие. В подвале она удалена от ответов и по
+ * указателю, и по обходу с клавиатуры — то есть не становится второй
+ * остановкой Tab вместо последней.
+ */
+.round-footer {
+  align-items: center;
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-5);
+  justify-content: space-between;
+  margin-block-start: var(--s-5);
+  padding-block-start: var(--s-4);
+}
+
+.round-footer .map-attribution {
+  margin: 0;
+  max-inline-size: 60ch;
+}
+
 .eyebrow {
   color: var(--accent-on-ground);
   font-size: var(--t-size-caption);
