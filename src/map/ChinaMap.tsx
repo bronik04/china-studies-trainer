@@ -4,24 +4,18 @@ import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
 import { MapControls, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
+import { OUTCOME_LABELS } from './outcome-labels';
+import {
+  isRegionClosed,
+  isRegionSelectable,
+  type AnswerState,
+} from './region-selection';
 
-export type AnswerState = 'correct' | 'incorrect' | 'disabled';
+export type { AnswerState } from './region-selection';
 
 export type MapHighlight = {
   readonly regionId: string;
   readonly kind: 'miss' | 'reveal';
-};
-
-/**
- * Исход обязан быть доступен не только цветом: с программой чтения с экрана
- * ученик иначе не отличит закрашенный регион от ещё не спрошенного
- * (AGENTS.md: карта должна иметь текстовые альтернативы и не полагаться
- * только на цвет).
- */
-const OUTCOME_LABELS: Readonly<Record<RegionOutcome, string>> = {
-  'first-try': 'взят с первой попытки',
-  'second-try': 'взят со второй попытки',
-  failed: 'не угадан',
 };
 
 type ChinaMapProps = {
@@ -175,37 +169,11 @@ export function ChinaMap({
     zoom,
   ]);
 
-  /**
-   * Состояние ответа появляется у области только после ответа, а второй ответ
-   * на вопрос запрещён (SPEC.md). Поэтому невыбираемы все области с любым
-   * состоянием, включая верную и неверную: иначе они выглядели бы рабочими,
-   * но не делали ничего.
-   *
-   * По той же причине невыбираем и уже закрашенный регион: он своё отыграл,
-   * и повторное нажатие не должно стоить попытки на текущем вопросе.
-   */
-  function isSelectable(regionId: string): boolean {
-    return (
-      interactive &&
-      !paused &&
-      answerStates[regionId] === undefined &&
-      outcomes[regionId] === undefined
-    );
-  }
-
-  /**
-   * Кнопка списка выключается только по окончательным причинам. Пауза — не
-   * из них: `disabled` на кнопке, где стоит фокус, сбрасывает его в браузере.
-   */
-  function isClosed(regionId: string): boolean {
-    return (
-      answerStates[regionId] !== undefined || outcomes[regionId] !== undefined
-    );
-  }
+  const selectionRules = { interactive, paused, answerStates, outcomes };
 
   function selectTarget(target: EventTarget | null) {
     const regionId = getRegionId(target);
-    if (regionId && isSelectable(regionId)) {
+    if (regionId !== null && isRegionSelectable(selectionRules, regionId)) {
       onSelect(regionId);
     }
   }
@@ -276,9 +244,9 @@ export function ChinaMap({
                   aria-pressed={region.id === selectedRegionId}
                   aria-disabled={paused ? true : undefined}
                   data-outcome={outcome}
-                  disabled={isClosed(region.id)}
+                  disabled={isRegionClosed(selectionRules, region.id)}
                   onClick={() => {
-                    if (isSelectable(region.id)) {
+                    if (isRegionSelectable(selectionRules, region.id)) {
                       onSelect(region.id);
                     }
                   }}
