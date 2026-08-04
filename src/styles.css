@@ -56,6 +56,166 @@ p {
   padding-bottom: var(--s-5);
 }
 
+/* --- Экран раунда ------------------------------------------------------- */
+
+/*
+ * Экран раунда выходит из меры 1120 px, которой живёт `.app-shell`: та мера
+ * задана для чтения, а здесь главный объект — карта, и ей нужна вся
+ * доступная ширина. Верхняя граница 1600 px: дальше карта упирается в высоту
+ * кадра и перестаёт расти, а колонка вопроса уезжает от неё настолько, что
+ * взгляд между ними уже не переносится.
+ */
+.round-shell {
+  inline-size: min(100% - 2 * var(--s-4), 1600px);
+  margin-inline: auto;
+  padding-block: var(--s-6);
+}
+
+.round-prompt {
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+  margin-bottom: var(--s-4);
+  padding-bottom: var(--s-4);
+}
+
+/*
+ * Узкий экран: блок вопроса липнет к верху, пока ученик прокручивает список
+ * из 34 кнопок. Фон обязателен, иначе список просвечивает сквозь него.
+ */
+@media (max-width: 1023px) {
+  .round-prompt {
+    background: var(--surface-ground);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  /* Липкий блок не должен закрывать карточку ответа при переводе фокуса. */
+  .answer-feedback {
+    scroll-margin-block-start: 9rem;
+  }
+}
+
+/*
+ * Порог 1024, а не обычные для проекта 720: при 720 колонка карты получает
+ * меньше 400 px, карта — меньше 300 px высоты, и две колонки перестают быть
+ * выигрышем. Порог заодно обслуживает масштабирование текста до 200 % —
+ * кадр 1280 px превращается в 640 CSS px, и макет сам становится одной
+ * колонкой. То же значение живёт в src/design/breakpoints.ts.
+ */
+@media (min-width: 1024px) {
+  /*
+   * Оболочка — три строки: колонки, блок списка, подвал. Карта живёт в первой
+   * и забирает всё, что осталось от кадра.
+   *
+   * Высота служебных полос не выписана константой намеренно. Прежняя правка
+   * вычитала их вручную и промахнулась на 15 px: подвал уезжал за кадр при
+   * 1366×768. Здесь остаток считает браузер, и промахнуться не в чем.
+   *
+   * Высота кадра задана жёстко: пока она выводится из содержимого, строка
+   * `1fr` не разрешается — карта берёт свою естественную высоту, и подвал
+   * уезжает вниз. Раскрытый список поэтому получает собственную прокрутку
+   * (см. `.region-answer-list` ниже), а не растит страницу.
+   *
+   * `dvh`, а не `vh`: на мобильных браузерах адресная строка меняет высоту
+   * кадра.
+   */
+  .round-shell {
+    block-size: 100dvh;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto auto;
+  }
+
+  /*
+   * Раскрытый список забирает высоту у карты, но не больше 40 % кадра.
+   * Открыли список — он нужен, и карта уступает; закрыли — карта вернулась.
+   */
+  .region-answer-list {
+    max-block-size: 40dvh;
+    overflow-y: auto;
+  }
+
+  .round-layout[data-columns='two'] {
+    display: grid;
+    gap: var(--s-5);
+    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+    min-block-size: 0;
+  }
+
+  .round-layout[data-columns='one'] {
+    inline-size: min(100%, 640px);
+    margin-inline: auto;
+  }
+
+  /*
+   * Колонка вопроса высоту строки не занимает: она короче карты, и растягивать
+   * её незачем. Липкость нужна, когда раскрыт список, — вопрос остаётся на
+   * месте, пока ученик прокручивает 34 кнопки.
+   */
+  .round-prompt-column {
+    align-self: start;
+    position: sticky;
+    top: var(--s-6);
+  }
+
+  .round-map {
+    min-block-size: 0;
+  }
+
+  .round-map .map-section {
+    block-size: 100%;
+  }
+
+  /*
+   * Высота строки известна, поэтому ширина коробки выводится из пропорции
+   * карты — иначе вокруг рисунка оставалось бы до 200 px пустого моря.
+   * `max-inline-size` на случай узкой колонки: там ограничивает уже ширина,
+   * и рисунок вписывается сам.
+   */
+  .round-map .china-map {
+    aspect-ratio: var(--map-aspect);
+    block-size: 100%;
+    inline-size: auto;
+    margin-inline: auto;
+    max-inline-size: 100%;
+  }
+}
+
+.round-map .map-section {
+  margin-bottom: 0;
+}
+
+/*
+ * Коробка карты равна отведённой ячейке, а сам рисунок вписывается в неё
+ * `preserveAspectRatio`. Пропорция карты и пропорция ячейки не совпадают
+ * точно, и разница остаётся полем цвета моря — на карте это не помеха.
+ */
+.round-map .china-map svg {
+  block-size: 100%;
+}
+
+/*
+ * «Прервать раунд» живёт здесь, а не рядом с ответами. Раньше она стояла под
+ * последним вариантом, в той же колонке и той же форме: промах по ответу
+ * попадал в разрушающее действие. В подвале она удалена от ответов и по
+ * указателю, и по обходу с клавиатуры — то есть не становится второй
+ * остановкой Tab вместо последней.
+ */
+.round-footer {
+  align-items: center;
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-5);
+  justify-content: space-between;
+  margin-block-start: var(--s-5);
+  padding-block-start: var(--s-4);
+}
+
+.round-footer .map-attribution {
+  margin: 0;
+  max-inline-size: 60ch;
+}
+
 .eyebrow {
   color: var(--accent-on-ground);
   font-size: var(--t-size-caption);
@@ -220,6 +380,14 @@ button.secondary:hover:enabled {
 .map-alternative button:disabled {
   color: var(--text-on-ground-muted);
   cursor: not-allowed;
+}
+
+/*
+ * Образцы штриховки. Размер нулевой, но инлайновый `svg` всё равно заводит
+ * строку в 24 px — на экране раунда это высота, отнятая у карты.
+ */
+.map-defs {
+  display: block;
 }
 
 .china-map {
@@ -420,6 +588,32 @@ button.secondary:hover:enabled {
 /* Пауза показа: список остаётся на месте и в фокусе, но не отвечает. */
 .map-alternative button[aria-disabled='true'] {
   cursor: not-allowed;
+}
+
+/*
+ * На экране раунда список уезжает в свёрнутый блок: 34 кнопки — это половина
+ * всех остановок Tab на экране, и держать их раскрытыми там, где работает
+ * карта, незачем.
+ */
+.region-answer-list {
+  margin-block-start: var(--s-5);
+}
+
+.region-answer-list summary {
+  align-items: center;
+  color: var(--text-on-ground);
+  cursor: pointer;
+  display: flex;
+  min-block-size: var(--target-min);
+}
+
+.region-answer-list summary:focus-visible {
+  outline: var(--border-focus) solid var(--focus-on-ground);
+  outline-offset: var(--s-1);
+}
+
+.region-answer-list .map-alternative {
+  margin-block-start: var(--s-3);
 }
 
 /* --- Справочник регионов ------------------------------------------------ */

@@ -11,6 +11,9 @@ import { REGION_PALETTE } from './region-palette';
 /** Ширина viewBox карты. */
 export const MAP_VIEWBOX_WIDTH = 774;
 
+/** Высота viewBox карты. Из пары с шириной берётся пропорция `--map-aspect`. */
+export const MAP_VIEWBOX_HEIGHT = 569;
+
 /**
  * Опорная ширина карты: `.app-shell` ограничен 1120 px, карта занимает его
  * целиком. На этой ширине карта — основной способ ответа, и порог обязателен.

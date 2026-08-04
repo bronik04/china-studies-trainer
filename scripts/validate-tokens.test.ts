@@ -14,6 +14,7 @@ import {
   contrastRatioRounded,
 } from '../src/design/contrast';
 import { parseTokens, resolve } from '../src/design/tokens';
+import { MAP_VIEWBOX_HEIGHT, MAP_VIEWBOX_WIDTH } from '../src/map/target-size';
 
 /*
  * Контракт живёт рядом со скриптами сборки, а не в src: чтение файла требует
@@ -230,6 +231,18 @@ describe('игровая карта', () => {
    * 3:1 сверху — не выше 0.153, и все три цвета живут в этой полосе.
    * Различает их узор, см. MapDefs.tsx.
    */
+});
+
+describe('макет карты', () => {
+  it('пропорция карты в токенах совпадает с viewBox', () => {
+    const [width, height] = resolve(tokens, '--map-aspect')
+      .split('/')
+      .map((part) => Number(part.trim()));
+
+    expect(width).toBe(MAP_VIEWBOX_WIDTH);
+    expect(height).toBe(MAP_VIEWBOX_HEIGHT);
+  });
+
 });
 
 describe('справочная карта', () => {

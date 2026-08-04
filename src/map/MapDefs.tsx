@@ -17,7 +17,13 @@ const FAILED_PATTERN_ID = 'map-hatch-failed';
 
 export function MapDefs() {
   return (
-    <svg width="0" height="0" aria-hidden="true" focusable="false">
+    <svg
+      className="map-defs"
+      width="0"
+      height="0"
+      aria-hidden="true"
+      focusable="false"
+    >
       <defs>
         {/*
           Ошибка помечается штриховкой, а не другим цветом заливки: пара

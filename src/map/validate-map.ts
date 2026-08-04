@@ -1,5 +1,6 @@
 import { REGION_PALETTE } from './region-palette';
 import {
+  MAP_VIEWBOX_HEIGHT,
   MAP_VIEWBOX_WIDTH,
   MIN_TARGET_PX,
   REFERENCE_MAP_WIDTH,
@@ -29,16 +30,26 @@ export function validateRegionPalette(regionIds: readonly string[]): void {
 
 /**
  * Единицы палитры считаны из конкретного `viewBox`. Если карту заменят на
- * источник с другими размерами, пересчёт в пиксели станет врать, а порог
- * нажимаемости — пропускать мелкие области.
+ * источник с другими размерами, пересчёт в пиксели станет врать, порог
+ * нажимаемости — пропускать мелкие области, а пропорция `--map-aspect`
+ * в токенах разойдётся с содержимым коробки карты.
  */
 export function validateViewBox(viewBox: string | null): void {
-  const width = Number(viewBox?.trim().split(/\s+/)[2]);
+  const parts = viewBox?.trim().split(/\s+/) ?? [];
+  const width = Number(parts[2]);
+  const height = Number(parts[3]);
 
   if (width !== MAP_VIEWBOX_WIDTH) {
     throw new Error(
       `Ширина viewBox карты ${width} не совпадает с MAP_VIEWBOX_WIDTH ${MAP_VIEWBOX_WIDTH}. ` +
         'Обновите константу и перегенерируйте палитру и цели нажатия',
+    );
+  }
+
+  if (height !== MAP_VIEWBOX_HEIGHT) {
+    throw new Error(
+      `Высота viewBox карты ${height} не совпадает с MAP_VIEWBOX_HEIGHT ${MAP_VIEWBOX_HEIGHT}. ` +
+        'Обновите константу и токен --map-aspect в tokens.css',
     );
   }
 }

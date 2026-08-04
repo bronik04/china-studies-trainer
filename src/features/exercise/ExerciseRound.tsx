@@ -15,6 +15,8 @@ import {
   type Round,
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
+import { MapAttribution } from '../../map/MapAttribution';
+import { RegionAnswerList } from '../../map/RegionAnswerList';
 import { AnswerFeedback } from './AnswerFeedback';
 import { answerStatesFor } from './answer-states';
 import { EXERCISE_MODES } from './exercise-modes';
@@ -129,59 +131,83 @@ export function ExerciseRound({
   }
 
   return (
-    <main className="app-shell">
-      <header className="hero">
-        <p className="eyebrow">{mode.eyebrow}</p>
-        <h1 data-testid="exercise-target">
-          {question.exerciseType === 'name-region'
-            ? 'Регион на карте'
-            : labelOf(targetRegion, question.representation)}
-        </h1>
-        <p className="exercise-progress">
-          Вопрос {round.currentIndex + 1} из {round.questions.length} · уровень {level}
-        </p>
-      </header>
-      {showsMap ? (
-        <ChinaMap
+    <main className="round-shell">
+      <div className="round-layout" data-columns={showsMap ? 'two' : 'one'}>
+        <div className="round-prompt-column">
+          <header className="round-prompt">
+            <p className="eyebrow">{mode.eyebrow}</p>
+            <h1 data-testid="exercise-target">
+              {question.exerciseType === 'name-region'
+                ? 'Регион на карте'
+                : labelOf(targetRegion, question.representation)}
+            </h1>
+            <p className="exercise-progress">
+              Вопрос {round.currentIndex + 1} из {round.questions.length} · уровень{' '}
+              {level}
+            </p>
+          </header>
+          {isMapAnswer ? null : (
+            <ul className="choice-list" aria-label="Варианты ответа">
+              {choicesByQuestion[round.currentIndex].map((choice) => (
+                <li key={choice.id}>
+                  <button
+                    type="button"
+                    data-testid="choice-option"
+                    data-choice-id={choice.id}
+                    data-result={resultOf(
+                      choice.id,
+                      question.regionId,
+                      answeredRegionId,
+                    )}
+                    disabled={round.status !== 'ready'}
+                    onClick={handleChoice}
+                  >
+                    {question.exerciseType === 'match-capital'
+                      ? choice.capitalRu
+                      : labelOf(choice, question.representation)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {round.status === 'feedback' ? (
+            <AnswerFeedback
+              isCorrect={answeredRegionId === question.regionId}
+              targetRegion={targetRegion}
+              isLastQuestion={isLastQuestion}
+              onNext={handleNext}
+            />
+          ) : null}
+        </div>
+        {showsMap ? (
+          <div className="round-map">
+            <ChinaMap
+              regions={regions}
+              selectedRegionId={isMapAnswer ? answeredRegionId : question.regionId}
+              onSelect={handleMapSelect}
+              onClear={() => {}}
+              answerStates={answerStates}
+              interactive={isMapAnswer}
+              usage="answer"
+            />
+          </div>
+        ) : null}
+      </div>
+      {isMapAnswer ? (
+        <RegionAnswerList
+          presentation="disclosure"
           regions={regions}
-          selectedRegionId={isMapAnswer ? answeredRegionId : question.regionId}
+          selectedRegionId={answeredRegionId}
           onSelect={handleMapSelect}
-          onClear={() => {}}
           answerStates={answerStates}
-          interactive={isMapAnswer}
         />
       ) : null}
-      {isMapAnswer ? null : (
-        <ul className="choice-list" aria-label="Варианты ответа">
-          {choicesByQuestion[round.currentIndex].map((choice) => (
-            <li key={choice.id}>
-              <button
-                type="button"
-                data-testid="choice-option"
-                data-choice-id={choice.id}
-                data-result={resultOf(choice.id, question.regionId, answeredRegionId)}
-                disabled={round.status !== 'ready'}
-                onClick={handleChoice}
-              >
-                {question.exerciseType === 'match-capital'
-                  ? choice.capitalRu
-                  : labelOf(choice, question.representation)}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {round.status === 'feedback' ? (
-        <AnswerFeedback
-          isCorrect={answeredRegionId === question.regionId}
-          targetRegion={targetRegion}
-          isLastQuestion={isLastQuestion}
-          onNext={handleNext}
-        />
-      ) : null}
-      <button type="button" className="secondary" onClick={onExit}>
-        Прервать раунд
-      </button>
+      <footer className="round-footer">
+        <button type="button" className="secondary" onClick={onExit}>
+          Прервать раунд
+        </button>
+        {showsMap ? <MapAttribution /> : null}
+      </footer>
     </main>
   );
 }

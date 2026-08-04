@@ -58,3 +58,9 @@ it('сверяет ширину viewBox карты с константой пе�
   );
   expect(() => validateViewBox(null)).toThrow(/не совпадает/);
 });
+
+it('сверяет высоту viewBox: от неё зависит пропорция коробки карты в CSS', () => {
+  expect(() => validateViewBox('0 0 774 600')).toThrow(
+    /Высота viewBox карты 600 не совпадает/,
+  );
+});
