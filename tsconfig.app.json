@@ -16,7 +16,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["vite/client", "vitest/globals"]
+    // `node` — ради design/tokens.ts: он читает tokens.css с диска, чтобы тест
+    // проверял тот же файл, который грузит приложение. В коде приложения
+    // узловые API не используются — сборка Vite упала бы на них сразу.
+    "types": ["vite/client", "vitest/globals", "node"]
   },
   "include": ["src"]
 }

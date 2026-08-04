@@ -1,10 +1,18 @@
+@import './design/tokens.css';
+
+/*
+ * Компоненты не задают цвета, размеры и длительности напрямую — только через
+ * токены из design/tokens.css. Контраст каждой пары зафиксирован тестом
+ * design/tokens.test.ts.
+ */
+
 :root {
-  color: #1f2937;
-  background: #fffdf8;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  background: var(--surface-ground);
+  color: var(--text-on-ground);
+  font-family: var(--t-family-text);
+  font-size: var(--t-size-body);
   font-synthesis: none;
+  line-height: var(--t-leading-body);
 }
 
 * {
@@ -12,43 +20,19 @@
 }
 
 body {
+  background: var(--surface-ground);
   margin: 0;
-  min-width: 320px;
   min-height: 100vh;
-  background: #fffdf8;
+  min-width: 320px;
 }
 
-body,
 button {
-  line-height: 1.5;
+  font: inherit;
+  line-height: var(--t-leading-body);
 }
 
-button,
-a {
-  outline-offset: 3px;
-}
-
-button:focus-visible,
-a:focus-visible {
-  outline: 3px solid #175cd3;
-}
-
-.app-shell {
-  width: min(100% - 32px, 1120px);
-  margin: 0 auto;
-  padding-block: 32px;
-}
-
-.hero {
-  border-bottom: 1px solid #d0d5dd;
-  margin-bottom: 32px;
-  padding-bottom: 24px;
-}
-
-.eyebrow {
-  color: #b42318;
-  font-weight: 700;
-  margin: 0 0 4px;
+:where([lang='zh-Hans']) {
+  font-family: var(--t-family-han);
 }
 
 h1,
@@ -58,144 +42,306 @@ p {
   margin-top: 0;
 }
 
+/* --- Оболочка ---------------------------------------------------------- */
+
+.app-shell {
+  margin: 0 auto;
+  padding-block: var(--s-6);
+  width: min(100% - 2 * var(--s-4), 1120px);
+}
+
+.hero {
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+  margin-bottom: var(--s-6);
+  padding-bottom: var(--s-5);
+}
+
+.eyebrow {
+  color: var(--accent-on-ground);
+  font-size: var(--t-size-caption);
+  font-weight: var(--t-weight-bold);
+  letter-spacing: var(--t-tracking-eyebrow);
+  margin: 0 0 var(--s-2);
+  text-transform: uppercase;
+}
+
 h1 {
-  font-size: clamp(1.75rem, 5vw, 2rem);
-  line-height: 1.2;
-  margin-bottom: 12px;
+  font-size: var(--t-size-title);
+  line-height: var(--t-leading-tight);
+  margin-bottom: var(--s-3);
 }
 
 .section-heading {
   align-items: baseline;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 16px;
+  gap: var(--s-2) var(--s-4);
   justify-content: space-between;
 }
 
 .section-heading p,
-.status-note {
-  color: #475467;
+.exercise-progress,
+.map-attribution {
+  color: var(--text-on-ground-muted);
 }
 
 .status-note {
-  border-left: 4px solid #b42318;
-  padding-left: 12px;
-}
-
-.map-section {
-  margin-bottom: 40px;
+  border-left: var(--border-focus) solid var(--accent-on-ground);
+  color: var(--text-on-ground);
+  padding-left: var(--s-3);
 }
 
 .map-attribution {
-  color: #475467;
-  font-size: 0.875rem;
+  font-size: var(--t-size-caption);
+}
+
+.map-attribution a {
+  color: inherit;
+}
+
+/* --- Фокус -------------------------------------------------------------- */
+
+/*
+ * На доске кольцо золотое, на бумаге — тушью: одного цвета, видного и там и
+ * там, не существует (см. tokens.css).
+ */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: var(--border-focus) solid var(--focus-on-ground);
+  outline-offset: var(--s-1);
+}
+
+.region-card :focus-visible,
+.answer-feedback :focus-visible,
+.choice-list button:focus-visible {
+  outline-color: var(--focus-on-paper);
+}
+
+/* --- Кнопки ------------------------------------------------------------- */
+
+button.primary,
+button.secondary {
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: var(--t-weight-medium);
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-5);
+  transition: background var(--duration-quick) var(--ease-out),
+    border-color var(--duration-quick) var(--ease-out);
+}
+
+button.primary {
+  background: var(--accent);
+  border: var(--border-solid) solid var(--accent);
+  color: var(--surface-paper-bright);
+}
+
+button.primary:hover:enabled {
+  background: var(--c-cinnabar-700);
+  border-color: var(--c-cinnabar-700);
+}
+
+button.secondary {
+  background: transparent;
+  border: var(--border-solid) solid var(--line-on-ground);
+  color: var(--text-on-ground);
+}
+
+button.secondary:hover:enabled {
+  border-color: var(--text-on-ground-muted);
+}
+
+.mode-actions,
+.results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+}
+
+.level-choice {
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  margin-top: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+}
+
+.level-choice legend {
+  font-weight: var(--t-weight-medium);
+  padding: 0 var(--s-1);
+}
+
+.level-choice label {
+  align-items: center;
+  display: flex;
+  gap: var(--s-2);
+  min-height: var(--target-min);
+}
+
+.level-choice input {
+  accent-color: var(--accent-on-ground);
+}
+
+/* --- Карта -------------------------------------------------------------- */
+
+.map-section {
+  margin-bottom: var(--s-7);
 }
 
 .map-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 16px 0;
+  gap: var(--s-2);
+  margin: var(--s-4) 0;
 }
 
 .map-controls button,
 .map-alternative button {
-  background: #ffffff;
-  border: 1px solid #98a2b3;
-  border-radius: 6px;
-  color: #1d2939;
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground);
   cursor: pointer;
   font: inherit;
-  padding: 8px 12px;
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-3);
 }
 
 .map-controls button:hover:not(:disabled),
-.map-alternative button:hover {
-  background: #eff8ff;
-  border-color: #175cd3;
+.map-alternative button:hover:not(:disabled) {
+  border-color: var(--focus-on-ground);
 }
 
-.map-controls button:disabled {
-  color: #98a2b3;
+.map-controls button:disabled,
+.map-alternative button:disabled {
+  color: var(--text-on-ground-muted);
   cursor: not-allowed;
 }
 
 .china-map {
-  background: #eff8ff;
-  border: 1px solid #98a2b3;
-  border-radius: 8px;
+  background: var(--map-sea);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
 .china-map svg {
   display: block;
   transform-origin: center;
-  transition: transform 160ms ease-out;
+  transition: transform var(--duration-quick) var(--ease-out);
   width: 100%;
 }
 
+/*
+ * Границы провинций — главная информация на карте. Прежняя белая обводка
+ * давала 1.47:1 при требуемых MAP_SPEC.md 3:1; теперь граница рисуется тушью.
+ */
 .china-map [data-region-id] {
   cursor: pointer;
-  fill: #d0d5dd;
-  stroke: #ffffff;
-  stroke-width: 1;
-  transition: fill 120ms ease-out, stroke 120ms ease-out;
+  fill: var(--map-land-1);
+  stroke: var(--map-border);
+  stroke-width: var(--map-border-width);
+  transition: fill var(--duration-instant) var(--ease-out),
+    stroke-width var(--duration-instant) var(--ease-out);
 }
 
+.china-map [data-land-tone='2'] {
+  fill: var(--map-land-2);
+}
+
+.china-map [data-land-tone='3'] {
+  fill: var(--map-land-3);
+}
+
+.china-map [data-land-tone='4'] {
+  fill: var(--map-land-4);
+}
+
+/* Наведение отмечается толщиной границы, а не оттенком: оттенка мало. */
 .china-map [data-region-id]:hover {
-  fill: #98a2b3;
-}
-
-.china-map [data-region-id][data-selected='true'] {
-  fill: #175cd3;
-  stroke: #ffffff;
+  stroke-width: var(--map-border-width-strong);
 }
 
 .china-map [data-region-id]:focus-visible {
-  fill: #98a2b3;
   outline: none;
-  stroke: #101828;
+  stroke: var(--focus-on-paper);
   stroke-width: 4;
 }
 
-.china-map [data-region-id][data-answer-state='correct'] {
-  fill: #087443;
-  stroke: #ffffff;
-  stroke-width: 2;
+.china-map [data-region-id][data-selected='true'] {
+  fill: var(--map-selected);
 }
 
-.china-map [data-region-id][data-answer-state='incorrect'] {
-  fill: #b42318;
-  stroke: #ffffff;
-  stroke-dasharray: 3 2;
-  stroke-width: 2;
+/* Цели нажатия для областей меньше 24 px: см. scripts/generate-hit-targets.ts */
+.china-map .map-hit {
+  cursor: pointer;
 }
 
-.china-map [data-region-id][data-answer-state='disabled'] {
+.china-map [data-region-id][data-answer-state] {
   cursor: not-allowed;
-  fill: #eaecf0;
+}
+
+/*
+ * Ответ закрыт: все области получают один тон вместо четырёх. Прежняя пара
+ * #EAECF0 / #D0D5DD давала 1.25:1 — ученик не видел, что карта не отвечает.
+ */
+.china-map [data-region-id][data-answer-state='disabled'] {
+  fill: var(--map-locked);
+}
+
+.china-map [data-region-id][data-answer-state='correct'] {
+  fill: var(--map-correct);
+  stroke: var(--map-correct-ink);
+  stroke-width: var(--map-border-width-strong);
+}
+
+/*
+ * Ошибка помечается штриховкой и пунктиром, а не сплошной заливкой другого
+ * цвета. Различие с верным ответом категориальное — сплошное против
+ * штрихованного, — поэтому читается и в оттенках серого, и при дальтонизме,
+ * и на чёрно-белой печати (см. tokens.css и MapDefs.tsx).
+ */
+.china-map [data-region-id][data-answer-state='incorrect'] {
+  fill: url('#map-hatch-incorrect');
+  stroke: var(--map-incorrect-mark);
+  stroke-dasharray: 4 2;
+  stroke-width: var(--map-border-width-strong);
 }
 
 .china-map .map-callout line {
-  stroke: #667085;
+  stroke: var(--map-border);
+  stroke-width: 1;
+}
+
+/*
+ * Маркер выноски — такая же область карты, как контур: заливку он берёт из
+ * своего тона, а состояния получает по общим правилам. Своего `fill` здесь
+ * нет намеренно — он перекрыл бы тон, потому что стоит ниже по файлу.
+ */
+.china-map .map-callout circle {
+  stroke: var(--map-border);
   stroke-width: 1;
 }
 
 .china-map .map-callout text {
-  fill: #1f2937;
-  font-family: inherit;
-  font-size: 9px;
-  font-weight: 600;
+  fill: var(--map-label);
+  font-family: var(--t-family-text);
+  font-size: 11px;
+  font-weight: var(--t-weight-bold);
 }
 
 .map-selection {
-  font-weight: 700;
-  margin: 16px 0;
+  font-weight: var(--t-weight-bold);
+  margin: var(--s-4) 0;
 }
 
 .map-alternative {
   display: grid;
-  gap: 8px;
+  gap: var(--s-2);
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   list-style: none;
   margin: 0;
@@ -203,39 +349,40 @@ h1 {
 }
 
 .map-alternative button {
-  min-height: 44px;
   text-align: left;
   width: 100%;
 }
 
 .map-alternative button[aria-pressed='true'] {
-  background: #d1e9ff;
-  border-color: #175cd3;
-  font-weight: 700;
+  border-color: var(--accent-on-ground);
+  font-weight: var(--t-weight-bold);
 }
+
+/* --- Справочник регионов ------------------------------------------------ */
 
 .region-list {
   display: grid;
-  gap: 12px;
+  gap: var(--s-3);
   list-style: none;
-  margin: 24px 0 0;
+  margin: var(--s-5) 0 0;
   padding: 0;
 }
 
 .region-card {
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
+  background: var(--surface-paper);
+  border-radius: var(--radius-md);
+  color: var(--text-on-paper);
   height: 100%;
-  padding: 16px;
+  padding: var(--s-4);
 }
 
 .region-card h3 {
-  font-size: 1.125rem;
-  margin-bottom: 8px;
+  font-size: var(--t-size-lead);
+  margin-bottom: var(--s-2);
 }
 
 .region-card p {
-  margin-bottom: 8px;
+  margin-bottom: var(--s-2);
 }
 
 .region-card p:last-child {
@@ -248,103 +395,14 @@ h1 {
   }
 }
 
-.answer-feedback {
-  border: 2px solid #d0d5dd;
-  border-radius: 8px;
-  margin: 16px 0;
-  padding: 16px;
-}
-
-.answer-feedback[data-result='correct'] {
-  border-color: #087443;
-}
-
-.answer-feedback[data-result='incorrect'] {
-  border-color: #b42318;
-  border-style: dashed;
-}
-
-.answer-feedback-icon {
-  font-size: 24px;
-  line-height: 1;
-  margin: 0 0 8px;
-}
-
-.answer-feedback[data-result='correct'] .answer-feedback-icon {
-  color: #087443;
-}
-
-.answer-feedback[data-result='incorrect'] .answer-feedback-icon {
-  color: #b42318;
-}
-
-.answer-feedback h3 {
-  margin: 0 0 8px;
-}
-
-.answer-feedback h3:focus-visible {
-  outline: 3px solid #175cd3;
-  outline-offset: 2px;
-}
-
-.exercise-progress {
-  color: #475467;
-  font-weight: 600;
-}
-
-button.primary {
-  background: #b42318;
-  border: 2px solid #b42318;
-  border-radius: 8px;
-  color: #fffdf8;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 600;
-  min-height: 44px;
-  padding: 8px 24px;
-}
-
-button.secondary {
-  background: transparent;
-  border: 2px solid #d0d5dd;
-  border-radius: 8px;
-  color: #1f2937;
-  cursor: pointer;
-  font: inherit;
-  min-height: 44px;
-  padding: 8px 24px;
-}
-
-button.primary:focus-visible,
-button.secondary:focus-visible {
-  outline: 3px solid #175cd3;
-  outline-offset: 2px;
-}
-
-.review-list {
-  list-style: none;
-  margin: 8px 0 16px;
-  padding: 0;
-}
-
-.review-list li {
-  border-bottom: 1px solid #d0d5dd;
-  padding: 8px 0;
-}
-
-.results-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 24px;
-}
+/* --- Варианты ответа ---------------------------------------------------- */
 
 .choice-list {
   display: grid;
-  gap: 12px;
+  gap: var(--s-3);
   grid-template-columns: 1fr;
   list-style: none;
-  margin: 16px 0;
+  margin: var(--s-4) 0;
   padding: 0;
 }
 
@@ -355,63 +413,81 @@ button.secondary:focus-visible {
 }
 
 .choice-list button {
-  background: #fffdf8;
-  border: 2px solid #d0d5dd;
-  border-radius: 8px;
-  color: #1f2937;
+  background: var(--surface-paper);
+  border: var(--border-solid) solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-on-paper);
   cursor: pointer;
   font: inherit;
-  min-height: 44px;
-  padding: 12px 16px;
+  min-height: var(--target-min);
+  padding: var(--s-3) var(--s-4);
   text-align: left;
+  transition: border-color var(--duration-quick) var(--ease-out);
   width: 100%;
 }
 
 .choice-list button:hover:enabled {
-  border-color: #175cd3;
-}
-
-.choice-list button:focus-visible {
-  outline: 3px solid #175cd3;
-  outline-offset: 2px;
+  border-color: var(--text-on-paper);
 }
 
 .choice-list button[data-result='correct'] {
-  border-color: #087443;
-  border-width: 3px;
+  background: var(--state-correct);
+  border-color: var(--state-correct);
+  color: var(--map-correct-ink);
+  font-weight: var(--t-weight-bold);
 }
 
 .choice-list button[data-result='incorrect'] {
-  border-color: #b42318;
+  border-color: var(--state-incorrect);
   border-style: dashed;
-  border-width: 3px;
 }
 
-.mode-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 16px;
+/* --- Обратная связь ----------------------------------------------------- */
+
+.answer-feedback {
+  background: var(--surface-paper);
+  border-left: var(--s-1) solid var(--line-on-paper);
+  border-radius: var(--radius-md);
+  color: var(--text-on-paper);
+  margin: var(--s-4) 0;
+  padding: var(--s-4);
 }
 
-.level-choice {
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 16px;
-  padding: 12px 16px;
+.answer-feedback[data-result='correct'] {
+  border-left-color: var(--state-correct);
 }
 
-.level-choice legend {
-  font-weight: 600;
-  padding: 0 4px;
+.answer-feedback[data-result='incorrect'] {
+  border-left-color: var(--state-incorrect);
 }
 
-.level-choice label {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  min-height: 44px;
+.answer-feedback-icon {
+  font-size: var(--t-size-lead);
+  line-height: 1;
+  margin: 0 0 var(--s-2);
+}
+
+.answer-feedback[data-result='correct'] .answer-feedback-icon {
+  color: var(--state-correct);
+}
+
+.answer-feedback[data-result='incorrect'] .answer-feedback-icon {
+  color: var(--state-incorrect);
+}
+
+.answer-feedback h3 {
+  margin: 0 0 var(--s-2);
+}
+
+/* --- Итоги -------------------------------------------------------------- */
+
+.review-list {
+  list-style: none;
+  margin: var(--s-2) 0 var(--s-4);
+  padding: 0;
+}
+
+.review-list li {
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+  padding: var(--s-2) 0;
 }

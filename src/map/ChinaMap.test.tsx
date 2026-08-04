@@ -279,3 +279,43 @@ it('в неинтерактивном режиме не зовёт выбира�
 
   expect(screen.queryByText('Выберите регион на схеме или в списке.')).toBeNull();
 });
+
+it('нажатие на увеличенную цель выбирает мелкий регион, а не соседний', () => {
+  const select = vi.fn();
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={select}
+      onClear={() => {}}
+    />,
+  );
+
+  // Цель Пекина заходит на территорию Хэбэя: у самого Пекина под палец есть
+  // 19 px при требуемых 24 (см. scripts/generate-hit-targets.ts).
+  const hit = container.querySelector('[data-hit-region-id="beijing"]')!;
+  fireEvent.click(hit);
+
+  expect(select).toHaveBeenCalledWith('beijing');
+});
+
+it('каждая область карты получает тон заливки', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+    />,
+  );
+
+  const areas = [...container.querySelectorAll('[data-region-id]')];
+
+  expect(areas).not.toHaveLength(0);
+  for (const area of areas) {
+    expect(
+      area.getAttribute('data-land-tone'),
+      area.getAttribute('data-region-id') ?? '',
+    ).toMatch(/^[1-4]$/);
+  }
+});

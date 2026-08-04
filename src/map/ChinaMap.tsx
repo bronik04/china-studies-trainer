@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import { MapControls, type MapZoom } from './MapControls';
+import { MapDefs } from './MapDefs';
+import { REGION_PALETTE } from './region-palette';
 
 export type AnswerState = 'correct' | 'incorrect' | 'disabled';
 
@@ -23,9 +25,20 @@ type ChinaMapProps = {
  */
 const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
 
+/**
+ * Нажатие принимает и сам контур, и увеличенная цель для мелких областей.
+ * Цели помечены отдельным атрибутом: доступное имя, фокус и состояния должны
+ * остаться на контуре, иначе регион удвоится в обходе по Tab и в дереве
+ * доступности (см. scripts/generate-hit-targets.ts).
+ */
 function getRegionId(target: EventTarget | null): string | null {
   if (!(target instanceof Element)) {
     return null;
+  }
+
+  const hit = target.closest<SVGElement>('[data-hit-region-id]');
+  if (hit?.dataset.hitRegionId) {
+    return hit.dataset.hitRegionId;
   }
 
   return target.closest<SVGElement>('[data-region-id]')?.dataset.regionId ?? null;
@@ -61,6 +74,13 @@ export function ChinaMap({
       const label = labelsByMapAreaId.get(area.dataset.regionId ?? '');
       if (label) {
         area.setAttribute('aria-label', label);
+      }
+
+      // Тон заливки считается по геометрии карты: у соседей он не совпадает
+      // никогда (см. scripts/generate-region-palette.ts).
+      const tone = REGION_PALETTE[area.dataset.regionId ?? '']?.tone;
+      if (tone !== undefined) {
+        area.dataset.landTone = String(tone);
       }
 
       const answerState = answerStates[area.dataset.regionId ?? ''];
@@ -110,6 +130,7 @@ export function ChinaMap({
         <a href="https://github.com/antvis/china-geojson">china-geojson</a> (AntV).
       </p>
       {onZoomChange ? <MapControls zoom={zoom} onZoomChange={onZoomChange} /> : null}
+      <MapDefs />
       <div
         className="china-map"
         ref={mapRef}
