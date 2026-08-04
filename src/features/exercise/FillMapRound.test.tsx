@@ -182,3 +182,32 @@ it('во время показа не принимает ответ, но спи
   }
 });
 
+
+it('первый фокусируемый элемент — область карты', () => {
+  const { container } = renderRound();
+
+  const first = container.querySelector(
+    'a[href], button:not([disabled]), [tabindex="0"]',
+  );
+
+  expect(first).toHaveAttribute('data-region-id');
+});
+
+it('«Прервать раунд» стоит в разметке после списка ответов', () => {
+  renderRound();
+
+  const list = screen.getByRole('list', { name: 'Список регионов карты' });
+  const abort = screen.getByRole('button', { name: 'Прервать раунд' });
+
+  expect(
+    list.compareDocumentPosition(abort) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+});
+
+it('карта на экране раунда без заголовка «Интерактивная карта»', () => {
+  renderRound();
+
+  expect(
+    screen.queryByRole('heading', { name: 'Интерактивная карта' }),
+  ).toBeNull();
+});

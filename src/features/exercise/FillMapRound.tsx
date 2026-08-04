@@ -13,6 +13,8 @@ import { createSeededRandom } from '../../domain/random';
 import { labelOf } from '../../domain/representations';
 import type { Level } from '../../domain/round';
 import { ChinaMap, type MapHighlight } from '../../map/ChinaMap';
+import { MapAttribution } from '../../map/MapAttribution';
+import { RegionAnswerList } from '../../map/RegionAnswerList';
 import { RoundStopwatch } from './RoundStopwatch';
 
 /**
@@ -192,47 +194,66 @@ export function FillMapRound({
   }
 
   return (
-    <main className="app-shell">
-      <header className="hero">
-        <p className="eyebrow">Найдите на карте</p>
-        <h1 data-testid="fill-target">
-          {targetRegion === null
-            ? 'Карта заполнена'
-            : labelOf(targetRegion, question!.representation)}
-        </h1>
-        <div className="fill-meta">
-          <p className="exercise-progress" data-testid="fill-progress">
-            Закрашено {closed} из {round.order.length}
-          </p>
-          <p className="attempt-dots">
-            <span aria-hidden="true">
-              {'●'.repeat(attemptsLeft)}
-              {'○'.repeat(round.usedAttempts)}
-            </span>
-            <span className="visually-hidden">
-              Попытка {round.usedAttempts + 1} из {MAX_ATTEMPTS_PER_REGION}
-            </span>
-          </p>
-          <RoundStopwatch startedAt={startedAt} />
+    <main className="round-shell">
+      <div className="round-layout" data-columns="two">
+        <div className="round-prompt-column">
+          <header className="round-prompt">
+            <p className="eyebrow">Найдите на карте</p>
+            <h1 data-testid="fill-target">
+              {targetRegion === null
+                ? 'Карта заполнена'
+                : labelOf(targetRegion, question!.representation)}
+            </h1>
+            <div className="fill-meta">
+              <p className="exercise-progress" data-testid="fill-progress">
+                Закрашено {closed} из {round.order.length}
+              </p>
+              <p className="attempt-dots">
+                <span aria-hidden="true">
+                  {'●'.repeat(attemptsLeft)}
+                  {'○'.repeat(round.usedAttempts)}
+                </span>
+                <span className="visually-hidden">
+                  Попытка {round.usedAttempts + 1} из {MAX_ATTEMPTS_PER_REGION}
+                </span>
+              </p>
+              <RoundStopwatch startedAt={startedAt} />
+            </div>
+            <p className="fill-status" role="status" aria-live="polite">
+              {statusText()}
+            </p>
+          </header>
         </div>
-        <p className="fill-status" role="status" aria-live="polite">
-          {statusText()}
-        </p>
-      </header>
-      <ChinaMap
+        <div className="round-map">
+          <ChinaMap
+            regions={regions}
+            selectedRegionId={null}
+            onSelect={handleSelect}
+            onClear={() => {}}
+            variant="fill"
+            usage="answer"
+            outcomes={round.outcomes}
+            highlight={mapHighlight}
+            interactive={!finished}
+            paused={isRevealing}
+          />
+        </div>
+      </div>
+      <RegionAnswerList
+        presentation="disclosure"
         regions={regions}
         selectedRegionId={null}
         onSelect={handleSelect}
-        onClear={() => {}}
-        variant="fill"
         outcomes={round.outcomes}
-        highlight={mapHighlight}
         interactive={!finished}
         paused={isRevealing}
       />
-      <button type="button" className="secondary" onClick={onExit}>
-        Прервать раунд
-      </button>
+      <footer className="round-footer">
+        <button type="button" className="secondary" onClick={onExit}>
+          Прервать раунд
+        </button>
+        <MapAttribution />
+      </footer>
     </main>
   );
 }
