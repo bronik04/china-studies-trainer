@@ -53,8 +53,15 @@ export function FillMapRound({
   const [revealedRegionId, setRevealedRegionId] = useState<string | null>(null);
   const [missedRegionId, setMissedRegionId] = useState<string | null>(null);
   /*
-   * Раунд закончился, но показ ещё идёт. Без этого экран итогов подменил бы
-   * карту прямо во время показа, и последний регион ученик бы не увидел.
+   * Раунд закончился, но показ ещё идёт: экран итогов не должен подменить
+   * карту прямо во время показа.
+   *
+   * При нынешних правилах ветка защитная: закрытый регион нажать нельзя, и на
+   * последнем вопросе кликабелен только он сам, поэтому последний регион
+   * всегда берётся с первой попытки и показом не заканчивается. Ветка нужна,
+   * чтобы правило «последний вопрос нельзя провалить» не оказалось молчаливым
+   * условием работы кода: снимут запрет на повторное нажатие — показ
+   * последнего региона всё равно доиграет.
    */
   const [finishedRound, setFinishedRound] = useState<FillRound | null>(null);
   /*
@@ -66,6 +73,18 @@ export function FillMapRound({
   /** Начало текущего региона. `null` — регион ещё не начинали, считаем от старта. */
   const regionStartedAt = useRef<number | null>(null);
 
+  /*
+   * `onFinish` объявлена в теле родителя, поэтому её идентичность меняется на
+   * каждый его рендер. В зависимостях эффекта это перезаводило бы таймер
+   * показа при каждой перерисовке App — и при частых перерисовках он не
+   * сработал бы никогда. Ссылка держит всегда свежий обработчик, не входя в
+   * зависимости.
+   */
+  const onFinishRef = useRef(onFinish);
+  useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
+
   // Пауза показа: пока она идёт, карта не принимает нажатия. Если раунд на
   // этом и закончился, итог отдаётся наверх только после паузы.
   useEffect(() => {
@@ -75,13 +94,16 @@ export function FillMapRound({
 
     const timer = setTimeout(() => {
       setRevealedRegionId(null);
+      // Показ кончился: строка «Регион показан на карте» перестала быть
+      // правдой, а следующий вопрос уже задан.
+      setMove(null);
       if (finishedRound !== null) {
-        onFinish(finishedRound);
+        onFinishRef.current(finishedRound);
       }
     }, REVEAL_MS);
 
     return () => clearTimeout(timer);
-  }, [finishedRound, onFinish, revealedRegionId]);
+  }, [finishedRound, revealedRegionId]);
 
   // Вспышка промаха: загорается и гаснет сама.
   useEffect(() => {
@@ -205,7 +227,8 @@ export function FillMapRound({
         variant="fill"
         outcomes={round.outcomes}
         highlight={mapHighlight}
-        interactive={!isRevealing && !finished}
+        interactive={!finished}
+        paused={isRevealing}
       />
       <button type="button" className="secondary" onClick={onExit}>
         Прервать раунд

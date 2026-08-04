@@ -398,3 +398,71 @@ it('в игровом режиме карта не заводит второй a
 
   expect(screen.queryByRole('status')).toBeNull();
 });
+
+it('не выбирает уже закрашенный регион', () => {
+  const select = vi.fn();
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={select}
+      onClear={() => {}}
+      variant="fill"
+      outcomes={{ sichuan: 'first-try' }}
+    />,
+  );
+
+  fireEvent.click(container.querySelector('[data-region-id="sichuan"]')!);
+  fireEvent.click(screen.getByRole('button', { name: /^Сычуань \(四川省\)/ }));
+
+  expect(select).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: /^Сычуань \(四川省\)/ })).toBeDisabled();
+});
+
+it('называет исход региона в доступном имени', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+      outcomes={{ sichuan: 'second-try', hunan: 'failed' }}
+    />,
+  );
+
+  expect(container.querySelector('[data-region-id="sichuan"]')).toHaveAttribute(
+    'aria-label',
+    'Сычуань, 四川省 — взят со второй попытки',
+  );
+  expect(container.querySelector('[data-region-id="hunan"]')).toHaveAttribute(
+    'aria-label',
+    'Хунань, 湖南省 — не угадан',
+  );
+  expect(
+    screen.getByRole('button', { name: 'Хунань (湖南省) — не угадан' }),
+  ).toBeInTheDocument();
+});
+
+it('на паузе не отвечает, но список и фокус остаются на месте', () => {
+  const select = vi.fn();
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={select}
+      onClear={() => {}}
+      variant="fill"
+      paused
+    />,
+  );
+
+  const button = screen.getByRole('button', { name: 'Сычуань (四川省)' });
+  button.focus();
+  fireEvent.click(button);
+
+  expect(select).not.toHaveBeenCalled();
+  expect(button).toHaveAttribute('aria-disabled', 'true');
+  expect(button).not.toBeDisabled();
+  expect(document.activeElement).toBe(button);
+});

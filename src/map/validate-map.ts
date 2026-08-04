@@ -1,8 +1,47 @@
+import { REGION_PALETTE } from './region-palette';
 import {
+  MAP_VIEWBOX_WIDTH,
   MIN_TARGET_PX,
   REFERENCE_MAP_WIDTH,
   undersizedRegions,
 } from './target-size';
+
+/**
+ * У каждого региона должна быть запись в палитре: из неё берутся точка
+ * подписи и диаметр вписанной окружности.
+ *
+ * Без этой проверки `undersizedRegions` молча пропускает неизвестный
+ * идентификатор, и забытый `npm run generate:palette` проходит сборку, а
+ * область остаётся без цели нажатия.
+ */
+export function validateRegionPalette(regionIds: readonly string[]): void {
+  const missing = regionIds.filter(
+    (regionId) => REGION_PALETTE[regionId] === undefined,
+  );
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Нет записи в палитре регионов: ${missing.join(', ')}. ` +
+        'Запустите npm run generate:palette',
+    );
+  }
+}
+
+/**
+ * Единицы палитры считаны из конкретного `viewBox`. Если карту заменят на
+ * источник с другими размерами, пересчёт в пиксели станет врать, а порог
+ * нажимаемости — пропускать мелкие области.
+ */
+export function validateViewBox(viewBox: string | null): void {
+  const width = Number(viewBox?.trim().split(/\s+/)[2]);
+
+  if (width !== MAP_VIEWBOX_WIDTH) {
+    throw new Error(
+      `Ширина viewBox карты ${width} не совпадает с MAP_VIEWBOX_WIDTH ${MAP_VIEWBOX_WIDTH}. ` +
+        'Обновите константу и перегенерируйте палитру и цели нажатия',
+    );
+  }
+}
 
 /**
  * Каждый регион, который меньше порога нажатия, обязан иметь либо отдельную

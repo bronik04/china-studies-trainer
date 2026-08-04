@@ -1,17 +1,12 @@
 /**
- * Чтение токенов из `tokens.css`. CSS остаётся единственным источником
- * значений: тест разбирает тот же файл, который грузит приложение, поэтому
- * контракт не может разойтись с реальностью.
+ * Разбор `tokens.css`. CSS остаётся единственным источником значений: проверка
+ * контраста читает тот же файл, который грузит приложение, поэтому контракт не
+ * может разойтись с реальностью.
  *
- * Модуль только для тестов и скриптов: приложению он не нужен, оно подключает
- * `tokens.css` напрямую. Импорт `?raw` здесь не годится — сборщик обрабатывает
- * CSS раньше и отдаёт пустую строку, поэтому файл читается с диска. Путь
- * считается от корня проекта: и Vitest, и `npx tsx` запускаются оттуда.
+ * Модуль чистый: файл он не читает. Чтение с диска живёт в
+ * `scripts/validate-tokens.ts` — узловые API не должны попадать в область
+ * сборки приложения.
  */
-import { readFileSync } from 'node:fs';
-import { resolve as resolvePath } from 'node:path';
-
-const TOKENS_FILE = resolvePath(process.cwd(), 'src/design/tokens.css');
 
 /**
  * Берётся только первый блок `:root`. Второй блок лежит внутри
@@ -34,8 +29,8 @@ function readRootBlock(css: string): string {
   return css.slice(start, end);
 }
 
-export function readTokens(): ReadonlyMap<string, string> {
-  const block = readRootBlock(readFileSync(TOKENS_FILE, 'utf8'));
+export function parseTokens(css: string): ReadonlyMap<string, string> {
+  const block = readRootBlock(css);
   const tokens = new Map<string, string>();
 
   for (const [, name, value] of block.matchAll(

@@ -9,7 +9,9 @@ import {
 } from '../src/map/target-size';
 import {
   validateMapAreaIds,
+  validateRegionPalette,
   validateTargetSizes,
+  validateViewBox,
 } from '../src/map/validate-map';
 
 const assetPath = new URL('../public/maps/china-provinces.svg', import.meta.url);
@@ -23,7 +25,9 @@ const hitTargetIds = [...svg.matchAll(/data-hit-region-id="([^"]+)"/g)].map(
 
 const regionIds = regions.map((region) => region.mapAreaId);
 
+validateViewBox(/viewBox="([^"]+)"/.exec(svg)?.[1] ?? null);
 validateMapAreaIds(regionIds, mapAreaIds);
+validateRegionPalette(regionIds);
 validateTargetSizes(
   regionIds,
   hitTargetIds,

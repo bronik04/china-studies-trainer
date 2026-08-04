@@ -6,9 +6,14 @@
  * разрешается в пределах документа, так что образец объявляется отдельным
  * скрытым `svg` — сам файл карты остаётся нетронутым.
  */
-export const INCORRECT_PATTERN_ID = 'map-hatch-incorrect';
-export const SECOND_TRY_PATTERN_ID = 'map-hatch-second-try';
-export const FAILED_PATTERN_ID = 'map-hatch-failed';
+/*
+ * Идентификаторы образцов. Не экспортируются: ссылается на них только
+ * `src/styles.css` литералами `url('#...')`, а импортировать их оттуда нельзя.
+ * Переименование правится в двух местах — других потребителей нет.
+ */
+const INCORRECT_PATTERN_ID = 'map-hatch-incorrect';
+const SECOND_TRY_PATTERN_ID = 'map-hatch-second-try';
+const FAILED_PATTERN_ID = 'map-hatch-failed';
 
 export function MapDefs() {
   return (

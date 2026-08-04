@@ -1,6 +1,7 @@
 import type { Region } from '../../content/types';
 import { summariseFillRound, type FillRound } from '../../domain/fill-round';
 import { ChinaMap } from '../../map/ChinaMap';
+import { formatDuration } from './format-duration';
 
 export type FillMapResultsPageProps = {
   readonly round: FillRound;
@@ -9,15 +10,6 @@ export type FillMapResultsPageProps = {
   readonly onNewRound: () => void;
   readonly onExit: () => void;
 };
-
-/** Время подаётся как факт, без оценки скорости (UI_UX.md). */
-function formatDuration(durationMs: number): string {
-  const totalSeconds = Math.round(durationMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return minutes === 0 ? `${seconds} с` : `${minutes} мин ${seconds} с`;
-}
 
 /**
  * Итог — сама заполненная карта. Числовая разбивка рядом не украшает: три
@@ -68,10 +60,18 @@ export function FillMapResultsPage({
         ) : (
           <>
             <h3>Стоит повторить</h3>
+            {/*
+              Исход назван словом: на карте «со второго раза» и «не угадано»
+              различаются цветом и штриховкой, и без подписи этот разбор
+              пропал бы для того, кто карту не видит.
+            */}
             <ul className="review-list">
               {reviewRegions.map((region) => (
                 <li key={region.id}>
-                  {region.nameRu} <span lang="zh-Hans">{region.nameZh}</span>
+                  {region.nameRu} <span lang="zh-Hans">{region.nameZh}</span> —{' '}
+                  {round.outcomes[region.id] === 'second-try'
+                    ? 'со второго раза'
+                    : 'не угадано'}
                 </li>
               ))}
             </ul>

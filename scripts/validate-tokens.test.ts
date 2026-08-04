@@ -5,15 +5,26 @@
  * Проверяются только пары, которые реально встречаются на экране: контраст
  * двух цветов, никогда не оказывающихся рядом, ничего не значит.
  */
+import { readFileSync } from 'node:fs';
+import { resolve as resolvePath } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   GRAPHIC_CONTRAST,
   TEXT_CONTRAST,
   contrastRatioRounded,
-} from './contrast';
-import { readTokens, resolve } from './tokens';
+} from '../src/design/contrast';
+import { parseTokens, resolve } from '../src/design/tokens';
 
-const tokens = readTokens();
+/*
+ * Контракт живёт рядом со скриптами сборки, а не в src: чтение файла требует
+ * узловых API, и держать их в области сборки приложения значило бы позволить
+ * компоненту написать readFileSync и узнать об ошибке только в браузере.
+ *
+ * Путь считается от корня проекта: и Vitest, и `npx tsx` запускаются оттуда.
+ */
+const tokens = parseTokens(
+  readFileSync(resolvePath(process.cwd(), 'src/design/tokens.css'), 'utf8'),
+);
 const color = (name: string) => resolve(tokens, name);
 
 const LAND_TONES = [
@@ -181,9 +192,9 @@ describe('шкалы', () => {
     );
   });
 
-  it('движение снимается по запросу пользователя', () => {
-    const css = readTokens();
-    expect(css.has('--duration-quick')).toBe(true);
+  it('длительности заданы токенами, чтобы их можно было обнулить', () => {
+    expect(tokens.has('--duration-quick')).toBe(true);
+    expect(tokens.has('--duration-calm')).toBe(true);
   });
 });
 

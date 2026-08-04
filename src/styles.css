@@ -246,8 +246,7 @@ button.secondary:hover:enabled {
   stroke: var(--map-border);
   stroke-width: var(--map-border-width);
   transition: fill var(--duration-instant) var(--ease-out),
-    stroke var(--duration-calm) var(--ease-out),
-    stroke-width var(--duration-calm) var(--ease-out);
+    stroke-width var(--duration-instant) var(--ease-out);
 }
 
 /*
@@ -272,8 +271,21 @@ button.secondary:hover:enabled {
  * поэтому вся карта стартует одним серым. Селектор с двумя атрибутами
  * намеренно специфичнее правил типа региона выше.
  */
+/*
+ * Гашение вспышки промаха живёт только здесь: в трёх прежних режимах обводка
+ * несёт наведение и фокус, и растягивать её появление на 260 мс значило бы
+ * задерживать индикатор фокуса без всякой пользы.
+ */
 .china-map[data-map-variant='fill'] [data-region-id] {
   fill: var(--map-unplayed);
+  transition: fill var(--duration-instant) var(--ease-out),
+    stroke var(--duration-calm) var(--ease-out),
+    stroke-width var(--duration-instant) var(--ease-out);
+}
+
+/* Закрашенный регион своё отыграл: нажатие на него ничего не делает. */
+.china-map[data-map-variant='fill'] [data-outcome] {
+  cursor: not-allowed;
 }
 
 .china-map[data-map-variant='fill'] [data-outcome='first-try'] {
@@ -380,6 +392,7 @@ button.secondary:hover:enabled {
   font-weight: var(--t-weight-bold);
 }
 
+
 .map-selection {
   font-weight: var(--t-weight-bold);
   margin: var(--s-4) 0;
@@ -402,6 +415,11 @@ button.secondary:hover:enabled {
 .map-alternative button[aria-pressed='true'] {
   border-color: var(--accent-on-ground);
   font-weight: var(--t-weight-bold);
+}
+
+/* Пауза показа: список остаётся на месте и в фокусе, но не отвечает. */
+.map-alternative button[aria-disabled='true'] {
+  cursor: not-allowed;
 }
 
 /* --- Справочник регионов ------------------------------------------------ */

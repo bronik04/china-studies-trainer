@@ -1,4 +1,5 @@
 import type { Region } from '../content/types';
+import { MAX_REVIEW_TOPICS } from './progress-rules';
 import { shuffle } from './random';
 import { representationsFor, type Representation } from './representations';
 import type { Attempt, Level } from './round';
@@ -84,7 +85,7 @@ export function createFillRound(
     roundId: options.roundId,
     regionId: region.id,
     representation:
-      available[Math.floor(options.random() * available.length)] ?? available[0],
+      available[Math.floor(options.random() * available.length)],
     level: options.level,
   }));
 
@@ -182,14 +183,21 @@ export function summariseFillRound(round: FillRound): FillSummary {
       (sum, attempt) => sum + attempt.durationMs,
       0,
     ),
-    // Порядок повтора — порядок опроса. Регион без исхода ещё не спрашивали,
-    // поэтому он не «стоит повторить»: итог считается и по ходу раунда.
+    /*
+     * Порядок повтора — порядок опроса. Регион без исхода ещё не спрашивали,
+     * поэтому он не «стоит повторить»: итог считается и по ходу раунда.
+     *
+     * Длина списка ограничена той же константой, что и в `summariseRound`:
+     * иначе два экрана итогов в одном приложении вели бы себя по-разному, а
+     * на слабом раунде список вытолкнул бы кнопки далеко за экран.
+     */
     regionIdsToReview: round.order
       .map((question) => question.regionId)
       .filter((regionId) => {
         const outcome = round.outcomes[regionId];
 
         return outcome !== undefined && outcome !== 'first-try';
-      }),
+      })
+      .slice(0, MAX_REVIEW_TOPICS),
   };
 }

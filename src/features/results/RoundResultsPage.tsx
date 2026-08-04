@@ -1,5 +1,6 @@
 import type { Region } from '../../content/types';
 import type { RoundSummary } from '../../domain/progress-rules';
+import { formatDuration } from './format-duration';
 
 export type RoundResultsPageProps = {
   readonly summary: RoundSummary;
@@ -13,15 +14,6 @@ export type RoundResultsPageProps = {
 
 function formatPercent(value: number): string {
   return `${Math.round(value * 100)}%`;
-}
-
-/** Время подаётся как факт, без оценки скорости (UI_UX.md). */
-function formatDuration(durationMs: number): string {
-  const totalSeconds = Math.round(durationMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return minutes === 0 ? `${seconds} с` : `${minutes} мин ${seconds} с`;
 }
 
 export function RoundResultsPage({

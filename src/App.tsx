@@ -73,28 +73,14 @@ export default function App() {
   }
 
   /**
-   * Раунд-заполнение пишет по одной попытке на регион, поэтому существующие
-   * правила освоенности и открытия уровней применяются без изменений.
-   */
-  function finishFillRound(round: FillRound) {
-    const withAttempts = addAttempts(progress, round.attempts);
-    const updated = {
-      ...withAttempts,
-      masteredRegionIds: masteredRegionIds(withAttempts.attempts, new Date()),
-      unlockedLevel: unlockedLevelFrom(withAttempts.attempts),
-    };
-    setProgress(updated);
-    store.write(updated);
-    setFillRound(round);
-    setScreen('fill-results');
-  }
-
-  /**
    * Освоенность и открытый уровень выводятся из истории попыток. В прогрессе
    * они всё же сохраняются: этого требует DATA_MODEL.md, — но для показа
    * всегда вычисляются заново, чтобы отставшее поле не заперло ученика.
+   *
+   * Общая для всех режимов: раунд-заполнение пишет по одной попытке на
+   * регион, поэтому правила применяются к нему без изменений.
    */
-  function finishRound(attempts: readonly Attempt[]) {
+  function commitAttempts(attempts: readonly Attempt[]) {
     const withAttempts = addAttempts(progress, attempts);
     const updated = {
       ...withAttempts,
@@ -103,6 +89,16 @@ export default function App() {
     };
     setProgress(updated);
     store.write(updated);
+  }
+
+  function finishFillRound(round: FillRound) {
+    commitAttempts(round.attempts);
+    setFillRound(round);
+    setScreen('fill-results');
+  }
+
+  function finishRound(attempts: readonly Attempt[]) {
+    commitAttempts(attempts);
     setLastAttempts(attempts);
     setScreen('results');
   }
