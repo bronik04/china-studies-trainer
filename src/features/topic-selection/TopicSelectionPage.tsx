@@ -11,6 +11,8 @@ type TopicSelectionPageProps = {
   readonly children?: ReactNode;
   readonly unlockedLevel?: Level;
   readonly onStartRound?: (request: RoundRequest, level: Level) => void;
+  /** Отдельный вход: раунд-заполнение доступен на всех уровнях. */
+  readonly onStartFillRound?: (level: Level) => void;
 };
 
 const ALL_LEVELS = [1, 2, 3, 4] as const;
@@ -20,6 +22,7 @@ export function TopicSelectionPage({
   children,
   unlockedLevel = 1,
   onStartRound,
+  onStartFillRound,
 }: TopicSelectionPageProps) {
   const [level, setLevel] = useState<Level>(1);
   const levels = ALL_LEVELS.filter((value) => value <= unlockedLevel);
@@ -70,6 +73,15 @@ export function TopicSelectionPage({
                   </button>
                 ))
               )}
+              {onStartFillRound ? (
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => onStartFillRound(level)}
+                >
+                  Заполнить карту
+                </button>
+              ) : null}
             </div>
           </>
         ) : null}

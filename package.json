@@ -8,6 +8,8 @@
     "validate:content": "tsx scripts/validate-content.ts",
     "validate:map": "tsx scripts/validate-map.ts",
     "generate:callouts": "tsx scripts/generate-callouts.ts",
+    "generate:palette": "tsx scripts/generate-region-palette.ts",
+    "generate:hit-targets": "tsx scripts/generate-hit-targets.ts",
     "build": "npm run validate:map && npm run validate:content && tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest run"

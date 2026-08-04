@@ -55,7 +55,7 @@ export const regions = [
   region('guangxi', 'autonomous-region', 'Гуанси-Чжуанский автономный район', '广西壮族自治区', 'Guǎngxī Zhuàngzú zìzhìqū', 'Наньнин', '南宁'),
   region('inner-mongolia', 'autonomous-region', 'Автономный район Внутренняя Монголия', '内蒙古自治区', 'Nèi Měnggǔ zìzhìqū', 'Хух-Хото', '呼和浩特'),
   region('ningxia', 'autonomous-region', 'Нинся-Хуэйский автономный район', '宁夏回族自治区', 'Níngxià Huízú zìzhìqū', 'Иньчуань', '银川'),
-  region('xinjiang', 'autonomous-region', 'Синьцзян-Уйғурский автономный район', '新疆维吾尔自治区', 'Xīnjiāng Wéiwú’ěr zìzhìqū', 'Урумчи', '乌鲁木齐'),
+  region('xinjiang', 'autonomous-region', 'Синьцзян-Уйгурский автономный район', '新疆维吾尔自治区', 'Xīnjiāng Wéiwú’ěr zìzhìqū', 'Урумчи', '乌鲁木齐'),
   region('tibet', 'autonomous-region', 'Тибетский автономный район', '西藏自治区', 'Xīzàng zìzhìqū', 'Лхаса', '拉萨'),
   region('beijing', 'municipality', 'Пекин', '北京市', 'Běijīng shì', 'Пекин', '北京'),
   region('chongqing', 'municipality', 'Чунцин', '重庆市', 'Chóngqìng shì', 'Чунцин', '重庆'),

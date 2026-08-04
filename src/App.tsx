@@ -9,10 +9,13 @@ import {
   summariseRound,
   unlockedLevelFrom,
 } from './domain/progress-rules';
+import type { FillRound } from './domain/fill-round';
 import { createProgressStore } from './domain/progress-storage';
 import type { Attempt, ExerciseType, Level } from './domain/round';
 import { ExerciseRound } from './features/exercise/ExerciseRound';
+import { FillMapRound } from './features/exercise/FillMapRound';
 import { ALL_EXERCISE_TYPES } from './features/exercise/exercise-modes';
+import { FillMapResultsPage } from './features/results/FillMapResultsPage';
 import { RoundResultsPage } from './features/results/RoundResultsPage';
 import {
   TopicSelectionPage,
@@ -21,7 +24,7 @@ import {
 import { ChinaMap } from './map/ChinaMap';
 import type { MapZoom } from './map/MapControls';
 
-type Screen = 'topic' | 'exercise' | 'results';
+type Screen = 'topic' | 'exercise' | 'results' | 'fill' | 'fill-results';
 
 /** Хранилище может быть запрещено политикой браузера — обращение к нему бросает. */
 function readStorage(): Storage | null {
@@ -48,6 +51,7 @@ export default function App() {
   const [roundId, setRoundId] = useState(newRoundId);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 31));
   const [lastAttempts, setLastAttempts] = useState<readonly Attempt[]>([]);
+  const [fillRound, setFillRound] = useState<FillRound | null>(null);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
 
@@ -60,12 +64,23 @@ export default function App() {
     setScreen('exercise');
   }
 
+  function startFillRound(nextLevel: Level) {
+    setLevel(nextLevel);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setFillRound(null);
+    setScreen('fill');
+  }
+
   /**
    * Освоенность и открытый уровень выводятся из истории попыток. В прогрессе
    * они всё же сохраняются: этого требует DATA_MODEL.md, — но для показа
    * всегда вычисляются заново, чтобы отставшее поле не заперло ученика.
+   *
+   * Общая для всех режимов: раунд-заполнение пишет по одной попытке на
+   * регион, поэтому правила применяются к нему без изменений.
    */
-  function finishRound(attempts: readonly Attempt[]) {
+  function commitAttempts(attempts: readonly Attempt[]) {
     const withAttempts = addAttempts(progress, attempts);
     const updated = {
       ...withAttempts,
@@ -74,8 +89,43 @@ export default function App() {
     };
     setProgress(updated);
     store.write(updated);
+  }
+
+  function finishFillRound(round: FillRound) {
+    commitAttempts(round.attempts);
+    setFillRound(round);
+    setScreen('fill-results');
+  }
+
+  function finishRound(attempts: readonly Attempt[]) {
+    commitAttempts(attempts);
     setLastAttempts(attempts);
     setScreen('results');
+  }
+
+  if (screen === 'fill') {
+    return (
+      <FillMapRound
+        regions={regions}
+        level={level}
+        roundId={roundId}
+        seed={seed}
+        onFinish={finishFillRound}
+        onExit={() => setScreen('topic')}
+      />
+    );
+  }
+
+  if (screen === 'fill-results' && fillRound !== null) {
+    return (
+      <FillMapResultsPage
+        round={fillRound}
+        regions={regions}
+        isProgressSaved={store.isAvailable}
+        onNewRound={() => startFillRound(level)}
+        onExit={() => setScreen('topic')}
+      />
+    );
   }
 
   if (screen === 'exercise') {
@@ -128,6 +178,7 @@ export default function App() {
       regions={regions}
       unlockedLevel={unlockedLevelFrom(progress.attempts)}
       onStartRound={(request, nextLevel) => startRound(regions, request, nextLevel)}
+      onStartFillRound={startFillRound}
     >
       <ChinaMap
         regions={regions}

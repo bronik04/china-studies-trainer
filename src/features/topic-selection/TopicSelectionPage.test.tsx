@@ -50,3 +50,19 @@ it('на четвёртом уровне предлагает один смеш�
 
   expect(start).toHaveBeenCalledWith('mixed', 4);
 });
+
+it('запускает раунд заполнения карты на выбранном уровне', () => {
+  const start = vi.fn();
+  render(
+    <TopicSelectionPage
+      regions={regions}
+      unlockedLevel={1}
+      onStartRound={() => {}}
+      onStartFillRound={start}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Заполнить карту' }));
+
+  expect(start).toHaveBeenCalledWith(1);
+});

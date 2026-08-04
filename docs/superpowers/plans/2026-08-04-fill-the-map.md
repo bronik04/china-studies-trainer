@@ -776,7 +776,7 @@ git commit -m "feat(domain): движок раунда «Заполни карт
 
 **Interfaces:**
 - Consumes: `RegionOutcome` из `../domain/fill-round`; токены из Task 1.
-- Produces: новые необязательные пропсы `ChinaMap`: `variant?: 'reference' | 'fill'`, `outcomes?: Readonly<Record<string, RegionOutcome>>`, `highlightedRegionIds?: readonly string[]`. Идентификаторы образцов: `SECOND_TRY_PATTERN_ID = 'map-hatch-second-try'`, `FAILED_PATTERN_ID = 'map-hatch-failed'`.
+- Produces: новые необязательные пропсы `ChinaMap`: `variant?: 'reference' | 'fill'`, `outcomes?: Readonly<Record<string, RegionOutcome>>`, `highlight?: MapHighlight | null`, где `export type MapHighlight = { readonly regionId: string; readonly kind: 'miss' | 'reveal' }`. Идентификаторы образцов: `SECOND_TRY_PATTERN_ID = 'map-hatch-second-try'`, `FAILED_PATTERN_ID = 'map-hatch-failed'`.
 
 - [ ] **Step 1: Написать падающий тест**
 
@@ -809,26 +809,41 @@ it('в игровом режиме отмечает только закрыты�
   );
 });
 
-it('подсвечивает указанные регионы', () => {
-  const { container } = render(
+it('отмечает промах и показ разными видами подсветки', () => {
+  const { container, rerender } = render(
     <ChinaMap
       regions={regions}
       selectedRegionId={null}
       onSelect={() => {}}
       onClear={() => {}}
       variant="fill"
-      highlightedRegionIds={['gansu', 'hunan']}
+      highlight={{ regionId: 'gansu', kind: 'miss' }}
     />,
   );
 
   expect(
     container.querySelector('[data-region-id="gansu"]')?.getAttribute('data-highlight'),
-  ).toBe('true');
+  ).toBe('miss');
   expect(
     container.querySelector('[data-region-id="hunan"]')?.getAttribute('data-highlight'),
-  ).toBe('true');
+  ).toBeNull();
+
+  rerender(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+      highlight={{ regionId: 'hunan', kind: 'reveal' }}
+    />,
+  );
+
   expect(
-    container.querySelector('[data-region-id="yunnan"]')?.getAttribute('data-highlight'),
+    container.querySelector('[data-region-id="hunan"]')?.getAttribute('data-highlight'),
+  ).toBe('reveal');
+  expect(
+    container.querySelector('[data-region-id="gansu"]')?.getAttribute('data-highlight'),
   ).toBeNull();
 });
 ```
@@ -855,8 +870,21 @@ import type { RegionOutcome } from '../domain/fill-round';
    */
   readonly variant?: 'reference' | 'fill';
   readonly outcomes?: Readonly<Record<string, RegionOutcome>>;
-  /** Регионы, которые надо показать: промахи и подсказка после исчерпания попыток. */
-  readonly highlightedRegionIds?: readonly string[];
+  /**
+   * Что показать поверх заливки. `miss` — вспышка на промахе, `reveal` —
+   * показ региона, который так и не нашли. Виды разные, потому что живут
+   * разное время и означают разное.
+   */
+  readonly highlight?: MapHighlight | null;
+```
+
+Рядом с типом `AnswerState` добавить:
+
+```ts
+export type MapHighlight = {
+  readonly regionId: string;
+  readonly kind: 'miss' | 'reveal';
+};
 ```
 
 Рядом с `NO_ANSWER_STATES` добавить — по той же причине, что описана там же:
@@ -865,7 +893,6 @@ import type { RegionOutcome } from '../domain/fill-round';
 
 ```ts
 const NO_OUTCOMES: Readonly<Record<string, RegionOutcome>> = {};
-const NO_HIGHLIGHTS: readonly string[] = [];
 ```
 
 В сигнатуру функции добавить параметры:
@@ -873,7 +900,7 @@ const NO_HIGHLIGHTS: readonly string[] = [];
 ```ts
   variant = 'reference',
   outcomes = NO_OUTCOMES,
-  highlightedRegionIds = NO_HIGHLIGHTS,
+  highlight = null,
 ```
 
 Внутри `areas?.forEach` после блока `answerState` добавить:
@@ -886,14 +913,14 @@ const NO_HIGHLIGHTS: readonly string[] = [];
         delete area.dataset.outcome;
       }
 
-      if (highlightedRegionIds.includes(area.dataset.regionId ?? '')) {
-        area.dataset.highlight = 'true';
+      if (highlight !== null && area.dataset.regionId === highlight.regionId) {
+        area.dataset.highlight = highlight.kind;
       } else {
         delete area.dataset.highlight;
       }
 ```
 
-Добавить `highlightedRegionIds` и `outcomes` в массив зависимостей `useEffect`.
+Добавить `highlight` и `outcomes` в массив зависимостей `useEffect`.
 
 На `div.china-map` добавить атрибут:
 
@@ -984,11 +1011,35 @@ export const FAILED_PATTERN_ID = 'map-hatch-failed';
   fill: url('#map-hatch-failed');
 }
 
-.china-map [data-highlight='true'] {
+/*
+ * Промах вспыхивает киноварью и гаснет. Гашение — переход, поэтому при
+ * prefers-reduced-motion токен длительности обнуляется и отметка снимается
+ * мгновенно; саму вспышку это не отменяет, её длительность задаёт таймер в
+ * компоненте, а не анимация.
+ */
+.china-map [data-region-id] {
+  transition: fill var(--duration-instant) var(--ease-out),
+    stroke var(--duration-calm) var(--ease-out),
+    stroke-width var(--duration-calm) var(--ease-out);
+}
+
+.china-map [data-highlight='miss'] {
+  stroke: var(--map-incorrect-mark);
+  stroke-width: var(--map-border-width-strong);
+  transition: none;
+}
+
+/* Показ региона, который не нашли: держится 1.5 с, гаснуть ему незачем. */
+.china-map [data-highlight='reveal'] {
   stroke: var(--map-border);
   stroke-width: var(--map-border-width-strong);
+  transition: none;
 }
 ```
+
+Правило `transition` заменяет переход в существующем блоке
+`.china-map [data-region-id]` выше по файлу — уберите оттуда строку
+`transition: fill … stroke-width …`, чтобы объявление осталось одно.
 
 - [ ] **Step 7: Запустить все проверки**
 
@@ -1011,7 +1062,7 @@ git commit -m "feat(map): игровой режим отображения ка�
 - Modify: `src/styles.css`
 
 **Interfaces:**
-- Consumes: движок из Task 3, `ChinaMap` с `variant`/`outcomes`/`highlightedRegionIds` из Task 4, `labelOf` из `../../domain/representations`.
+- Consumes: движок из Task 3, `ChinaMap` с `variant`/`outcomes`/`highlight` из Task 4, `labelOf` из `../../domain/representations`.
 - Produces: `FillMapRound` с пропсами `{ regions, level, roundId, seed, onFinish: (round: FillRound) => void, onExit: () => void }`; константа `REVEAL_MS = 1500`.
 
 - [ ] **Step 1: Написать падающие тесты**
@@ -1019,10 +1070,10 @@ git commit -m "feat(map): игровой режим отображения ка�
 Создать `src/features/exercise/FillMapRound.test.tsx`:
 
 ```tsx
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../../content/regions';
 import type { Region } from '../../content/types';
-import { FillMapRound } from './FillMapRound';
+import { FillMapRound, MISS_FLASH_MS } from './FillMapRound';
 
 function renderRound() {
   return render(
@@ -1079,18 +1130,34 @@ it('промах уменьшает счётчик попыток и не мен
   expect(askedRegion().id).toBe(asked.id);
 });
 
-it('промах не закрашивает нажатый регион', () => {
+it('промах не закрашивает нажатый регион, а только вспыхивает на нём', () => {
   const { container } = renderRound();
   const asked = askedRegion();
   const other = anyOtherRegion(asked);
 
   answerWith(other);
 
-  expect(
-    container
-      .querySelector(`[data-region-id="${other.id}"]`)
-      ?.getAttribute('data-outcome'),
-  ).toBeNull();
+  const area = container.querySelector(`[data-region-id="${other.id}"]`);
+
+  expect(area?.getAttribute('data-outcome')).toBeNull();
+  expect(area?.getAttribute('data-highlight')).toBe('miss');
+});
+
+it('вспышка промаха гаснет сама', () => {
+  vi.useFakeTimers();
+  try {
+    const { container } = renderRound();
+    const asked = askedRegion();
+
+    answerWith(anyOtherRegion(asked));
+    act(() => {
+      vi.advanceTimersByTime(MISS_FLASH_MS);
+    });
+
+    expect(container.querySelector('[data-highlight="miss"]')).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('на экране нет панели обратной связи', () => {
@@ -1175,7 +1242,7 @@ import {
 import { createSeededRandom } from '../../domain/random';
 import { labelOf } from '../../domain/representations';
 import type { Level } from '../../domain/round';
-import { ChinaMap } from '../../map/ChinaMap';
+import { ChinaMap, type MapHighlight } from '../../map/ChinaMap';
 import { RoundStopwatch } from './RoundStopwatch';
 
 /**
@@ -1184,6 +1251,9 @@ import { RoundStopwatch } from './RoundStopwatch';
  * окажется мало, менять здесь.
  */
 export const REVEAL_MS = 1500;
+
+/** Сколько горит вспышка промаха до того, как погаснуть. */
+export const MISS_FLASH_MS = 600;
 
 export type FillMapRoundProps = {
   readonly regions: readonly Region[];
@@ -1211,26 +1281,42 @@ export function FillMapRound({
   );
   const [move, setMove] = useState<Move | null>(null);
   const [revealedRegionId, setRevealedRegionId] = useState<string | null>(null);
+  const [missedRegionId, setMissedRegionId] = useState<string | null>(null);
   /*
-   * Промахи по текущему региону остаются помеченными до его закрытия: ученик
-   * видит, что уже пробовал, и не тратит попытку на то же место. Отметка
-   * держится, а не мигает, поэтому анимации здесь нет вовсе и отдельная ветка
-   * для prefers-reduced-motion не нужна.
+   * Раунд закончился, но показ ещё идёт. Без этого экран итогов подменил бы
+   * карту прямо во время показа, и последний регион ученик бы не увидел.
    */
-  const [missedRegionIds, setMissedRegionIds] = useState<readonly string[]>([]);
+  const [finishedRound, setFinishedRound] = useState<FillRound | null>(null);
   const startedAt = useRef(performance.now());
   const regionStartedAt = useRef(performance.now());
 
-  // Пауза показа: пока она идёт, карта не принимает нажатия.
+  // Пауза показа: пока она идёт, карта не принимает нажатия. Если раунд на
+  // этом и закончился, итог отдаётся наверх только после паузы.
   useEffect(() => {
     if (revealedRegionId === null) {
       return;
     }
 
-    const timer = setTimeout(() => setRevealedRegionId(null), REVEAL_MS);
+    const timer = setTimeout(() => {
+      setRevealedRegionId(null);
+      if (finishedRound !== null) {
+        onFinish(finishedRound);
+      }
+    }, REVEAL_MS);
 
     return () => clearTimeout(timer);
-  }, [revealedRegionId]);
+  }, [finishedRound, onFinish, revealedRegionId]);
+
+  // Вспышка промаха: загорается и гаснет сама.
+  useEffect(() => {
+    if (missedRegionId === null) {
+      return;
+    }
+
+    const timer = setTimeout(() => setMissedRegionId(null), MISS_FLASH_MS);
+
+    return () => clearTimeout(timer);
+  }, [missedRegionId]);
 
   const isRevealing = revealedRegionId !== null;
   const finished = isFillRoundFinished(round);
@@ -1241,6 +1327,14 @@ export function FillMapRound({
       : regions.find((region) => region.id === question.regionId)!;
   const attemptsLeft = MAX_ATTEMPTS_PER_REGION - round.usedAttempts;
   const closed = Object.keys(round.outcomes).length;
+
+  // Показ важнее вспышки: если идёт он, промах уже не показывается.
+  const mapHighlight: MapHighlight | null =
+    revealedRegionId !== null
+      ? { regionId: revealedRegionId, kind: 'reveal' }
+      : missedRegionId !== null
+        ? { regionId: missedRegionId, kind: 'miss' }
+        : null;
 
   function handleSelect(regionId: string) {
     if (isRevealing || finished) {
@@ -1258,19 +1352,23 @@ export function FillMapRound({
     setMove(result.move);
 
     if (result.move.kind === 'retry') {
-      setMissedRegionIds([...missedRegionIds, regionId]);
+      setMissedRegionId(regionId);
       return;
     }
 
-    setMissedRegionIds([]);
+    setMissedRegionId(null);
     regionStartedAt.current = performance.now();
 
-    // Регион так и не нашли: сначала показать где он, потом идти дальше.
+    const isFinished = isFillRoundFinished(result.round);
+
+    // Регион так и не нашли: сначала показать, где он, потом идти дальше.
     if (!result.move.wasFound) {
       setRevealedRegionId(target);
+      setFinishedRound(isFinished ? result.round : null);
+      return;
     }
 
-    if (isFillRoundFinished(result.round)) {
+    if (isFinished) {
       onFinish(result.round);
     }
   }
@@ -1323,9 +1421,7 @@ export function FillMapRound({
         onClear={() => {}}
         variant="fill"
         outcomes={round.outcomes}
-        highlightedRegionIds={
-          revealedRegionId === null ? missedRegionIds : [revealedRegionId]
-        }
+        highlight={mapHighlight}
         interactive={!isRevealing && !finished}
       />
       <button type="button" className="secondary" onClick={onExit}>

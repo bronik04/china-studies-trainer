@@ -279,3 +279,190 @@ it('в неинтерактивном режиме не зовёт выбира�
 
   expect(screen.queryByText('Выберите регион на схеме или в списке.')).toBeNull();
 });
+
+it('нажатие на увеличенную цель выбирает мелкий регион, а не соседний', () => {
+  const select = vi.fn();
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={select}
+      onClear={() => {}}
+    />,
+  );
+
+  // Цель Пекина заходит на территорию Хэбэя: у самого Пекина под палец есть
+  // 19 px при требуемых 24 (см. scripts/generate-hit-targets.ts).
+  const hit = container.querySelector('[data-hit-region-id="beijing"]')!;
+  fireEvent.click(hit);
+
+  expect(select).toHaveBeenCalledWith('beijing');
+});
+
+it('справочная карта красит области по типу региона', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+    />,
+  );
+
+  const areas = [...container.querySelectorAll('[data-region-id]')];
+
+  expect(areas).not.toHaveLength(0);
+  for (const area of areas) {
+    expect(
+      area.getAttribute('data-region-kind'),
+      area.getAttribute('data-region-id') ?? '',
+    ).toMatch(/^(province|autonomous-region|municipality|sar)$/);
+  }
+  expect(container.querySelector('[data-land-tone]')).toBeNull();
+});
+
+it('в игровом режиме отмечает только закрытые регионы', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+      outcomes={{ sichuan: 'first-try', hunan: 'failed' }}
+    />,
+  );
+
+  expect(
+    container.querySelector('[data-region-id="sichuan"]')?.getAttribute('data-outcome'),
+  ).toBe('first-try');
+  expect(
+    container.querySelector('[data-region-id="hunan"]')?.getAttribute('data-outcome'),
+  ).toBe('failed');
+  expect(
+    container.querySelector('[data-region-id="yunnan"]')?.getAttribute('data-outcome'),
+  ).toBeNull();
+  expect(container.querySelector('.china-map')?.getAttribute('data-map-variant')).toBe(
+    'fill',
+  );
+});
+
+it('отмечает промах и показ разными видами подсветки', () => {
+  const { container, rerender } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+      highlight={{ regionId: 'gansu', kind: 'miss' }}
+    />,
+  );
+
+  expect(
+    container.querySelector('[data-region-id="gansu"]')?.getAttribute('data-highlight'),
+  ).toBe('miss');
+  expect(
+    container.querySelector('[data-region-id="hunan"]')?.getAttribute('data-highlight'),
+  ).toBeNull();
+
+  rerender(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+      highlight={{ regionId: 'hunan', kind: 'reveal' }}
+    />,
+  );
+
+  expect(
+    container.querySelector('[data-region-id="hunan"]')?.getAttribute('data-highlight'),
+  ).toBe('reveal');
+  expect(
+    container.querySelector('[data-region-id="gansu"]')?.getAttribute('data-highlight'),
+  ).toBeNull();
+});
+
+it('в игровом режиме карта не заводит второй aria-live о выборе', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+    />,
+  );
+
+  expect(screen.queryByRole('status')).toBeNull();
+});
+
+it('не выбирает уже закрашенный регион', () => {
+  const select = vi.fn();
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={select}
+      onClear={() => {}}
+      variant="fill"
+      outcomes={{ sichuan: 'first-try' }}
+    />,
+  );
+
+  fireEvent.click(container.querySelector('[data-region-id="sichuan"]')!);
+  fireEvent.click(screen.getByRole('button', { name: /^Сычуань \(四川省\)/ }));
+
+  expect(select).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: /^Сычуань \(四川省\)/ })).toBeDisabled();
+});
+
+it('называет исход региона в доступном имени', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="fill"
+      outcomes={{ sichuan: 'second-try', hunan: 'failed' }}
+    />,
+  );
+
+  expect(container.querySelector('[data-region-id="sichuan"]')).toHaveAttribute(
+    'aria-label',
+    'Сычуань, 四川省 — взят со второй попытки',
+  );
+  expect(container.querySelector('[data-region-id="hunan"]')).toHaveAttribute(
+    'aria-label',
+    'Хунань, 湖南省 — не угадан',
+  );
+  expect(
+    screen.getByRole('button', { name: 'Хунань (湖南省) — не угадан' }),
+  ).toBeInTheDocument();
+});
+
+it('на паузе не отвечает, но список и фокус остаются на месте', () => {
+  const select = vi.fn();
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={select}
+      onClear={() => {}}
+      variant="fill"
+      paused
+    />,
+  );
+
+  const button = screen.getByRole('button', { name: 'Сычуань (四川省)' });
+  button.focus();
+  fireEvent.click(button);
+
+  expect(select).not.toHaveBeenCalled();
+  expect(button).toHaveAttribute('aria-disabled', 'true');
+  expect(button).not.toBeDisabled();
+  expect(document.activeElement).toBe(button);
+});
