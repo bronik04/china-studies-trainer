@@ -422,6 +422,32 @@ button.secondary:hover:enabled {
   cursor: not-allowed;
 }
 
+/*
+ * На экране раунда список уезжает в свёрнутый блок: 34 кнопки — это половина
+ * всех остановок Tab на экране, и держать их раскрытыми там, где работает
+ * карта, незачем.
+ */
+.region-answer-list {
+  margin-block-start: var(--s-5);
+}
+
+.region-answer-list summary {
+  align-items: center;
+  color: var(--text-on-ground);
+  cursor: pointer;
+  display: flex;
+  min-block-size: var(--target-min);
+}
+
+.region-answer-list summary:focus-visible {
+  outline: var(--border-focus) solid var(--focus-on-ground);
+  outline-offset: var(--s-1);
+}
+
+.region-answer-list .map-alternative {
+  margin-block-start: var(--s-3);
+}
+
 /* --- Справочник регионов ------------------------------------------------ */
 
 .region-list {

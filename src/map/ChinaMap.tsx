@@ -5,11 +5,8 @@ import type { RegionOutcome } from '../domain/fill-round';
 import { MapControls, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
 import { OUTCOME_LABELS } from './outcome-labels';
-import {
-  isRegionClosed,
-  isRegionSelectable,
-  type AnswerState,
-} from './region-selection';
+import { isRegionSelectable, type AnswerState } from './region-selection';
+import { RegionAnswerList } from './RegionAnswerList';
 
 export type { AnswerState } from './region-selection';
 
@@ -233,31 +230,14 @@ export function ChinaMap({
         <p className="map-selection">На карте подсвечена одна область.</p>
       )}
       {interactive ? (
-        <ul className="map-alternative" aria-label="Список регионов карты">
-          {regions.map((region) => {
-            const outcome = outcomes[region.id];
-
-            return (
-              <li key={region.id}>
-                <button
-                  type="button"
-                  aria-pressed={region.id === selectedRegionId}
-                  aria-disabled={paused ? true : undefined}
-                  data-outcome={outcome}
-                  disabled={isRegionClosed(selectionRules, region.id)}
-                  onClick={() => {
-                    if (isRegionSelectable(selectionRules, region.id)) {
-                      onSelect(region.id);
-                    }
-                  }}
-                >
-                  {region.nameRu} <span lang="zh-Hans">({region.nameZh})</span>
-                  {outcome ? ` — ${OUTCOME_LABELS[outcome]}` : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <RegionAnswerList
+          regions={regions}
+          selectedRegionId={selectedRegionId}
+          onSelect={onSelect}
+          answerStates={answerStates}
+          outcomes={outcomes}
+          paused={paused}
+        />
       ) : null}
     </section>
   );
