@@ -3,7 +3,7 @@ import type { Region } from '../content/types';
 import { TWO_COLUMN_QUERY } from '../design/breakpoints';
 import type { RegionOutcome } from '../domain/fill-round';
 import { OUTCOME_LABELS } from './outcome-labels';
-import { regionsWord } from './region-count';
+import { regionsWord } from '../content/region-count';
 import {
   isRegionClosed,
   isRegionSelectable,

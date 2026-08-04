@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { regions } from '../content/regions';
 import { TWO_COLUMN_QUERY } from '../design/breakpoints';
-import { regionsWord } from './region-count';
+import { regionsWord } from '../content/region-count';
 import { RegionAnswerList } from './RegionAnswerList';
 
 function renderList(presentation: 'inline' | 'disclosure') {
