@@ -2,7 +2,7 @@ import { useMemo, useState, type MouseEvent } from 'react';
 import type { Region } from '../../content/types';
 import { buildChoices } from '../../domain/choices';
 import { createSeededRandom } from '../../domain/random';
-import { labelOf } from '../../domain/representations';
+import { labelOf, langOf } from '../../domain/representations';
 import {
   answerQuestion,
   createRound,
@@ -136,7 +136,14 @@ export function ExerciseRound({
         <div className="round-prompt-column">
           <header className="round-prompt">
             <p className="eyebrow">{mode.eyebrow}</p>
-            <h1 data-testid="exercise-target">
+            <h1
+              data-testid="exercise-target"
+              lang={
+                question.exerciseType === 'name-region'
+                  ? undefined
+                  : langOf(question.representation)
+              }
+            >
               {question.exerciseType === 'name-region'
                 ? 'Регион на карте'
                 : labelOf(targetRegion, question.representation)}
