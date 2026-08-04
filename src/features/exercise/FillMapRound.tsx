@@ -10,7 +10,7 @@ import {
   type Move,
 } from '../../domain/fill-round';
 import { createSeededRandom } from '../../domain/random';
-import { labelOf } from '../../domain/representations';
+import { labelOf, langOf } from '../../domain/representations';
 import type { Level } from '../../domain/round';
 import { ChinaMap, type MapHighlight } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
@@ -199,7 +199,10 @@ export function FillMapRound({
         <div className="round-prompt-column">
           <header className="round-prompt">
             <p className="eyebrow">Найдите на карте</p>
-            <h1 data-testid="fill-target">
+            <h1
+              data-testid="fill-target"
+              lang={question === null ? undefined : langOf(question.representation)}
+            >
               {targetRegion === null
                 ? 'Карта заполнена'
                 : labelOf(targetRegion, question!.representation)}

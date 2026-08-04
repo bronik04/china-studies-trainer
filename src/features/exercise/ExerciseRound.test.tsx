@@ -94,6 +94,18 @@ it('в смешанном раунде меняет вид задания от �
   expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
 });
 
+it('заголовок вопроса помечен языком, когда спрашивают иероглифами', () => {
+  renderRound(['find-on-map'], 2);
+
+  expect(screen.getByTestId('exercise-target')).toHaveAttribute('lang', 'zh-Hans');
+});
+
+it('на первом уровне заголовок вопроса языком не помечен', () => {
+  renderRound();
+
+  expect(screen.getByTestId('exercise-target')).not.toHaveAttribute('lang');
+});
+
 it('первый фокусируемый элемент — ответ, а не ссылка на лицензию', () => {
   const { container } = renderRound();
 

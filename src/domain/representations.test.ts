@@ -1,7 +1,19 @@
 import { regions } from '../content/regions';
-import { labelOf, REPRESENTATIONS_BY_LEVEL, representationsFor } from './representations';
+import {
+  labelOf,
+  langOf,
+  REPRESENTATIONS_BY_LEVEL,
+  representationsFor,
+} from './representations';
 
 const sichuan = regions.find((region) => region.id === 'sichuan')!;
+
+it('помечает языком только китайские представления', () => {
+  expect(langOf('name-zh')).toBe('zh-Hans');
+  expect(langOf('pinyin')).toBe('zh-Latn-pinyin');
+  expect(langOf('name-ru')).toBeUndefined();
+  expect(langOf('capital')).toBeUndefined();
+});
 
 it('подписывает регион каждым представлением', () => {
   expect(labelOf(sichuan, 'name-ru')).toBe('Сычуань');

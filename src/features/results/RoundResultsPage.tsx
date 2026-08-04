@@ -42,7 +42,7 @@ export function RoundResultsPage({
 
   return (
     <main className="app-shell">
-      <header className="hero">
+      <header className="hero results-hero">
         <p className="eyebrow">Итог раунда</p>
         <h1>{formatPercent(summary.accuracy)}</h1>
         <p>
