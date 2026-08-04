@@ -51,6 +51,7 @@ export default function App() {
   const [roundId, setRoundId] = useState(newRoundId);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 31));
   const [lastAttempts, setLastAttempts] = useState<readonly Attempt[]>([]);
+  const [repeatRegionIds, setRepeatRegionIds] = useState<readonly string[]>([]);
   const [fillRound, setFillRound] = useState<FillRound | null>(null);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
@@ -89,6 +90,8 @@ export default function App() {
     };
     setProgress(updated);
     store.write(updated);
+
+    return updated;
   }
 
   function finishFillRound(round: FillRound) {
@@ -98,8 +101,14 @@ export default function App() {
   }
 
   function finishRound(attempts: readonly Attempt[]) {
-    commitAttempts(attempts);
+    const updated = commitAttempts(attempts);
     setLastAttempts(attempts);
+    /*
+     * Набор для повтора считается здесь, а не при отрисовке итогов: `new Date()`
+     * в теле компонента — нечистый вызов. Заодно подпись кнопки и её действие
+     * получают один и тот же список, а не два вычисления одного правила.
+     */
+    setRepeatRegionIds(regionIdsToRepeat(updated.attempts, new Date()));
     setScreen('results');
   }
 
@@ -151,12 +160,10 @@ export default function App() {
         regions={regions}
         bestAccuracy={bestAccuracy(progress.attempts)}
         isProgressSaved={store.isAvailable}
+        regionIdsToRepeat={repeatRegionIds}
         onRepeatMistakes={() => {
-          // Список тем на экране обрезан до пяти, а повторять надо все ошибки
-          // за последние 14 дней (EXERCISES.md).
-          const toRepeat = regionIdsToRepeat(progress.attempts, new Date());
           startRound(
-            regions.filter((region) => toRepeat.includes(region.id)),
+            regions.filter((region) => repeatRegionIds.includes(region.id)),
             exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
             level,
           );

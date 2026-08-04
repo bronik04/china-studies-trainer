@@ -82,7 +82,7 @@ it('показывает итог после раунда и возвращае�
 });
 
 
-it('повторяет все ошибки, а не только показанные пять', () => {
+it('повторяет все ошибки, а не только показанные пять, и говорит об этом', () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Регион — столица' }));
@@ -90,7 +90,11 @@ it('повторяет все ошибки, а не только показан�
 
   expect(screen.getByText('0%')).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Повторить ошибки' }));
+  // Подпись кнопки — то же число, что и длина раунда: экран показывает пять
+  // тем, а повтор берёт все 34 ошибки.
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Повторить ошибки: 34 региона' }),
+  );
 
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 }, 20_000);

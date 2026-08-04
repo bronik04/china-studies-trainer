@@ -21,6 +21,7 @@ function renderResults(
       regions={regions}
       bestAccuracy={0.9}
       isProgressSaved
+      regionIdsToRepeat={['sichuan', 'yunnan']}
       onRepeatMistakes={() => {}}
       onNewRound={() => {}}
       onExit={() => {}}
@@ -59,7 +60,7 @@ it('предлагает повторить ошибки', () => {
   const repeat = vi.fn();
   renderResults({ onRepeatMistakes: repeat });
 
-  fireEvent.click(screen.getByRole('button', { name: 'Повторить ошибки' }));
+  fireEvent.click(screen.getByRole('button', { name: /^Повторить ошибки/ }));
 
   expect(repeat).toHaveBeenCalledOnce();
 });
@@ -67,10 +68,48 @@ it('предлагает повторить ошибки', () => {
 it('не предлагает повторить ошибки, когда их нет', () => {
   renderResults({
     summary: { ...SUMMARY, correct: 34, accuracy: 1, regionIdsToReview: [] },
+    regionIdsToRepeat: [],
   });
 
-  expect(screen.queryByRole('button', { name: 'Повторить ошибки' })).toBeNull();
+  expect(screen.queryByRole('button', { name: /^Повторить ошибки/ })).toBeNull();
   expect(screen.getByText('Ошибок нет.')).toBeInTheDocument();
+});
+
+it('кнопка называет, сколько регионов войдёт в повтор', () => {
+  // Раунд показывает не больше пяти тем, а повтор берёт все ошибки за 14 дней.
+  renderResults({
+    regionIdsToRepeat: [
+      'sichuan',
+      'yunnan',
+      'hunan',
+      'hebei',
+      'gansu',
+      'jilin',
+      'anhui',
+    ],
+  });
+
+  expect(
+    screen.getByRole('button', { name: 'Повторить ошибки: 7 регионов' }),
+  ).toBeInTheDocument();
+});
+
+it('объясняет, что список — ошибки этого раунда, а повтор шире', () => {
+  renderResults({
+    regionIdsToRepeat: ['sichuan', 'yunnan', 'hunan', 'hebei'],
+  });
+
+  expect(
+    screen.getByText(
+      'Здесь ошибки этого раунда. В повтор войдут все 4 региона с ошибками за последние 14 дней.',
+    ),
+  ).toBeInTheDocument();
+});
+
+it('не объясняет ничего, когда повтор совпадает со списком', () => {
+  renderResults();
+
+  expect(screen.queryByText(/за последние 14 дней/)).toBeNull();
 });
 
 it('предупреждает, когда прогресс не сохраняется', () => {
