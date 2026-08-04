@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../../content/regions';
 import type { Region } from '../../content/types';
 import type { ExerciseType, Level } from '../../domain/round';
+import { ChinaMap } from '../../map/ChinaMap';
 import { ExerciseRound } from './ExerciseRound';
 
 const SHORT_POOL = regions.slice(0, 3);
@@ -139,6 +140,37 @@ it('без карты макет схлопывается в одну колон
     'one',
   );
   expect(screen.queryByRole('link', { name: 'CC BY 4.0' })).toBeNull();
+});
+
+it('не печатает названия выносок: иначе Макао и Гонконг — готовые ответы', () => {
+  const { container } = renderRound();
+
+  const labels = [...container.querySelectorAll('.map-callout text')];
+
+  expect(labels).not.toHaveLength(0);
+  for (const label of labels) {
+    expect((label as SVGElement).style.display, label.textContent ?? '').toBe(
+      'none',
+    );
+  }
+});
+
+it('на экране темы выноски подписаны: там карту разглядывают, а не отвечают', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+    />,
+  );
+
+  const labels = [...container.querySelectorAll('.map-callout text')];
+
+  expect(labels).not.toHaveLength(0);
+  for (const label of labels) {
+    expect((label as SVGElement).style.display).toBe('');
+  }
 });
 
 it('сообщает о завершении раунда', () => {
