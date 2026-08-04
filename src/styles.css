@@ -231,6 +231,84 @@ p {
   max-inline-size: 60ch;
 }
 
+/* --- Кабинет ------------------------------------------------------------ */
+
+.home-shell h1 {
+  margin-bottom: var(--s-6);
+}
+
+.home-layout {
+  display: grid;
+  gap: var(--s-6);
+}
+
+.home-actions {
+  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.home-status {
+  color: var(--text-on-ground-muted);
+  margin: 0;
+}
+
+.home-legend {
+  align-items: center;
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--t-size-caption);
+  gap: var(--s-2);
+  margin-block-start: var(--s-3);
+}
+
+.home-legend span {
+  block-size: var(--s-3);
+  border: var(--border-hair) solid var(--map-border);
+  display: inline-block;
+  inline-size: var(--s-4);
+}
+
+.home-legend span[data-progress-state='mastered'] {
+  background: var(--map-progress-mastered);
+}
+
+.home-legend span[data-progress-state='in-progress'] {
+  background: var(--map-progress-in-progress);
+}
+
+.home-legend span[data-progress-state='untouched'] {
+  background: var(--map-progress-untouched);
+}
+
+.home-other-modes summary {
+  cursor: pointer;
+  min-block-size: var(--target-min);
+  padding-block: var(--s-2);
+}
+
+.home-mode-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * Карта освоенности — предмет, на который смотрят, поэтому она забирает
+ * широкую колонку, а блок действий стоит рядом узкой.
+ */
+@media (min-width: 1024px) {
+  .home-layout {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  }
+}
+
 /* --- Атлас -------------------------------------------------------------- */
 
 .atlas-shell {
@@ -424,6 +502,24 @@ button.secondary {
 
 button.secondary:hover:enabled {
   border-color: var(--text-on-ground-muted);
+}
+
+/*
+ * Третий вес: переход, а не действие. Нужен там, где рядом уже стоит главная
+ * кнопка и второй прямоугольник спорил бы с ней за внимание.
+ */
+button.text {
+  background: none;
+  border: none;
+  color: var(--accent-on-ground);
+  cursor: pointer;
+  min-height: var(--target-min);
+  padding: 0;
+  text-align: start;
+}
+
+button.text:hover:enabled {
+  text-decoration: underline;
 }
 
 .mode-actions,
