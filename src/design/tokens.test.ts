@@ -186,3 +186,53 @@ describe('шкалы', () => {
     expect(css.has('--duration-quick')).toBe(true);
   });
 });
+
+describe('игровая карта', () => {
+  const OUTCOMES = ['--map-first-try', '--map-second-try', '--map-failed'] as const;
+
+  it('граница тушью видна на сером и на каждом исходе', () => {
+    expectAtLeast('--map-border', '--map-unplayed', GRAPHIC_CONTRAST);
+    for (const outcome of OUTCOMES) {
+      expectAtLeast('--map-border', outcome, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('граница тушью видна на море: береговую линию держит обводка', () => {
+    expectAtLeast('--map-border', '--map-sea', GRAPHIC_CONTRAST);
+  });
+
+  it('каждый исход отличим от серого, иначе прогресс не виден', () => {
+    for (const outcome of OUTCOMES) {
+      expectAtLeast(outcome, '--map-unplayed', GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('подпись читается поверх любого исхода', () => {
+    for (const outcome of OUTCOMES) {
+      expectAtLeast('--map-outcome-ink', outcome, TEXT_CONTRAST);
+    }
+  });
+
+  /*
+   * Попарного контраста между тремя исходами здесь нет намеренно: он
+   * недостижим. Обводка тушью требует светлоты не ниже 0.118, а серый при
+   * 3:1 сверху — не выше 0.153, и все три цвета живут в этой полосе.
+   * Различает их узор, см. MapDefs.tsx.
+   */
+});
+
+describe('справочная карта', () => {
+  const KINDS = [
+    '--map-kind-province',
+    '--map-kind-autonomous-region',
+    '--map-kind-municipality',
+    '--map-kind-sar',
+  ] as const;
+
+  it('граница и подпись тушью видны на каждом типе региона', () => {
+    for (const kind of KINDS) {
+      expectAtLeast('--map-border', kind, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-label', kind, TEXT_CONTRAST);
+    }
+  });
+});
