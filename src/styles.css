@@ -675,6 +675,37 @@ button.secondary:hover:enabled {
 }
 
 /*
+ * Список в атласе прокручивается внутри себя: страница атласа занимает ровно
+ * кадр, и 34 кнопки не должны её растить.
+ */
+.region-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-block-size: 0;
+}
+
+.region-panel-search {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+}
+
+.region-panel-list input {
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground);
+  font: inherit;
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-3);
+}
+
+.region-panel-list .map-alternative {
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/*
  * На экране раунда список уезжает в свёрнутый блок: 34 кнопки — это половина
  * всех остановок Tab на экране, и держать их раскрытыми там, где работает
  * карта, незачем.
