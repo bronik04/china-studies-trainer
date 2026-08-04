@@ -30,7 +30,7 @@ export function FillMapResultsPage({
 
   return (
     <main className="app-shell">
-      <header className="hero">
+      <header className="hero results-hero">
         <p className="eyebrow">Карта заполнена</p>
         <h1>{formatDuration(summary.durationMs)}</h1>
         <ul className="fill-breakdown" data-testid="fill-breakdown">

@@ -193,6 +193,19 @@ describe('шкалы', () => {
     );
   });
 
+  it('семейства начинаются с наших шрифтов и сохраняют системный фолбэк', () => {
+    expect(resolve(tokens, '--t-family-display')).toMatch(/^'Prata'/);
+    expect(resolve(tokens, '--t-family-display')).toMatch(/serif$/);
+    expect(resolve(tokens, '--t-family-text')).toMatch(/^'Golos Text'/);
+    expect(resolve(tokens, '--t-family-han')).toMatch(/^'Noto Serif SC'/);
+  });
+
+  it('латинские шрифты уступают китайскому знаки, которых у них нет', () => {
+    // `● ○ ✓ → ≈` есть только в Noto Serif SC, поэтому он стоит вторым.
+    expect(resolve(tokens, '--t-family-display')).toContain("'Noto Serif SC'");
+    expect(resolve(tokens, '--t-family-text')).toContain("'Noto Serif SC'");
+  });
+
   it('длительности заданы токенами, чтобы их можно было обнулить', () => {
     expect(tokens.has('--duration-quick')).toBe(true);
     expect(tokens.has('--duration-calm')).toBe(true);

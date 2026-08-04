@@ -1,4 +1,5 @@
 @import './design/tokens.css';
+@import './design/fonts.css';
 
 /*
  * Компоненты не задают цвета, размеры и длительности напрямую — только через
@@ -31,7 +32,15 @@ button {
   line-height: var(--t-leading-body);
 }
 
-:where([lang='zh-Hans']) {
+/*
+ * Селектор без `:where` намеренно: у заголовков появилось семейство
+ * дисплейного шрифта, и нулевая специфичность `:where` ему проиграла бы —
+ * иероглифы в заголовке вопроса набирались бы Prata, где их нет.
+ *
+ * Пиньинь набирается тем же китайским шрифтом: только он несёт `ǎ ǔ ā ē ī ō ū`.
+ */
+[lang='zh-Hans'],
+[lang='zh-Latn-pinyin'] {
   font-family: var(--t-family-han);
 }
 
@@ -225,10 +234,27 @@ p {
   text-transform: uppercase;
 }
 
+/*
+ * Заголовки набираются дисплейным шрифтом. Вес задан явно: у Prata одно
+ * начертание, а `font-synthesis: none` не даст браузеру подделать жирное —
+ * без этой строки браузерный `font-weight: bold` у `h1` попал бы в шрифт,
+ * которому нечем на него ответить.
+ */
 h1 {
+  font-family: var(--t-family-display);
   font-size: var(--t-size-title);
+  font-weight: var(--t-weight-regular);
   line-height: var(--t-leading-tight);
   margin-bottom: var(--s-3);
+}
+
+/* Слово-вопрос крупнее: высококонтрастная Prata начинает работать от 32 px. */
+.round-prompt h1 {
+  font-size: var(--t-size-question);
+}
+
+.results-hero h1 {
+  font-size: var(--t-size-display);
 }
 
 .section-heading {
