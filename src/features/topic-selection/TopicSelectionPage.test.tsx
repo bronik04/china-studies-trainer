@@ -12,6 +12,14 @@ it('shows the available topic and all 34 regions', () => {
   expect(screen.getAllByRole('listitem')).toHaveLength(34);
 });
 
+it('атрибуция карты стоит последней на странице', () => {
+  const { container } = render(<TopicSelectionPage regions={regions} />);
+
+  expect(container.querySelector('main')?.lastElementChild).toHaveClass(
+    'map-attribution',
+  );
+});
+
 it('shows all study forms for Sichuan', () => {
   render(<TopicSelectionPage regions={regions} />);
 

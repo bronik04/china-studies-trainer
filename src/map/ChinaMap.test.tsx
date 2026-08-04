@@ -85,6 +85,19 @@ it('renders a named text alternative with 34 region actions', () => {
   expect(screen.getAllByRole('listitem')).toHaveLength(34);
 });
 
+it('карта больше не печатает атрибуцию: её ставит страница', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+    />,
+  );
+
+  expect(screen.queryByRole('link', { name: 'CC BY 4.0' })).toBeNull();
+});
+
 it('retains region types for future exercise logic', () => {
   render(
     <ChinaMap

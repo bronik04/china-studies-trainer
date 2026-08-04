@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import type { Region } from '../../content/types';
 import type { ExerciseType, Level } from '../../domain/round';
+import { MapAttribution } from '../../map/MapAttribution';
 import { EXERCISE_MODES } from '../exercise/exercise-modes';
 
 /** «mixed» — смешанный раунд четвёртого уровня, где типы заданий чередуются. */
@@ -112,6 +113,7 @@ export function TopicSelectionPage({
           ))}
         </ul>
       </section>
+      <MapAttribution />
     </main>
   );
 }

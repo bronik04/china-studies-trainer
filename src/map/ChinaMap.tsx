@@ -181,14 +181,6 @@ export function ChinaMap({
         <h2 id="map-heading">{interactive ? 'Интерактивная карта' : 'Карта регионов'}</h2>
         {interactive ? <p>Выберите регион на схеме или в списке.</p> : null}
       </div>
-      <p className="map-attribution">
-        Геометрия 33 регионов: карта{' '}
-        <a href="https://www.npmjs.com/package/@svg-maps/china">@svg-maps/china</a>{' '}
-        (Victor Cazanave, на основе MapSVG) по лицензии{' '}
-        <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.{' '}
-        Контур Тайваня:{' '}
-        <a href="https://github.com/antvis/china-geojson">china-geojson</a> (AntV).
-      </p>
       {onZoomChange ? <MapControls zoom={zoom} onZoomChange={onZoomChange} /> : null}
       <MapDefs />
       <div
