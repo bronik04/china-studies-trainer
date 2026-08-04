@@ -30,6 +30,15 @@ type ChinaMapProps = {
    * `fill` — игровая: все регионы серые, цвет появляется только как исход.
    */
   readonly variant?: 'reference' | 'fill';
+  /**
+   * `browse` — карта для разглядывания на экране темы: заголовок, подсказка,
+   * строка выбора и список внутри секции. `answer` — карта как поверхность
+   * ответа: ничего из этого, только карта.
+   *
+   * Отдельно от `variant` намеренно: `variant` — про цвет, `usage` — про
+   * роль. Один параметр этих двух вопросов не выражает.
+   */
+  readonly usage?: 'browse' | 'answer';
   readonly outcomes?: Readonly<Record<string, RegionOutcome>>;
   /**
    * Что показать поверх заливки. `miss` — вспышка на промахе, `reveal` —
@@ -81,6 +90,7 @@ export function ChinaMap({
   answerStates = NO_ANSWER_STATES,
   interactive = true,
   variant = 'reference',
+  usage = 'browse',
   outcomes = NO_OUTCOMES,
   highlight = null,
   paused = false,
@@ -175,12 +185,31 @@ export function ChinaMap({
     }
   }
 
+  const showsBrowseChrome = usage === 'browse';
+  /*
+   * Строка выбора нужна там, где выбор ещё не ответ. На экране раунда нажатие
+   * и есть ответ, о нём объявляет карточка обратной связи, а второй aria-live
+   * заставил бы читать результат дважды. В «назвать регион» карта не
+   * интерактивна, и статичное объяснение подсветки остаётся.
+   */
+  const showsSelectionStatus =
+    variant !== 'fill' && (showsBrowseChrome || !interactive);
+
   return (
-    <section className="map-section" aria-labelledby="map-heading">
-      <div className="section-heading">
-        <h2 id="map-heading">{interactive ? 'Интерактивная карта' : 'Карта регионов'}</h2>
-        {interactive ? <p>Выберите регион на схеме или в списке.</p> : null}
-      </div>
+    <section
+      className="map-section"
+      data-usage={usage}
+      aria-labelledby={showsBrowseChrome ? 'map-heading' : undefined}
+      aria-label={showsBrowseChrome ? undefined : 'Карта регионов'}
+    >
+      {showsBrowseChrome ? (
+        <div className="section-heading">
+          <h2 id="map-heading">
+            {interactive ? 'Интерактивная карта' : 'Карта регионов'}
+          </h2>
+          {interactive ? <p>Выберите регион на схеме или в списке.</p> : null}
+        </div>
+      ) : null}
       {onZoomChange ? <MapControls zoom={zoom} onZoomChange={onZoomChange} /> : null}
       <MapDefs />
       <div
@@ -212,16 +241,18 @@ export function ChinaMap({
         после каждого ответа программа чтения читает ещё и «Регион ещё не
         выбран» — выбор там всегда пуст.
       */}
-      {variant === 'fill' ? null : interactive ? (
-        <p className="map-selection" role="status" aria-live="polite">
-          {selectedRegion
-            ? `Выбрано: ${selectedRegion.nameRu} (${selectedRegion.nameZh})`
-            : 'Регион ещё не выбран.'}
-        </p>
-      ) : (
-        <p className="map-selection">На карте подсвечена одна область.</p>
-      )}
-      {interactive ? (
+      {showsSelectionStatus ? (
+        interactive ? (
+          <p className="map-selection" role="status" aria-live="polite">
+            {selectedRegion
+              ? `Выбрано: ${selectedRegion.nameRu} (${selectedRegion.nameZh})`
+              : 'Регион ещё не выбран.'}
+          </p>
+        ) : (
+          <p className="map-selection">На карте подсвечена одна область.</p>
+        )
+      ) : null}
+      {showsBrowseChrome && interactive ? (
         <RegionAnswerList
           regions={regions}
           selectedRegionId={selectedRegionId}

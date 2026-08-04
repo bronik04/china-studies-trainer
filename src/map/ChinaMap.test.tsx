@@ -293,6 +293,69 @@ it('в неинтерактивном режиме не зовёт выбира�
   expect(screen.queryByText('Выберите регион на схеме или в списке.')).toBeNull();
 });
 
+it('на экране ответа карта не печатает заголовок и подсказку', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      usage="answer"
+    />,
+  );
+
+  expect(
+    screen.queryByRole('heading', { name: 'Интерактивная карта' }),
+  ).toBeNull();
+  expect(screen.queryByText('Выберите регион на схеме или в списке.')).toBeNull();
+  expect(
+    screen.getByRole('region', { name: 'Карта регионов' }),
+  ).toBeInTheDocument();
+});
+
+it('на экране ответа карта не объявляет выбор: о нём говорит карточка ответа', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      usage="answer"
+    />,
+  );
+
+  expect(screen.queryByRole('status')).toBeNull();
+});
+
+it('на экране ответа список регионов ставит страница, а не карта', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      usage="answer"
+    />,
+  );
+
+  expect(screen.queryByRole('list', { name: 'Список регионов карты' })).toBeNull();
+});
+
+it('в режиме «назвать регион» карта и на экране ответа объясняет подсветку', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId="sichuan"
+      onSelect={() => {}}
+      onClear={() => {}}
+      usage="answer"
+      interactive={false}
+    />,
+  );
+
+  expect(screen.getByText('На карте подсвечена одна область.')).toBeInTheDocument();
+});
+
 it('нажатие на увеличенную цель выбирает мелкий регион, а не соседний', () => {
   const select = vi.fn();
   const { container } = render(
