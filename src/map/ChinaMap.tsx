@@ -103,10 +103,14 @@ export function ChinaMap({
     svg?.style.setProperty('transform', `scale(${zoom})`);
 
     /*
-     * В игре подписи выносок скрываются: иначе карта печатает «Макао» и
-     * «Гонконг» рядом с маркерами и выдаёт два ответа из 34. Выносные линии
-     * остаются — они показывают, к каким территориям относятся маркеры, не
-     * называя их.
+     * Там, где на карте отвечают, подписи выносок скрываются: иначе карта
+     * печатает «Макао» и «Гонконг» рядом с маркерами и выдаёт два ответа из
+     * 34. Выносные линии остаются — они показывают, к каким территориям
+     * относятся маркеры, не называя их.
+     *
+     * Условие по `usage`, а не по `variant`: утечка одинакова и в игре, и в
+     * «найти на карте», где карта раскрашена по типу региона. Прежняя проверка
+     * по `variant === 'fill'` закрывала только игру.
      *
      * Скрытие живёт здесь, а не в таблице стилей, намеренно: утечка ответа —
      * не оформление, и проверять её нужно там, где стили не подключены.
@@ -114,7 +118,7 @@ export function ChinaMap({
     mapRef.current
       ?.querySelectorAll<SVGElement>('.map-callout text')
       .forEach((label) => {
-        label.style.setProperty('display', variant === 'fill' ? 'none' : '');
+        label.style.setProperty('display', usage === 'answer' ? 'none' : '');
       });
 
     const areas = mapRef.current?.querySelectorAll<SVGElement>('[data-region-id]');
@@ -172,7 +176,7 @@ export function ChinaMap({
     paused,
     regions,
     selectedRegionId,
-    variant,
+    usage,
     zoom,
   ]);
 

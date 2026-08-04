@@ -492,8 +492,20 @@ button.secondary:hover:enabled {
   stroke-width: var(--map-border-width-strong);
 }
 
-.china-map [data-region-id]:focus-visible {
+/*
+ * Кольцо браузера снимается на `:focus`, а не только на `:focus-visible`:
+ * нажатие мышью по области с `tabindex` даёт обычный фокус, и Chrome рисует
+ * поверх карты синий прямоугольник по габаритам контура — у Ляонина он
+ * захватывает пол-Жёлтого моря.
+ *
+ * Свой индикатор остаётся на `:focus-visible`, то есть там, где он и нужен:
+ * при обходе с клавиатуры.
+ */
+.china-map [data-region-id]:focus {
   outline: none;
+}
+
+.china-map [data-region-id]:focus-visible {
   stroke: var(--focus-on-paper);
   stroke-width: 4;
 }
