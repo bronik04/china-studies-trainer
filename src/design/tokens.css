@@ -174,11 +174,15 @@
   --map-coast: var(--c-ink-900);
 
   /*
-   * Пропорция карты: 774×569 в единицах viewBox. Сверяется с
-   * MAP_VIEWBOX_WIDTH и MAP_VIEWBOX_HEIGHT в scripts/validate-tokens.test.ts,
-   * а сама карта — в validateViewBox на сборке.
+   * Пропорция карты: 806×601 в единицах viewBox — 774×569 рисунка плюс поле
+   * по 16 единиц с каждой стороны. Поле обязательно: обводка рисуется по
+   * центру контура и без него срезалась бы у крайних регионов.
+   *
+   * Сверяется с MAP_VIEWBOX_WIDTH и MAP_VIEWBOX_HEIGHT в
+   * scripts/validate-tokens.test.ts, а сама карта — в validateViewBox
+   * на сборке.
    */
-  --map-aspect: 774 / 569;
+  --map-aspect: 806 / 601;
 
   /*
    * Границы провинций — главная информация на карте, поэтому они рисуются

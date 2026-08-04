@@ -1,6 +1,6 @@
 <svg
 	xmlns="http://www.w3.org/2000/svg"
-	viewBox="0 0 774 569"
+	viewBox="-16 -16 806 601"
 	aria-labelledby="map-title map-description"
 >
 	<title id="map-title">Карта регионов Китая</title>
@@ -183,9 +183,10 @@
 	<!-- callouts:end -->
 	<!-- hit-targets:start -->
 	<g class="map-hit-targets">
-		<circle class="map-hit" data-hit-region-id="shanghai" cx="605" cy="389.5" r="8.29" fill="transparent" aria-hidden="true" />
-		<circle class="map-hit" data-hit-region-id="tianjin" cx="553.6" cy="263.1" r="8.29" fill="transparent" aria-hidden="true" />
-		<circle class="map-hit" data-hit-region-id="beijing" cx="543.1" cy="245.5" r="8.29" fill="transparent" aria-hidden="true" />
+		<circle class="map-hit" data-hit-region-id="shanghai" cx="605" cy="389.5" r="8.64" fill="transparent" aria-hidden="true" />
+		<circle class="map-hit" data-hit-region-id="tianjin" cx="553.6" cy="263.1" r="8.64" fill="transparent" aria-hidden="true" />
+		<circle class="map-hit" data-hit-region-id="beijing" cx="543.1" cy="245.5" r="8.64" fill="transparent" aria-hidden="true" />
+		<circle class="map-hit" data-hit-region-id="taiwan" cx="597.7" cy="496.7" r="8.64" fill="transparent" aria-hidden="true" />
 	</g>
 	<!-- hit-targets:end -->
 </svg>

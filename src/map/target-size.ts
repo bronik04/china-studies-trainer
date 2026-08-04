@@ -8,11 +8,22 @@
  */
 import { REGION_PALETTE } from './region-palette';
 
-/** Ширина viewBox карты. */
-export const MAP_VIEWBOX_WIDTH = 774;
+/**
+ * Поле вокруг рисунка. Обводка рисуется по центру контура и при наведении
+ * уходит наружу на 0.8 единицы; без поля край viewBox срезал бы её у крайних
+ * регионов, а граница — главная информация на карте (MAP_SPEC.md).
+ *
+ * Геометрия при этом не двигается: рамка растёт наружу, координаты путей,
+ * выносок, целей нажатия и палитры остаются прежними.
+ */
+export const MAP_VIEWBOX_MIN_X = -16;
+export const MAP_VIEWBOX_MIN_Y = -16;
+
+/** Ширина viewBox карты: 774 единицы рисунка плюс поле с двух сторон. */
+export const MAP_VIEWBOX_WIDTH = 806;
 
 /** Высота viewBox карты. Из пары с шириной берётся пропорция `--map-aspect`. */
-export const MAP_VIEWBOX_HEIGHT = 569;
+export const MAP_VIEWBOX_HEIGHT = 601;
 
 /**
  * Опорная ширина карты: `.app-shell` ограничен 1120 px, карта занимает его

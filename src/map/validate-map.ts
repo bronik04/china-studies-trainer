@@ -1,6 +1,8 @@
 import { REGION_PALETTE } from './region-palette';
 import {
   MAP_VIEWBOX_HEIGHT,
+  MAP_VIEWBOX_MIN_X,
+  MAP_VIEWBOX_MIN_Y,
   MAP_VIEWBOX_WIDTH,
   MIN_TARGET_PX,
   REFERENCE_MAP_WIDTH,
@@ -36,8 +38,18 @@ export function validateRegionPalette(regionIds: readonly string[]): void {
  */
 export function validateViewBox(viewBox: string | null): void {
   const parts = viewBox?.trim().split(/\s+/) ?? [];
+  const minX = Number(parts[0]);
+  const minY = Number(parts[1]);
   const width = Number(parts[2]);
   const height = Number(parts[3]);
+
+  if (minX !== MAP_VIEWBOX_MIN_X || minY !== MAP_VIEWBOX_MIN_Y) {
+    throw new Error(
+      `Начало координат viewBox ${minX} ${minY} не совпадает с ` +
+        `${MAP_VIEWBOX_MIN_X} ${MAP_VIEWBOX_MIN_Y}. В нём живёт поле вокруг ` +
+        'рисунка: без него обводка крайних регионов обрезается',
+    );
+  }
 
   if (width !== MAP_VIEWBOX_WIDTH) {
     throw new Error(

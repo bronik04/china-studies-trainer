@@ -52,15 +52,19 @@ it('требует запись в палитре для каждой облас
 });
 
 it('сверяет ширину viewBox карты с константой пересчёта', () => {
-  expect(() => validateViewBox('0 0 774 569')).not.toThrow();
-  expect(() => validateViewBox('0 0 1000 735')).toThrow(
+  expect(() => validateViewBox('-16 -16 806 601')).not.toThrow();
+  expect(() => validateViewBox('-16 -16 1000 601')).toThrow(
     /Ширина viewBox карты 1000 не совпадает/,
   );
   expect(() => validateViewBox(null)).toThrow(/не совпадает/);
 });
 
 it('сверяет высоту viewBox: от неё зависит пропорция коробки карты в CSS', () => {
-  expect(() => validateViewBox('0 0 774 600')).toThrow(
+  expect(() => validateViewBox('-16 -16 806 600')).toThrow(
     /Высота viewBox карты 600 не совпадает/,
   );
+});
+
+it('сверяет начало координат viewBox: в нём живёт поле вокруг рисунка', () => {
+  expect(() => validateViewBox('0 0 806 601')).toThrow(/Начало координат viewBox/);
 });
