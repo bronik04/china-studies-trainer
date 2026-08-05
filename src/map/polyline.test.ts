@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clipRingToFrame,
   clipToFrame,
   distanceToPolyline,
   simplifyPath,
@@ -166,6 +167,29 @@ describe('toPathData', () => {
     expect(parsed[0].at(-1)?.[0]).toBeCloseTo(999 * 0.333, 1);
   });
 
+  it('пишет второе кольцо смещением, а не абсолютной точкой', () => {
+    // `m` строчное — «относительно текущего положения». Абсолютные координаты
+    // во втором кольце сложились бы с концом первого, и форма уехала бы.
+    const rings: Point[][] = [
+      [
+        [10, 10],
+        [20, 10],
+        [20, 20],
+      ],
+      [
+        [100, 100],
+        [110, 100],
+        [110, 110],
+      ],
+    ];
+
+    const parsed = parseMapPath(toPathData(rings, { closed: true }));
+
+    expect(parsed).toHaveLength(2);
+    expect(parsed[1][0][0]).toBeCloseTo(100, 2);
+    expect(parsed[1][0][1]).toBeCloseTo(100, 2);
+  });
+
   it('замыкает кольцо по требованию', () => {
     expect(
       toPathData(
@@ -179,5 +203,45 @@ describe('toPathData', () => {
         { closed: true },
       ),
     ).toMatch(/z$/);
+  });
+});
+
+describe('clipRingToFrame', () => {
+  it('оставляет кольцо целиком, когда оно внутри рамки', () => {
+    const ring: Point[] = [
+      [10, 10],
+      [90, 10],
+      [90, 90],
+    ];
+
+    expect(clipRingToFrame(ring, FRAME)).toEqual(ring);
+  });
+
+  it('обрезает кольцо по краю, оставляя его замкнутым', () => {
+    const clipped = clipRingToFrame(
+      [
+        [50, 50],
+        [150, 50],
+        [150, 90],
+        [50, 90],
+      ],
+      FRAME,
+    );
+
+    expect(clipped.every(([x]) => x <= 100)).toBe(true);
+    expect(clipped.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('отбрасывает кольцо целиком снаружи', () => {
+    expect(
+      clipRingToFrame(
+        [
+          [200, 200],
+          [300, 200],
+          [300, 300],
+        ],
+        FRAME,
+      ),
+    ).toEqual([]);
   });
 });

@@ -209,11 +209,86 @@ export function clipToFrame(points: readonly Point[], frame: Frame): Point[][] {
 }
 
 /**
+ * Часть кольца внутри рамки — по Сазерленду–Ходжмену: многоугольник по очереди
+ * отсекается четырьмя полуплоскостями рамки.
+ *
+ * Линии хватало разрезания на куски, кольцу — нет: у него нет концов, и
+ * выброшенная часть должна замениться отрезком по краю рамки, иначе форма
+ * перестанет быть замкнутой. Гоби уходит в Монголию, Гималаи — в Непал, и без
+ * обрезки их координаты остались бы в файле числами, которым на этой карте
+ * нет места.
+ */
+export function clipRingToFrame(ring: readonly Point[], frame: Frame): Point[] {
+  const crossX = (a: Point, b: Point, x: number): Point => [
+    x,
+    a[1] + ((x - a[0]) / (b[0] - a[0])) * (b[1] - a[1]),
+  ];
+  const crossY = (a: Point, b: Point, y: number): Point => [
+    a[0] + ((y - a[1]) / (b[1] - a[1])) * (b[0] - a[0]),
+    y,
+  ];
+
+  const sides: {
+    inside: (point: Point) => boolean;
+    cross: (a: Point, b: Point) => Point;
+  }[] = [
+    { inside: (p) => p[0] >= frame.minX, cross: (a, b) => crossX(a, b, frame.minX) },
+    { inside: (p) => p[0] <= frame.maxX, cross: (a, b) => crossX(a, b, frame.maxX) },
+    { inside: (p) => p[1] >= frame.minY, cross: (a, b) => crossY(a, b, frame.minY) },
+    { inside: (p) => p[1] <= frame.maxY, cross: (a, b) => crossY(a, b, frame.maxY) },
+  ];
+
+  /* Замыкающая точка совпадает с первой: обход и так цикличен, дубль лишний. */
+  const first = ring[0];
+  const last = ring[ring.length - 1];
+  let output: Point[] =
+    ring.length > 1 && first[0] === last[0] && first[1] === last[1]
+      ? ring.slice(0, -1)
+      : [...ring];
+
+  for (const side of sides) {
+    const input = output;
+    output = [];
+
+    for (let i = 0; i < input.length; i += 1) {
+      const current = input[i];
+      const previous = input[(i + input.length - 1) % input.length];
+      const currentInside = side.inside(current);
+      const previousInside = side.inside(previous);
+
+      if (currentInside) {
+        if (!previousInside) {
+          output.push(side.cross(previous, current));
+        }
+        output.push(current);
+      } else if (previousInside) {
+        output.push(side.cross(previous, current));
+      }
+    }
+
+    if (output.length === 0) {
+      return [];
+    }
+  }
+
+  return output;
+}
+
+/**
  * Запись контуров в тот же вид пути, в котором записана карта:
  * `m x,y dx,dy ... z`. Обратно их читает `parseMapPath`.
  *
  * Смещение считается от округлённой предыдущей точки, а не от исходной: иначе
  * ошибка округления копится и на тысяче точек уводит хвост линии.
+ *
+ * Начало **каждого** кольца тоже смещение, а не абсолютная точка. У первого
+ * кольца разницы нет — отсчёт идёт от нуля, — а у второго есть: `m` строчное
+ * означает «относительно текущего положения», и абсолютные координаты в нём
+ * сложились бы с концом предыдущего кольца. Многокольцевая форма уезжала бы
+ * тем дальше, чем больше в ней колец, и выглядела бы при этом правдоподобно.
+ *
+ * Где кончает разбор предыдущее кольцо, зависит от `z`: замкнутое возвращает
+ * положение в свою же начальную точку, незамкнутое оставляет его в последней.
  */
 export function toPathData(
   rings: readonly (readonly Point[])[],
@@ -222,12 +297,18 @@ export function toPathData(
   const { closed = false, precision = 2 } = options;
   const round = (value: number) => Number(value.toFixed(precision));
 
+  let cursorX = 0;
+  let cursorY = 0;
+
   return rings
     .filter((ring) => ring.length > 1)
     .map((ring) => {
-      let [previousX, previousY] = [round(ring[0][0]), round(ring[0][1])];
-      const parts = [`m ${previousX},${previousY}`];
+      const startX = round(ring[0][0]);
+      const startY = round(ring[0][1]);
+      const parts = [`m ${round(startX - cursorX)},${round(startY - cursorY)}`];
 
+      let previousX = startX;
+      let previousY = startY;
       for (const [x, y] of ring.slice(1)) {
         const nextX = round(x);
         const nextY = round(y);
@@ -239,6 +320,9 @@ export function toPathData(
       if (closed) {
         parts.push('z');
       }
+
+      cursorX = closed ? startX : previousX;
+      cursorY = closed ? startY : previousY;
 
       return parts.join(' ');
     })

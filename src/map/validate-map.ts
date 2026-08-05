@@ -1,12 +1,16 @@
+import type { PhysicalFeature } from '../content/types';
 import { REGION_PALETTE } from './region-palette';
+import { containsPoint, largestInscribedCircle, type Point } from './svg-path';
 import {
   MAP_VIEWBOX_HEIGHT,
   MAP_VIEWBOX_MIN_X,
   MAP_VIEWBOX_MIN_Y,
   MAP_VIEWBOX_WIDTH,
   MIN_TARGET_PX,
+  pixelsToUnits,
   REFERENCE_MAP_WIDTH,
   undersizedRegions,
+  unitsToPixels,
 } from './target-size';
 
 /**
@@ -208,4 +212,195 @@ export function validateCityPlacement(
   }
 
   return { onBoundary };
+}
+
+/**
+ * Ширина ленты нажатия по реке в единицах карты: те же 24 px, что и у всех
+ * целей, на опорной ширине.
+ */
+export const RIVER_RIBBON_UNITS = pixelsToUnits(MIN_TARGET_PX, REFERENCE_MAP_WIDTH);
+
+/**
+ * Какая доля точек реки обязана быть свободна — то есть иметь ближайшую чужую
+ * реку дальше половины ленты.
+ *
+ * Требовать непересечения лент нельзя: Янцзы и Ланьцанцзян сближаются до 4,0
+ * единицы карты, и это не дефект данных, а 三江并流 — параллельные реки
+ * Юньнани. На исходной геометрии доли составили 94,6 % у Янцзы и 85,5 % у
+ * Ланьцанцзяна, на упрощённой — 97 % и 96 % (упрощение выбрасывает частые
+ * вершины извилистого горного участка, где реки и сходятся); у остальных
+ * четырёх — 100 %. Порог 80 % оставляет запас настоящей географии и всё равно
+ * ловит ошибку, ради которой он стоит: отрезок, отданный не той реке, кладёт
+ * две линии друг на друга целиком.
+ */
+export const MIN_FREE_SHARE = 0.8;
+
+export type PhysicalGeometry = {
+  readonly rivers: ReadonlyMap<string, Point[][]>;
+  readonly landforms: ReadonlyMap<string, Point[][]>;
+};
+
+export type PhysicalShapes = {
+  readonly contains: (mapAreaId: string, x: number, y: number) => boolean;
+  readonly distanceToBoundary: (mapAreaId: string, x: number, y: number) => number;
+  readonly mapAreaOf: (regionId: string) => string | undefined;
+};
+
+export type PhysicalReport = {
+  /** Доля свободных точек по каждой реке: её видно в логе сборки. */
+  readonly freeShare: ReadonlyMap<string, number>;
+};
+
+/**
+ * Геометрия физических целей: она есть, лежит на карте, задевает заявленные
+ * регионы и годится под нажатие.
+ *
+ * Проверка «заявленный регион задет» ловит три ошибки сразу — опечатку в
+ * номере отрезка, неверную привязку и расхождение проекции, — тем же приёмом,
+ * которым уже проверяются города.
+ */
+export function validatePhysicalGeometry(
+  features: readonly PhysicalFeature[],
+  geometry: PhysicalGeometry,
+  shapes: PhysicalShapes,
+): PhysicalReport {
+  const errors: string[] = [];
+  const freeShare = new Map<string, number>();
+  const frame = {
+    minX: MAP_VIEWBOX_MIN_X,
+    minY: MAP_VIEWBOX_MIN_Y,
+    maxX: MAP_VIEWBOX_MIN_X + MAP_VIEWBOX_WIDTH,
+    maxY: MAP_VIEWBOX_MIN_Y + MAP_VIEWBOX_HEIGHT,
+  };
+
+  const pointsOf = (feature: PhysicalFeature): Point[][] | undefined =>
+    feature.kind === 'river'
+      ? geometry.rivers.get(feature.id)
+      : geometry.landforms.get(feature.id);
+
+  for (const feature of features) {
+    const rings = pointsOf(feature);
+    if (rings === undefined || rings.length === 0) {
+      errors.push(
+        `Нет геометрии у цели ${feature.id}. Запустите npm run generate:physical`,
+      );
+      continue;
+    }
+
+    const points = rings.flat();
+
+    for (const [x, y] of points) {
+      if (x < frame.minX || x > frame.maxX || y < frame.minY || y > frame.maxY) {
+        errors.push(
+          `Точка за рамкой карты у цели ${feature.id}: ${x.toFixed(1)}, ${y.toFixed(1)}`,
+        );
+        break;
+      }
+    }
+
+    for (const regionId of feature.regionIds) {
+      const mapAreaId = shapes.mapAreaOf(regionId);
+      if (mapAreaId === undefined) {
+        errors.push(`Нет области карты у региона ${regionId}`);
+        continue;
+      }
+
+      /*
+       * Проверять надо в обе стороны. Вершины объекта внутри региона — это
+       * случай «река течёт по региону» и «мелкая форма лежит в нём». Но у
+       * формы, которая регион накрывает, все вершины снаружи: контур
+       * Тибетского нагорья обходит его по краю — через Синьцзян, Сычуань и
+       * заграницу, — и ни одна вершина не попадает ни в Тибет, ни в Цинхай.
+       * Для этого случая берётся точка подписи региона: она заведомо внутри
+       * его контура, потому что это середина наибольшей вписанной окружности.
+       */
+      const label = REGION_PALETTE[mapAreaId]?.label;
+      const covers =
+        feature.kind === 'landform' &&
+        label !== undefined &&
+        containsPoint(rings, label[0], label[1]);
+
+      const touches =
+        covers ||
+        points.some(
+          ([x, y]) =>
+            shapes.contains(mapAreaId, x, y) ||
+            shapes.distanceToBoundary(mapAreaId, x, y) <= CITY_BOUNDARY_TOLERANCE,
+        );
+
+      if (!touches) {
+        errors.push(
+          `Цель ${feature.id} заявляет регион ${regionId}, но не касается его`,
+        );
+      }
+    }
+
+    if (feature.kind === 'landform') {
+      const circle = largestInscribedCircle(rings);
+      const availablePx = unitsToPixels(circle.radius * 2, REFERENCE_MAP_WIDTH);
+      if (availablePx < MIN_TARGET_PX) {
+        errors.push(
+          `Форма ${feature.id} меньше ${MIN_TARGET_PX} px: ${availablePx.toFixed(1)} px ` +
+            `при ширине карты ${REFERENCE_MAP_WIDTH} px`,
+        );
+      }
+    }
+  }
+
+  /*
+   * Свободная доля считается по всем рекам сразу: «свободна» — значит, что
+   * ближайшая точка любой другой реки дальше половины ленты.
+   */
+  const riverPoints = new Map(
+    features
+      .filter((feature) => feature.kind === 'river')
+      .map((feature) => [feature.id, (geometry.rivers.get(feature.id) ?? []).flat()]),
+  );
+
+  for (const [featureId, points] of riverPoints) {
+    if (points.length === 0) {
+      continue;
+    }
+
+    const others = [...riverPoints]
+      .filter(([otherId]) => otherId !== featureId)
+      .flatMap(([, otherPoints]) => otherPoints);
+
+    /*
+     * Расстояние до ближайшей вершины чужой реки, а не до её звена: звенья
+     * разных рек соединять нельзя, а склеить их в одну ломаную значило бы
+     * получить ложные звенья через всю страну. При звене реки в доли единицы и
+     * пороге в 8,6 разница между вершиной и звеном ничтожна.
+     */
+    const nearestOtherPoint = (x: number, y: number): number => {
+      let nearest = Number.POSITIVE_INFINITY;
+      for (const [otherX, otherY] of others) {
+        const distance = Math.hypot(x - otherX, y - otherY);
+        if (distance < nearest) {
+          nearest = distance;
+        }
+      }
+
+      return nearest;
+    };
+
+    const free = points.filter(
+      ([x, y]) => nearestOtherPoint(x, y) > RIVER_RIBBON_UNITS / 2,
+    ).length;
+    const share = free / points.length;
+    freeShare.set(featureId, share);
+
+    if (share < MIN_FREE_SHARE) {
+      errors.push(
+        `У реки ${featureId} свободно ${(100 * share).toFixed(1)} % длины при ` +
+          `пороге ${(100 * MIN_FREE_SHARE).toFixed(0)} %: её негде показать однозначно`,
+      );
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+
+  return { freeShare };
 }

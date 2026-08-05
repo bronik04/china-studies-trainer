@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { physicalFeatures } from '../src/content/physical-features';
 import type { ReliefStep } from '../src/content/types';
 import {
+  clipRingToFrame,
   clipToFrame,
   simplifyPath,
   simplifyRing,
@@ -107,8 +108,13 @@ const riverLines = physicalFeatures
       );
     }
 
-    const parts = clipToFrame(project(chain), FRAME).map((part) =>
-      simplifyPath(part, SIMPLIFY_TOLERANCE_UNITS),
+    /*
+     * Сначала упрощение, потом обрезка: упрощённая линия отходит от исходной до
+     * допуска, и, обрежь мы раньше, она вышла бы за рамку на эту самую единицу.
+     */
+    const parts = clipToFrame(
+      simplifyPath(project(chain), SIMPLIFY_TOLERANCE_UNITS),
+      FRAME,
     );
 
     if (parts.length === 0) {
@@ -139,7 +145,12 @@ if (withoutStep.length > 0) {
 const shapes = source.landforms
   .map((landform) => {
     const rings = landform.rings
-      .map((ring) => simplifyRing(project(ring), SIMPLIFY_TOLERANCE_UNITS))
+      .map((ring) =>
+        clipRingToFrame(
+          simplifyRing(project(ring), SIMPLIFY_TOLERANCE_UNITS),
+          FRAME,
+        ),
+      )
       .filter((ring) => ring.length > 3);
 
     return {
