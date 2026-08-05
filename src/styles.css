@@ -992,10 +992,28 @@ button.text:hover:enabled {
   outline: none;
 }
 
+/*
+ * Спрошенная точка обязана быть видна с другого конца карты: в «Назвать
+ * город» она и есть вопрос. Тушь по тёмной заливке для этого не годилась —
+ * знак отличался от соседних только обводкой в полтона.
+ *
+ * Каналов три, и ни один не цвет сам по себе: знак крупнее, вокруг него
+ * светлое кольцо тоном бумаги и киноварная заливка — та же, которой на карте
+ * помечена цель ответа.
+ */
 .china-map .city:focus-within .city-mark,
 .china-map .city[data-selected='true'] .city-mark {
-  stroke: var(--focus-on-paper);
-  stroke-width: 2;
+  fill: var(--accent);
+  r: 5;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 2.5;
+}
+
+/* Кольцо вокруг спрошенной точки: видно и на светлой, и на тёмной заливке. */
+.china-map .city[data-selected='true'] .city-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1038,6 +1056,23 @@ button.text:hover:enabled {
 .map-alternative button[aria-pressed='true'] {
   border-color: var(--accent-on-ground);
   font-weight: var(--t-weight-bold);
+}
+
+/*
+ * Исход ответа в списке городов помечается тем же способом, что и в списке
+ * вариантов: заливкой на верном и пунктиром на ошибочном — два канала, не
+ * один цвет.
+ */
+.map-alternative button[data-result='correct'] {
+  background: var(--state-correct);
+  border-color: var(--state-correct);
+  color: var(--map-correct-ink);
+  font-weight: var(--t-weight-bold);
+}
+
+.map-alternative button[data-result='incorrect'] {
+  border-color: var(--state-incorrect);
+  border-style: dashed;
 }
 
 /* Пауза показа: список остаётся на месте и в фокусе, но не отвечает. */
