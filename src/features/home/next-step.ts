@@ -1,5 +1,5 @@
 import { regionsWord } from '../../content/region-count';
-import { regionIdsToRepeat } from '../../domain/progress-rules';
+import { targetsToRepeat } from '../../domain/progress-rules';
 import type { Attempt, ExerciseType, Level } from '../../domain/round';
 import { EXERCISE_MODES } from '../exercise/exercise-modes';
 
@@ -37,7 +37,7 @@ export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
   const exerciseType = lastExerciseType(attempts);
   const mode = EXERCISE_MODES[exerciseType];
 
-  const toRepeat = regionIdsToRepeat(attempts, now);
+  const toRepeat = targetsToRepeat(attempts, now, 'region').map((target) => target.id);
   if (toRepeat.length > 0) {
     return {
       label: `Повторить ${toRepeat.length} ${regionsWord(toRepeat.length)}`,

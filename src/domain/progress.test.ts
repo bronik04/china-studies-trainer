@@ -5,7 +5,7 @@ function attempt(index: number): Attempt {
   return {
     questionId: `${index}-sichuan`,
     roundId: `round-${index}`,
-    regionId: 'sichuan',
+    target: { kind: 'region', id: 'sichuan' },
     exerciseType: 'find-on-map',
     level: 1,
     isCorrect: true,
@@ -16,7 +16,7 @@ function attempt(index: number): Attempt {
 
 it('начинается с пустой истории', () => {
   expect(EMPTY_PROGRESS.attempts).toEqual([]);
-  expect(EMPTY_PROGRESS.masteredRegionIds).toEqual([]);
+  expect(EMPTY_PROGRESS.masteredTargets).toEqual([]);
 });
 
 /*

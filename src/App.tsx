@@ -5,8 +5,8 @@ import type { Region } from './content/types';
 import { addAttempts } from './domain/progress';
 import {
   bestAccuracy,
-  masteredRegionIds,
-  regionIdsToRepeat,
+  masteredTargets,
+  targetsToRepeat,
   summariseRound,
 } from './domain/progress-rules';
 import type { FillRound } from './domain/fill-round';
@@ -241,7 +241,7 @@ export default function App() {
     const withAttempts = addAttempts(progress, attempts);
     const updated = {
       ...withAttempts,
-      masteredRegionIds: masteredRegionIds(withAttempts.attempts, new Date()),
+      masteredTargets: masteredTargets(withAttempts.attempts, new Date(), 'region'),
     };
     setProgress(updated);
     store.write(updated);
@@ -263,7 +263,9 @@ export default function App() {
      * в теле компонента — нечистый вызов. Заодно подпись кнопки и её действие
      * получают один и тот же список, а не два вычисления одного правила.
      */
-    setRepeatRegionIds(regionIdsToRepeat(updated.attempts, new Date()));
+    setRepeatRegionIds(
+      targetsToRepeat(updated.attempts, new Date(), 'region').map((target) => target.id),
+    );
     setScreen('results');
   }
 

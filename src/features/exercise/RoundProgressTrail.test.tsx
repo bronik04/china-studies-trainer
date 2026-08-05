@@ -7,7 +7,7 @@ function attempt(isCorrect: boolean): Attempt {
   return {
     questionId: 'q',
     roundId: 'r',
-    regionId: 'hunan',
+    target: { kind: 'region', id: 'hunan' },
     exerciseType: 'find-on-map',
     level: 1,
     isCorrect,

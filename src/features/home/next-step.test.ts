@@ -15,7 +15,7 @@ function attempt(
   return {
     questionId: `${roundId}-${regionId}`,
     roundId,
-    regionId,
+    target: { kind: 'region', id: regionId },
     exerciseType,
     level,
     isCorrect,

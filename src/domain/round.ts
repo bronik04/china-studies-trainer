@@ -1,9 +1,33 @@
-import type { Region } from '../content/types';
 import { shuffle } from './random';
 import { representationsFor, type Representation } from './representations';
 
 export type ExerciseType = 'find-on-map' | 'name-region' | 'match-capital';
 export type Level = 1 | 2 | 3 | 4;
+
+/**
+ * Вид цели. Регионы и города — разные наборы: «путает Ланьчжоу с Синином» не
+ * должно смешиваться с «не знает Ганьсу», поэтому вид входит в саму цель, а не
+ * выводится из идентификатора. `beijing` существует и как регион, и как город.
+ */
+export type TargetKind = 'region' | 'city';
+
+export type Target = {
+  readonly kind: TargetKind;
+  readonly id: string;
+};
+
+export function regionTarget(id: string): Target {
+  return { kind: 'region', id };
+}
+
+/** Ключ для группировки: `Map` не умеет сравнивать объекты по значению. */
+export function targetKey(target: Target): string {
+  return `${target.kind}:${target.id}`;
+}
+
+export function sameTarget(left: Target, right: Target): boolean {
+  return left.kind === right.kind && left.id === right.id;
+}
 
 /**
  * SPEC.md описывает последовательность ready → answered → feedback → next.
@@ -15,7 +39,7 @@ export type QuestionStatus = 'ready' | 'feedback';
 export type Question = {
   readonly id: string;
   readonly roundId: string;
-  readonly regionId: string;
+  readonly target: Target;
   readonly exerciseType: ExerciseType;
   readonly representation: Representation;
   readonly level: Level;
@@ -24,7 +48,7 @@ export type Question = {
 export type Attempt = {
   readonly questionId: string;
   readonly roundId: string;
-  readonly regionId: string;
+  readonly target: Target;
   readonly exerciseType: ExerciseType;
   readonly level: Level;
   readonly isCorrect: boolean;
@@ -48,33 +72,38 @@ export type RoundOptions = {
 };
 
 export type AnswerInput = {
-  readonly answeredRegionId: string;
+  /**
+   * Что выбрал ученик. Строка, а не цель: в играх по городам ответом бывает
+   * регион, а не тот же вид, что у вопроса, и правило сравнения тогда
+   * переезжает в саму игру.
+   */
+  readonly answeredId: string;
   readonly durationMs: number;
   readonly answeredAt: string;
 };
 
-/** Раунд по всем регионам темы: каждый ровно один раз, порядок перемешан. */
+/** Раунд по всем целям темы: каждая ровно один раз, порядок перемешан. */
 export function createRound(
-  regions: readonly Region[],
+  targets: readonly Target[],
   options: RoundOptions,
 ): Round {
-  if (regions.length === 0) {
-    throw new Error('Раунд не создан: нет регионов');
+  if (targets.length === 0) {
+    throw new Error('Раунд не создан: нет целей');
   }
 
   if (options.exerciseTypes.length === 0) {
     throw new Error('Раунд не создан: не заданы типы заданий');
   }
 
-  const questions = shuffle(regions, options.random).map((region, index) => {
+  const questions = shuffle(targets, options.random).map((target, index) => {
     const exerciseType = options.exerciseTypes[index % options.exerciseTypes.length];
     const available = representationsFor(options.level, exerciseType);
     const representation = available[Math.floor(options.random() * available.length)];
 
     return {
-      id: `${index + 1}-${region.id}`,
+      id: `${index + 1}-${target.id}`,
       roundId: options.roundId,
-      regionId: region.id,
+      target,
       exerciseType,
       representation,
       level: options.level,
@@ -106,10 +135,10 @@ export function answerQuestion(round: Round, input: AnswerInput): Round {
   const attempt: Attempt = {
     questionId: question.id,
     roundId: question.roundId,
-    regionId: question.regionId,
+    target: question.target,
     exerciseType: question.exerciseType,
     level: question.level,
-    isCorrect: input.answeredRegionId === question.regionId,
+    isCorrect: input.answeredId === question.target.id,
     durationMs: input.durationMs,
     answeredAt: input.answeredAt,
   };

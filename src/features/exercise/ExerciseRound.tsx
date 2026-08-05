@@ -9,6 +9,7 @@ import {
   currentQuestion,
   goToNextQuestion,
   isRoundFinished,
+  regionTarget,
   type Attempt,
   type ExerciseType,
   type Level,
@@ -62,12 +63,15 @@ export function ExerciseRound({
   onExit,
 }: ExerciseRoundProps) {
   const [round, setRound] = useState<Round>(() =>
-    createRound(regions, {
-      roundId,
-      exerciseTypes,
-      level,
-      random: createSeededRandom(seed),
-    }),
+    createRound(
+      regions.map((region) => regionTarget(region.id)),
+      {
+        roundId,
+        exerciseTypes,
+        level,
+        random: createSeededRandom(seed),
+      },
+    ),
   );
   const [answeredRegionId, setAnsweredRegionId] = useState<string | null>(null);
   const [askedAt, setAskedAt] = useState(() => performance.now());
@@ -78,12 +82,12 @@ export function ExerciseRound({
     const random = createSeededRandom(seed + 1);
 
     return round.questions.map((question) =>
-      buildChoices(regions, question.regionId, random),
+      buildChoices(regions, question.target.id, random),
     );
   }, [regions, round.questions, seed]);
 
   const question = currentQuestion(round);
-  const targetRegion = regions.find((region) => region.id === question.regionId)!;
+  const targetRegion = regions.find((region) => region.id === question.target.id)!;
   const mode = EXERCISE_MODES[question.exerciseType];
   const isMapAnswer = question.exerciseType === 'find-on-map';
   const showsMap = isMapAnswer || question.exerciseType === 'name-region';
@@ -91,15 +95,15 @@ export function ExerciseRound({
 
   const answerStates = useMemo(
     () =>
-      isMapAnswer ? answerStatesFor(regions, question.regionId, answeredRegionId) : {},
-    [isMapAnswer, regions, question.regionId, answeredRegionId],
+      isMapAnswer ? answerStatesFor(regions, question.target.id, answeredRegionId) : {},
+    [isMapAnswer, regions, question.target.id, answeredRegionId],
   );
 
   function answer(regionId: string) {
     setAnsweredRegionId(regionId);
     setRound(
       answerQuestion(round, {
-        answeredRegionId: regionId,
+        answeredId: regionId,
         durationMs: Math.round(performance.now() - askedAt),
         answeredAt: new Date().toISOString(),
       }),
@@ -168,7 +172,7 @@ export function ExerciseRound({
                     data-choice-id={choice.id}
                     data-result={resultOf(
                       choice.id,
-                      question.regionId,
+                      question.target.id,
                       answeredRegionId,
                     )}
                     disabled={round.status !== 'ready'}
@@ -184,7 +188,7 @@ export function ExerciseRound({
           )}
           {round.status === 'feedback' ? (
             <AnswerFeedback
-              isCorrect={answeredRegionId === question.regionId}
+              isCorrect={answeredRegionId === question.target.id}
               targetRegion={targetRegion}
               isLastQuestion={isLastQuestion}
               onNext={handleNext}
@@ -199,7 +203,7 @@ export function ExerciseRound({
           <div className="round-map">
             <ChinaMap
               regions={regions}
-              selectedRegionId={isMapAnswer ? answeredRegionId : question.regionId}
+              selectedRegionId={isMapAnswer ? answeredRegionId : question.target.id}
               onSelect={handleMapSelect}
               onClear={() => {}}
               answerStates={answerStates}

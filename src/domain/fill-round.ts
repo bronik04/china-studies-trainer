@@ -2,7 +2,7 @@ import type { Region } from '../content/types';
 import { MAX_REVIEW_TOPICS } from './progress-rules';
 import { shuffle } from './random';
 import { representationsFor, type Representation } from './representations';
-import type { Attempt, Level } from './round';
+import { regionTarget, type Attempt, type Level } from './round';
 
 /**
  * Раунд-заполнение карты: каждый регион остаётся в игре, пока не закрыт, и
@@ -150,7 +150,7 @@ export function answerFillRound(
   const attempt: Attempt = {
     questionId: question.id,
     roundId: question.roundId,
-    regionId: question.regionId,
+    target: regionTarget(question.regionId),
     exerciseType: 'find-on-map',
     level: question.level,
     // «Освоил» значит «берёт с первой». Ответ со второй попадает в повтор.

@@ -1,9 +1,9 @@
-import type { Attempt, Level } from './round';
+import { regionTarget, type Attempt, type Level } from './round';
 import {
   bestAccuracy,
-  masteredRegionIds,
+  masteredTargets,
   MAX_REVIEW_TOPICS,
-  regionIdsToRepeat,
+  targetsToRepeat,
   summariseRound,
 } from './progress-rules';
 
@@ -17,7 +17,7 @@ function attempt(overrides: Partial<Attempt> = {}): Attempt {
   return {
     questionId: '1-sichuan',
     roundId: 'round-1',
-    regionId: 'sichuan',
+    target: regionTarget('sichuan'),
     exerciseType: 'find-on-map',
     level: 1 as Level,
     isCorrect: true,
@@ -29,8 +29,8 @@ function attempt(overrides: Partial<Attempt> = {}): Attempt {
 
 it('считает точность раунда', () => {
   const summary = summariseRound([
-    attempt({ regionId: 'sichuan', isCorrect: true, durationMs: 1000 }),
-    attempt({ regionId: 'yunnan', isCorrect: false, durationMs: 3000 }),
+    attempt({ target: regionTarget('sichuan'), isCorrect: true, durationMs: 1000 }),
+    attempt({ target: regionTarget('yunnan'), isCorrect: false, durationMs: 3000 }),
   ]);
 
   expect(summary.total).toBe(2);
@@ -41,19 +41,19 @@ it('считает точность раунда', () => {
 
 it('собирает темы для повторения из ошибок раунда', () => {
   const summary = summariseRound([
-    attempt({ regionId: 'sichuan', isCorrect: false }),
-    attempt({ regionId: 'yunnan', isCorrect: true }),
+    attempt({ target: regionTarget('sichuan'), isCorrect: false }),
+    attempt({ target: regionTarget('yunnan'), isCorrect: true }),
   ]);
 
-  expect(summary.regionIdsToReview).toEqual(['sichuan']);
+  expect(summary.targetsToReview).toEqual([regionTarget('sichuan')]);
 });
 
 it('показывает не больше пяти тем для повторения', () => {
   const wrong = Array.from({ length: 8 }, (_, index) =>
-    attempt({ regionId: `region-${index}`, isCorrect: false }),
+    attempt({ target: regionTarget(`region-${index}`), isCorrect: false }),
   );
 
-  expect(summariseRound(wrong).regionIdsToReview).toHaveLength(MAX_REVIEW_TOPICS);
+  expect(summariseRound(wrong).targetsToReview).toHaveLength(MAX_REVIEW_TOPICS);
 });
 
 it('без ответов даёт нулевую точность, а не деление на ноль', () => {
@@ -77,12 +77,12 @@ it('без истории рекорд равен нулю', () => {
 
 it('возвращает в повторение регионы с ошибкой за последние 14 дней', () => {
   const attempts = [
-    attempt({ regionId: 'sichuan', isCorrect: false, answeredAt: daysAgo(3) }),
-    attempt({ regionId: 'yunnan', isCorrect: false, answeredAt: daysAgo(20) }),
-    attempt({ regionId: 'hebei', isCorrect: true, answeredAt: daysAgo(1) }),
+    attempt({ target: regionTarget('sichuan'), isCorrect: false, answeredAt: daysAgo(3) }),
+    attempt({ target: regionTarget('yunnan'), isCorrect: false, answeredAt: daysAgo(20) }),
+    attempt({ target: regionTarget('hebei'), isCorrect: true, answeredAt: daysAgo(1) }),
   ];
 
-  expect(regionIdsToRepeat(attempts, NOW)).toEqual(['sichuan']);
+  expect(targetsToRepeat(attempts, NOW, 'region')).toEqual([regionTarget('sichuan')]);
 });
 
 it('не осваивает регион без ответа на уровне не ниже второго', () => {
@@ -90,7 +90,7 @@ it('не осваивает регион без ответа на уровне �
     attempt({ roundId: `round-${index}`, isCorrect: true }),
   );
 
-  expect(masteredRegionIds(attempts, NOW)).toEqual([]);
+  expect(masteredTargets(attempts, NOW, 'region')).toEqual([]);
 });
 
 it('осваивает регион после трёх верных ответов в разных раундах', () => {
@@ -100,7 +100,7 @@ it('осваивает регион после трёх верных ответ�
     attempt({ roundId: 'round-3', isCorrect: true }),
   ];
 
-  expect(masteredRegionIds(attempts, NOW)).toEqual(['sichuan']);
+  expect(masteredTargets(attempts, NOW, 'region')).toEqual([regionTarget('sichuan')]);
 });
 
 it('снимает освоенность после ошибки за последние 14 дней', () => {
@@ -111,5 +111,19 @@ it('снимает освоенность после ошибки за посл�
     attempt({ roundId: 'round-4', isCorrect: false, answeredAt: daysAgo(2) }),
   ];
 
-  expect(masteredRegionIds(attempts, NOW)).toEqual([]);
+  expect(masteredTargets(attempts, NOW, 'region')).toEqual([]);
+});
+
+it('не смешивает регионы и города в списке на повторение', () => {
+  const attempts = [
+    attempt({ target: { kind: 'region', id: 'gansu' }, isCorrect: false }),
+    attempt({ target: { kind: 'city', id: 'lanzhou' }, isCorrect: false }),
+  ];
+
+  expect(targetsToRepeat(attempts, NOW, 'region')).toEqual([
+    { kind: 'region', id: 'gansu' },
+  ]);
+  expect(targetsToRepeat(attempts, NOW, 'city')).toEqual([
+    { kind: 'city', id: 'lanzhou' },
+  ]);
 });

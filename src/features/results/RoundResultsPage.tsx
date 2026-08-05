@@ -34,8 +34,8 @@ export function RoundResultsPage({
   onNewRound,
   onExit,
 }: RoundResultsPageProps) {
-  const reviewRegions = summary.regionIdsToReview.flatMap(
-    (regionId) => regions.find((region) => region.id === regionId) ?? [],
+  const reviewRegions = summary.targetsToReview.flatMap(
+    (target) => regions.find((region) => region.id === target.id) ?? [],
   );
   const repeatCount = regionIdsToRepeat.length;
   const isRepeatWider = repeatCount > reviewRegions.length;

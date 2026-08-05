@@ -1,4 +1,4 @@
-import type { Attempt } from './round';
+import { targetKey, type Attempt, type Target, type TargetKind } from './round';
 
 export const REVIEW_WINDOW_DAYS = 14;
 export const MASTERY_CORRECT_ROUNDS = 3;
@@ -18,7 +18,7 @@ export type RoundSummary = {
   readonly correct: number;
   readonly accuracy: number;
   readonly durationMs: number;
-  readonly regionIdsToReview: readonly string[];
+  readonly targetsToReview: readonly Target[];
 };
 
 function isWithinReviewWindow(attempt: Attempt, now: Date): boolean {
@@ -48,9 +48,9 @@ export function summariseRound(attempts: readonly Attempt[]): RoundSummary {
     correct,
     accuracy: attempts.length === 0 ? 0 : correct / attempts.length,
     durationMs: attempts.reduce((sum, attempt) => sum + attempt.durationMs, 0),
-    regionIdsToReview: attempts
+    targetsToReview: attempts
       .filter((attempt) => !attempt.isCorrect)
-      .map((attempt) => attempt.regionId)
+      .map((attempt) => attempt.target)
       .slice(0, MAX_REVIEW_TOPICS),
   };
 }
@@ -64,47 +64,65 @@ export function bestAccuracy(attempts: readonly Attempt[]): number {
   return accuracies.length === 0 ? 0 : Math.max(...accuracies);
 }
 
-/** Регионы с неверным ответом за последние 14 дней. */
-export function regionIdsToRepeat(
+/** Цели заданного вида с неверным ответом за последние 14 дней. */
+export function targetsToRepeat(
   attempts: readonly Attempt[],
   now: Date,
-): readonly string[] {
+  kind: TargetKind,
+): readonly Target[] {
   const wrong = attempts.filter(
-    (attempt) => !attempt.isCorrect && isWithinReviewWindow(attempt, now),
+    (attempt) =>
+      attempt.target.kind === kind &&
+      !attempt.isCorrect &&
+      isWithinReviewWindow(attempt, now),
   );
 
-  return [...new Set(wrong.map((attempt) => attempt.regionId))];
+  const seen = new Set<string>();
+  const unique: Target[] = [];
+
+  for (const attempt of wrong) {
+    const key = targetKey(attempt.target);
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(attempt.target);
+    }
+  }
+
+  return unique;
 }
 
 /**
- * Регион освоен после трёх верных ответов в разных завершённых раундах, из
+ * Цель освоена после трёх верных ответов в разных завершённых раундах, из
  * которых хотя бы один — в игре, спрашивающей не русским названием. Одна
  * ошибка за последние 14 дней снимает статус, но историю не стирает
  * (PROGRESS_SYSTEM.md).
  */
-export function masteredRegionIds(
+export function masteredTargets(
   attempts: readonly Attempt[],
   now: Date,
-): readonly string[] {
-  const recentlyWrong = new Set(regionIdsToRepeat(attempts, now));
-  const mastered: string[] = [];
+  kind: TargetKind,
+): readonly Target[] {
+  const recentlyWrong = new Set(
+    targetsToRepeat(attempts, now, kind).map((target) => targetKey(target)),
+  );
+  const mastered: Target[] = [];
 
-  for (const [regionId, regionAttempts] of groupBy(
-    attempts,
-    (attempt) => attempt.regionId,
+  for (const [key, targetAttempts] of groupBy(
+    attempts.filter((attempt) => attempt.target.kind === kind),
+    (attempt) => targetKey(attempt.target),
   )) {
-    if (recentlyWrong.has(regionId)) {
+    if (recentlyWrong.has(key)) {
       continue;
     }
 
-    const correct = regionAttempts.filter((attempt) => attempt.isCorrect);
+    const correct = targetAttempts.filter((attempt) => attempt.isCorrect);
     const rounds = new Set(correct.map((attempt) => attempt.roundId));
     const hasHigherLevel = correct.some(
       (attempt) => attempt.level >= MASTERY_MIN_LEVEL,
     );
 
     if (rounds.size >= MASTERY_CORRECT_ROUNDS && hasHigherLevel) {
-      mastered.push(regionId);
+      mastered.push(targetAttempts[0].target);
     }
   }
 

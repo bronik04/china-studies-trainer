@@ -9,7 +9,10 @@ const SUMMARY: RoundSummary = {
   correct: 30,
   accuracy: 30 / 34,
   durationMs: 245_000,
-  regionIdsToReview: ['sichuan', 'yunnan'],
+  targetsToReview: [
+    { kind: 'region', id: 'sichuan' },
+    { kind: 'region', id: 'yunnan' },
+  ],
 };
 
 function renderResults(
@@ -67,7 +70,7 @@ it('предлагает повторить ошибки', () => {
 
 it('не предлагает повторить ошибки, когда их нет', () => {
   renderResults({
-    summary: { ...SUMMARY, correct: 34, accuracy: 1, regionIdsToReview: [] },
+    summary: { ...SUMMARY, correct: 34, accuracy: 1, targetsToReview: [] },
     regionIdsToRepeat: [],
   });
 

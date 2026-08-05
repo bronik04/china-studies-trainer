@@ -5,7 +5,7 @@ import type { Attempt } from './round';
 const attempt: Attempt = {
   questionId: '1-sichuan',
   roundId: 'round-1',
-  regionId: 'sichuan',
+  target: { kind: 'region', id: 'sichuan' },
   exerciseType: 'find-on-map',
   level: 1,
   isCorrect: true,

@@ -6,6 +6,9 @@ import {
   currentQuestion,
   goToNextQuestion,
   isRoundFinished,
+  regionTarget,
+  sameTarget,
+  targetKey,
   type Round,
 } from './round';
 
@@ -15,16 +18,18 @@ const OPTIONS = {
   level: 1,
 } as const;
 
+const targets = regions.map((region) => regionTarget(region.id));
+
 function newRound(seed = 1): Round {
-  return createRound(regions, { ...OPTIONS, random: createSeededRandom(seed) });
+  return createRound(targets, { ...OPTIONS, random: createSeededRandom(seed) });
 }
 
 function answerCurrent(round: Round, correct: boolean): Round {
   const question = currentQuestion(round);
-  const wrongId = regions.find((region) => region.id !== question.regionId)!.id;
+  const wrongId = regions.find((region) => region.id !== question.target.id)!.id;
 
   return answerQuestion(round, {
-    answeredRegionId: correct ? question.regionId : wrongId,
+    answeredId: correct ? question.target.id : wrongId,
     durationMs: 1200,
     answeredAt: '2026-08-03T10:00:00.000Z',
   });
@@ -32,11 +37,11 @@ function answerCurrent(round: Round, correct: boolean): Round {
 
 it('включает каждый регион ровно один раз', () => {
   const round = newRound();
-  const regionIds = round.questions.map((question) => question.regionId);
+  const answered = round.questions.map((question) => question.target.id);
 
-  expect(regionIds).toHaveLength(34);
-  expect(new Set(regionIds).size).toBe(34);
-  expect([...regionIds].sort()).toEqual(regions.map((region) => region.id).sort());
+  expect(answered).toHaveLength(34);
+  expect(new Set(answered).size).toBe(34);
+  expect([...answered].sort()).toEqual(regions.map((region) => region.id).sort());
 });
 
 it('даёт один и тот же порядок при одном seed', () => {
@@ -67,7 +72,7 @@ it('записывает верный ответ', () => {
     {
       questionId: question.id,
       roundId: 'round-1',
-      regionId: question.regionId,
+      target: question.target,
       exerciseType: 'find-on-map',
       level: 1,
       isCorrect: true,
@@ -128,12 +133,12 @@ it('завершается после ответа на все регионы', 
 
 it('не создаёт раунд без регионов', () => {
   expect(() => createRound([], { ...OPTIONS, random: createSeededRandom(1) })).toThrow(
-    /Раунд не создан: нет регионов/,
+    /Раунд не создан: нет целей/,
   );
 });
 
 it('помечает вопросы и попытки признаком раунда', () => {
-  const round = createRound(regions, {
+  const round = createRound(targets, {
     ...OPTIONS,
     roundId: 'round-7',
     random: createSeededRandom(1),
@@ -144,7 +149,7 @@ it('помечает вопросы и попытки признаком рау�
 });
 
 it('чередует типы заданий в смешанном раунде', () => {
-  const round = createRound(regions, {
+  const round = createRound(targets, {
     roundId: 'round-1',
     exerciseTypes: ['find-on-map', 'name-region', 'match-capital'],
     level: 4,
@@ -160,7 +165,7 @@ it('чередует типы заданий в смешанном раунде'
 });
 
 it('даёт каждому вопросу представление из своего уровня', () => {
-  const round = createRound(regions, {
+  const round = createRound(targets, {
     roundId: 'round-1',
     exerciseTypes: ['find-on-map'],
     level: 2,
@@ -173,7 +178,7 @@ it('даёт каждому вопросу представление из св�
 });
 
 it('не показывает столицу в вопросе «регион — столица»', () => {
-  const round = createRound(regions, {
+  const round = createRound(targets, {
     roundId: 'round-1',
     exerciseTypes: ['match-capital'],
     level: 4,
@@ -185,9 +190,23 @@ it('не показывает столицу в вопросе «регион �
   );
 });
 
+it('делает целью вопроса регион с явным видом', () => {
+  const round = newRound();
+
+  expect(round.questions[0].target.kind).toBe('region');
+  expect(regions.map((region) => region.id)).toContain(round.questions[0].target.id);
+});
+
+it('различает цели по виду, а не только по идентификатору', () => {
+  expect(sameTarget({ kind: 'region', id: 'beijing' }, { kind: 'city', id: 'beijing' })).toBe(
+    false,
+  );
+  expect(targetKey({ kind: 'city', id: 'beijing' })).toBe('city:beijing');
+});
+
 it('не создаёт раунд без типов заданий', () => {
   expect(() =>
-    createRound(regions, {
+    createRound(targets, {
       roundId: 'round-1',
       exerciseTypes: [],
       level: 1,
