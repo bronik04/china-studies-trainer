@@ -149,9 +149,13 @@ export function ExerciseRound({
                 ? 'Регион на карте'
                 : labelOf(targetRegion, question.representation)}
             </h1>
+            {/*
+              Номера уровня здесь больше нет: уровней в продукте не существует,
+              игры равноправны и открыты все сразу. Ход раунда — это «сколько
+              из скольких», и число уровня рядом с ним ничего не сообщало.
+            */}
             <p className="exercise-progress">
-              Вопрос {round.currentIndex + 1} из {round.questions.length} · уровень{' '}
-              {level}
+              Вопрос {round.currentIndex + 1} из {round.questions.length}
             </p>
           </header>
           {isMapAnswer ? null : (

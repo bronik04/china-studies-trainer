@@ -6,15 +6,12 @@ import {
   type CollectionGroupId,
 } from '../../content/collections';
 import type { Region } from '../../content/types';
-import { unlockedLevelFrom } from '../../domain/progress-rules';
 import type { Attempt, ExerciseType, Level } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { SiteFooter } from '../../ui/SiteFooter';
 import { MODE_CARDS } from '../exercise/exercise-modes';
 import { CollectionCard } from './CollectionCard';
-import { LEVEL_LADDER } from './level-ladder';
 import { nextStep } from './next-step';
-import { summariseProgress } from './progress-summary';
 
 export type HomePageProps = {
   readonly regions: readonly Region[];
@@ -37,8 +34,8 @@ const SHOWCASE_LIMIT = 4;
 
 /**
  * Главная. Отвечает на «что это такое» и «что делать дальше» одним экраном:
- * герой с картой и единственным призывом, затем режимы, уровни с картой
- * освоенности, витрина коллекций и происхождение содержания.
+ * герой с картой и единственным призывом, затем игры, витрина коллекций и
+ * происхождение содержания.
  *
  * Главный шаг ровно один и он единственный набран киноварью. Карточки режимов
  * и коллекций стоят на бумаге и запускают то же самое другим путём — для тех,
@@ -53,21 +50,9 @@ export function HomePage({
   onOpenCollections,
   onOpenCollection,
 }: HomePageProps) {
-  const unlockedLevel = unlockedLevelFrom(attempts);
   const [filter, setFilter] = useState<CollectionFilter>('all');
 
-  /*
-   * `new Date()` берётся один раз на рендер и передаётся обоим правилам: они
-   * зависят от окна повтора в 14 дней, и два разных «сейчас» дали бы карту и
-   * кнопку, рассказывающие разное.
-   */
-  const now = new Date();
-  const summary = summariseProgress(
-    regions.map((region) => region.id),
-    attempts,
-    now,
-  );
-  const step = nextStep(attempts, now);
+  const step = nextStep(attempts, new Date());
 
   const shown =
     filter === 'all'
@@ -75,11 +60,19 @@ export function HomePage({
       : collections.filter((collection) => collection.groupId === filter);
 
   return (
-    <main className="site-main">
+    <main className="site-main site-landing">
       <section className="landing-hero">
         <div className="landing-hero-text">
           <p className="eyebrow">Тренажёр к уроку</p>
-          <h1>Китай на карте, а не в списке</h1>
+          {/*
+            Цель перехода по названию в шапке. Фокус переводится на заголовок,
+            а не на весь герой: кольцо вокруг полосы во весь кадр читалось бы
+            как ошибка вёрстки, а вокруг заголовка — как индикатор фокуса. Он
+            же и называет, куда попали.
+          */}
+          <h1 id="top" tabIndex={-1}>
+            Китай на карте, а не в списке
+          </h1>
           <p className="lead">
             34 единицы провинциального уровня, столицы, иероглифы, места и
             явления. Короткий раунд на 5–15 минут, разбор после каждого ответа и
@@ -144,13 +137,12 @@ export function HomePage({
         <ul className="mode-card-grid">
           {MODE_CARDS.map((card) => {
             const isPlanned = card.kind === 'planned';
-            const isLocked = !isPlanned && card.level > unlockedLevel;
 
             return (
               <li key={card.id} className="mode-card" data-planned={isPlanned}>
                 <button
                   type="button"
-                  disabled={isPlanned || isLocked}
+                  disabled={isPlanned}
                   onClick={() => {
                     if (card.kind === 'exercise') {
                       onStartRound(card.exerciseType, card.level, null);
@@ -164,17 +156,15 @@ export function HomePage({
                       {card.mark}
                     </span>
                     {/*
-                      Строка справа отвечает, почему карточка не нажимается:
-                      «Готовится» — режима ещё нет, «Откроется на уровне N» —
-                      есть, но не заслужен. Без неё выключенная кнопка молчит.
+                      Строка справа отвечает, почему карточка не нажимается.
+                      Причина осталась одна — режим ещё не написан: заслужить
+                      игру нельзя, все открыты сразу. У работающих карточек
+                      строки нет: писать «доступно» на том, что и так
+                      нажимается, незачем.
                     */}
-                    <span className="mode-card-level">
-                      {isPlanned
-                        ? 'Готовится'
-                        : isLocked
-                          ? `Откроется на уровне ${card.level}`
-                          : `Уровень ${card.level}`}
-                    </span>
+                    {isPlanned ? (
+                      <span className="mode-card-level">Готовится</span>
+                    ) : null}
                   </span>
                   <span className="mode-card-title">{card.title}</span>
                   <span className="mode-card-summary">{card.summary}</span>
@@ -186,57 +176,12 @@ export function HomePage({
         </ul>
       </section>
 
-      <section className="landing-section landing-levels">
-        <div>
-          <h2>Уровни и прогресс</h2>
-          <p className="landing-section-lead">
-            Сложность растёт постепенно, а не выбирается наугад. Уровень
-            открывается результатом, и ученик всегда видит, что именно осталось.
-          </p>
-          <ol className="level-ladder">
-            {LEVEL_LADDER.map((rung) => (
-              <li key={rung.level} data-open={rung.level <= unlockedLevel}>
-                <span className="level-ladder-number">{rung.level}</span>
-                <span className="level-ladder-body">
-                  <b>{rung.title}</b>
-                  <span>{rung.summary}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <div className="landing-progress">
-          <ChinaMap
-            regions={regions}
-            selectedRegionId={null}
-            onSelect={() => {}}
-            onClear={() => {}}
-            variant="progress"
-            usage="answer"
-            interactive={false}
-            progressStates={summary.stateByRegionId}
-          />
-          {/*
-            Легенда обязательна: статус в этом проекте никогда не передаётся
-            одним цветом, а карта освоенности только цветом и говорит.
-          */}
-          <p className="home-legend" data-testid="progress-legend">
-            <span data-progress-state="mastered" /> освоено
-            <span data-progress-state="in-progress" /> в работе
-            <span data-progress-state="untouched" /> не тронуто
-          </p>
-          <p className="home-status" data-testid="progress-status">
-            Освоено {summary.mastered} из {summary.total} · в работе{' '}
-            {summary.inProgress} · открыт уровень {unlockedLevel}
-          </p>
-          <p className="caption">
-            Состояние никогда не передаётся одним цветом: у каждого есть второй
-            канал — заливка, штриховка или слово.
-          </p>
-        </div>
-      </section>
-
-      <section className="landing-section raised">
+      {/*
+        Полоса не поднятая: секции чередуют две поверхности доски, а после
+        снятия «Уровней и прогресса» две поднятые оказались бы подряд и слились
+        бы в одну.
+      */}
+      <section className="landing-section">
         <div className="landing-section-head landing-section-head-split">
           <div>
             <h2>Коллекции</h2>

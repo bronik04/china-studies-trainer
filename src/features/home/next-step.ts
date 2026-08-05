@@ -1,5 +1,5 @@
 import { regionsWord } from '../../content/region-count';
-import { regionIdsToRepeat, unlockedLevelFrom } from '../../domain/progress-rules';
+import { regionIdsToRepeat } from '../../domain/progress-rules';
 import type { Attempt, ExerciseType, Level } from '../../domain/round';
 import { EXERCISE_MODES } from '../exercise/exercise-modes';
 
@@ -29,16 +29,20 @@ function lastExerciseType(attempts: readonly Attempt[]): ExerciseType {
   return attempts.at(-1)?.exerciseType ?? 'find-on-map';
 }
 
+/*
+ * Уровень берётся у самой игры, а не из истории: он означает, какими
+ * представлениями она спрашивает, и меняться от прогресса ученика не может.
+ */
 export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
-  const level = unlockedLevelFrom(attempts);
   const exerciseType = lastExerciseType(attempts);
+  const mode = EXERCISE_MODES[exerciseType];
 
   const toRepeat = regionIdsToRepeat(attempts, now);
   if (toRepeat.length > 0) {
     return {
       label: `Повторить ${toRepeat.length} ${regionsWord(toRepeat.length)}`,
       exerciseType,
-      level,
+      level: mode.level,
       regionIds: toRepeat,
     };
   }
@@ -47,17 +51,15 @@ export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
     return {
       label: `Начать: ${lowerFirst(EXERCISE_MODES['find-on-map'].title)}`,
       exerciseType: 'find-on-map',
-      level: 1,
+      level: EXERCISE_MODES['find-on-map'].level,
       regionIds: null,
     };
   }
 
   return {
-    label: `Продолжить: уровень ${level} · ${lowerFirst(
-      EXERCISE_MODES[exerciseType].title,
-    )}`,
+    label: `Продолжить: ${lowerFirst(mode.title)}`,
     exerciseType,
-    level,
+    level: mode.level,
     regionIds: null,
   };
 }

@@ -38,6 +38,43 @@ it('на главной ни один пункт не помечен откры�
   }
 });
 
+/*
+ * Пока название не было кнопкой, попасть на главную было нечем: «Режимы» ведёт
+ * на раздел внутри неё, и герой с единственным главным шагом навигацией не
+ * доставался.
+ */
+it('название ведёт на главную', () => {
+  const onNavigate = vi.fn();
+  render(<SiteHeader current="atlas" onNavigate={onNavigate} />);
+
+  fireEvent.click(screen.getByRole('button', { name: /^Китай/ }));
+
+  expect(onNavigate).toHaveBeenCalledWith('home');
+});
+
+it('название говорит, что оно делает, и не теряет видимую подпись', () => {
+  render(<SiteHeader current={null} onNavigate={vi.fn()} />);
+
+  // WCAG 2.5.3: доступное имя содержит видимую подпись целиком.
+  expect(
+    screen.getByRole('button', {
+      name: 'Китай 中国 · страноведение — на главную',
+    }),
+  ).toBeInTheDocument();
+});
+
+it('открытая главная помечена на названии, а не на «Режимах»', () => {
+  render(<SiteHeader current="home" onNavigate={vi.fn()} />);
+
+  expect(screen.getByRole('button', { name: /^Китай/ })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  expect(screen.getByRole('button', { name: 'Режимы' })).not.toHaveAttribute(
+    'aria-current',
+  );
+});
+
 it('навигация названа: на странице она не единственная', () => {
   render(<SiteHeader current={null} onNavigate={vi.fn()} />);
 

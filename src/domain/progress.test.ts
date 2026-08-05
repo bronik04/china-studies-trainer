@@ -17,7 +17,15 @@ function attempt(index: number): Attempt {
 it('начинается с пустой истории', () => {
   expect(EMPTY_PROGRESS.attempts).toEqual([]);
   expect(EMPTY_PROGRESS.masteredRegionIds).toEqual([]);
-  expect(EMPTY_PROGRESS.unlockedLevel).toBe(1);
+});
+
+/*
+ * Открытых и закрытых уровней не существует, все игры доступны сразу, и поля
+ * под «открытый уровень» в прогрессе больше нет: оно осталось бы числом,
+ * которое никто не читает.
+ */
+it('не хранит открытый уровень', () => {
+  expect(EMPTY_PROGRESS).not.toHaveProperty('unlockedLevel');
 });
 
 it('добавляет попытки в конец', () => {

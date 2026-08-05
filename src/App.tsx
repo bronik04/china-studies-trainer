@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { collectionById } from './content/collections';
 import { regions } from './content/regions';
 import type { Region } from './content/types';
@@ -8,14 +8,16 @@ import {
   masteredRegionIds,
   regionIdsToRepeat,
   summariseRound,
-  unlockedLevelFrom,
 } from './domain/progress-rules';
 import type { FillRound } from './domain/fill-round';
 import { createProgressStore } from './domain/progress-storage';
 import type { Attempt, ExerciseType, Level } from './domain/round';
 import { ExerciseRound } from './features/exercise/ExerciseRound';
 import { FillMapRound } from './features/exercise/FillMapRound';
-import { ALL_EXERCISE_TYPES } from './features/exercise/exercise-modes';
+import {
+  ALL_EXERCISE_TYPES,
+  EXERCISE_MODES,
+} from './features/exercise/exercise-modes';
 import { FillMapResultsPage } from './features/results/FillMapResultsPage';
 import { RoundResultsPage } from './features/results/RoundResultsPage';
 import { AtlasPage } from './features/atlas/AtlasPage';
@@ -39,23 +41,46 @@ type Screen =
   | 'fill-results';
 
 /**
- * Шапка стоит на поверхностях, где ходят между разделами, и снята с тех, где
- * отвечают: раунд, итоги и заполнение карты занимают ровно кадр, и полоса в
- * 76 px отняла бы высоту у карты (UI_UX.md).
+ * Кадр приложения: закреплённая шапка и поверхность в одной колонке.
+ *
+ * Шапка живёт здесь, а не у каждого экрана: она стоит на всех поверхностях, и
+ * список «где она есть» пришлось бы держать в согласии с пятью разбросанными
+ * по функции возвратами. Прежде экраны ответа её не получали — кадр отдавался
+ * карте целиком; решение владельца продукта это отменяет (DECISIONS.md,
+ * 2026-08-05).
+ *
+ * `fillsFrame` — поверхность занимает ровно экран и не прокручивается: атлас,
+ * раунд, заполнение карты. Кадру при этом нужна определённая высота, иначе
+ * оболочка внутри берёт естественную и строка `1fr` под карту не разрешается
+ * (см. `.app-frame` в styles.css). Итоги и прокручиваемые поверхности признака
+ * не получают: список ошибок бывает длиннее кадра.
  */
-const SCREENS_WITH_HEADER: readonly Screen[] = [
-  'home',
-  'atlas',
-  'collections',
-  'collection',
-];
+function AppFrame({
+  fillsFrame,
+  current,
+  onNavigate,
+  children,
+}: {
+  readonly fillsFrame: boolean;
+  readonly current: SiteSection | null;
+  readonly onNavigate: (section: SiteSection) => void;
+  readonly children: ReactNode;
+}) {
+  return (
+    <div className="app-frame" data-fills-frame={fillsFrame}>
+      <SiteHeader current={current} onNavigate={onNavigate} />
+      {children}
+    </div>
+  );
+}
 
 /**
- * Какой пункт шапки отмечен открытым. Главной здесь нет намеренно: «Режимы» —
- * её раздел, а не отдельная поверхность, и отметка «вы здесь» на нём означала
- * бы, что из главной уже никуда не уйти.
+ * Какой пункт шапки отмечен открытым. Главная отмечается на названии слева, а
+ * не на «Режимах»: «Режимы» — её раздел, а не отдельная поверхность, и отметка
+ * «вы здесь» на нём означала бы, что из главной уже никуда не уйти.
  */
 const ACTIVE_SECTION: Partial<Record<Screen, SiteSection>> = {
+  home: 'home',
   atlas: 'atlas',
   collections: 'collections',
   collection: 'collections',
@@ -133,6 +158,17 @@ export default function App() {
      * вставал нижним краем экрана вместо верхнего.
      */
     target?.focus({ preventScroll: true });
+
+    /*
+     * Заголовок главной — первое, что на странице есть, и подтягивать его «в
+     * кадр» нельзя: он встал бы к верхней кромке, спрятав шапку над собой.
+     * Наверх страницы — значит в ноль.
+     */
+    if (anchorId === 'top') {
+      window.scrollTo(0, 0);
+      return;
+    }
+
     target?.scrollIntoView();
   }, [anchorRequests]);
 
@@ -147,8 +183,14 @@ export default function App() {
       return;
     }
 
+    /*
+     * Оба перехода ведут на главную, но в разные её места, поэтому якорь у них
+     * разный. Запрос считается и тогда, когда главная уже открыта: нажатие по
+     * названию с середины страницы обязано вернуть наверх, а смены экрана при
+     * этом не происходит и эффект прокрутки сам бы не сработал.
+     */
     setScreen('home');
-    pendingAnchor.current = 'modes';
+    pendingAnchor.current = section === 'home' ? 'top' : 'modes';
     setAnchorRequests((count) => count + 1);
   }
 
@@ -200,7 +242,6 @@ export default function App() {
     const updated = {
       ...withAttempts,
       masteredRegionIds: masteredRegionIds(withAttempts.attempts, new Date()),
-      unlockedLevel: unlockedLevelFrom(withAttempts.attempts),
     };
     setProgress(updated);
     store.write(updated);
@@ -228,40 +269,46 @@ export default function App() {
 
   if (screen === 'fill') {
     return (
-      <FillMapRound
-        regions={regions}
-        level={level}
-        roundId={roundId}
-        seed={seed}
-        onFinish={finishFillRound}
-        onExit={() => setScreen('home')}
-      />
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <FillMapRound
+          regions={regions}
+          level={level}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishFillRound}
+          onExit={() => setScreen('home')}
+        />
+      </AppFrame>
     );
   }
 
   if (screen === 'fill-results' && fillRound !== null) {
     return (
-      <FillMapResultsPage
-        round={fillRound}
-        regions={regions}
-        isProgressSaved={store.isAvailable}
-        onNewRound={() => startFillRound(level)}
-        onExit={() => setScreen('home')}
-      />
+      <AppFrame fillsFrame={false} current={null} onNavigate={navigate}>
+        <FillMapResultsPage
+          round={fillRound}
+          regions={regions}
+          isProgressSaved={store.isAvailable}
+          onNewRound={() => startFillRound(level)}
+          onExit={() => setScreen('home')}
+        />
+      </AppFrame>
     );
   }
 
   if (screen === 'exercise') {
     return (
-      <ExerciseRound
-        regions={roundPool}
-        exerciseTypes={exerciseTypes}
-        level={level}
-        roundId={roundId}
-        seed={seed}
-        onFinish={finishRound}
-        onExit={() => setScreen('home')}
-      />
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <ExerciseRound
+          regions={roundPool}
+          exerciseTypes={exerciseTypes}
+          level={level}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishRound}
+          onExit={() => setScreen('home')}
+        />
+      </AppFrame>
     );
   }
 
@@ -269,28 +316,30 @@ export default function App() {
     const summary = summariseRound(lastAttempts);
 
     return (
-      <RoundResultsPage
-        summary={summary}
-        regions={regions}
-        bestAccuracy={bestAccuracy(progress.attempts)}
-        isProgressSaved={store.isAvailable}
-        regionIdsToRepeat={repeatRegionIds}
-        onRepeatMistakes={() => {
-          startRound(
-            exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
-            level,
-            repeatRegionIds,
-          );
-        }}
-        onNewRound={() =>
-          startRound(
-            exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
-            level,
-            null,
-          )
-        }
-        onExit={() => setScreen('home')}
-      />
+      <AppFrame fillsFrame={false} current={null} onNavigate={navigate}>
+        <RoundResultsPage
+          summary={summary}
+          regions={regions}
+          bestAccuracy={bestAccuracy(progress.attempts)}
+          isProgressSaved={store.isAvailable}
+          regionIdsToRepeat={repeatRegionIds}
+          onRepeatMistakes={() => {
+            startRound(
+              exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
+              level,
+              repeatRegionIds,
+            );
+          }}
+          onNewRound={() =>
+            startRound(
+              exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
+              level,
+              null,
+            )
+          }
+          onExit={() => setScreen('home')}
+        />
+      </AppFrame>
     );
   }
 
@@ -299,7 +348,11 @@ export default function App() {
    * повторяется внутри каждой страницы: иначе «Коллекции» отмечались бы
    * открытыми в двух местах и однажды разошлись бы.
    */
-  const unlockedLevel = unlockedLevelFrom(progress.attempts);
+  /*
+   * И атлас, и страница коллекции ведут в «найти на карте»: уровень берётся у
+   * самой игры, а не у ученика — открытых и закрытых уровней не существует.
+   */
+  const findOnMapLevel = EXERCISE_MODES['find-on-map'].level;
   const collection =
     collectionId === null ? null : (collectionById(collectionId) ?? null);
   /*
@@ -311,13 +364,11 @@ export default function App() {
     screen === 'collection' && collection === null ? 'home' : screen;
 
   return (
-    <>
-      {SCREENS_WITH_HEADER.includes(activeScreen) ? (
-        <SiteHeader
-          current={ACTIVE_SECTION[activeScreen] ?? null}
-          onNavigate={navigate}
-        />
-      ) : null}
+    <AppFrame
+      fillsFrame={activeScreen === 'atlas'}
+      current={ACTIVE_SECTION[activeScreen] ?? null}
+      onNavigate={navigate}
+    >
       {activeScreen === 'atlas' ? (
         <AtlasPage
           regions={regions}
@@ -327,7 +378,7 @@ export default function App() {
           zoom={zoom}
           onZoomChange={setZoom}
           onExit={() => setScreen('home')}
-          onTrain={() => startRound('find-on-map', unlockedLevel, null)}
+          onTrain={() => startRound('find-on-map', findOnMapLevel, null)}
         />
       ) : activeScreen === 'collections' ? (
         <CollectionsPage regions={regions} onOpenCollection={openCollection} />
@@ -335,11 +386,10 @@ export default function App() {
         <CollectionPage
           collection={collection}
           regions={regions}
-          level={unlockedLevel}
           onOpenCollections={() => setScreen('collections')}
           onOpenCollection={openCollection}
           onTrainRegions={(regionIds) =>
-            startRound('find-on-map', unlockedLevel, regionIds)
+            startRound('find-on-map', findOnMapLevel, regionIds)
           }
         />
       ) : (
@@ -353,6 +403,6 @@ export default function App() {
           onOpenCollection={openCollection}
         />
       )}
-    </>
+    </AppFrame>
   );
 }

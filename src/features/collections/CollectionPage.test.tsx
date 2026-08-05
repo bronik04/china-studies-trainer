@@ -24,7 +24,6 @@ function renderPage(id: string) {
     <CollectionPage
       collection={byId(id)}
       regions={regions}
-      level={1}
       {...handlers}
     />,
   );
@@ -37,7 +36,6 @@ it('называет коллекцию по-русски, иероглифам�
     <CollectionPage
       collection={byId('great-wall')}
       regions={regions}
-      level={1}
       onOpenCollections={vi.fn()}
       onOpenCollection={vi.fn()}
       onTrainRegions={vi.fn()}

@@ -14,6 +14,45 @@
   font-size: var(--t-size-body);
   font-synthesis: none;
   line-height: var(--t-leading-body);
+  /*
+   * Переход по шапке доезжает, а не перепрыгивает: страница длинная, и без
+   * прокрутки непонятно, вверх ушли или вниз.
+   */
+  scroll-behavior: smooth;
+
+  /*
+   * Лендинг листается по секциям. `proximity`, а не `mandatory`: на узком
+   * экране секция режимов выше кадра — шесть карточек в столбик, — и
+   * обязательная привязка не дала бы дочитать её до конца.
+   *
+   * Остановка считается от нижнего края шапки: она закреплена, и без отступа
+   * заголовок секции вставал бы под неё.
+   */
+  scroll-padding-block-start: var(--header-height, 0px);
+  scroll-snap-type: y proximity;
+}
+
+/*
+ * Колонка страницы. Меру держит каждый блок сам, а не общая обёртка: только
+ * так поднятая полоса может идти от края до края кадра, оставив содержимое в
+ * колонке. Значение при широком кадре — 1344 px, ровно столько же оставляла
+ * прежняя обёртка 1440 с полями по 48.
+ */
+:root {
+  --page-column: min(100% - 2 * var(--s-4), 1440px);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --page-column: min(100% - 2 * var(--s-7), 1344px);
+  }
+}
+
+/* Движение обслуживает понимание: кому от него плохо — переход мгновенный. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
+  }
 }
 
 * {
@@ -25,6 +64,44 @@ body {
   margin: 0;
   min-height: 100vh;
   min-width: 320px;
+}
+
+/*
+ * Кадр приложения: шапка и поверхность в одной колонке. Оболочки, которые
+ * обязаны занимать ровно экран — атлас и раунд, — берут остаток этой колонки,
+ * а не требуют `100dvh` сами.
+ *
+ * Требовать `100dvh` у оболочки можно было, пока над ней ничего не стояло. С
+ * появлением шапки атлас стал ровно на её высоту выше кадра: 69 px шапки плюс
+ * 900 px оболочки при кадре 900, и подвал с атрибуцией уходил за фальц.
+ * Вычесть высоту шапки константой — то же, на чём уже обожглись при вычитании
+ * служебных полос на экране раунда (DECISIONS.md, 2026-08-04): промахнулись на
+ * 15 px. Остаток считает браузер, и промахнуться не в чем.
+ *
+ * Правило не спрашивает, какой высоты шапка: она стоит на всех поверхностях,
+ * но переносится в две строки на узком экране, и остаток считается от неё
+ * самой.
+ */
+.app-frame {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+/*
+ * Высота кадра объявлена там, где она известна, — на самом кадре, а не на
+ * оболочке внутри него.
+ *
+ * `block-size`, а не `min-block-size`: пока высота выводится из содержимого,
+ * она неопределённа, `flex: 1` нечего распределять, и оболочка берёт
+ * естественную высоту вместе со всей строкой `1fr` внутри себя. Измерено:
+ * атлас при `min-block-size` стал 960 px в кадре 900 — хуже, чем до правки.
+ *
+ * Прокручиваемые поверхности — главная, коллекции, итоги — этого признака не
+ * получают и растут содержимым.
+ */
+.app-frame[data-fills-frame='true'] {
+  block-size: 100dvh;
 }
 
 button {
@@ -120,18 +197,17 @@ p {
    * вычитала их вручную и промахнулась на 15 px: подвал уезжал за кадр при
    * 1366×768. Здесь остаток считает браузер, и промахнуться не в чем.
    *
-   * Высота кадра задана жёстко: пока она выводится из содержимого, строка
+   * Высота приходит извне, а не из содержимого: оболочка забирает остаток
+   * колонки `#root` (`flex: 1`). Пока высота выводится из содержимого, строка
    * `1fr` не разрешается — карта берёт свою естественную высоту, и подвал
    * уезжает вниз. Раскрытый список поэтому получает собственную прокрутку
    * (см. `.region-answer-list` ниже), а не растит страницу.
-   *
-   * `dvh`, а не `vh`: на мобильных браузерах адресная строка меняет высоту
-   * кадра.
    */
   .round-shell {
-    block-size: 100dvh;
     display: grid;
+    flex: 1;
     grid-template-rows: minmax(0, 1fr) auto auto;
+    min-block-size: 0;
   }
 
   /*
@@ -282,155 +358,6 @@ p {
   }
 }
 
-/* --- Кабинет ------------------------------------------------------------ */
-
-.home-shell h1 {
-  margin-bottom: var(--s-6);
-}
-
-.home-layout {
-  display: grid;
-  gap: var(--s-6);
-}
-
-.home-actions {
-  align-items: start;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
-}
-
-.home-status {
-  color: var(--text-on-ground-muted);
-  margin: 0;
-}
-
-/*
- * Узкий экран: колонок нет, высоту задавать нечему, поэтому у карты потолок.
- * Без него она забирала всю ширину и выносила кабинет за кадр.
- * На широком его снимает правило в медиазапросе — там высоту считает кадр.
- */
-.home-progress .china-map-frame {
-  aspect-ratio: var(--map-aspect);
-  block-size: min(46dvh, 420px);
-  inline-size: auto;
-  margin-inline: auto;
-  max-inline-size: 100%;
-}
-
-.home-progress .china-map,
-.home-progress .china-map svg {
-  block-size: 100%;
-}
-
-/* Поле под картой нужно в потоке страницы, а не в сетке кабинета. */
-.home-progress .map-section {
-  margin-bottom: 0;
-}
-
-.home-legend {
-  align-items: center;
-  color: var(--text-on-ground-muted);
-  display: flex;
-  flex-wrap: wrap;
-  font-size: var(--t-size-caption);
-  gap: var(--s-2);
-  margin-block-start: var(--s-3);
-}
-
-/*
- * Образец обведён линией доски, а не тушью карты: тушь темнее самой доски и
- * на ней пропадает, а из трёх заливок только «в работе» и «не тронуто»
- * достаточно светлые, чтобы очертить себя сами. С линией все три читаются как
- * поле цвета, и заливка при этом остаётся ровно той, что на карте, — образец
- * не имеет права показывать цвет, которого на карте нет.
- */
-.home-legend span {
-  block-size: var(--s-3);
-  border: var(--border-hair) solid var(--line-on-ground-strong);
-  display: inline-block;
-  inline-size: var(--s-4);
-}
-
-.home-legend span[data-progress-state='mastered'] {
-  background: var(--map-progress-mastered);
-}
-
-.home-legend span[data-progress-state='in-progress'] {
-  background: var(--map-progress-in-progress);
-}
-
-.home-legend span[data-progress-state='untouched'] {
-  background: var(--map-progress-untouched);
-}
-
-.home-other-modes summary {
-  cursor: pointer;
-  min-block-size: var(--target-min);
-  padding-block: var(--s-2);
-}
-
-.home-mode-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-/*
- * Оболочка та же, что у атласа и раунда: кабинет занимает ровно кадр и делится
- * на три строки — заголовок, колонки, атрибуция. Карта забирает остаток второй.
- *
- * Потолок в долях кадра здесь не годился: он оставлял под содержимым 193 px
- * пустоты на 1280×720 и ровно столько же не отдавал карте. Высоту считает
- * браузер, как в двух других оболочках, — и промахнуться не в чем.
- *
- * Карта освоенности — предмет, на который смотрят, поэтому она забирает
- * широкую колонку, а блок действий стоит рядом узкой.
- */
-@media (min-width: 1024px) {
-  /*
-   * `block-size`, а не `min-block-size`: пока высота выводится из содержимого,
-   * строка `1fr` не разрешается, `block-size: 100%` у рамки карты падает в
-   * `auto`, и карта берёт естественную высоту — измерено, 748 px при кадре 720.
-   * То же правило и по той же причине действует в оболочке раунда.
-   */
-  .home-shell {
-    block-size: 100dvh;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
-  }
-
-  .home-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-    min-block-size: 0;
-  }
-
-  /*
-   * Раскрытые «Другие режимы» на низком кадре длиннее строки: при жёсткой
-   * высоте оболочки колонка проезжала мимо атрибуции (1280×520). Она получает
-   * собственную прокрутку — тем же приёмом, каким её получил равнозначный
-   * список на экране раунда.
-   */
-  .home-actions {
-    min-block-size: 0;
-    overflow-y: auto;
-  }
-
-  /* Карта берёт остаток колонки, легенда — свою строку под ней. */
-  .home-progress {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-    min-block-size: 0;
-  }
-
-  .home-progress .china-map-frame {
-    block-size: 100%;
-  }
-}
-
 /* --- Атлас -------------------------------------------------------------- */
 
 .atlas-shell {
@@ -474,14 +401,16 @@ p {
 }
 
 /*
- * Тот же порог и та же сетка, что у раунда. Оболочка занимает ровно кадр и
- * делится на две строки: колонки и подвал. Карта забирает остаток первой.
+ * Тот же порог и та же сетка, что у раунда. Оболочка забирает остаток кадра —
+ * то, что осталось от `#root` под шапкой, — и делится на две строки: колонки и
+ * подвал. Карта забирает остаток первой.
  */
 @media (min-width: 1024px) {
   .atlas-shell {
-    block-size: 100dvh;
     display: grid;
+    flex: 1;
     grid-template-rows: minmax(0, 1fr) auto;
+    min-block-size: 0;
   }
 
   .atlas-layout {
@@ -585,9 +514,27 @@ h1 {
  */
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+h1[tabindex]:focus-visible,
+.landing-section[tabindex]:focus-visible {
   outline: var(--border-focus) solid var(--focus-on-ground);
   outline-offset: var(--s-1);
+}
+
+/*
+ * Кольцо у полосы во весь кадр рисуется внутрь: снаружи ему некуда деться —
+ * полоса идёт от края до края, и смещённое кольцо ушло бы за кадр.
+ */
+.landing-section[tabindex]:focus-visible {
+  outline-offset: calc(-1 * var(--border-focus));
+}
+
+/*
+ * Цель перехода в поток Tab не входит: кольцо ей нужно, когда её выбрали с
+ * клавиатуры, и не нужно после нажатия мышью.
+ */
+h1[tabindex]:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .region-card :focus-visible,
@@ -1246,10 +1193,22 @@ button.text:hover:enabled {
 /*
  * Постоянная навигация появилась вместе с главной-лендингом: поверхностей
  * стало четыре, и возврат кнопкой из подвала перестал держаться. На экранах
- * ответа шапки нет — они занимают ровно кадр (см. DECISIONS.md, 2026-08-04).
+ * ответа она тоже стоит (см. DECISIONS.md, 2026-08-05).
+ */
+/*
+ * Шапка закреплена и видна всегда. Своей высоты она не уступает: остаток кадра
+ * считается после неё.
+ *
+ * Заливка обязательна: под липкой полосой проезжает то бумага карточек, то
+ * поднятая поверхность секции, и прозрачная шапка мешалась бы с ними в кашу.
  */
 .site-header {
+  background: var(--surface-ground);
   border-bottom: var(--border-hair) solid var(--line-on-ground);
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 /*
@@ -1262,17 +1221,43 @@ button.text:hover:enabled {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-3) var(--s-6);
+  inline-size: var(--page-column);
   justify-content: space-between;
   margin: 0 auto;
   padding-block: var(--s-3);
-  width: min(100% - 2 * var(--s-4), 1440px);
 }
 
-.site-header-mark {
+/*
+ * Название — кнопка на главную, но выглядит названием: ни рамки, ни заливки.
+ * Кнопкой, а не ссылкой, по той же причине, что и пункты шапки: маршрутизатора
+ * нет, и `href="#"` обещал бы адрес, которого не существует.
+ */
+button.site-header-mark {
   align-items: baseline;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
+  min-height: var(--target-min);
+  padding: 0;
+  text-align: start;
+}
+
+/*
+ * Наведение подчёркивает — тем же приёмом, что и у прочих кнопок-переходов.
+ * Подчёркивание, а не черта: чертой помечен открытый раздел, и два разных
+ * смысла не должны выглядеть одинаково.
+ */
+button.site-header-mark:hover .site-header-name {
+  text-decoration: underline;
+}
+
+/* Открытая главная помечена так же, как открытый раздел: чертой и словом. */
+button.site-header-mark[aria-current='page'] .site-header-name {
+  border-bottom: var(--border-solid) solid var(--accent-on-ground);
 }
 
 .site-header-name {
@@ -1324,9 +1309,28 @@ button.text:hover:enabled {
   color: var(--text-on-ground-strong);
 }
 
+/*
+ * Поверхность во всю ширину кадра. Колонку держат её блоки, а не она сама:
+ * пока меру задавала обёртка, поднятая полоса обрывалась вместе с ней и на
+ * широком экране висела посреди доски с полями по 230 px по бокам.
+ */
 .site-main {
-  margin: 0 auto;
-  width: min(100% - 2 * var(--s-4), 1440px);
+  inline-size: 100%;
+}
+
+.site-main > * {
+  inline-size: var(--page-column);
+  margin-inline: auto;
+}
+
+/* Полоса идёт от края до края, колонку внутри неё держит содержимое. */
+.site-main > .landing-section.raised {
+  inline-size: 100%;
+}
+
+.landing-section.raised > * {
+  margin-inline: auto;
+  max-inline-size: var(--page-column);
 }
 
 .site-footer {
@@ -1352,7 +1356,31 @@ button.text:hover:enabled {
 
 /* --- Главная ------------------------------------------------------------ */
 
+/*
+ * Одна секция — один экран. Высота считается от кадра за вычетом закреплённой
+ * шапки: она стоит поверх, и без вычета каждая секция была бы выше экрана ровно
+ * на её высоту.
+ *
+ * `min-block-size`, а не `block-size`: секция режимов на 375 px выше кадра, и
+ * жёсткая высота обрезала бы её. Правило висит на `.site-landing`, а не на
+ * `.landing-section` вообще: тот же класс носит «Смотрите также» на странице
+ * коллекции, и разворачивать её на весь экран незачем.
+ */
+.site-landing > .landing-hero,
+.site-landing > .landing-section {
+  min-block-size: calc(100dvh - var(--header-height, 0px));
+  scroll-snap-align: start;
+}
+
+/* Содержимое стоит по центру экрана, а не липнет к его верхней кромке. */
+.site-landing > .landing-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .landing-hero {
+  align-content: center;
   align-items: center;
   display: grid;
   gap: var(--s-7);
@@ -1419,12 +1447,10 @@ button.text:hover:enabled {
 }
 
 /*
- * Поднятая полоса идёт от края до края кадра, а не только под текстом: она
- * гасит горизонтальное поле `.site-main` и возвращает его себе отступом.
- * Отрицательное поле и padding берутся из одной переменной — только так они
- * гасятся точно и полоса не вылезает за кадр на узком экране.
- *
- * До 1024 px поля у `.site-main` нет, поэтому гасить нечего.
+ * Поднятая полоса идёт от края до края кадра, а не только под текстом.
+ * Ширину ей даёт правило `.site-main > .landing-section.raised` выше, а
+ * колонку внутри держит её содержимое: отрицательных полей и вычислений с
+ * `vw` здесь нет — с `vw` полоса вылезала бы на ширину полосы прокрутки.
  */
 .landing-section.raised {
   background: var(--surface-raised);
@@ -1460,13 +1486,6 @@ button.text:hover:enabled {
   flex-wrap: wrap;
   gap: var(--s-4) var(--s-7);
   justify-content: space-between;
-}
-
-.landing-section-lead {
-  color: var(--text-on-ground-muted);
-  margin-bottom: var(--s-5);
-  max-width: 52ch;
-  text-wrap: pretty;
 }
 
 /* --- Карточки режимов --------------------------------------------------- */
@@ -1576,76 +1595,6 @@ button.text:hover:enabled {
   font-size: var(--t-size-caption);
   margin-top: auto;
   padding-top: var(--s-2);
-}
-
-/* --- Лестница уровней --------------------------------------------------- */
-
-.landing-levels {
-  display: grid;
-  gap: var(--s-7);
-}
-
-.level-ladder {
-  display: flex;
-  flex-direction: column;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.level-ladder li {
-  border-top: var(--border-hair) solid var(--line-on-ground);
-  display: grid;
-  gap: var(--s-4);
-  grid-template-columns: var(--s-7) minmax(0, 1fr);
-  padding: var(--s-4) 0;
-}
-
-.level-ladder li:last-child {
-  border-bottom: var(--border-hair) solid var(--line-on-ground);
-}
-
-/*
- * Открытый уровень отличается не только цветом цифры: у закрытого она стоит в
- * скобках-обводке, у открытого залита киноварью. Цифра сама по себе — второй
- * канал: порядок ступеней читается и без цвета.
- */
-.level-ladder-number {
-  color: var(--accent-on-ground);
-  font-family: var(--t-family-display);
-  font-size: 1.75rem;
-  line-height: var(--t-leading-tight);
-}
-
-.level-ladder li[data-open='false'] .level-ladder-number {
-  color: var(--text-on-ground-muted);
-}
-
-.level-ladder-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-}
-
-.level-ladder-body b {
-  color: var(--text-on-ground-strong);
-  font-size: 1.0625rem;
-  font-weight: var(--t-weight-medium);
-}
-
-.level-ladder-body span {
-  color: var(--text-on-ground-muted);
-}
-
-.landing-progress {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
-
-.landing-progress .home-legend,
-.landing-progress .home-status {
-  margin: 0;
 }
 
 /* --- Витрина коллекций -------------------------------------------------- */
@@ -1769,7 +1718,13 @@ button.chip[aria-pressed='true'] {
 
 /* --- Происхождение содержания ------------------------------------------- */
 
+/*
+ * Две равные колонки. `align-content` центрирует их по вертикали: сетке
+ * колонка из `.site-landing > .landing-section` не досталась бы — `display`
+ * здесь свой.
+ */
 .landing-provenance {
+  align-content: center;
   display: grid;
   gap: var(--s-7);
 }
@@ -2021,19 +1976,6 @@ button.chip[aria-pressed='true'] {
 }
 
 @media (min-width: 1024px) {
-  .site-main {
-    padding-inline: var(--s-7);
-  }
-
-  .landing-section.raised {
-    margin-inline: calc(-1 * var(--s-7));
-    padding-inline: var(--s-7);
-  }
-
-  .site-header-inner {
-    padding-inline: var(--s-7);
-  }
-
   .landing-hero {
     grid-template-columns: minmax(0, 1fr) minmax(0, 50%);
   }
@@ -2049,11 +1991,6 @@ button.chip[aria-pressed='true'] {
    */
   .landing-hero-map .map-section {
     margin-inline-end: calc(-1 * var(--s-7));
-  }
-
-  /* Лестница слева, карта освоенности справа — она уже лестницы. */
-  .landing-levels {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 40%);
   }
 
   /* «Содержание» и «Источники» равнозначны: колонки одинаковые. */
@@ -2108,7 +2045,6 @@ button.chip[aria-pressed='true'] {
 
 /* Подпись под картой относится к ней, а не к следующему разделу. */
 .landing-hero-map .map-section,
-.landing-progress .map-section,
 .paper-panel .map-section {
   margin-bottom: 0;
 }

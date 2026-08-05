@@ -2,29 +2,13 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { collections } from '../../content/collections';
 import { regions } from '../../content/regions';
-import type { Attempt, Level } from '../../domain/round';
+import type { Attempt } from '../../domain/round';
 import { HomePage } from './HomePage';
 
 /**
- * Два раунда первого уровня без ошибок открывают второй: UNLOCK_ROUNDS = 2,
- * UNLOCK_ACCURACY = 0.8. Собирается здесь, а не берётся готовым, потому что
- * карточки режимов гасятся именно по открытому уровню.
+ * История нужна только тем проверкам, где от неё зависит подпись главного
+ * шага: карточки игр от неё не зависят — все открыты сразу.
  */
-function perfectRounds(level: Level): readonly Attempt[] {
-  return ['round-1', 'round-2'].flatMap((roundId) =>
-    regions.map((region) => ({
-      questionId: `${level}-${region.id}`,
-      roundId,
-      regionId: region.id,
-      exerciseType: 'find-on-map' as const,
-      level,
-      isCorrect: true,
-      durationMs: 1000,
-      answeredAt: '2026-08-03T12:00:00.000Z',
-    })),
-  );
-}
-
 function renderHome(attempts: readonly Attempt[] = []) {
   const handlers = {
     onStartRound: vi.fn(),
@@ -57,24 +41,6 @@ it('главная кнопка называет следующий шаг и з
   expect(onStartRound).toHaveBeenCalledWith('find-on-map', 1, null);
 });
 
-it('строка состояния называет счёт числами, а не только цветом на карте', () => {
-  renderHome();
-
-  expect(screen.getByTestId('progress-status')).toHaveTextContent(
-    'Освоено 0 из 34',
-  );
-});
-
-it('легенда называет все три состояния карты словами', () => {
-  renderHome();
-
-  const legend = screen.getByTestId('progress-legend');
-
-  expect(legend).toHaveTextContent('освоено');
-  expect(legend).toHaveTextContent('в работе');
-  expect(legend).toHaveTextContent('не тронуто');
-});
-
 it('карточка открытого режима запускает свой раунд', () => {
   const { onStartRound } = renderHome();
 
@@ -83,31 +49,37 @@ it('карточка открытого режима запускает свой
   expect(onStartRound).toHaveBeenCalledWith('name-region', 1, null);
 });
 
-it('карточка закрытого режима не запускается и объясняет, чем открывается', () => {
+/*
+ * Игры равноправны и открыты все сразу: это разные занятия, а не ступени одной
+ * лестницы. Заслуживать доступ не нужно и истории для этого не требуется.
+ */
+it('карточка игры запускается без всякой истории', () => {
   const { onStartRound } = renderHome();
 
   const card = screen.getByRole('button', { name: /Регион — столица/ });
 
+  expect(card).toBeEnabled();
+  fireEvent.click(card);
+
+  expect(onStartRound).toHaveBeenCalledWith('match-capital', 2, null);
+});
+
+it('карточка ненаписанного режима не запускается и говорит почему', () => {
+  const { onStartRound } = renderHome();
+
+  const card = screen.getByRole('button', {
+    name: /История: династии и даты/,
+  });
+
   expect(card).toBeDisabled();
-  expect(card).toHaveTextContent('Откроется на уровне 2');
+  expect(card).toHaveTextContent('Готовится');
 
   fireEvent.click(card);
   expect(onStartRound).not.toHaveBeenCalled();
 });
 
-it('открытый уровень отпирает свою карточку', () => {
-  const { onStartRound } = renderHome(perfectRounds(1));
-
-  fireEvent.click(screen.getByRole('button', { name: /Регион — столица/ }));
-
-  expect(onStartRound).toHaveBeenCalledWith('match-capital', 2, null);
-});
-
 it('заполнение карты идёт своим раундом, а не упражнением', () => {
-  const { onStartFillRound, onStartRound } = renderHome([
-    ...perfectRounds(1),
-    ...perfectRounds(2),
-  ]);
+  const { onStartFillRound, onStartRound } = renderHome();
 
   fireEvent.click(screen.getByRole('button', { name: /Заполнить карту/ }));
 
@@ -174,21 +146,6 @@ it('витрина показывает четыре коллекции из д�
 
   expect(collections).toHaveLength(12);
   expect(cards).toHaveLength(4);
-});
-
-it('лестница уровней отмечает, какие ступени открыты', () => {
-  renderHome(perfectRounds(1));
-
-  const rungs = screen
-    .getAllByRole('listitem')
-    .filter((item) => item.dataset.open !== undefined);
-
-  expect(rungs.map((item) => item.dataset.open)).toEqual([
-    'true',
-    'true',
-    'false',
-    'false',
-  ]);
 });
 
 it('раздел режимов принимает фокус: шапка ведёт на него по якорю', () => {

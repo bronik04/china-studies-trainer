@@ -1,16 +1,15 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterEach, beforeEach } from 'vitest';
 import App from './App';
 import { regions } from './content/regions';
-import type { Attempt, Level } from './domain/round';
 
 /**
  * Хранилище подменяется картой в памяти: приложение читает прогресс при
  * монтировании, поэтому засеять его можно только до `render`.
  *
- * Подмена снимается после каждого теста. Без этого засеянный прогресс утекал
- * бы в следующие тесты файла и открывал бы им уровни, которых они не
- * заслуживали.
+ * Хранилище пустое и своё у каждого теста, а подмена снимается после него.
+ * Без этого пройденный раунд утекал бы в следующие тесты файла: приложение
+ * пишет прогресс, а «повторить ошибки» его читает.
  */
 const realStorage = Object.getOwnPropertyDescriptor(window, 'localStorage');
 
@@ -37,33 +36,9 @@ afterEach(() => {
   }
 });
 
-function seedAttempts(attempts: readonly Attempt[]): void {
-  installMemoryStorage({
-    'china-studies-trainer/progress': JSON.stringify({
-      schemaVersion: 1,
-      attempts,
-      masteredRegionIds: [],
-      /* Поле намеренно отстало: открытый уровень выводится из истории. */
-      unlockedLevel: 1,
-    }),
-  });
-}
-
-/** Два безошибочных раунда уровня открывают следующий: см. progress-rules.ts. */
-function perfectRounds(level: Level): readonly Attempt[] {
-  return [`r${level}-1`, `r${level}-2`].flatMap((roundId) =>
-    regions.map((region) => ({
-      questionId: `${level}-${region.id}`,
-      roundId,
-      regionId: region.id,
-      exerciseType: 'find-on-map' as const,
-      level,
-      isCorrect: true,
-      durationMs: 1000,
-      answeredAt: '2026-08-03T10:00:00.000Z',
-    })),
-  );
-}
+beforeEach(() => {
+  installMemoryStorage({});
+});
 
 it('открывается главной, а не сразу раундом', () => {
   render(<App />);
@@ -71,9 +46,6 @@ it('открывается главной, а не сразу раундом', (
   expect(
     screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
   ).toBeInTheDocument();
-  expect(screen.getByTestId('progress-status')).toHaveTextContent(
-    'Освоено 0 из 34',
-  );
 });
 
 it('на главной ровно одна главная кнопка', () => {
@@ -93,7 +65,9 @@ it('ведёт с главной в атлас и обратно', () => {
   expect(screen.getByTestId('atlas-region-card')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /В кабинет/ }));
-  expect(screen.getByTestId('progress-status')).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
+  ).toBeInTheDocument();
 });
 
 it('шапка ведёт в атлас и в коллекции', () => {
@@ -113,7 +87,11 @@ it('шапка ведёт в атлас и в коллекции', () => {
   expect(nav).toBeInTheDocument();
 });
 
-it('шапки нет там, где отвечают: раунд занимает ровно кадр', () => {
+/*
+ * Шапка закреплена и стоит везде, включая экраны ответа: решение владельца
+ * продукта отменяет прежнее «на экранах ответа шапки нет».
+ */
+it('шапка стоит и на экране ответа', () => {
   render(<App />);
 
   expect(
@@ -122,9 +100,10 @@ it('шапки нет там, где отвечают: раунд занимае
 
   fireEvent.click(screen.getByRole('button', { name: /^Начать/ }));
 
+  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
   expect(
-    screen.queryByRole('navigation', { name: 'Разделы сайта' }),
-  ).not.toBeInTheDocument();
+    screen.getByRole('navigation', { name: 'Разделы сайта' }),
+  ).toBeInTheDocument();
 });
 
 it('ведёт с главной на страницу коллекции и обратно в раздел', () => {
@@ -170,7 +149,9 @@ it('главная кнопка запускает раунд и возвращ�
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Прервать раунд' }));
-  expect(screen.getByTestId('progress-status')).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
+  ).toBeInTheDocument();
 });
 
 /**
@@ -217,7 +198,6 @@ function finishRound(correct: boolean): void {
 }
 
 function startCapitalRound(): void {
-  seedAttempts(perfectRounds(1));
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /Регион — столица/ }));
 }
@@ -231,7 +211,9 @@ it('показывает итог после раунда и возвращае�
 
   fireEvent.click(screen.getByRole('button', { name: 'В кабинет' }));
 
-  expect(screen.getByTestId('progress-status')).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
+  ).toBeInTheDocument();
 });
 
 it('повторяет все ошибки, а не только показанные пять, и говорит об этом', () => {
@@ -256,24 +238,23 @@ it('проходит раунд «регион — столица»', () => {
   expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
 });
 
-it('показывает уровень в ходе раунда', () => {
+/*
+ * Игры равноправны: запирать одну за другой значило бы решать за ученика, что
+ * ему сейчас интересно. Закрытой карточка бывает только пока режим не написан.
+ */
+it('все написанные игры открыты сразу, без всякой истории', () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: /Найти на карте/ }));
+  for (const name of [
+    /Найти на карте/,
+    /Назвать регион/,
+    /Регион — столица/,
+    /Заполнить карту/,
+  ]) {
+    expect(screen.getByRole('button', { name })).toBeEnabled();
+  }
 
-  expect(screen.getByText(/уровень 1/)).toBeInTheDocument();
-});
-
-it('открывает уровень по истории, даже если сохранённое поле отстало', () => {
-  seedAttempts(perfectRounds(1));
-
-  render(<App />);
-
-  const card = screen.getByRole('button', { name: /Регион — столица/ });
-
-  expect(card).toBeEnabled();
-  expect(card).toHaveTextContent('Уровень 2');
-  expect(screen.getByTestId('progress-status')).toHaveTextContent(
-    'открыт уровень 2',
-  );
+  expect(
+    screen.getByRole('button', { name: /История: династии и даты/ }),
+  ).toBeDisabled();
 });

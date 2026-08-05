@@ -46,7 +46,7 @@ it('при свежих ошибках предлагает повторить �
   expect(step.regionIds).toEqual(['hunan', 'hubei']);
 });
 
-it('без ошибок продолжает режимом последнего раунда на открытом уровне', () => {
+it('без ошибок продолжает игрой последнего раунда', () => {
   const attempts = [
     attempt('hunan', 'r1', true, 'find-on-map'),
     attempt('hubei', 'r2', true, 'match-capital'),
@@ -55,10 +55,10 @@ it('без ошибок продолжает режимом последнего
   const step = nextStep(attempts, NOW);
 
   /*
-   * Уровень 2, а не 1: два раунда подряд с точностью выше 80 % открывают
-   * следующий уровень (SPEC.md), и кнопка обязана вести именно туда.
+   * Номера уровня в подписи нет: уровней не существует. Число рядом со `level`
+   * — собственные правила игры «регион — столица», её набор представлений.
    */
-  expect(step.label).toBe('Продолжить: уровень 2 · регион — столица');
+  expect(step.label).toBe('Продолжить: регион — столица');
   expect(step.exerciseType).toBe('match-capital');
   expect(step.level).toBe(2);
   expect(step.regionIds).toBeNull();

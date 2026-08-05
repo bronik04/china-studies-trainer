@@ -50,12 +50,6 @@ it('на втором уровне спрашивает китайским на�
   expect(regions.map((region) => region.nameZh)).toContain(asked());
 });
 
-it('показывает уровень в прогрессе', () => {
-  renderRound(['find-on-map'], 2);
-
-  expect(screen.getByText(/уровень 2/)).toBeInTheDocument();
-});
-
 it('в режиме «найти на карте» отвечают выбором области', () => {
   renderRound();
   const target = askedRegion();

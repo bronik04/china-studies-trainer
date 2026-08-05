@@ -1,9 +1,15 @@
 import type { ExerciseType, Level } from '../../domain/round';
 
+/**
+ * `level` — не ступень лестницы, а собственные правила игры: какими
+ * представлениями она спрашивает (`REPRESENTATIONS_BY_LEVEL`). Лестницы нет,
+ * закрытых игр нет, и снаружи это число не показывается никогда.
+ */
 export type ExerciseMode = {
   readonly exerciseType: ExerciseType;
   readonly title: string;
   readonly eyebrow: string;
+  readonly level: Level;
 };
 
 export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
@@ -11,16 +17,19 @@ export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
     exerciseType: 'find-on-map',
     title: 'Найти на карте',
     eyebrow: 'Найдите на карте',
+    level: 1,
   },
   'name-region': {
     exerciseType: 'name-region',
     title: 'Назвать регион',
     eyebrow: 'Какой регион подсвечен',
+    level: 1,
   },
   'match-capital': {
     exerciseType: 'match-capital',
     title: 'Регион — столица',
     eyebrow: 'Выберите административный центр',
+    level: 2,
   },
 };
 
@@ -31,8 +40,12 @@ export const ALL_EXERCISE_TYPES: readonly ExerciseType[] = [
 ];
 
 /**
- * Карточка режима на главной. Описывает режим для того, кто ещё не пробовал:
- * что спрашивают, на каком уровне открывается и сколько это займёт.
+ * Карточка режима на главной. Описывает игру для того, кто ещё не пробовал:
+ * что спрашивают и сколько это займёт.
+ *
+ * Игры равноправны и открыты все сразу: это разные занятия, а не ступени
+ * одной лестницы, и запирать одно за другим значило бы решать за ученика, что
+ * ему сейчас интересно. Закрытой карточка бывает только пока режим не написан.
  *
  * Заполнение карты — не `ExerciseType`: это отдельный вид раунда со своим
  * экраном и своим счётом попыток. Поэтому карточка помечена видом, а не просто

@@ -1,10 +1,13 @@
-import type { Attempt, Level } from './round';
+import type { Attempt } from './round';
 
 export const REVIEW_WINDOW_DAYS = 14;
-export const UNLOCK_ACCURACY = 0.8;
-export const UNLOCK_ROUNDS = 2;
-const MAX_LEVEL: Level = 4;
 export const MASTERY_CORRECT_ROUNDS = 3;
+/**
+ * Освоенность требует верного ответа в игре, которая спрашивает не русским
+ * названием: узнать регион по подписи и назвать его по иероглифам — разное
+ * знание. Число — набор представлений игры (`REPRESENTATIONS_BY_LEVEL`), а не
+ * ступень лестницы: лестницы больше нет, все игры открыты сразу.
+ */
 export const MASTERY_MIN_LEVEL = 2;
 export const MAX_REVIEW_TOPICS = 5;
 
@@ -52,33 +55,6 @@ export function summariseRound(attempts: readonly Attempt[]): RoundSummary {
   };
 }
 
-/**
- * Уровень открывается, когда два последних завершённых раунда предыдущего
- * уровня дали вместе не меньше 80% верных ответов (SPEC.md). Цепочка
- * прерывается на первом уровне, который этого не набрал.
- */
-export function unlockedLevelFrom(attempts: readonly Attempt[]): Level {
-  let unlocked: Level = 1;
-
-  while (unlocked < MAX_LEVEL) {
-    const ofLevel = attempts.filter((attempt) => attempt.level === unlocked);
-    const rounds = [...groupBy(ofLevel, (attempt) => attempt.roundId).values()];
-    if (rounds.length < UNLOCK_ROUNDS) {
-      return unlocked;
-    }
-
-    const recent = rounds.slice(-UNLOCK_ROUNDS).flat();
-    const correct = recent.filter((attempt) => attempt.isCorrect).length;
-    if (correct / recent.length < UNLOCK_ACCURACY) {
-      return unlocked;
-    }
-
-    unlocked = (unlocked + 1) as Level;
-  }
-
-  return unlocked;
-}
-
 /** Персональный рекорд точности среди прошлых раундов. */
 export function bestAccuracy(attempts: readonly Attempt[]): number {
   const accuracies = [...groupBy(attempts, (attempt) => attempt.roundId).values()].map(
@@ -102,10 +78,9 @@ export function regionIdsToRepeat(
 
 /**
  * Регион освоен после трёх верных ответов в разных завершённых раундах, из
- * которых хотя бы один — на уровне не ниже второго. Одна ошибка за последние
- * 14 дней снимает статус, но историю не стирает (PROGRESS_SYSTEM.md).
- *
- * Уровни 2–4 ещё не открыты, поэтому пока список остаётся пустым.
+ * которых хотя бы один — в игре, спрашивающей не русским названием. Одна
+ * ошибка за последние 14 дней снимает статус, но историю не стирает
+ * (PROGRESS_SYSTEM.md).
  */
 export function masteredRegionIds(
   attempts: readonly Attempt[],

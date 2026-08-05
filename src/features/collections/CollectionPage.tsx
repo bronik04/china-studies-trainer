@@ -7,7 +7,6 @@ import {
 } from '../../content/collections';
 import { regionsWord } from '../../content/region-count';
 import type { Region } from '../../content/types';
-import type { Level } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
 import { PhotoSlot } from '../../ui/PhotoSlot';
@@ -17,7 +16,6 @@ import { CollectionCard } from '../home/CollectionCard';
 export type CollectionPageProps = {
   readonly collection: Collection;
   readonly regions: readonly Region[];
-  readonly level: Level;
   readonly onOpenCollections: () => void;
   readonly onOpenCollection: (collectionId: string) => void;
   /** Раунд по регионам коллекции. Отсюда и берётся её польза на уроке. */
@@ -36,7 +34,6 @@ export type CollectionPageProps = {
 export function CollectionPage({
   collection,
   regions,
-  level,
   onOpenCollections,
   onOpenCollection,
   onTrainRegions,
@@ -180,9 +177,8 @@ export function CollectionPage({
                   Спросить эти регионы
                 </button>
                 <p className="status-note">
-                  {memberRegions.length}{' '}
-                  {regionsWord(memberRegions.length)} · режим «найти на карте» ·
-                  уровень {level}
+                  {memberRegions.length} {regionsWord(memberRegions.length)} ·
+                  игра «найти на карте»
                 </p>
               </>
             )}
