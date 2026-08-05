@@ -17,6 +17,7 @@ import {
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
+import type { MapZoom } from '../../map/MapControls';
 import { CityAnswerList } from './CityAnswerList';
 import { CITY_MODES } from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
@@ -83,6 +84,13 @@ export function CityRound({
       },
     ),
   );
+  /*
+   * Увеличение с панорамированием даётся именно здесь: самая плотная часть
+   * городов — восточное побережье, и на целом виде соседние точки там сливаются
+   * (спек городов, «Где геометрия не спасает»). В играх по регионам области
+   * крупные, и зум им не нужен.
+   */
+  const [zoom, setZoom] = useState<MapZoom>(1);
   const [answeredId, setAnsweredId] = useState<string | null>(null);
   const [askedAt, setAskedAt] = useState(startClock);
   const advanceTimer = useRef<number | null>(null);
@@ -249,9 +257,11 @@ export function CityRound({
         </div>
         <div className="round-map">
           {/*
-            В «город — регион» точки скрыты: подсвеченный кружок в середине
-            области — готовый ответ. В «назвать город» показана одна точка —
-            та, о которой спрашивают.
+            В «город — регион» точки скрыты вовсе: подсвеченный кружок в
+            середине области — готовый ответ. В остальных двух играх точки
+            есть, но без подписей: в «назвать город» подпись назвала бы
+            спрошенный город, в «найти город» — выдала бы его наведением
+            курсора. Та же утечка, что у выносок Макао и Гонконга.
           */}
           <ChinaMap
             regions={regions}
@@ -259,10 +269,12 @@ export function CityRound({
             onSelect={handleRegionSelect}
             onClear={() => {}}
             interactive={answersWithRegion}
+            zoom={zoom}
+            onZoomChange={setZoom}
             usage="answer"
             showsCities={!answersWithRegion}
             selectedCityId={showsChoices ? targetCity.id : answeredId}
-            showsCityLabels={!showsChoices}
+            showsCityLabels={false}
             onSelectCity={exerciseType === 'find-on-map' ? handleCitySelect : undefined}
           />
         </div>

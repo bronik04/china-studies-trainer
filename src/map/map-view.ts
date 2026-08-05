@@ -1,0 +1,97 @@
+import {
+  MAP_VIEWBOX_HEIGHT,
+  MAP_VIEWBOX_MIN_X,
+  MAP_VIEWBOX_MIN_Y,
+  MAP_VIEWBOX_WIDTH,
+} from './target-size';
+
+/**
+ * Что видно на карте: во сколько раз увеличено и какая точка в середине.
+ *
+ * Увеличение делается сменой `viewBox`, а не масштабированием картинки.
+ * Разница не косметическая: `viewBox` — та же система координат, в которой
+ * лежат области, выноски, цели нажатия и точки городов, поэтому при сдвиге
+ * они едут вместе с картой и попадают под курсор там, где нарисованы. При
+ * `transform: scale` пришлось бы держать вторую систему координат и переводить
+ * между ними каждое нажатие.
+ */
+export type MapView = {
+  readonly zoom: number;
+  readonly centerX: number;
+  readonly centerY: number;
+};
+
+const FULL = {
+  minX: MAP_VIEWBOX_MIN_X,
+  minY: MAP_VIEWBOX_MIN_Y,
+  width: MAP_VIEWBOX_WIDTH,
+  height: MAP_VIEWBOX_HEIGHT,
+} as const;
+
+export const WHOLE_MAP: MapView = {
+  zoom: 1,
+  centerX: FULL.minX + FULL.width / 2,
+  centerY: FULL.minY + FULL.height / 2,
+};
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Середина вида не уходит дальше, чем нужно, чтобы за краем карты не
+ * показалась пустота: на единичном увеличении середина одна-единственная.
+ */
+export function clampView(view: MapView): MapView {
+  const width = FULL.width / view.zoom;
+  const height = FULL.height / view.zoom;
+
+  return {
+    zoom: view.zoom,
+    centerX: clamp(
+      view.centerX,
+      FULL.minX + width / 2,
+      FULL.minX + FULL.width - width / 2,
+    ),
+    centerY: clamp(
+      view.centerY,
+      FULL.minY + height / 2,
+      FULL.minY + FULL.height - height / 2,
+    ),
+  };
+}
+
+export function viewBoxOf(view: MapView): string {
+  const { zoom, centerX, centerY } = clampView(view);
+  const width = FULL.width / zoom;
+  const height = FULL.height / zoom;
+
+  return `${centerX - width / 2} ${centerY - height / 2} ${width} ${height}`;
+}
+
+/** Сдвиг в единицах карты: тянут за саму карту, поэтому вид едет навстречу. */
+export function panView(view: MapView, dx: number, dy: number): MapView {
+  return clampView({ ...view, centerX: view.centerX + dx, centerY: view.centerY + dy });
+}
+
+/**
+ * Смена увеличения сохраняет середину, а не возвращает к центру страны: место,
+ * которое разглядывают, должно остаться на экране. Возврат к целому виду —
+ * отдельная кнопка «Сбросить вид».
+ */
+export function zoomView(view: MapView, zoom: number): MapView {
+  return clampView({ ...view, zoom });
+}
+
+/**
+ * Сколько единиц карты приходится на пиксель экрана. Нужно, чтобы карта под
+ * курсором ехала ровно за ним, а не быстрее или медленнее.
+ */
+export function unitsPerPixel(view: MapView, mapWidthPx: number): number {
+  return FULL.width / view.zoom / mapWidthPx;
+}
+
+/** Шаг клавиатуры — десятая часть видимого, как у прокрутки строкой. */
+export function keyboardStep(view: MapView): number {
+  return FULL.width / view.zoom / 10;
+}

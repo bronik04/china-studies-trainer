@@ -46,11 +46,29 @@ it('стоит внутри коробки карты, а не до неё', () 
 });
 
 /*
- * Карта, которая только показывает, не отдаёт управление собой. Проверка
- * держит именно `interactive`, а не наличие колбэка: витрина в герое главной
- * получала `onZoomChange` и вместе с ним три кнопки по 44 px.
+ * Управление достаётся тому, кто его попросил. Прежде проверка держала ещё и
+ * `interactive`: витрина в герое главной получала `onZoomChange` и вместе с ним
+ * три кнопки по 44 px. Колбэк оттуда убран, а условие по `interactive` мешало
+ * играм по городам — там карту не выбирают областями, но увеличивать и двигать
+ * её нужно как раз там.
  */
-it('не показывает зум карте, которая только показывает', () => {
+it('не показывает зум карте, которая о нём не просила', () => {
+  render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+      zoom={1}
+    />,
+  );
+
+  expect(screen.queryByLabelText('Масштаб карты')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Увеличить' })).toBeNull();
+});
+
+it('показывает зум карте, которой отвечают точками, а не областями', () => {
   render(
     <ChinaMap
       regions={regions}
@@ -63,6 +81,5 @@ it('не показывает зум карте, которая только п�
     />,
   );
 
-  expect(screen.queryByLabelText('Масштаб карты')).toBeNull();
-  expect(screen.queryByRole('button', { name: 'Увеличить' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Увеличить' })).toBeInTheDocument();
 });

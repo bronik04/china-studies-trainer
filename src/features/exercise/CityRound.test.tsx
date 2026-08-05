@@ -146,14 +146,18 @@ function regionNameOf(regionId: string): string {
   return regions.find((region) => region.id === regionId)!.nameRu;
 }
 
-/*
- * Та же утечка, что у выносок Макао и Гонконга: подпись подсвеченной точки —
- * готовый ответ.
- */
-it('в «назвать город» не подписывает подсвеченную точку', () => {
-  const { container } = renderRound('name-target');
 
-  expect(container.querySelector('.city-layer')?.getAttribute('data-labels')).toBe(
-    'false',
-  );
-});
+/*
+ * В «найти город» подпись выдавала бы ответ наведением курсора — точку
+ * достаточно было бы обвести мышью.
+ */
+it.each(['find-on-map', 'name-target'] as const)(
+  'в игре %s не подписывает города на карте',
+  (exerciseType) => {
+    const { container } = renderRound(exerciseType);
+
+    expect(container.querySelector('.city-layer')?.getAttribute('data-labels')).toBe(
+      'false',
+    );
+  },
+);
