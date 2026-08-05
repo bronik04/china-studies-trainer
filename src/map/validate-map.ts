@@ -127,3 +127,85 @@ export function validateMapAreaIds(
     throw new Error(errors.join('\n'));
   }
 }
+
+/**
+ * Допуск на точку у самого края региона.
+ *
+ * Строгого попадания в контур требовать нельзя: проекция карты восстановлена
+ * с невязкой 1.8 px (`projection.ts`), а береговая линия и границы в исходной
+ * карте генерализованы. Приморские и приграничные города — Гонконг, Циндао,
+ * Хэйхэ, Маньчжурия — оказываются снаружи на доли единицы, оставаясь на своём
+ * месте.
+ *
+ * Три единицы — вдвое больше наблюдаемого максимума (2.0 у Маньчжурии) и на
+ * порядок меньше расстояния до соседнего региона, поэтому неверная привязка
+ * города к региону всё равно не пройдёт.
+ */
+export const CITY_BOUNDARY_TOLERANCE = 3;
+
+export type CityPlacement = {
+  readonly cityId: string;
+  readonly regionId: string;
+  readonly x: number;
+  readonly y: number;
+};
+
+export type PlacementShapes = {
+  /** Контур региона по его `mapAreaId`. */
+  readonly contains: (mapAreaId: string, x: number, y: number) => boolean;
+  readonly distanceToBoundary: (mapAreaId: string, x: number, y: number) => number;
+  readonly mapAreaOf: (regionId: string) => string | undefined;
+  readonly mapAreaIds: readonly string[];
+};
+
+export type PlacementReport = {
+  /** Города вне контура, но в пределах допуска: их видно в логе сборки. */
+  readonly onBoundary: readonly string[];
+};
+
+/**
+ * Точка города должна лежать в контуре своего региона. Проверка ловит три
+ * разные ошибки сразу: опечатку в координатах, неверную привязку к региону и
+ * расхождение проекции.
+ */
+export function validateCityPlacement(
+  placements: readonly CityPlacement[],
+  shapes: PlacementShapes,
+): PlacementReport {
+  const errors: string[] = [];
+  const onBoundary: string[] = [];
+
+  for (const placement of placements) {
+    const mapAreaId = shapes.mapAreaOf(placement.regionId);
+    if (mapAreaId === undefined) {
+      errors.push(`Нет области карты у региона ${placement.regionId}`);
+      continue;
+    }
+
+    if (shapes.contains(mapAreaId, placement.x, placement.y)) {
+      continue;
+    }
+
+    const distance = shapes.distanceToBoundary(mapAreaId, placement.x, placement.y);
+    if (distance <= CITY_BOUNDARY_TOLERANCE) {
+      onBoundary.push(placement.cityId);
+      continue;
+    }
+
+    const inside = shapes.mapAreaIds.filter((id) =>
+      shapes.contains(id, placement.x, placement.y),
+    );
+
+    errors.push(
+      `Город ${placement.cityId} вне региона ${placement.regionId}: ` +
+        `до края ${distance.toFixed(1)} единиц при допуске ${CITY_BOUNDARY_TOLERANCE}` +
+        (inside.length > 0 ? `; точка лежит в ${inside.join(', ')}` : ''),
+    );
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+
+  return { onBoundary };
+}
