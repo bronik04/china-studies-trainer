@@ -205,6 +205,52 @@ describe('карта', () => {
     }
   });
 
+  /**
+   * Ступени рельефа. Линия реки идёт поверх всех четырёх заливок, и ей, как
+   * всякой графике, несущей смысл, WCAG 2.2 (1.4.11) требует 3:1. Это
+   * связывающее ограничение всей палитры: чем темнее ступень, тем темнее
+   * обязана быть линия, а темнее туши она быть не может.
+   */
+  const RELIEF_FILLS = [
+    '--map-relief-step-1',
+    '--map-relief-step-2',
+    '--map-relief-step-3',
+    '--map-relief-rest',
+  ] as const;
+
+  it('линия реки видна на каждой ступени рельефа', () => {
+    for (const fill of RELIEF_FILLS) {
+      expectAtLeast('--map-river', fill, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('граница региона видна на каждой ступени рельефа', () => {
+    for (const fill of RELIEF_FILLS) {
+      expectAtLeast('--map-border', fill, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('подпись объекта читается на каждой ступени рельефа', () => {
+    for (const fill of RELIEF_FILLS) {
+      expectAtLeast('--map-label', fill, TEXT_CONTRAST);
+    }
+  });
+
+  it('соседние ступени различимы по светлоте', () => {
+    /*
+     * Не требование WCAG: смысл несёт ещё и слово в легенде. Но ступени —
+     * главное, что говорит эта карта, и сливаться им нельзя. Измеренный предел
+     * при линии светлотой 0.045 — около 1.79 между соседними.
+     */
+    for (const [darker, lighter] of [
+      ['--map-relief-step-1', '--map-relief-step-2'],
+      ['--map-relief-step-2', '--map-relief-step-3'],
+    ] as const) {
+      const ratio = contrastRatioRounded(color(darker), color(lighter));
+      expect(ratio, `${darker} против ${lighter}: ${ratio}:1`).toBeGreaterThan(1.3);
+    }
+  });
+
   it('залитое состояние отличимо от любой соседней заливки', () => {
     for (const state of FILLED_STATES) {
       for (const fill of MAP_FILLS) {
