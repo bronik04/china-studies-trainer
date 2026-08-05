@@ -1,7 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
+import { CityLayer } from './CityLayer';
+import { cityPointsOfRegions } from './city-points';
 import { MapControls, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
 import { MEMBERSHIP_LABELS } from './membership';
@@ -66,6 +69,13 @@ type ChinaMapProps = {
    * фокус клавиатуры на body и заставить проходить табом заново.
    */
   readonly paused?: boolean;
+  /**
+   * Показывать ли города. В играх по регионам слой скрыт: точка в середине
+   * Сычуани там подсказка, а не цель.
+   */
+  readonly showsCities?: boolean;
+  readonly selectedCityId?: string | null;
+  readonly onSelectCity?: (cityId: string) => void;
 };
 
 /**
@@ -76,6 +86,17 @@ const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
 const NO_OUTCOMES: Readonly<Record<string, RegionOutcome>> = {};
 const NO_PROGRESS_STATES: Readonly<Record<string, RegionProgressState>> = {};
 const NO_MEMBERS: readonly string[] = [];
+
+/*
+ * Разметка карты объявлена один раз на модуль, а не литералом в разметке.
+ * Новый объект на каждом рендере React считает новым содержимым и
+ * переустанавливает `innerHTML`: узлы создаются заново, а вместе с ними
+ * пропадает всё, что расставил эффект, — русские имена областей, состояния
+ * ответа и признак выбора. Эффект после этого не перезапускается, потому что
+ * его зависимости не менялись, и карта остаётся с английскими подписями из
+ * исходного файла.
+ */
+const MAP_HTML = { __html: mapMarkup };
 
 /**
  * Нажатие принимает и сам контур, и увеличенная цель для мелких областей.
@@ -112,9 +133,23 @@ export function ChinaMap({
   memberRegionIds = NO_MEMBERS,
   highlight = null,
   paused = false,
+  showsCities = false,
+  selectedCityId = null,
+  onSelectCity,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  /*
+   * Разметка карты вставляется строкой, поэтому слой городов рисуется в неё
+   * порталом: система координат и увеличение достаются ему от самой карты, а
+   * не подгоняются вторым `svg` поверх. Узел находится после первой отрисовки,
+   * отсюда состояние.
+   */
+  const [citySvg, setCitySvg] = useState<SVGSVGElement | null>(null);
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
+
+  useEffect(() => {
+    setCitySvg(mapRef.current?.querySelector<SVGSVGElement>('svg') ?? null);
+  }, []);
 
   useEffect(() => {
     const svg = mapRef.current?.querySelector<SVGElement>('svg');
@@ -304,8 +339,18 @@ export function ChinaMap({
               selectTarget(event.target);
             }
           }}
-          dangerouslySetInnerHTML={{ __html: mapMarkup }}
+          dangerouslySetInnerHTML={MAP_HTML}
         />
+        {showsCities && citySvg !== null
+          ? createPortal(
+              <CityLayer
+                points={cityPointsOfRegions(regions.map((region) => region.id))}
+                selectedCityId={selectedCityId}
+                onSelect={onSelectCity}
+              />,
+              citySvg,
+            )
+          : null}
         {/* Зум идёт после карты в разметке: сначала предмет, потом управление им. */}
         {/*
           Условие спрашивает и про `interactive`, а не только про наличие

@@ -109,6 +109,11 @@ const border: readonly City[] = [
 
 export const cities: readonly City[] = [...capitals, ...notable, ...border];
 
+/** Города региона в порядке каталога: сначала центр, потом остальные. */
+export function citiesOfRegion(regionId: string): readonly City[] {
+  return cities.filter((item) => item.regionId === regionId);
+}
+
 export function cityById(id: string): City | undefined {
   return cities.find((item) => item.id === id);
 }

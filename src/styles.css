@@ -919,6 +919,93 @@ button.text:hover:enabled {
 }
 
 
+/* --- Слой городов ------------------------------------------------------- */
+
+/*
+ * Знак стоит на настоящем месте города, цель нажатия может отойти, подпись
+ * появляется только у одного города за раз (`CityLayer.tsx`). Цветом здесь
+ * ничего не сообщается: канал занят типом региона, исходом ответа и
+ * освоенностью, — у знака свои каналы, размер и обводка.
+ */
+.china-map .city-mark {
+  fill: var(--map-label);
+  stroke: var(--map-sea);
+  stroke-width: 1;
+}
+
+/* Столица крупнее прочих городов: это разный вес, а не разный цвет. */
+.china-map .city[data-city-set='capital'] .city-mark {
+  r: 3.4;
+  stroke-width: 1.4;
+}
+
+/* Поводок от знака к отошедшей цели: иначе нажатие срабатывает «мимо города». */
+.china-map .city-leader {
+  stroke: var(--map-label);
+  stroke-dasharray: 2 2;
+  stroke-width: 0.7;
+}
+
+.china-map .city-hit {
+  fill: transparent;
+}
+
+.china-map .city-layer[data-interactive='true'] .city-hit {
+  cursor: pointer;
+}
+
+/*
+ * Подпись видна у одного города за раз — при наведении, фокусе и выборе.
+ * Обводка тоном бумаги отделяет её от заливки региона: подпись ложится на
+ * любой из четырёх тонов карты, и подкладывать под неё плашку значило бы
+ * закрывать саму карту.
+ */
+.china-map .city-label {
+  fill: var(--map-label);
+  font-family: var(--t-family-text);
+  font-size: 10px;
+  font-weight: var(--t-weight-bold);
+  opacity: 0;
+  paint-order: stroke;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 3;
+  transition: opacity var(--duration-quick) var(--ease-out);
+}
+
+.china-map .city:hover .city-label,
+.china-map .city:focus-within .city-label,
+.china-map .city[data-selected='true'] .city-label {
+  opacity: 1;
+}
+
+.china-map .city-hit:focus-visible {
+  outline: none;
+}
+
+.china-map .city:focus-within .city-mark,
+.china-map .city[data-selected='true'] .city-mark {
+  stroke: var(--focus-on-paper);
+  stroke-width: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .china-map .city-label {
+    transition: none;
+  }
+}
+
+/* Города региона в карточке атласа: перечень, а не абзац. */
+.region-city-list {
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  font-size: var(--t-size-caption);
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+}
+
 .map-selection {
   font-weight: var(--t-weight-bold);
   margin: var(--s-4) 0;

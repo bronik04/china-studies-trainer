@@ -34,3 +34,12 @@ const BY_ID = new Map(CITY_POINTS.map((point) => [point.city.id, point]));
 export function cityPoint(cityId: string): CityPoint | undefined {
   return BY_ID.get(cityId);
 }
+
+/** Точки городов заданных регионов — в порядке каталога. */
+export function cityPointsOfRegions(
+  regionIds: readonly string[],
+): readonly CityPoint[] {
+  const wanted = new Set(regionIds);
+
+  return CITY_POINTS.filter((point) => wanted.has(point.city.regionId));
+}
