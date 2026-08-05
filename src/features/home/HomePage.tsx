@@ -10,8 +10,9 @@ import type { QuestionLanguage } from '../../domain/question-language';
 import type { Attempt, ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { SiteFooter } from '../../ui/SiteFooter';
-import { MODE_CARDS } from '../exercise/exercise-modes';
+import { MODE_CARDS, type ModeCard } from '../exercise/exercise-modes';
 import { CollectionCard } from './CollectionCard';
+import { ModeStartDialog } from './ModeStartDialog';
 import { nextStep } from './next-step';
 
 export type HomePageProps = {
@@ -56,16 +57,19 @@ export function HomePage({
   const step = nextStep(attempts, new Date());
 
   /*
-   * Язык у каждой карточки свой: «Найти на карте» можно держать на русском,
-   * пока «Регион — столица» уже идёт иероглифами. Умолчание общее — язык
-   * последней попытки, он же в главном шаге.
+   * Карточка не запускает раунд сразу: сначала спрашивается язык. Открытая
+   * карточка живёт в состоянии целиком, а не одним признаком, — окну нужны и
+   * название, и объём, и то, каким вызовом её запускать.
    */
-  const [languageByCard, setLanguageByCard] = useState<Record<string, QuestionLanguage>>(
-    {},
-  );
+  const [startingCard, setStartingCard] = useState<ModeCard | null>(null);
 
-  function languageOf(cardId: string): QuestionLanguage {
-    return languageByCard[cardId] ?? step.language;
+  function start(card: ModeCard, language: QuestionLanguage) {
+    setStartingCard(null);
+    if (card.kind === 'exercise') {
+      onStartRound(card.exerciseType, language, null);
+    } else if (card.kind === 'fill') {
+      onStartFillRound(language);
+    }
   }
 
   const shown =
@@ -157,13 +161,7 @@ export function HomePage({
                 <button
                   type="button"
                   disabled={isPlanned}
-                  onClick={() => {
-                    if (card.kind === 'exercise') {
-                      onStartRound(card.exerciseType, languageOf(card.id), null);
-                    } else if (card.kind === 'fill') {
-                      onStartFillRound(languageOf(card.id));
-                    }
-                  }}
+                  onClick={() => setStartingCard(card)}
                 >
                   <span className="mode-card-head">
                     <span lang="zh-Hans" className="mode-card-mark">
@@ -184,34 +182,19 @@ export function HomePage({
                   <span className="mode-card-summary">{card.summary}</span>
                   <span className="mode-card-volume">{card.volume}</span>
                 </button>
-                {isPlanned ? null : (
-                  <fieldset className="mode-card-language">
-                    <legend>Чем спрашивать</legend>
-                    {(
-                      [
-                        ['ru', 'Русское'],
-                        ['zh', '中文'],
-                      ] as const
-                    ).map(([value, label]) => (
-                      <label key={value}>
-                        <input
-                          type="radio"
-                          name={`mode-language-${card.id}`}
-                          value={value}
-                          checked={languageOf(card.id) === value}
-                          onChange={() =>
-                            setLanguageByCard((current) => ({ ...current, [card.id]: value }))
-                          }
-                        />
-                        <span lang={value === 'zh' ? 'zh-Hans' : undefined}>{label}</span>
-                      </label>
-                    ))}
-                  </fieldset>
-                )}
               </li>
             );
           })}
         </ul>
+        {startingCard === null ? null : (
+          <ModeStartDialog
+            title={startingCard.title}
+            volume={startingCard.volume}
+            defaultLanguage={step.language}
+            onStart={(language) => start(startingCard, language)}
+            onClose={() => setStartingCard(null)}
+          />
+        )}
       </section>
 
       {/*

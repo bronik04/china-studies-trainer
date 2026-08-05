@@ -45,6 +45,7 @@ it('карточка открытого режима запускает свой
   const { onStartRound } = renderHome();
 
   fireEvent.click(screen.getByRole('button', { name: /Назвать регион/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
   expect(onStartRound).toHaveBeenCalledWith('name-target', 'ru', null);
 });
@@ -60,6 +61,7 @@ it('карточка игры запускается без всякой ист�
 
   expect(card).toBeEnabled();
   fireEvent.click(card);
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
   expect(onStartRound).toHaveBeenCalledWith('match-pair', 'ru', null);
 });
@@ -82,6 +84,7 @@ it('заполнение карты идёт своим раундом, а не 
   const { onStartFillRound, onStartRound } = renderHome();
 
   fireEvent.click(screen.getByRole('button', { name: /Заполнить карту/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
   expect(onStartFillRound).toHaveBeenCalledWith('ru');
   expect(onStartRound).not.toHaveBeenCalled();
@@ -170,32 +173,40 @@ it('раздел режимов принимает фокус: шапка вед
   );
 });
 
-/** Карточка целиком — `<li>`; внутри и кнопка запуска, и своя радиогруппа. */
-function cardOf(title: string): HTMLElement {
-  return screen
-    .getAllByRole('listitem')
-    .find((item) => item.textContent?.includes(title))!;
+function openCard(title: string | RegExp): void {
+  fireEvent.click(screen.getByRole('button', { name: title }));
 }
+
+it('спрашивает язык перед стартом, а не запускает раунд сразу', () => {
+  const { onStartRound } = renderHome();
+
+  openCard(/Найти на карте/);
+
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  expect(onStartRound).not.toHaveBeenCalled();
+});
 
 it('запускает игру на выбранном языке', () => {
   const { onStartRound } = renderHome();
-  const card = cardOf('Найти на карте');
 
-  fireEvent.click(within(card).getByRole('radio', { name: '中文' }));
-  fireEvent.click(within(card).getByRole('button', { name: /Найти на карте/ }));
+  openCard(/Найти на карте/);
+  fireEvent.click(screen.getByRole('radio', { name: '中文' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
   expect(onStartRound).toHaveBeenCalledWith('find-on-map', 'zh', null);
 });
 
-it('переключение языка само не запускает раунд', () => {
+it('«Отмена» закрывает окно и ничего не запускает', () => {
   const { onStartRound } = renderHome();
 
-  fireEvent.click(within(cardOf('Найти на карте')).getByRole('radio', { name: '中文' }));
+  openCard(/Найти на карте/);
+  fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
 
+  expect(screen.queryByRole('dialog')).toBeNull();
   expect(onStartRound).not.toHaveBeenCalled();
 });
 
-it('умолчание карточки берётся из языка последней попытки', () => {
+it('умолчание в окне берётся из языка последней попытки', () => {
   renderHome([
     {
       questionId: '1-gansu',
@@ -209,8 +220,17 @@ it('умолчание карточки берётся из языка посл�
     },
   ]);
 
-  expect(
-    within(cardOf('Найти на карте')).getByRole<HTMLInputElement>('radio', { name: '中文' })
-      .checked,
-  ).toBe(true);
+  openCard(/Найти на карте/);
+
+  expect(screen.getByRole<HTMLInputElement>('radio', { name: '中文' }).checked).toBe(
+    true,
+  );
+});
+
+it('окно называет игру, в которую попадёшь', () => {
+  renderHome();
+
+  openCard(/Заполнить карту/);
+
+  expect(screen.getByRole('heading', { name: 'Заполнить карту' })).toBeInTheDocument();
 });

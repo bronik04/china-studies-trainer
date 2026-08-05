@@ -215,6 +215,8 @@ function finishRound(correct: boolean): void {
 function startCapitalRound(): void {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /Регион — столица/ }));
+  // Карточка спрашивает язык окном, и раунд начинается из него.
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 }
 
 it('показывает итог после раунда и возвращает на главную', () => {

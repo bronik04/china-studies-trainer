@@ -539,6 +539,7 @@ h1[tabindex]:focus:not(:focus-visible) {
 
 .region-card :focus-visible,
 .answer-feedback :focus-visible,
+.mode-dialog :focus-visible,
 .choice-list button:focus-visible {
   outline-color: var(--focus-on-paper);
 }
@@ -1586,32 +1587,109 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   font-size: var(--t-size-caption);
 }
 
+/* --- Окно перед стартом игры -------------------------------------------- */
+
 /*
- * Переключатель языка стоит под кнопкой карточки, а не внутри неё:
- * интерактивный элемент внутри кнопки недостижим с клавиатуры.
+ * Выбор языка стоит окном, а не переключателем на карточке: переключатель
+ * приходилось выносить из кнопки запуска — кнопка внутри кнопки недостижима с
+ * клавиатуры, — и он оказывался на доске, тёмным по тёмному. Окно ставит его
+ * на бумагу.
  */
-.mode-card-language {
-  display: flex;
-  gap: var(--s-3);
-  align-items: baseline;
-  margin: 0;
-  padding: var(--s-3) var(--s-5) 0;
+.mode-dialog {
+  background: none;
   border: 0;
+  color: var(--text-on-paper);
+  padding: 0;
 }
 
-.mode-card-language legend {
-  padding: 0;
+.mode-dialog::backdrop {
+  background: rgb(0 0 0 / 60%);
+}
+
+.mode-dialog-body {
+  background: var(--surface-paper-bright);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  max-inline-size: min(100vw - 2 * var(--s-4), 26rem);
+  padding: var(--s-6);
+}
+
+.mode-dialog h2 {
+  color: var(--text-on-paper);
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-title);
+  line-height: var(--t-leading-tight);
+}
+
+.mode-dialog-volume {
   color: var(--text-on-paper-muted);
   font-size: var(--t-size-caption);
 }
 
-.mode-card-language label {
-  display: inline-flex;
+.mode-dialog-language {
+  border: 0;
+  display: flex;
+  flex-direction: column;
   gap: var(--s-2);
-  align-items: baseline;
-  color: var(--c-ink-700);
+  margin: 0;
+  padding: 0;
+}
+
+.mode-dialog-language legend {
+  color: var(--text-on-paper-muted);
   font-size: var(--t-size-caption);
+  padding: 0 0 var(--s-2);
+}
+
+/*
+ * Строка выбора — цель нажатия во всю ширину окна: попасть в саму кнопку
+ * радио размером с букву на телефоне нельзя (WCAG 2.5.8).
+ */
+.mode-dialog-language label {
+  align-items: center;
+  border: var(--border-solid) solid var(--line-on-paper);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-paper);
   cursor: pointer;
+  display: flex;
+  gap: var(--s-3);
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-4);
+}
+
+.mode-dialog-language label:has(input:checked) {
+  border-color: var(--accent);
+}
+
+.mode-dialog-language label:has(input:focus-visible) {
+  outline: var(--border-focus) solid var(--focus-on-paper);
+  outline-offset: var(--s-1);
+}
+
+/* Кольцо рисует строка целиком, поэтому у самой радиокнопки его нет. */
+.mode-dialog-language input:focus-visible {
+  outline: none;
+}
+
+.mode-dialog-language input {
+  accent-color: var(--accent);
+  block-size: var(--s-4);
+  inline-size: var(--s-4);
+  margin: 0;
+}
+
+.mode-dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding-top: var(--s-2);
+}
+
+/* Отмена стоит на бумаге, а не на доске: киноварь доски здесь не читается. */
+.mode-dialog-actions button.text {
+  color: var(--accent);
 }
 
 .mode-card-title {
