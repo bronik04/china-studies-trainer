@@ -203,11 +203,54 @@ p {
    * уезжает вниз. Раскрытый список поэтому получает собственную прокрутку
    * (см. `.region-answer-list` ниже), а не растит страницу.
    */
+  /*
+   * Кадр раунда — одна сетка на все его части, а не сетка внутри сетки.
+   * Колонка вопроса кончается высоко: под ним оставалось до 400 px пустоты,
+   * пока равнозначный список лежал отдельной полосой под картой и отнимал у
+   * неё высоту. Теперь список встаёт в ту самую пустоту, а карта занимает обе
+   * строки — на 1440×900 её рисунок вырос с 804×600 до 1005×750.
+   */
   .round-shell {
+    column-gap: var(--s-5);
     display: grid;
     flex: 1;
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto auto;
     min-block-size: 0;
+    padding-block: var(--s-4);
+    row-gap: var(--s-3);
+  }
+
+  /* Части раскладки становятся ячейками кадра, а не отдельной сетки. */
+  .round-layout[data-columns='two'] {
+    display: contents;
+  }
+
+  .round-prompt-column {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .round-map {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .round-shell > .region-answer-list {
+    align-self: end;
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  /* Без карты вопрос занимает кадр целиком: делить его не с чем. */
+  .round-layout[data-columns='one'] {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .round-footer {
+    grid-column: 1 / -1;
+    grid-row: 3;
   }
 
   /*
@@ -217,13 +260,6 @@ p {
   .region-answer-list {
     max-block-size: 40dvh;
     overflow-y: auto;
-  }
-
-  .round-layout[data-columns='two'] {
-    display: grid;
-    gap: var(--s-5);
-    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
-    min-block-size: 0;
   }
 
   .round-layout[data-columns='one'] {
