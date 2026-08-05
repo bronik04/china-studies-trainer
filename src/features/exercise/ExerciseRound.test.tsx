@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { cityById } from '../../content/cities';
 import { regions } from '../../content/regions';
 import type { Region } from '../../content/types';
 import type { QuestionLanguage } from '../../domain/question-language';
@@ -25,6 +26,11 @@ function renderRound(
       onExit={() => {}}
     />,
   );
+}
+
+/** Название административного центра региона: оно живёт в справочнике городов. */
+function capitalOf(region: Region): string {
+  return cityById(region.capitalCityId)!.nameRu;
 }
 
 function asked(): string {
@@ -124,7 +130,7 @@ it('в режиме «регион — столица» отвечают выб�
     fireEvent.click(
       screen
         .getAllByTestId('choice-option')
-        .find((option) => option.textContent === target.capitalRu)!,
+        .find((option) => option.textContent === capitalOf(target))!,
     );
     act(() => {
       vi.advanceTimersByTime(500);
@@ -253,7 +259,7 @@ it('сообщает о завершении раунда, не требуя н�
       fireEvent.click(
         screen
           .getAllByTestId('choice-option')
-          .find((option) => option.textContent === target.capitalRu)!,
+          .find((option) => option.textContent === capitalOf(target))!,
       );
       act(() => {
         vi.advanceTimersByTime(500);

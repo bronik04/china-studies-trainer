@@ -18,8 +18,7 @@ const region = {
   nameRu: 'Сычуань',
   nameZh: '四川省',
   pinyin: 'Sìchuān shěng',
-  capitalRu: 'Чэнду',
-  capitalZh: '成都',
+  capitalCityId: 'chengdu',
   mapAreaId: 'sichuan',
   facts: [],
   sourceIds: ['example-educational-source'],
@@ -37,7 +36,7 @@ it('reports duplicate region and map area identifiers', () => {
   expect(validateDuplicates).toThrow(/Повторяющийся mapAreaId: sichuan/);
 });
 
-it.each(['nameRu', 'nameZh', 'pinyin', 'capitalRu', 'capitalZh'] as const)(
+it.each(['nameRu', 'nameZh', 'pinyin', 'capitalCityId'] as const)(
   'rejects an empty %s',
   (field) => {
     expect(() =>

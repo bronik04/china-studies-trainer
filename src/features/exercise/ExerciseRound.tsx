@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { cityById } from '../../content/cities';
 import type { Region } from '../../content/types';
 import { buildChoices } from '../../domain/choices';
 import { createSeededRandom } from '../../domain/random';
@@ -214,7 +215,7 @@ export function ExerciseRound({
                     onClick={handleChoice}
                   >
                     {question.exerciseType === 'match-pair'
-                      ? choice.capitalRu
+                      ? cityById(choice.capitalCityId)?.nameRu
                       : labelOf(choice, question.language)}
                   </button>
                 </li>

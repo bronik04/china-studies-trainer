@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { cityById } from '../../content/cities';
 import type { Region } from '../../content/types';
 
 export type AnswerFeedbackProps = {
@@ -27,6 +28,7 @@ export function AnswerFeedback({
     headingRef.current?.focus();
   }, [targetRegion.id]);
 
+  const capital = cityById(targetRegion.capitalCityId);
   const title = 'Этот регион стоит повторить';
 
   return (
@@ -46,8 +48,8 @@ export function AnswerFeedback({
         <span lang="zh-Hans">{targetRegion.nameZh}</span>.
       </p>
       <p>
-        Административный центр: {targetRegion.capitalRu}{' '}
-        <span lang="zh-Hans">({targetRegion.capitalZh})</span>.
+        Административный центр: {capital?.nameRu}{' '}
+        <span lang="zh-Hans">({capital?.nameZh})</span>.
       </p>
       <button type="button" className="primary" onClick={onNext}>
         {isLastQuestion ? 'Завершить раунд' : 'Далее'}

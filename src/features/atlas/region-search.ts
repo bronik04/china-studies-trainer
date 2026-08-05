@@ -1,3 +1,4 @@
+import { cityById } from '../../content/cities';
 import type { Region } from '../../content/types';
 
 /**
@@ -23,8 +24,10 @@ function normalise(text: string): string {
  * он разное.
  */
 function haystack(region: Region): string {
+  const capital = cityById(region.capitalCityId);
+
   return normalise(
-    [region.nameRu, region.pinyin, region.nameZh, region.capitalRu].join(' '),
+    [region.nameRu, region.pinyin, region.nameZh, capital?.nameRu ?? ''].join(' '),
   );
 }
 

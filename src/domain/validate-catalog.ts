@@ -50,8 +50,7 @@ export function validateCatalog(
       ['nameRu', region.nameRu],
       ['nameZh', region.nameZh],
       ['pinyin', region.pinyin],
-      ['capitalRu', region.capitalRu],
-      ['capitalZh', region.capitalZh],
+      ['capitalCityId', region.capitalCityId],
       ['mapAreaId', region.mapAreaId],
     ] as const) {
       if (field[1].trim().length === 0) {
@@ -158,12 +157,23 @@ export function validateCities(
   }
 
   for (const region of regions) {
+    if (!cityIds.has(region.capitalCityId)) {
+      errors.push(
+        `Неизвестный административный центр у региона ${region.id}: ${region.capitalCityId}`,
+      );
+    }
+
     const capitals = capitalsByRegion.get(region.id) ?? [];
     if (capitals.length !== 1) {
       errors.push(
         `У региона ${region.id} административных центров: ${capitals.length} (${
           capitals.join(', ') || 'ни одного'
         }); нужен ровно один`,
+      );
+    } else if (capitals[0] !== region.capitalCityId) {
+      errors.push(
+        `Регион ${region.id} называет центром ${region.capitalCityId}, ` +
+          `а в справочнике городов центр — ${capitals[0]}`,
       );
     }
   }

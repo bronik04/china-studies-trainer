@@ -1,3 +1,4 @@
+import { cityById } from '../../content/cities';
 import type { Region, RegionKind } from '../../content/types';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
@@ -63,8 +64,10 @@ export function AtlasPage({
                 <p lang="zh-Latn-pinyin">{selected.pinyin}</p>
                 <p className="status-note">{KIND_LABELS[selected.kind]}</p>
                 <p>
-                  Административный центр: {selected.capitalRu}{' '}
-                  <span lang="zh-Hans">({selected.capitalZh})</span>
+                  Административный центр: {cityById(selected.capitalCityId)?.nameRu}{' '}
+                  <span lang="zh-Hans">
+                    ({cityById(selected.capitalCityId)?.nameZh})
+                  </span>
                 </p>
               </>
             ) : (

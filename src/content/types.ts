@@ -53,8 +53,11 @@ export type Region = {
   readonly nameRu: string;
   readonly nameZh: string;
   readonly pinyin: string;
-  readonly capitalRu: string;
-  readonly capitalZh: string;
+  /**
+   * Административный центр — ссылка в справочник городов, а не пара имён.
+   * Иначе у Чэнду два места правды, и они разъедутся при первой же правке.
+   */
+  readonly capitalCityId: string;
   readonly mapAreaId: string;
   readonly facts: readonly Fact[];
   readonly sourceIds: readonly string[];

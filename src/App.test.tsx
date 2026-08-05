@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
 import App from './App';
+import { cityById } from './content/cities';
 import { regions } from './content/regions';
+import type { Region } from './content/types';
 
 /**
  * Хранилище подменяется картой в памяти: приложение читает прогресс при
@@ -160,6 +162,11 @@ it('главная кнопка запускает раунд и возвращ�
  * Проверяемое поведение от режима не зависит, а раунд идёт в разы быстрее.
  *
  */
+/** Название административного центра региона: оно живёт в справочнике городов. */
+function capitalOf(region: Region): string {
+  return cityById(region.capitalCityId)!.nameRu;
+}
+
 function answerCapital(correct: boolean): void {
   const asked = screen.getByTestId('exercise-target').textContent;
   /*
@@ -174,8 +181,8 @@ function answerCapital(correct: boolean): void {
   fireEvent.click(
     options.find((option) =>
       correct
-        ? option.textContent === target.capitalRu
-        : option.textContent !== target.capitalRu,
+        ? option.textContent === capitalOf(target)
+        : option.textContent !== capitalOf(target),
     )!,
   );
 }
