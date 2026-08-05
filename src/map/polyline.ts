@@ -42,6 +42,47 @@ export function distanceToPolyline(
 }
 
 /**
+ * Расстояние до ломаной, разрезанной на несколько кусков.
+ *
+ * Отдельная функция, потому что склеить куски в один список точек нельзя:
+ * между концом одного и началом другого появилось бы звено через всю карту, и
+ * нажатие в пустом месте засчиталось бы этой линии. Река после обрезки по
+ * рамке может оказаться именно такой — `clipToFrame` возвращает список кусков,
+ * а `parseMapPath` читает их обратно кольцами.
+ */
+export function distanceToPolylines(
+  x: number,
+  y: number,
+  lines: readonly (readonly Point[])[],
+): number {
+  let nearest = Number.POSITIVE_INFINITY;
+  for (const line of lines) {
+    const distance = distanceToPolyline(x, y, line);
+    if (distance < nearest) {
+      nearest = distance;
+    }
+  }
+
+  return nearest;
+}
+
+/**
+ * Площадь кольца по формуле шнуровки, без знака. Ею выбирают, какой контур
+ * считать главным: у Тайваня — главный остров среди осколков, у формы
+ * рельефа — порядок отрисовки от крупных к мелким.
+ */
+export function ringArea(ring: readonly Point[]): number {
+  let area = 0;
+  for (let i = 0; i < ring.length; i += 1) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % ring.length];
+    area += x1 * y2 - x2 * y1;
+  }
+
+  return Math.abs(area / 2);
+}
+
+/**
  * Упрощение по Дугласу–Пекеру: точка остаётся, если без неё линия сместилась
  * бы дальше допуска. Цикл, а не рекурсия: у реки до двух тысяч точек, и
  * глубина рекурсии на почти прямом участке дошла бы до их числа.

@@ -119,6 +119,24 @@ describe('chainPieces', () => {
     expect(leftovers).toHaveLength(1);
   });
 
+  it('не теряет кусок из одной точки, а кладёт его в остаток', () => {
+    const degenerate: Point[] = [[7, 7]];
+
+    const { chain, leftovers } = chainPieces(
+      [
+        [
+          [0, 0],
+          [1, 0],
+        ],
+        degenerate,
+      ],
+      TOLERANCE,
+    );
+
+    expect(chain).toHaveLength(2);
+    expect(leftovers).toEqual([degenerate]);
+  });
+
   it('на пустом списке кусков даёт пустую цепь', () => {
     expect(chainPieces([], TOLERANCE)).toEqual({ chain: [], leftovers: [] });
   });

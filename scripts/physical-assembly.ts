@@ -22,9 +22,15 @@ function apart(left: Point, right: Point): number {
 }
 
 export function chainPieces(pieces: readonly Piece[], tolerance: number): Chained {
+  /*
+   * Кусок из одной точки склеить не с чем, но и потерять его молча нельзя:
+   * генератор считает долю потерь по `leftovers`, и выброшенное мимо этого
+   * счёта прошло бы незамеченным именно там, где он отчитывается о потерях.
+   */
+  const degenerate = pieces.filter((piece) => piece.length <= 1);
   const pool = pieces.filter((piece) => piece.length > 1).map((piece) => [...piece]);
   if (pool.length === 0) {
-    return { chain: [], leftovers: [] };
+    return { chain: [], leftovers: [...degenerate] };
   }
 
   let chain = pool.shift() as Point[];
@@ -56,5 +62,5 @@ export function chainPieces(pieces: readonly Piece[], tolerance: number): Chaine
     }
   }
 
-  return { chain, leftovers: pool };
+  return { chain, leftovers: [...pool, ...degenerate] };
 }

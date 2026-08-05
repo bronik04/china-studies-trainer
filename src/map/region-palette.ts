@@ -40,7 +40,7 @@ export const REGION_PALETTE: Readonly<Record<string, RegionPaletteEntry>> = {
   'shanghai': { label: [605, 389.5], inscribedDiameter: 8.7 },
   'shanxi': { label: [490, 291.4], inscribedDiameter: 38.6 },
   'sichuan': { label: [358.1, 400.5], inscribedDiameter: 69.5 },
-  'taiwan': { label: [597.7, 496.7], inscribedDiameter: 16.8 },
+  'taiwan': { label: [597.8, 496.6], inscribedDiameter: 16.8 },
   'tianjin': { label: [553.6, 263.1], inscribedDiameter: 11.7 },
   'tibet': { label: [159.3, 371.8], inscribedDiameter: 102.5 },
   'xinjiang': { label: [166.8, 216.1], inscribedDiameter: 149.5 },

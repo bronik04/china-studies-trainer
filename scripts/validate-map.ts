@@ -3,7 +3,11 @@ import { cities } from '../src/content/cities';
 import { physicalFeatures } from '../src/content/physical-features';
 import { regions } from '../src/content/regions';
 import { CALLOUT_TARGETS } from '../src/map/callout-targets';
-import { RELIEF_SHAPES, RIVER_LINES } from '../src/map/physical-geometry';
+import {
+  INPUTS_FINGERPRINT,
+  RELIEF_SHAPES,
+  RIVER_LINES,
+} from '../src/map/physical-geometry';
 import {
   COMFORTABLE_TARGET_PX,
   MIN_TARGET_PX,
@@ -25,6 +29,7 @@ import {
   validateTargetSizes,
   validateViewBox,
 } from '../src/map/validate-map';
+import { physicalInputsFingerprint } from './physical-fingerprint';
 
 const assetPath = new URL('../public/maps/china-provinces.svg', import.meta.url);
 const svg = readFileSync(assetPath, 'utf8');
@@ -110,6 +115,24 @@ console.info(
   `Ниже ${COMFORTABLE_TARGET_PX} px при ширине ${REFERENCE_MAP_WIDTH} px: ${belowComfortable}. ` +
     `Ниже ${MIN_TARGET_PX} px при ширине ${MOBILE_MAP_WIDTH} px: ${belowOnMobile}.`,
 );
+
+/*
+ * Сгенерированная геометрия обязана быть получена из тех входов, что лежат в
+ * репозитории сейчас. Без этой сверки правка справочника или разметки ступеней
+ * без запуска генератора проходит сборку молча: цель на месте, геометрия у неё
+ * есть — просто прежняя. Та же причина, по которой существует
+ * `validateRegionPalette`.
+ */
+const expectedFingerprint = physicalInputsFingerprint(
+  physicalFeatures,
+  readFileSync(new URL('data/physical-source.json', import.meta.url), 'utf8'),
+);
+if (expectedFingerprint !== INPUTS_FINGERPRINT) {
+  throw new Error(
+    `Геометрия физической карты собрана из других входов: в файле ${INPUTS_FINGERPRINT}, ` +
+      `у нынешних входов ${expectedFingerprint}. Запустите npm run generate:physical`,
+  );
+}
 
 /*
  * Физические цели проверяются теми же контурами, что и города: `rings` и

@@ -15,10 +15,10 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { physicalFeatures } from '../src/content/physical-features';
-import type { ReliefStep } from '../src/content/types';
 import {
   clipRingToFrame,
   clipToFrame,
+  ringArea,
   simplifyPath,
   simplifyRing,
   toPathData,
@@ -34,15 +34,18 @@ import {
 } from '../src/map/target-size';
 import { RELIEF_STEPS, SHAPE_FEATURE_IDS } from './data/relief-steps';
 import { chainPieces } from './physical-assembly';
+import { physicalInputsFingerprint } from './physical-fingerprint';
 
 /*
  * Выжимка читается файлом, а не импортом JSON: импорт модулей JSON требует
  * согласия сборщика, загрузчика и линтера, и все три пришлось бы уговаривать
  * ради одного места.
  */
-const source = JSON.parse(
-  readFileSync(new URL('data/physical-source.json', import.meta.url), 'utf8'),
-) as {
+const sourceJson = readFileSync(
+  new URL('data/physical-source.json', import.meta.url),
+  'utf8',
+);
+const source = JSON.parse(sourceJson) as {
   rivers: { rivernum: number; parts: [number, number][][] }[];
   landforms: { key: string; nameRu: string; nameZh: string; rings: [number, number][][] }[];
 };
@@ -72,15 +75,19 @@ const FRAME: Frame = {
 const project = (ring: readonly Point[]): Point[] =>
   ring.map(([lon, lat]) => projectLonLat(lon, lat) as Point);
 
-function ringArea(ring: readonly Point[]): number {
-  let area = 0;
-  for (let i = 0; i < ring.length; i += 1) {
-    const [x1, y1] = ring[i];
-    const [x2, y2] = ring[(i + 1) % ring.length];
-    area += x1 * y2 - x2 * y1;
-  }
-
-  return Math.abs(area / 2);
+const landformIds = new Set(
+  physicalFeatures
+    .filter((feature) => feature.kind === 'landform')
+    .map((feature) => feature.id),
+);
+const danglingTargets = Object.entries(SHAPE_FEATURE_IDS).filter(
+  ([, featureId]) => !landformIds.has(featureId),
+);
+if (danglingTargets.length > 0) {
+  throw new Error(
+    'В SHAPE_FEATURE_IDS указаны цели, которых нет среди форм справочника: ' +
+      danglingTargets.map(([key, id]) => `${key} → ${id}`).join(', '),
+  );
 }
 
 // --- Реки -------------------------------------------------------------------
@@ -96,7 +103,22 @@ for (const river of source.rivers) {
 const riverLines = physicalFeatures
   .filter((feature) => feature.kind === 'river')
   .map((feature) => {
-    const pieces = feature.riverNums.flatMap((num) => partsByNum.get(num) ?? []);
+    const pieces = feature.riverNums.flatMap((num) => {
+      const parts = partsByNum.get(num);
+      /*
+       * Пустой список вместо ошибки давал бы реку короче заявленной при
+       * зелёной сборке: доля потерь считается по тем же кускам, что нашлись,
+       * и порог MAX_LEFTOVER_SHARE молчал бы.
+       */
+      if (parts === undefined) {
+        throw new Error(
+          `Отрезка ${num} нет в выжимке (река ${feature.id}). ` +
+            'Запустите npm run extract:physical',
+        );
+      }
+
+      return parts;
+    });
     const { chain, leftovers } = chainPieces(pieces, JOIN_TOLERANCE_DEG);
 
     const total = pieces.reduce((n, piece) => n + piece.length, 0);
@@ -133,7 +155,7 @@ const riverLines = physicalFeatures
 // --- Формы рельефа ----------------------------------------------------------
 
 const withoutStep = source.landforms.filter(
-  (landform) => (RELIEF_STEPS[landform.key] as ReliefStep | undefined) === undefined,
+  (landform) => !Object.hasOwn(RELIEF_STEPS, landform.key),
 );
 if (withoutStep.length > 0) {
   throw new Error(
@@ -170,7 +192,15 @@ const shapes = source.landforms
 
 // --- Запись -----------------------------------------------------------------
 
-const quote = (value: string) => `'${value.replace(/'/g, "\\'")}'`;
+/*
+ * Косая черта экранируется первой: иначе `\t` в имени формы стал бы в
+ * сгенерированном файле табуляцией, а неудачное сочетание — синтаксической
+ * ошибкой в модуле, который импортирует сборка.
+ */
+const quote = (value: string) =>
+  `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+
+const fingerprint = physicalInputsFingerprint(physicalFeatures, sourceJson);
 
 const module = `/**
  * СГЕНЕРИРОВАННЫЙ ФАЙЛ. Не править руками.
@@ -190,6 +220,13 @@ export type ReliefShape = {
 
 export type RiverLine = {
   readonly featureId: string;
+  /**
+   * Путь линии. Кусков в нём может быть несколько: обрезка по рамке карты
+   * разрывает реку, если та вышла за край и вернулась. Читать его надо
+   * \`parseMapPath\`, а мерить расстояние — \`distanceToPolylines\` по кускам:
+   * склеенные в один список точек, они дадут звено через всю карту, и нажатие
+   * в пустом месте засчитается этой реке.
+   */
   readonly d: string;
 };
 
@@ -205,6 +242,13 @@ ${shapes
   .join('\n')}
 ];
 
+/**
+ * Отпечаток входов, из которых собрана эта геометрия: справочник, разметка
+ * ступеней и выжимка. \`validate:map\` сверяет его заново и роняет сборку, если
+ * входы поменялись, а генератор не запускали.
+ */
+export const INPUTS_FINGERPRINT = '${fingerprint}';
+
 export const RIVER_LINES: readonly RiverLine[] = [
 ${riverLines
   .map((line) => `  { featureId: ${quote(line.featureId)}, d: ${quote(line.d)} },`)
@@ -215,5 +259,5 @@ ${riverLines
 writeFileSync(OUT, module);
 console.info(
   `Записано: форм ${shapes.length}, рек ${riverLines.length}, ` +
-    `размер ${(module.length / 1024).toFixed(0)} КБ`,
+    `размер ${(module.length / 1024).toFixed(0)} КБ, отпечаток входов ${fingerprint}`,
 );

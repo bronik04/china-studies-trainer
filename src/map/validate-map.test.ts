@@ -152,9 +152,8 @@ function validateRealPhysicalGeometry(): void {
    * файла из `src` потребовало бы типов Node, которых у приложения нет, — и
    * правильно, приложение файлов не читает.
    */
-  const svg = mapMarkup;
   const rings = new Map<string, Point[][]>();
-  for (const [, attributes] of svg.matchAll(/<path\b([\s\S]*?)\/>/g)) {
+  for (const [, attributes] of mapMarkup.matchAll(/<path\b([\s\S]*?)\/>/g)) {
     const id = /\bid="([^"]+)"/.exec(attributes)?.[1];
     const d = /\sd="([\s\S]*?)"/.exec(attributes)?.[1];
     if (id !== undefined && d !== undefined) {

@@ -41,8 +41,16 @@ async function load(name: string): Promise<readonly Feature[]> {
 }
 
 /** Части линии: `MultiLineString` — это несколько самостоятельных кусков. */
-function lineParts(geometry: Geometry): Position[][] {
+function lineParts(geometry: Geometry, rivernum: number): Position[][] {
   const coordinates = geometry.coordinates as Position[] | Position[][];
+
+  /*
+   * Без этой проверки пустая геометрия роняет скрипт стеком на разыменовании
+   * первой координаты — вместо строки о том, какой объект плох.
+   */
+  if (coordinates.length === 0) {
+    throw new Error(`Пустая геометрия у отрезка ${rivernum}`);
+  }
 
   return typeof (coordinates as Position[])[0][0] === 'number'
     ? [coordinates as Position[]]
@@ -85,7 +93,10 @@ const rivers = riverFeatures
   })
   .map((feature) => ({
     rivernum: feature.properties.rivernum as number,
-    parts: lineParts(feature.geometry as Geometry).map((part) => part.map(round)),
+    parts: lineParts(
+      feature.geometry as Geometry,
+      feature.properties.rivernum as number,
+    ).map((part) => part.map(round)),
   }));
 
 const shapeFeatures = await load('ne_10m_geography_regions_polys');
@@ -98,7 +109,7 @@ const landforms = shapeFeatures
   .filter(
     (feature) =>
       feature.geometry !== null &&
-      RELIEF_STEPS[feature.properties.NAME as string] !== undefined,
+      Object.hasOwn(RELIEF_STEPS, feature.properties.NAME as string),
   )
   .map((feature) => ({
     key: feature.properties.NAME as string,
@@ -120,7 +131,21 @@ if (missingNums.length > 0) {
   throw new Error(`Не найдены отрезки рек: ${missingNums.join(', ')}`);
 }
 
-writeFileSync(OUT, `${JSON.stringify({ rivers, landforms }, null, 1)}\n`);
+/*
+ * Пометка первым ключом: комментариев в JSON нет, а сказать «руками не
+ * править» файл обязан сам — иначе правку в нём потеряет первый же запуск.
+ *
+ * Запись компактная: 11 тысяч точек с отступом занимают вдвое больше и дают
+ * сорок пять тысяч строк, читать которые всё равно некому.
+ */
+writeFileSync(
+  OUT,
+  `${JSON.stringify({
+    generatedBy: 'scripts/extract-physical-source.ts (npm run extract:physical) — не править руками',
+    rivers,
+    landforms,
+  })}\n`,
+);
 
 const points =
   rivers.reduce((n, river) => n + river.parts.flat().length, 0) +

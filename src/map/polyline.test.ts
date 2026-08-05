@@ -3,6 +3,8 @@ import {
   clipRingToFrame,
   clipToFrame,
   distanceToPolyline,
+  distanceToPolylines,
+  ringArea,
   simplifyPath,
   simplifyRing,
   toPathData,
@@ -30,6 +32,45 @@ describe('distanceToPolyline', () => {
         [100, 0],
       ]),
     ).toBeCloseTo(0, 6);
+  });
+});
+
+describe('distanceToPolylines', () => {
+  it('не считает звеном разрыв между кусками', () => {
+    // Два куска по краям карты. Точка ровно посередине далека от обоих; если
+    // склеить их в один список точек, между ними появится звено через всю
+    // карту, и расстояние вышло бы нулевым.
+    const parts: Point[][] = [
+      [
+        [0, 0],
+        [10, 0],
+      ],
+      [
+        [90, 0],
+        [100, 0],
+      ],
+    ];
+
+    expect(distanceToPolylines(50, 0, parts)).toBeCloseTo(40, 6);
+    expect(distanceToPolyline(50, 0, parts.flat())).toBeCloseTo(0, 6);
+  });
+
+  it('на пустом списке кусков даёт бесконечность', () => {
+    expect(distanceToPolylines(0, 0, [])).toBe(Number.POSITIVE_INFINITY);
+  });
+});
+
+describe('ringArea', () => {
+  it('меряет площадь независимо от направления обхода', () => {
+    const square: Point[] = [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+    ];
+
+    expect(ringArea(square)).toBeCloseTo(100, 6);
+    expect(ringArea([...square].reverse())).toBeCloseTo(100, 6);
   });
 });
 
@@ -86,6 +127,24 @@ describe('simplifyRing', () => {
     // расстояние от любой точки до отрезка «начало — конец» считается от
     // вырожденного отрезка нулевой длины.
     expect(simplifyRing(ring, 1).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('оставляет кольцо замкнутым', () => {
+    // Ради этого функция и написана. Разомкнутое кольцо `toPathData` всё равно
+    // закроет командой `z`, соединив концы прямой через всю форму, — и молча.
+    const ring: Point[] = [
+      [0, 0],
+      [50, 2],
+      [100, 0],
+      [100, 100],
+      [50, 98],
+      [0, 100],
+      [0, 0],
+    ];
+
+    const simplified = simplifyRing(ring, 1);
+
+    expect(simplified.at(-1)).toEqual(simplified[0]);
   });
 });
 
