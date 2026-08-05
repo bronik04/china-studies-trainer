@@ -62,3 +62,49 @@ export type Region = {
   readonly facts: readonly Fact[];
   readonly sourceIds: readonly string[];
 };
+
+/**
+ * Ступень рельефа Китая (三级阶梯). Первая — Тибетское нагорье, вторая —
+ * плато и котловины, третья — восточные равнины. Понятие школьной географии:
+ * в Natural Earth такого поля нет, разметка живёт входом генератора.
+ */
+export type ReliefStep = 1 | 2 | 3;
+
+export type PhysicalKind = 'river' | 'landform';
+
+type PhysicalCommon = {
+  readonly id: string;
+  readonly nameRu: string;
+  readonly nameZh: string;
+  readonly pinyin: string;
+  /**
+   * Регионы, которых объект касается. Не украшение: `validate:map` проверяет
+   * каждый заявленный регион геометрией и ловит этим и опечатку в номере
+   * отрезка, и неверную привязку, и расхождение проекции.
+   */
+  readonly regionIds: readonly string[];
+  /**
+   * Длина реки и куда она впадает — факты со своими источниками, а не поля.
+   * `lengthKm: number` пришлось бы заполнить числом без источника: у Амура
+   * «длина» означает то 2824 км, то 4444 — смотря считать ли Аргунь.
+   */
+  readonly facts: readonly Fact[];
+  readonly sourceIds: readonly string[];
+};
+
+export type PhysicalFeature = PhysicalCommon &
+  (
+    | {
+        readonly kind: 'river';
+        /**
+         * Номера отрезков в Natural Earth. Именно номера: имена там не
+         * уникальны — `Quan` есть и в Гуанси, и в Хэнани.
+         */
+        readonly riverNums: readonly number[];
+      }
+    | {
+        readonly kind: 'landform';
+        readonly step: ReliefStep;
+        readonly landform: 'plateau' | 'plain' | 'basin' | 'desert';
+      }
+  );

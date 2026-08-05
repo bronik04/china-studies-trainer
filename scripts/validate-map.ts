@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { cities } from '../src/content/cities';
+import { physicalFeatures } from '../src/content/physical-features';
 import { regions } from '../src/content/regions';
 import { CALLOUT_TARGETS } from '../src/map/callout-targets';
+import {
+  INPUTS_FINGERPRINT,
+  RELIEF_SHAPES,
+  RIVER_LINES,
+} from '../src/map/physical-geometry';
 import {
   COMFORTABLE_TARGET_PX,
   MIN_TARGET_PX,
@@ -18,10 +24,12 @@ import {
 import {
   validateCityPlacement,
   validateMapAreaIds,
+  validatePhysicalGeometry,
   validateRegionPalette,
   validateTargetSizes,
   validateViewBox,
 } from '../src/map/validate-map';
+import { physicalInputsFingerprint } from './physical-fingerprint';
 
 const assetPath = new URL('../public/maps/china-provinces.svg', import.meta.url);
 const svg = readFileSync(assetPath, 'utf8');
@@ -106,4 +114,52 @@ const belowOnMobile = undersizedRegions(
 console.info(
   `Ниже ${COMFORTABLE_TARGET_PX} px при ширине ${REFERENCE_MAP_WIDTH} px: ${belowComfortable}. ` +
     `Ниже ${MIN_TARGET_PX} px при ширине ${MOBILE_MAP_WIDTH} px: ${belowOnMobile}.`,
+);
+
+/*
+ * Сгенерированная геометрия обязана быть получена из тех входов, что лежат в
+ * репозитории сейчас. Без этой сверки правка справочника или разметки ступеней
+ * без запуска генератора проходит сборку молча: цель на месте, геометрия у неё
+ * есть — просто прежняя. Та же причина, по которой существует
+ * `validateRegionPalette`.
+ */
+const expectedFingerprint = physicalInputsFingerprint(
+  physicalFeatures,
+  readFileSync(new URL('data/physical-source.json', import.meta.url), 'utf8'),
+);
+if (expectedFingerprint !== INPUTS_FINGERPRINT) {
+  throw new Error(
+    `Геометрия физической карты собрана из других входов: в файле ${INPUTS_FINGERPRINT}, ` +
+      `у нынешних входов ${expectedFingerprint}. Запустите npm run generate:physical`,
+  );
+}
+
+/*
+ * Физические цели проверяются теми же контурами, что и города: `rings` и
+ * `mapAreaOf` уже разобраны выше и переиспользуются.
+ */
+const physical = validatePhysicalGeometry(
+  physicalFeatures,
+  {
+    rivers: new Map(RIVER_LINES.map((line) => [line.featureId, parseMapPath(line.d)])),
+    landforms: new Map(
+      RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined).map((shape) => [
+        shape.featureId as string,
+        parseMapPath(shape.d),
+      ]),
+    ),
+  },
+  {
+    contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),
+    distanceToBoundary: (mapAreaId, x, y) => distanceToBoundary(ringsOf(mapAreaId), x, y),
+    mapAreaOf: (regionId) => mapAreaOf.get(regionId),
+  },
+);
+
+console.info(
+  `Проверено физических целей: ${physicalFeatures.length}. ` +
+    `Форм на подложке: ${RELIEF_SHAPES.length}. Свободная длина рек: ` +
+    [...physical.freeShare]
+      .map(([id, share]) => `${id} ${(100 * share).toFixed(0)} %`)
+      .join(', '),
 );

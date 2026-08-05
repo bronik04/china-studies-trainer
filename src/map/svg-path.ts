@@ -101,7 +101,12 @@ export function containsPoint(
   return inside;
 }
 
-function distanceToSegment(
+/**
+ * Расстояние от точки до отрезка. Открыта наружу ради ломаных: реку меряют по
+ * её звеньям, а не по вершинам — иначе точка напротив середины длинного звена
+ * считалась бы далёкой от реки, на которой она лежит.
+ */
+export function distanceToSegment(
   x: number,
   y: number,
   [x1, y1]: Point,

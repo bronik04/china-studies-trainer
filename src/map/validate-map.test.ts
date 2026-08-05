@@ -1,6 +1,18 @@
+import mapMarkup from '../../public/maps/china-provinces.svg?raw';
+import { physicalFeatures } from '../content/physical-features';
+import { regions } from '../content/regions';
+import type { PhysicalFeature } from '../content/types';
+import { RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
+import {
+  containsPoint,
+  distanceToBoundary,
+  parseMapPath,
+  type Point,
+} from './svg-path';
 import {
   validateCityPlacement,
   validateMapAreaIds,
+  validatePhysicalGeometry,
   validateRegionPalette,
   validateTargetSizes,
   validateViewBox,
@@ -127,4 +139,162 @@ it('называет регион, в который город попал на 
   expect(() =>
     validateCityPlacement([{ cityId: 'lost', regionId: 'far', x: 50, y: 50 }], two),
   ).toThrow(/точка лежит в square/);
+});
+
+/**
+ * Проверка настоящей геометрии настоящими контурами карты. Разбор SVG повторяет
+ * `scripts/validate-map.ts`: в тесте он нужен, чтобы падение поймал `npm test`,
+ * а не только сборка.
+ */
+function validateRealPhysicalGeometry(): void {
+  /*
+   * Карта берётся тем же вайтовским `?raw`, каким её берёт `ChinaMap`: чтение
+   * файла из `src` потребовало бы типов Node, которых у приложения нет, — и
+   * правильно, приложение файлов не читает.
+   */
+  const rings = new Map<string, Point[][]>();
+  for (const [, attributes] of mapMarkup.matchAll(/<path\b([\s\S]*?)\/>/g)) {
+    const id = /\bid="([^"]+)"/.exec(attributes)?.[1];
+    const d = /\sd="([\s\S]*?)"/.exec(attributes)?.[1];
+    if (id !== undefined && d !== undefined) {
+      rings.set(id, parseMapPath(d));
+    }
+  }
+
+  const mapAreaOf = new Map(regions.map((region) => [region.id, region.mapAreaId]));
+  const ringsOf = (mapAreaId: string) => rings.get(mapAreaId) ?? [];
+
+  validatePhysicalGeometry(
+    physicalFeatures,
+    {
+      rivers: new Map(RIVER_LINES.map((line) => [line.featureId, parseMapPath(line.d)])),
+      landforms: new Map(
+        RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined).map((shape) => [
+          shape.featureId as string,
+          parseMapPath(shape.d),
+        ]),
+      ),
+    },
+    {
+      contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),
+      distanceToBoundary: (mapAreaId, x, y) =>
+        distanceToBoundary(ringsOf(mapAreaId), x, y),
+      mapAreaOf: (regionId) => mapAreaOf.get(regionId),
+    },
+  );
+}
+
+describe('validatePhysicalGeometry', () => {
+  const river: PhysicalFeature = {
+    id: 'straight-river',
+    kind: 'river',
+    nameRu: 'Прямая',
+    nameZh: '直河',
+    pinyin: 'Zhí Hé',
+    riverNums: [1],
+    regionIds: ['qinghai'],
+    facts: [],
+    sourceIds: ['natural-earth-rivers-5.1.2'],
+  };
+
+  /**
+   * Регион-квадрат: всё, что внутри 0..100, считается Цинхаем. Расстояние до
+   * края — заведомо больше допуска на генерализацию: иначе допуск в 3 единицы
+   * признал бы задетым любой регион, и проверка молчала бы всегда.
+   */
+  const shapes = {
+    contains: (mapAreaId: string, x: number, y: number) =>
+      mapAreaId === 'qinghai' && x >= 0 && x <= 100 && y >= 0 && y <= 100,
+    distanceToBoundary: () => 500,
+    mapAreaOf: (regionId: string) => regionId,
+  };
+
+  const line: Point[] = [
+    [10, 10],
+    [90, 10],
+  ];
+
+  it('принимает реку, лежащую в заявленном регионе', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [river],
+        { rivers: new Map([['straight-river', [line]]]), landforms: new Map() },
+        shapes,
+      ),
+    ).not.toThrow();
+  });
+
+  it('ловит цель без геометрии', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [river],
+        { rivers: new Map(), landforms: new Map() },
+        shapes,
+      ),
+    ).toThrow(/straight-river/);
+  });
+
+  it('ловит заявленный регион, которого объект не касается', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [{ ...river, regionIds: ['tibet'] }],
+        { rivers: new Map([['straight-river', [line]]]), landforms: new Map() },
+        shapes,
+      ),
+    ).toThrow(/tibet/);
+  });
+
+  it('ловит точку за рамкой карты', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [river],
+        {
+          rivers: new Map([
+            [
+              'straight-river',
+              [
+                [
+                  [10, 10],
+                  [10_000, 10],
+                ] as Point[],
+              ],
+            ],
+          ]),
+          landforms: new Map(),
+        },
+        shapes,
+      ),
+    ).toThrow(/рамк/i);
+  });
+
+  it('ловит две реки, идущие рядом всей длиной', () => {
+    const twin: PhysicalFeature = { ...river, id: 'twin-river', riverNums: [2] };
+
+    expect(() =>
+      validatePhysicalGeometry(
+        [river, twin],
+        {
+          rivers: new Map([
+            ['straight-river', [line]],
+            [
+              'twin-river',
+              [
+                [
+                  [10, 12],
+                  [90, 12],
+                ] as Point[],
+              ],
+            ],
+          ]),
+          landforms: new Map(),
+        },
+        shapes,
+      ),
+    ).toThrow(/показать однозначно|свободн/i);
+  });
+
+  it('принимает настоящую геометрию', () => {
+    // Тот же вызов, что делает сборка: он и есть настоящая проверка.
+    expect(() => validateRealPhysicalGeometry()).not.toThrow();
+  });
 });

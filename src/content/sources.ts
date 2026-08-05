@@ -33,4 +33,20 @@ export const sources = [
     accessedAt: '2026-08-05',
     covers: ['координаты городов, которых нет в Natural Earth'],
   },
+  {
+    id: 'natural-earth-rivers-5.1.2',
+    title: 'Natural Earth 10m Rivers and Lake Centerlines, версия 5.1.2',
+    organization: 'Natural Earth',
+    url: 'https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-rivers-lake-centerlines/',
+    accessedAt: '2026-08-05',
+    covers: ['линии шести крупнейших рек Китая'],
+  },
+  {
+    id: 'natural-earth-geography-regions-5.1.2',
+    title: 'Natural Earth 10m Physical Labels: Geographic Regions, версия 5.1.2',
+    organization: 'Natural Earth',
+    url: 'https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-physical-labels/',
+    accessedAt: '2026-08-05',
+    covers: ['контуры форм рельефа Китая', 'русские и китайские названия форм для сверки'],
+  },
 ] as const satisfies readonly Source[];
