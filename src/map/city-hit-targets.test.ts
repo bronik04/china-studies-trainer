@@ -68,3 +68,24 @@ it('разводит почти все города настоящего кат�
 
   expect(left.length, left.map((pair) => pair.join('—')).join(', ')).toBeLessThanOrEqual(2);
 });
+
+/*
+ * Увеличение — тоже способ развести цели: те же 24 px на экране занимают
+ * меньше единиц карты, и города, которых на целом виде пришлось отодвигать,
+ * встают на свои места.
+ */
+it('на увеличении отодвигает меньше целей', () => {
+  const points = CITY_POINTS.map((point) => ({
+    id: point.city.id,
+    x: point.x,
+    y: point.y,
+  }));
+  const displaced = (diameter: number) =>
+    spreadHitTargets(points, diameter).filter(
+      (target) => Math.hypot(target.hitX - target.x, target.hitY - target.y) > 0.01,
+    ).length;
+
+  expect(displaced(TARGET_DIAMETER_UNITS / 1.5)).toBeLessThan(
+    displaced(TARGET_DIAMETER_UNITS),
+  );
+});

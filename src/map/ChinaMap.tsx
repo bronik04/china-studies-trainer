@@ -336,8 +336,16 @@ export function ChinaMap({
       return;
     }
 
+    /*
+     * Указатель здесь намеренно не захватывается, и карта пока не едет.
+     * Захват на нажатии сбивает прицел: `click` после него уходит не в точку
+     * города и не в область, а в саму карту — общего предка нажатия и
+     * отпускания. Ровно так же вредит и сдвиг на первый же пиксель: узел под
+     * курсором успевает уехать, отпускание приходится на соседний, и клика по
+     * городу не случается вовсе. Поэтому и то и другое начинается только
+     * после порога.
+     */
     drag.current = { x: event.clientX, y: event.clientY, moved: false };
-    event.currentTarget.setPointerCapture(event.pointerId);
   }
 
   function continueDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -346,15 +354,29 @@ export function ChinaMap({
       return;
     }
 
+    if (
+      !from.moved &&
+      Math.abs(event.clientX - from.x) <= DRAG_THRESHOLD_PX &&
+      Math.abs(event.clientY - from.y) <= DRAG_THRESHOLD_PX
+    ) {
+      // Дрожь руки на нажатии — не перетаскивание: карта стоит.
+      return;
+    }
+
+    if (!from.moved) {
+      /*
+       * Тянуть можно и за пределами карты: захват доводит движение до конца,
+       * даже если рука ушла на соседний блок и вернулась.
+       */
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
     const scale = unitsPerPixel(view, event.currentTarget.clientWidth);
     const dx = event.clientX - from.x;
     const dy = event.clientY - from.y;
 
-    if (Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX) {
-      from.moved = true;
-    }
+    drag.current = { x: event.clientX, y: event.clientY, moved: true };
 
-    drag.current = { x: event.clientX, y: event.clientY, moved: from.moved };
     /*
      * Тянут за карту, поэтому вид едет навстречу движению руки. Считается от
      * предыдущего значения, а не от вида этой отрисовки: между кадрами
@@ -373,7 +395,7 @@ export function ChinaMap({
   }
 
   function endDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (drag.current !== null) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
   }
@@ -494,6 +516,7 @@ export function ChinaMap({
                 selectedCityId={selectedCityId}
                 onSelect={onSelectCity}
                 showsLabels={showsCityLabels}
+                zoom={view.zoom}
               />,
               citySvg,
             )

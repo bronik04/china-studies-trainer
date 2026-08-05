@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { City } from '../content/types';
-import { spreadHitTargets } from './city-hit-targets';
+import { spreadHitTargets, TARGET_DIAMETER_UNITS } from './city-hit-targets';
 import { CITY_POINTS, type CityPoint } from './city-points';
 import { MAP_VIEWBOX_MIN_X, MAP_VIEWBOX_WIDTH } from './target-size';
 
@@ -21,6 +21,12 @@ export type CityLayerProps = {
    * Гонконга на экране ответа.
    */
   readonly showsLabels?: boolean;
+  /**
+   * Во сколько раз увеличена карта. Цель нажатия обязана быть 24 px на экране,
+   * а не в единицах карты: на увеличении те же 24 px занимают меньше единиц, и
+   * города, которые пришлось разводить на целом виде, встают на свои места.
+   */
+  readonly zoom?: number;
 };
 
 /** Радиус знака: город виден, но не спорит с границей региона. */
@@ -49,13 +55,15 @@ export function CityLayer({
   selectedCityId = null,
   onSelect,
   showsLabels = true,
+  zoom = 1,
 }: CityLayerProps) {
   const targets = useMemo(
     () =>
       spreadHitTargets(
         points.map((point) => ({ id: point.city.id, x: point.x, y: point.y })),
+        TARGET_DIAMETER_UNITS / zoom,
       ),
-    [points],
+    [points, zoom],
   );
 
   const cityById = useMemo(
