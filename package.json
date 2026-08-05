@@ -12,6 +12,7 @@
     "generate:palette": "tsx scripts/generate-region-palette.ts",
     "generate:hit-targets": "tsx scripts/generate-hit-targets.ts",
     "generate:fonts": "tsx scripts/generate-fonts.ts",
+    "extract:physical": "tsx scripts/extract-physical-source.ts",
     "build": "npm run validate:map && npm run validate:content && npm run validate:fonts && tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest run"
