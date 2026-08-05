@@ -13,6 +13,7 @@ function renderHome(attempts: readonly Attempt[] = []) {
   const handlers = {
     onStartRound: vi.fn(),
     onStartFillRound: vi.fn(),
+    onStartCityRound: vi.fn(),
     onOpenAtlas: vi.fn(),
     onOpenCollections: vi.fn(),
     onOpenCollection: vi.fn(),
@@ -158,6 +159,7 @@ it('раздел режимов принимает фокус: шапка вед
       attempts={[]}
       onStartRound={vi.fn()}
       onStartFillRound={vi.fn()}
+      onStartCityRound={vi.fn()}
       onOpenAtlas={vi.fn()}
       onOpenCollections={vi.fn()}
       onOpenCollection={vi.fn()}

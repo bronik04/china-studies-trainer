@@ -5,7 +5,7 @@ import {
   collections,
   type CollectionGroupId,
 } from '../../content/collections';
-import type { Region } from '../../content/types';
+import type { CitySet, Region } from '../../content/types';
 import type { QuestionLanguage } from '../../domain/question-language';
 import type { Attempt, ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
@@ -24,6 +24,11 @@ export type HomePageProps = {
     regionIds: readonly string[] | null,
   ) => void;
   readonly onStartFillRound: (language: QuestionLanguage) => void;
+  readonly onStartCityRound: (
+    exerciseType: ExerciseType,
+    language: QuestionLanguage,
+    citySet: CitySet,
+  ) => void;
   readonly onOpenAtlas: () => void;
   readonly onOpenCollections: () => void;
   readonly onOpenCollection: (collectionId: string) => void;
@@ -48,6 +53,7 @@ export function HomePage({
   attempts,
   onStartRound,
   onStartFillRound,
+  onStartCityRound,
   onOpenAtlas,
   onOpenCollections,
   onOpenCollection,
@@ -63,12 +69,14 @@ export function HomePage({
    */
   const [startingCard, setStartingCard] = useState<ModeCard | null>(null);
 
-  function start(card: ModeCard, language: QuestionLanguage) {
+  function start(card: ModeCard, language: QuestionLanguage, citySet: CitySet) {
     setStartingCard(null);
     if (card.kind === 'exercise') {
       onStartRound(card.exerciseType, language, null);
     } else if (card.kind === 'fill') {
       onStartFillRound(language);
+    } else if (card.kind === 'city') {
+      onStartCityRound(card.exerciseType, language, citySet);
     }
   }
 
@@ -191,7 +199,8 @@ export function HomePage({
             title={startingCard.title}
             volume={startingCard.volume}
             defaultLanguage={step.language}
-            onStart={(language) => start(startingCard, language)}
+            defaultCitySet={startingCard.kind === 'city' ? 'capital' : null}
+            onStart={(language, citySet) => start(startingCard, language, citySet)}
             onClose={() => setStartingCard(null)}
           />
         )}

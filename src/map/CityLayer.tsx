@@ -15,6 +15,12 @@ export type CityLayerProps = {
    * пропадают — они перечислены в его карточке.
    */
   readonly onSelect?: (cityId: string) => void;
+  /**
+   * Ложь — подписи скрыты совсем. В «назвать город» подсвеченная точка и есть
+   * вопрос, и её подпись — готовый ответ: та же утечка, что у выносок Макао и
+   * Гонконга на экране ответа.
+   */
+  readonly showsLabels?: boolean;
 };
 
 /** Радиус знака: город виден, но не спорит с границей региона. */
@@ -42,6 +48,7 @@ export function CityLayer({
   points = CITY_POINTS,
   selectedCityId = null,
   onSelect,
+  showsLabels = true,
 }: CityLayerProps) {
   const targets = useMemo(
     () =>
@@ -57,7 +64,11 @@ export function CityLayer({
   );
 
   return (
-    <g className="city-layer" data-interactive={onSelect !== undefined}>
+    <g
+      className="city-layer"
+      data-interactive={onSelect !== undefined}
+      data-labels={showsLabels}
+    >
       {targets.map((target) => {
         const city = cityById.get(target.id) as City;
         /*

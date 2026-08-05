@@ -41,7 +41,7 @@ export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
  * типом задания, и главная запускает её другим вызовом.
  *
  * Иероглиф — метка, а не украшение: 地 земля, 名 имя, 都 столица, 填 заполнять,
- * 史 история, 文 культура. Он же отличает карточки друг от друга, когда цвета
+ * 市 город, 认 узнавать, 属 принадлежать, 史 история, 文 культура. Он же отличает карточки друг от друга, когда цвета
  * на бумаге у них одинаковые.
  */
 export type ModeCard = {
@@ -53,10 +53,34 @@ export type ModeCard = {
   readonly volume: string;
 } & (
   | { readonly kind: 'exercise'; readonly exerciseType: ExerciseType }
+  /** Игра по городам: цели берутся из справочника городов, а не регионов. */
+  | { readonly kind: 'city'; readonly exerciseType: ExerciseType }
   | { readonly kind: 'fill' }
   /** Режим объявлен, но ещё не написан: карточка не запускается. */
   | { readonly kind: 'planned' }
 );
+
+/**
+ * Города спрашиваются теми же тремя формами, что и регионы, поэтому у игр те
+ * же `exerciseType`. Различают их вид карточки и экран: `CityRound`.
+ */
+export const CITY_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
+  'find-on-map': {
+    exerciseType: 'find-on-map',
+    title: 'Найти город',
+    eyebrow: 'Найдите город на карте',
+  },
+  'name-target': {
+    exerciseType: 'name-target',
+    title: 'Назвать город',
+    eyebrow: 'Какой город подсвечен',
+  },
+  'match-pair': {
+    exerciseType: 'match-pair',
+    title: 'Город — регион',
+    eyebrow: 'В каком регионе этот город',
+  },
+};
 
 export const MODE_CARDS: readonly ModeCard[] = [
   {
@@ -97,6 +121,36 @@ export const MODE_CARDS: readonly ModeCard[] = [
     summary:
       'Вся карта подряд, без вариантов ответа. Секундомер и разбор по числу попыток на регион.',
     volume: '34 региона · около 9 минут',
+  },
+  {
+    id: 'find-city',
+    kind: 'city',
+    exerciseType: 'find-on-map',
+    mark: '市',
+    title: 'Найти город',
+    summary:
+      'Вопрос называет город — ответ нажимается по точке на карте или выбирается из списка.',
+    volume: 'Набор выбирается перед стартом · около 10 минут',
+  },
+  {
+    id: 'name-city',
+    kind: 'city',
+    exerciseType: 'name-target',
+    mark: '认',
+    title: 'Назвать город',
+    summary:
+      'Одна точка подсвечена, четыре имени на выбор. Отвлекающие берутся из соседей, а не с другого конца страны.',
+    volume: 'Набор выбирается перед стартом · около 9 минут',
+  },
+  {
+    id: 'city-region',
+    kind: 'city',
+    exerciseType: 'match-pair',
+    mark: '属',
+    title: 'Город — регион',
+    summary:
+      'Назван город — нажать регион, в котором он стоит. Точки на карте скрыты, иначе они и есть ответ.',
+    volume: 'Без городов центрального подчинения · около 9 минут',
   },
   {
     id: 'history',

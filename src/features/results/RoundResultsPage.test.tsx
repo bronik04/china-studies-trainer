@@ -21,10 +21,10 @@ function renderResults(
   render(
     <RoundResultsPage
       summary={SUMMARY}
-      regions={regions}
+      targets={regions}
       bestAccuracy={0.9}
       isProgressSaved
-      regionIdsToRepeat={['sichuan', 'yunnan']}
+      idsToRepeat={['sichuan', 'yunnan']}
       onRepeatMistakes={() => {}}
       onNewRound={() => {}}
       onExit={() => {}}
@@ -71,7 +71,7 @@ it('предлагает повторить ошибки', () => {
 it('не предлагает повторить ошибки, когда их нет', () => {
   renderResults({
     summary: { ...SUMMARY, correct: 34, accuracy: 1, targetsToReview: [] },
-    regionIdsToRepeat: [],
+    idsToRepeat: [],
   });
 
   expect(screen.queryByRole('button', { name: /^Повторить ошибки/ })).toBeNull();
@@ -81,7 +81,7 @@ it('не предлагает повторить ошибки, когда их �
 it('кнопка называет, сколько регионов войдёт в повтор', () => {
   // Раунд показывает не больше пяти тем, а повтор берёт все ошибки за 14 дней.
   renderResults({
-    regionIdsToRepeat: [
+    idsToRepeat: [
       'sichuan',
       'yunnan',
       'hunan',
@@ -99,7 +99,7 @@ it('кнопка называет, сколько регионов войдёт 
 
 it('объясняет, что список — ошибки этого раунда, а повтор шире', () => {
   renderResults({
-    regionIdsToRepeat: ['sichuan', 'yunnan', 'hunan', 'hebei'],
+    idsToRepeat: ['sichuan', 'yunnan', 'hunan', 'hebei'],
   });
 
   expect(

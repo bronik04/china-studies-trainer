@@ -2,6 +2,7 @@ import { regions } from '../content/regions';
 import { createSeededRandom } from './random';
 import {
   answerQuestion,
+  cityTarget,
   createRound,
   currentQuestion,
   goToNextQuestion,
@@ -197,4 +198,25 @@ it('не создаёт раунд без типов заданий', () => {
       random: createSeededRandom(1),
     }),
   ).toThrow(/Раунд не создан: не заданы типы заданий/);
+});
+
+/*
+ * В игре «город — регион» спрашивают город, а отвечают нажатием по области:
+ * сравнивать ответ с идентификатором города нечего.
+ */
+it('принимает ответ другого вида, когда игра его назвала', () => {
+  const round = createRound([cityTarget('chengdu')], {
+    ...OPTIONS,
+    random: createSeededRandom(1),
+  });
+
+  const answered = answerQuestion(round, {
+    answeredId: 'sichuan',
+    expectedId: 'sichuan',
+    durationMs: 1000,
+    answeredAt: '2026-08-05T10:00:00.000Z',
+  });
+
+  expect(answered.attempts[0].isCorrect).toBe(true);
+  expect(answered.attempts[0].target).toEqual({ kind: 'city', id: 'chengdu' });
 });

@@ -20,3 +20,19 @@ export function regionsWord(count: number): string {
 
   return last >= 2 && last <= 4 ? 'региона' : 'регионов';
 }
+
+/** 1 город, 2–4 города, 5+ городов. */
+export function citiesWord(count: number): string {
+  const teens = count % 100;
+  const last = count % 10;
+
+  if (teens >= 11 && teens <= 14) {
+    return 'городов';
+  }
+
+  if (last === 1) {
+    return 'город';
+  }
+
+  return last >= 2 && last <= 4 ? 'города' : 'городов';
+}

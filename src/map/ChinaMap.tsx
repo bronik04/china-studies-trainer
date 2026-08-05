@@ -76,6 +76,7 @@ type ChinaMapProps = {
   readonly showsCities?: boolean;
   readonly selectedCityId?: string | null;
   readonly onSelectCity?: (cityId: string) => void;
+  readonly showsCityLabels?: boolean;
 };
 
 /**
@@ -136,6 +137,7 @@ export function ChinaMap({
   showsCities = false,
   selectedCityId = null,
   onSelectCity,
+  showsCityLabels = true,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   /*
@@ -347,6 +349,7 @@ export function ChinaMap({
                 points={cityPointsOfRegions(regions.map((region) => region.id))}
                 selectedCityId={selectedCityId}
                 onSelect={onSelectCity}
+                showsLabels={showsCityLabels}
               />,
               citySvg,
             )

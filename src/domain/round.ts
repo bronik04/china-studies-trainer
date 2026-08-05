@@ -24,6 +24,10 @@ export function regionTarget(id: string): Target {
   return { kind: 'region', id };
 }
 
+export function cityTarget(id: string): Target {
+  return { kind: 'city', id };
+}
+
 /** Ключ для группировки: `Map` не умеет сравнивать объекты по значению. */
 export function targetKey(target: Target): string {
   return `${target.kind}:${target.id}`;
@@ -81,6 +85,13 @@ export type AnswerInput = {
    * переезжает в саму игру.
    */
   readonly answeredId: string;
+  /**
+   * Чем считать верный ответ, когда он не того же вида, что цель. В игре
+   * «город — регион» спрашивают город, а отвечают нажатием по области, и
+   * сравнивать ответ с идентификатором города бессмысленно. Не задано —
+   * сравнение с самой целью, как во всех остальных играх.
+   */
+  readonly expectedId?: string;
   readonly durationMs: number;
   readonly answeredAt: string;
 };
@@ -134,7 +145,7 @@ export function answerQuestion(round: Round, input: AnswerInput): Round {
     target: question.target,
     exerciseType: question.exerciseType,
     language: question.language,
-    isCorrect: input.answeredId === question.target.id,
+    isCorrect: input.answeredId === (input.expectedId ?? question.target.id),
     durationMs: input.durationMs,
     answeredAt: input.answeredAt,
   };

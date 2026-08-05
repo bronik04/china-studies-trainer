@@ -1,4 +1,4 @@
-import { cityById } from '../../content/cities';
+import { citiesOfRegion } from '../../content/cities';
 import type { Region } from '../../content/types';
 
 /**
@@ -20,14 +20,20 @@ function normalise(text: string): string {
 
 /**
  * Поля для поиска: как регион называют по-русски, как он пишется и звучит
- * по-китайски и какой у него центр. Ученик ищет по тому, что помнит, а помнит
- * он разное.
+ * по-китайски и какие города в нём стоят. Ученик ищет по тому, что помнит, а
+ * помнит он разное — в том числе город, а не регион: запрос «Сучжоу» обязан
+ * привести на карточку Цзянсу, иначе город можно потренировать, но нельзя
+ * посмотреть.
  */
 function haystack(region: Region): string {
-  const capital = cityById(region.capitalCityId);
+  const cityNames = citiesOfRegion(region.id).flatMap((city) => [
+    city.nameRu,
+    city.nameZh,
+    city.pinyin,
+  ]);
 
   return normalise(
-    [region.nameRu, region.pinyin, region.nameZh, capital?.nameRu ?? ''].join(' '),
+    [region.nameRu, region.pinyin, region.nameZh, ...cityNames].join(' '),
   );
 }
 

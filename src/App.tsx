@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { citiesUpTo } from './content/cities';
 import { collectionById } from './content/collections';
 import { regions } from './content/regions';
-import type { Region } from './content/types';
+import { citiesWord } from './content/region-count';
+import type { City, CitySet, Region } from './content/types';
 import { addAttempts } from './domain/progress';
 import {
   bestAccuracy,
@@ -13,6 +15,7 @@ import type { FillRound } from './domain/fill-round';
 import { createProgressStore } from './domain/progress-storage';
 import type { QuestionLanguage } from './domain/question-language';
 import type { Attempt, ExerciseType } from './domain/round';
+import { CityRound } from './features/exercise/CityRound';
 import { ExerciseRound } from './features/exercise/ExerciseRound';
 import { FillMapRound } from './features/exercise/FillMapRound';
 import { FillMapResultsPage } from './features/results/FillMapResultsPage';
@@ -32,6 +35,7 @@ type Screen =
   | 'collections'
   | 'collection'
   | 'exercise'
+  | 'city-exercise'
   | 'results'
   | 'fill'
   | 'fill-results';
@@ -100,6 +104,7 @@ export default function App() {
   const [progress, setProgress] = useState(() => store.read());
   const [screen, setScreen] = useState<Screen>('home');
   const [roundPool, setRoundPool] = useState<readonly Region[]>(regions);
+  const [cityPool, setCityPool] = useState<readonly City[]>([]);
   const [exerciseTypes, setExerciseTypes] = useState<readonly ExerciseType[]>([
     'find-on-map',
   ]);
@@ -217,6 +222,39 @@ export default function App() {
     setScreen('exercise');
   }
 
+  /**
+   * Города-муниципалитеты и САР не попадают в «город — регион»: спрашивать, в
+   * каком регионе стоит Шанхай, значит спрашивать, в каком регионе стоит
+   * Шанхай. Свойство выводится из каталога, а не ставится флагом.
+   */
+  function cityPoolFor(exerciseType: ExerciseType, citySet: CitySet): readonly City[] {
+    const chosen = citiesUpTo(citySet);
+    if (exerciseType !== 'match-pair') {
+      return chosen;
+    }
+
+    const singleCityKinds = new Set(
+      regions
+        .filter((region) => region.kind === 'municipality' || region.kind === 'sar')
+        .map((region) => region.id),
+    );
+
+    return chosen.filter((city) => !singleCityKinds.has(city.regionId));
+  }
+
+  function startCityRound(
+    exerciseType: ExerciseType,
+    nextLanguage: QuestionLanguage,
+    citySet: CitySet,
+  ) {
+    setCityPool(cityPoolFor(exerciseType, citySet));
+    setExerciseTypes([exerciseType]);
+    setLanguage(nextLanguage);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('city-exercise');
+  }
+
   function startFillRound(nextLanguage: QuestionLanguage) {
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
@@ -249,6 +287,15 @@ export default function App() {
     commitAttempts(round.attempts);
     setFillRound(round);
     setScreen('fill-results');
+  }
+
+  function finishCityRound(attempts: readonly Attempt[]) {
+    const updated = commitAttempts(attempts);
+    setLastAttempts(attempts);
+    setRepeatRegionIds(
+      targetsToRepeat(updated.attempts, new Date(), 'city').map((target) => target.id),
+    );
+    setScreen('results');
   }
 
   function finishRound(attempts: readonly Attempt[]) {
@@ -310,30 +357,57 @@ export default function App() {
     );
   }
 
+  if (screen === 'city-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <CityRound
+          cities={cityPool}
+          exerciseType={exerciseTypes[0]}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishCityRound}
+          onExit={() => setScreen('home')}
+        />
+      </AppFrame>
+    );
+  }
+
   if (screen === 'results') {
     const summary = summariseRound(lastAttempts);
+    /*
+     * Итог одинаков для регионов и городов; различает их только то, чем
+     * называть цели и как склонять их число. Вид берётся из самих попыток, а
+     * не из отдельного признака: раунд по городам пишет городские цели, и
+     * второй источник правды разошёлся бы с ними.
+     */
+    const isCityRound = lastAttempts[0]?.target.kind === 'city';
+    const repeatCities = cityPool.filter((city) => repeatRegionIds.includes(city.id));
 
     return (
       <AppFrame fillsFrame={false} current={null} onNavigate={navigate}>
         <RoundResultsPage
           summary={summary}
-          regions={regions}
+          targets={isCityRound ? cityPool : regions}
+          countWord={isCityRound ? citiesWord : undefined}
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
-          regionIdsToRepeat={repeatRegionIds}
+          idsToRepeat={repeatRegionIds}
           onRepeatMistakes={() => {
-            startRound(
-              exerciseTypes[0],
-              language,
-              repeatRegionIds,
-            );
+            if (isCityRound) {
+              setCityPool(repeatCities);
+              setScreen('city-exercise');
+              setRoundId(newRoundId());
+              setSeed(Math.floor(Math.random() * 2 ** 31));
+              return;
+            }
+
+            startRound(exerciseTypes[0], language, repeatRegionIds);
           }}
           onNewRound={() =>
-            startRound(
-              exerciseTypes[0],
-              language,
-              null,
-            )
+            isCityRound
+              ? startCityRound(exerciseTypes[0], language, 'capital')
+              : startRound(exerciseTypes[0], language, null)
           }
           onExit={() => setScreen('home')}
         />
@@ -395,6 +469,7 @@ export default function App() {
           attempts={progress.attempts}
           onStartRound={startRound}
           onStartFillRound={startFillRound}
+          onStartCityRound={startCityRound}
           onOpenAtlas={() => setScreen('atlas')}
           onOpenCollections={() => setScreen('collections')}
           onOpenCollection={openCollection}

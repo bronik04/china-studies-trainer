@@ -34,3 +34,12 @@ it('не различает е и ё', () => {
 it('на бессмысленном запросе возвращает пусто', () => {
   expect(find('щщщ')).toEqual([]);
 });
+
+it('находит регион по городу, а не только по его центру', () => {
+  expect(searchRegions(regions, 'Сучжоу').map((region) => region.id)).toEqual([
+    'jiangsu',
+  ]);
+  expect(searchRegions(regions, 'Кашгар').map((region) => region.id)).toEqual([
+    'xinjiang',
+  ]);
+});
