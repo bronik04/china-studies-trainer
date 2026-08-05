@@ -28,6 +28,7 @@ npm run build                    # три валидатора → tsc -b → vi
 | `npm run generate:callouts` | правит `public/maps/china-provinces.svg` на месте — выноски для Макао и Гонконга |
 | `npm run generate:hit-targets` | правит тот же SVG — невидимые цели нажатия для регионов мельче порога WCAG |
 | `npm run generate:fonts` | пересобирает подмножества шрифтов в `src/assets/fonts` и `scripts/font-coverage.json` |
+| `npm run generate:physical` | перезаписывает `src/map/physical-geometry.ts` целиком по выжимке Natural Earth |
 
 Оба SVG-генератора идемпотентны, их блоки ограничены комментариями-метками. Перед правкой любого файла в `src/map/` или самого SVG прочитайте шапку файла: сгенерированные помечены явно.
 

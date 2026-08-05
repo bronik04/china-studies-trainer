@@ -1668,7 +1668,7 @@ const FRAME: Frame = {
   maxY: MAP_VIEWBOX_MIN_Y + MAP_VIEWBOX_HEIGHT,
 };
 
-const project = (ring: readonly [number, number][]): Point[] =>
+const project = (ring: readonly Point[]): Point[] =>
   ring.map(([lon, lat]) => projectLonLat(lon, lat) as Point);
 
 function ringArea(ring: readonly Point[]): number {
