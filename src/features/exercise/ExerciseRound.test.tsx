@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../../content/regions';
 import type { Region } from '../../content/types';
 import type { QuestionLanguage } from '../../domain/question-language';
@@ -39,6 +39,53 @@ function askedRegion(): Region {
   )!;
 }
 
+function answerCorrectly() {
+  const target = askedRegion();
+
+  fireEvent.click(
+    screen.getByRole('button', { name: `${target.nameRu} (${target.nameZh})` }),
+  );
+}
+
+function answerWrongly() {
+  const target = askedRegion();
+  const other = regions.find((region) => region.id !== target.id)!;
+
+  fireEvent.click(
+    screen.getByRole('button', { name: `${other.nameRu} (${other.nameZh})` }),
+  );
+}
+
+it('переводит к следующему вопросу сам, без кнопки, после верного ответа', () => {
+  vi.useFakeTimers();
+  try {
+    renderRound();
+    const before = asked();
+
+    answerCorrectly();
+
+    expect(screen.queryByRole('button', { name: 'Далее' })).toBeNull();
+    expect(screen.queryByText('Верно')).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(asked()).not.toBe(before);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('останавливается на ошибке и ждёт «Далее»', () => {
+  renderRound();
+
+  answerWrongly();
+
+  expect(screen.getByText('Этот регион стоит повторить')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Далее' })).toBeTruthy();
+});
+
 it('на русском спрашивает русским названием', () => {
   renderRound();
 
@@ -52,41 +99,59 @@ it('на китайском спрашивает иероглифами', () => 
 });
 
 it('в режиме «найти на карте» отвечают выбором области', () => {
-  renderRound();
-  const target = askedRegion();
+  vi.useFakeTimers();
+  try {
+    renderRound();
+    const before = asked();
 
-  fireEvent.click(
-    screen.getByRole('button', { name: `${target.nameRu} (${target.nameZh})` }),
-  );
+    answerCorrectly();
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
 
-  expect(screen.getByRole('heading', { name: 'Верно' })).toBeInTheDocument();
+    expect(asked()).not.toBe(before);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('в режиме «регион — столица» отвечают выбором варианта', () => {
-  renderRound(['match-pair']);
-  const target = askedRegion();
+  vi.useFakeTimers();
+  try {
+    renderRound(['match-pair']);
+    const target = askedRegion();
 
-  fireEvent.click(
-    screen
-      .getAllByTestId('choice-option')
-      .find((option) => option.textContent === target.capitalRu)!,
-  );
+    fireEvent.click(
+      screen
+        .getAllByTestId('choice-option')
+        .find((option) => option.textContent === target.capitalRu)!,
+    );
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
 
-  expect(screen.getByRole('heading', { name: 'Верно' })).toBeInTheDocument();
+    expect(asked()).not.toBe(target.nameRu);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('меняет вид задания от вопроса к вопросу, когда типов несколько', () => {
-  renderRound(['find-on-map', 'match-pair']);
+  vi.useFakeTimers();
+  try {
+    renderRound(['find-on-map', 'match-pair']);
 
-  expect(screen.queryAllByTestId('choice-option')).toHaveLength(0);
+    expect(screen.queryAllByTestId('choice-option')).toHaveLength(0);
 
-  const target = askedRegion();
-  fireEvent.click(
-    screen.getByRole('button', { name: `${target.nameRu} (${target.nameZh})` }),
-  );
-  fireEvent.click(screen.getByRole('button', { name: 'Далее' }));
+    answerCorrectly();
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
 
-  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+    expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('заголовок вопроса помечен языком, когда спрашивают иероглифами', () => {
@@ -122,13 +187,10 @@ it('«Прервать раунд» стоит в разметке после с
   ).toBeTruthy();
 });
 
-it('карточка ответа стоит в разметке до карты', () => {
+it('карточка разбора стоит в разметке до карты', () => {
   const { container } = renderRound();
-  const target = askedRegion();
 
-  fireEvent.click(
-    screen.getByRole('button', { name: `${target.nameRu} (${target.nameZh})` }),
-  );
+  answerWrongly();
 
   const feedback = container.querySelector('.answer-feedback')!;
   const map = container.querySelector('.china-map')!;
@@ -180,23 +242,26 @@ it('на экране темы выноски подписаны: там кар�
   }
 });
 
-it('сообщает о завершении раунда', () => {
-  const finish = vi.fn();
-  renderRound(['match-pair'], 'ru', finish, SHORT_POOL);
+it('сообщает о завершении раунда, не требуя нажатия на последнем вопросе', () => {
+  vi.useFakeTimers();
+  try {
+    const finish = vi.fn();
+    renderRound(['match-pair'], 'ru', finish, SHORT_POOL);
 
-  for (let index = 0; index < SHORT_POOL.length; index += 1) {
-    const target = askedRegion();
-    fireEvent.click(
-      screen
-        .getAllByTestId('choice-option')
-        .find((option) => option.textContent === target.capitalRu)!,
-    );
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: index === SHORT_POOL.length - 1 ? 'Завершить раунд' : 'Далее',
-      }),
-    );
+    for (let index = 0; index < SHORT_POOL.length; index += 1) {
+      const target = askedRegion();
+      fireEvent.click(
+        screen
+          .getAllByTestId('choice-option')
+          .find((option) => option.textContent === target.capitalRu)!,
+      );
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+    }
+
+    expect(finish).toHaveBeenCalledOnce();
+  } finally {
+    vi.useRealTimers();
   }
-
-  expect(finish).toHaveBeenCalledOnce();
 });

@@ -1,4 +1,4 @@
-import { useMemo, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import type { Region } from '../../content/types';
 import { buildChoices } from '../../domain/choices';
 import { createSeededRandom } from '../../domain/random';
@@ -49,6 +49,15 @@ function resultOf(
 }
 
 /**
+ * Сколько верный ответ виден до следующего вопроса. Без паузы регион
+ * закрашивается и исчезает раньше, чем глаз это заметит; с кнопкой «Далее»
+ * ученик подтверждал то, что и так знает. В «Заполни карту» той же цели
+ * служат полторы секунды показа неугаданного региона — здесь хватает
+ * меньшего, потому что подтверждается успех, а не сообщается новое.
+ */
+const CORRECT_PAUSE_MS = 500;
+
+/**
  * Один контейнер на все задания: типы могут чередоваться внутри раунда,
  * поэтому вид вопроса решается на каждом вопросе, а не на экране.
  */
@@ -75,6 +84,21 @@ export function ExerciseRound({
   const [answeredRegionId, setAnsweredRegionId] = useState<string | null>(null);
   const [askedAt, setAskedAt] = useState(() => performance.now());
 
+  /*
+   * Таймер живёт в ссылке: уход с экрана посреди паузы не должен переводить
+   * раунд, которого уже нет.
+   */
+  const advanceTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (advanceTimer.current !== null) {
+        window.clearTimeout(advanceTimer.current);
+      }
+    },
+    [],
+  );
+
   // Варианты считаются один раз на раунд: иначе перерисовка тасовала бы их
   // прямо под курсором.
   const choicesByQuestion = useMemo(() => {
@@ -91,6 +115,8 @@ export function ExerciseRound({
   const isMapAnswer = question.exerciseType === 'find-on-map';
   const showsMap = isMapAnswer || question.exerciseType === 'name-target';
   const isLastQuestion = round.currentIndex === round.questions.length - 1;
+  const lastAttempt = round.attempts[round.attempts.length - 1];
+  const showsFeedback = round.status === 'feedback' && lastAttempt?.isCorrect === false;
 
   const answerStates = useMemo(
     () =>
@@ -98,15 +124,33 @@ export function ExerciseRound({
     [isMapAnswer, regions, question.target.id, answeredRegionId],
   );
 
+  function goNext(from: Round) {
+    const next = goToNextQuestion(from);
+    if (isRoundFinished(next)) {
+      onFinish(next.attempts);
+      return;
+    }
+
+    setRound(next);
+    setAnsweredRegionId(null);
+    setAskedAt(performance.now());
+  }
+
   function answer(regionId: string) {
     setAnsweredRegionId(regionId);
-    setRound(
-      answerQuestion(round, {
-        answeredId: regionId,
-        durationMs: Math.round(performance.now() - askedAt),
-        answeredAt: new Date().toISOString(),
-      }),
-    );
+    const answered = answerQuestion(round, {
+      answeredId: regionId,
+      durationMs: Math.round(performance.now() - askedAt),
+      answeredAt: new Date().toISOString(),
+    });
+    setRound(answered);
+
+    if (answered.attempts[answered.attempts.length - 1].isCorrect) {
+      advanceTimer.current = window.setTimeout(() => {
+        advanceTimer.current = null;
+        goNext(answered);
+      }, CORRECT_PAUSE_MS);
+    }
   }
 
   function handleMapSelect(regionId: string) {
@@ -123,15 +167,7 @@ export function ExerciseRound({
   }
 
   function handleNext() {
-    const next = goToNextQuestion(round);
-    if (isRoundFinished(next)) {
-      onFinish(next.attempts);
-      return;
-    }
-
-    setRound(next);
-    setAnsweredRegionId(null);
-    setAskedAt(performance.now());
+    goNext(round);
   }
 
   return (
@@ -185,9 +221,8 @@ export function ExerciseRound({
               ))}
             </ul>
           )}
-          {round.status === 'feedback' ? (
+          {showsFeedback ? (
             <AnswerFeedback
-              isCorrect={answeredRegionId === question.target.id}
               targetRegion={targetRegion}
               isLastQuestion={isLastQuestion}
               onNext={handleNext}

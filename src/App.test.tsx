@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
 import App from './App';
 import { regions } from './content/regions';
@@ -159,21 +159,15 @@ it('главная кнопка запускает раунд и возвращ�
  * отрисовываются четыре кнопки вместо карты с 34 областями и списка-дублёра.
  * Проверяемое поведение от режима не зависит, а раунд идёт в разы быстрее.
  *
- * Режим живёт на втором уровне, поэтому прогресс засевается заранее: на
- * первом визите его карточка закрыта и об этом прямо написано.
  */
 function answerCapital(correct: boolean): void {
   const asked = screen.getByTestId('exercise-target').textContent;
   /*
-   * На втором уровне вопрос называет регион иероглифами, а не по-русски
-   * (`REPRESENTATIONS_BY_LEVEL`), поэтому регион ищется по любому из его
-   * представлений — тест не должен зависеть от того, каким уровнем идёт раунд.
+   * Регион ищется по обоим названиям: тест не должен зависеть от того, на
+   * каком языке идёт раунд.
    */
   const target = regions.find(
-    (region) =>
-      region.nameRu === asked ||
-      region.nameZh === asked ||
-      region.pinyin === asked,
+    (region) => region.nameRu === asked || region.nameZh === asked,
   )!;
   const options = screen.getAllByTestId('choice-option');
 
@@ -186,14 +180,35 @@ function answerCapital(correct: boolean): void {
   );
 }
 
+/*
+ * Верный ответ переводит вопрос сам, по таймеру; ошибка ждёт «Далее». Поэтому
+ * раунд из одних верных ответов проходится на поддельных часах, а раунд из
+ * ошибок — нажатиями, как и раньше.
+ */
 function finishRound(correct: boolean): void {
-  for (let index = 0; index < 34; index += 1) {
-    answerCapital(correct);
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: index === 33 ? 'Завершить раунд' : 'Далее',
-      }),
-    );
+  if (!correct) {
+    for (let index = 0; index < 34; index += 1) {
+      answerCapital(false);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: index === 33 ? 'Завершить раунд' : 'Далее',
+        }),
+      );
+    }
+
+    return;
+  }
+
+  vi.useFakeTimers();
+  try {
+    for (let index = 0; index < 34; index += 1) {
+      answerCapital(true);
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+    }
+  } finally {
+    vi.useRealTimers();
   }
 }
 

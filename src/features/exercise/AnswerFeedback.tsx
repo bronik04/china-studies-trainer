@@ -2,20 +2,21 @@ import { useEffect, useRef } from 'react';
 import type { Region } from '../../content/types';
 
 export type AnswerFeedbackProps = {
-  readonly isCorrect: boolean;
   readonly targetRegion: Region;
   readonly isLastQuestion: boolean;
   readonly onNext: () => void;
 };
 
 /**
- * Результат вопроса: значок, заголовок и пояснение. Тон поддерживающий —
+ * Разбор ошибки: значок, заголовок и правильный ответ. Тон поддерживающий —
  * вместо «Ты ошибся» говорится, что регион стоит повторить (UI_UX.md).
  * Фокус переводится на заголовок, чтобы результат был объявлен и доступен
  * с клавиатуры.
+ *
+ * Ветки «Верно» здесь нет: верный ответ не останавливает раунд и ничего не
+ * объясняет — ученик только что показал это сам.
  */
 export function AnswerFeedback({
-  isCorrect,
   targetRegion,
   isLastQuestion,
   onNext,
@@ -26,16 +27,16 @@ export function AnswerFeedback({
     headingRef.current?.focus();
   }, [targetRegion.id]);
 
-  const title = isCorrect ? 'Верно' : 'Этот регион стоит повторить';
+  const title = 'Этот регион стоит повторить';
 
   return (
     <section
       className="answer-feedback"
-      data-result={isCorrect ? 'correct' : 'incorrect'}
+      data-result="incorrect"
       aria-labelledby="answer-feedback-heading"
     >
       <p className="answer-feedback-icon" role="img" aria-label={title}>
-        {isCorrect ? '✓' : '↻'}
+        ↻
       </p>
       <h3 id="answer-feedback-heading" ref={headingRef} tabIndex={-1}>
         {title}
