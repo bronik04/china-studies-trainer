@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { cities } from '../src/content/cities';
 import { regions } from '../src/content/regions';
 import { CALLOUT_TARGETS } from '../src/map/callout-targets';
 import {
@@ -7,7 +8,15 @@ import {
   REFERENCE_MAP_WIDTH,
   undersizedRegions,
 } from '../src/map/target-size';
+import { projectLonLat } from '../src/map/projection';
 import {
+  containsPoint,
+  distanceToBoundary,
+  parseMapPath,
+  type Point,
+} from '../src/map/svg-path';
+import {
+  validateCityPlacement,
   validateMapAreaIds,
   validateRegionPalette,
   validateTargetSizes,
@@ -36,6 +45,44 @@ validateTargetSizes(
 
 console.info(
   `Проверено областей карты: ${mapAreaIds.length}. Целей нажатия: ${hitTargetIds.length}. Выносок: ${CALLOUT_TARGETS.length}.`,
+);
+
+/*
+ * Города проверяются по той же геометрии, что и области: контуры разбираются
+ * один раз и переиспользуются. Проекция применяется здесь, а не в каталоге, —
+ * в каталоге координаты остаются градусами.
+ */
+const rings = new Map<string, Point[][]>();
+for (const [, attributes] of svg.matchAll(/<path\b([\s\S]*?)\/>/g)) {
+  const id = /\bid="([^"]+)"/.exec(attributes)?.[1];
+  const d = /\sd="([\s\S]*?)"/.exec(attributes)?.[1];
+
+  if (id !== undefined && d !== undefined) {
+    rings.set(id, parseMapPath(d));
+  }
+}
+
+const mapAreaOf = new Map(regions.map((region) => [region.id, region.mapAreaId]));
+const ringsOf = (mapAreaId: string): Point[][] => rings.get(mapAreaId) ?? [];
+
+const placement = validateCityPlacement(
+  cities.map((city) => {
+    const [x, y] = projectLonLat(city.lon, city.lat);
+
+    return { cityId: city.id, regionId: city.regionId, x, y };
+  }),
+  {
+    contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),
+    distanceToBoundary: (mapAreaId, x, y) =>
+      distanceToBoundary(ringsOf(mapAreaId), x, y),
+    mapAreaOf: (regionId) => mapAreaOf.get(regionId),
+    mapAreaIds: [...rings.keys()],
+  },
+);
+
+console.info(
+  `Проверено городов: ${cities.length}. На кромке контура: ${placement.onBoundary.length}` +
+    (placement.onBoundary.length > 0 ? ` (${placement.onBoundary.join(', ')})` : ''),
 );
 
 /*

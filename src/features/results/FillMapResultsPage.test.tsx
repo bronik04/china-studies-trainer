@@ -12,7 +12,7 @@ import { FillMapResultsPage } from './FillMapResultsPage';
 function finishedRound(): FillRound {
   let round = createFillRound(regions, {
     roundId: 'r1',
-    level: 1,
+    language: 'ru',
     random: createSeededRandom(1),
   });
 

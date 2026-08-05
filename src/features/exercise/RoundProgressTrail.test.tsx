@@ -7,9 +7,9 @@ function attempt(isCorrect: boolean): Attempt {
   return {
     questionId: 'q',
     roundId: 'r',
-    regionId: 'hunan',
+    target: { kind: 'region', id: 'hunan' },
     exerciseType: 'find-on-map',
-    level: 1,
+    language: 'ru',
     isCorrect,
     durationMs: 1000,
     answeredAt: '2026-08-04T12:00:00.000Z',

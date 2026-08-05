@@ -1,15 +1,13 @@
-import type { ExerciseType, Level } from '../../domain/round';
+import type { ExerciseType } from '../../domain/round';
 
 /**
- * `level` — не ступень лестницы, а собственные правила игры: какими
- * представлениями она спрашивает (`REPRESENTATIONS_BY_LEVEL`). Лестницы нет,
- * закрытых игр нет, и снаружи это число не показывается никогда.
+ * Описание игры для экрана раунда. Числа сложности здесь нет: чем спрашивать,
+ * выбирает ученик, а не игра.
  */
 export type ExerciseMode = {
   readonly exerciseType: ExerciseType;
   readonly title: string;
   readonly eyebrow: string;
-  readonly level: Level;
 };
 
 export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
@@ -17,27 +15,18 @@ export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
     exerciseType: 'find-on-map',
     title: 'Найти на карте',
     eyebrow: 'Найдите на карте',
-    level: 1,
   },
-  'name-region': {
-    exerciseType: 'name-region',
+  'name-target': {
+    exerciseType: 'name-target',
     title: 'Назвать регион',
     eyebrow: 'Какой регион подсвечен',
-    level: 1,
   },
-  'match-capital': {
-    exerciseType: 'match-capital',
+  'match-pair': {
+    exerciseType: 'match-pair',
     title: 'Регион — столица',
     eyebrow: 'Выберите административный центр',
-    level: 2,
   },
 };
-
-export const ALL_EXERCISE_TYPES: readonly ExerciseType[] = [
-  'find-on-map',
-  'name-region',
-  'match-capital',
-];
 
 /**
  * Карточка режима на главной. Описывает игру для того, кто ещё не пробовал:
@@ -52,7 +41,7 @@ export const ALL_EXERCISE_TYPES: readonly ExerciseType[] = [
  * типом задания, и главная запускает её другим вызовом.
  *
  * Иероглиф — метка, а не украшение: 地 земля, 名 имя, 都 столица, 填 заполнять,
- * 史 история, 文 культура. Он же отличает карточки друг от друга, когда цвета
+ * 市 город, 认 узнавать, 属 принадлежать, 史 история, 文 культура. Он же отличает карточки друг от друга, когда цвета
  * на бумаге у них одинаковые.
  */
 export type ModeCard = {
@@ -63,18 +52,41 @@ export type ModeCard = {
   /** Что спрашивают и сколько: «34 региона · около 7 минут». */
   readonly volume: string;
 } & (
-  | { readonly kind: 'exercise'; readonly exerciseType: ExerciseType; readonly level: Level }
-  | { readonly kind: 'fill'; readonly level: Level }
+  | { readonly kind: 'exercise'; readonly exerciseType: ExerciseType }
+  /** Игра по городам: цели берутся из справочника городов, а не регионов. */
+  | { readonly kind: 'city'; readonly exerciseType: ExerciseType }
+  | { readonly kind: 'fill' }
   /** Режим объявлен, но ещё не написан: карточка не запускается. */
   | { readonly kind: 'planned' }
 );
+
+/**
+ * Города спрашиваются теми же тремя формами, что и регионы, поэтому у игр те
+ * же `exerciseType`. Различают их вид карточки и экран: `CityRound`.
+ */
+export const CITY_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
+  'find-on-map': {
+    exerciseType: 'find-on-map',
+    title: 'Найти город',
+    eyebrow: 'Найдите город на карте',
+  },
+  'name-target': {
+    exerciseType: 'name-target',
+    title: 'Назвать город',
+    eyebrow: 'Какой город подсвечен',
+  },
+  'match-pair': {
+    exerciseType: 'match-pair',
+    title: 'Город — регион',
+    eyebrow: 'В каком регионе этот город',
+  },
+};
 
 export const MODE_CARDS: readonly ModeCard[] = [
   {
     id: 'find-on-map',
     kind: 'exercise',
     exerciseType: 'find-on-map',
-    level: 1,
     mark: '地',
     title: 'Найти на карте',
     summary:
@@ -82,10 +94,9 @@ export const MODE_CARDS: readonly ModeCard[] = [
     volume: '34 региона · около 7 минут',
   },
   {
-    id: 'name-region',
+    id: 'name-target',
     kind: 'exercise',
-    exerciseType: 'name-region',
-    level: 1,
+    exerciseType: 'name-target',
     mark: '名',
     title: 'Назвать регион',
     summary:
@@ -93,10 +104,9 @@ export const MODE_CARDS: readonly ModeCard[] = [
     volume: '34 региона · около 6 минут',
   },
   {
-    id: 'match-capital',
+    id: 'match-pair',
     kind: 'exercise',
-    exerciseType: 'match-capital',
-    level: 2,
+    exerciseType: 'match-pair',
     mark: '都',
     title: 'Регион — столица',
     summary:
@@ -106,12 +116,41 @@ export const MODE_CARDS: readonly ModeCard[] = [
   {
     id: 'fill-map',
     kind: 'fill',
-    level: 3,
     mark: '填',
     title: 'Заполнить карту',
     summary:
       'Вся карта подряд, без вариантов ответа. Секундомер и разбор по числу попыток на регион.',
     volume: '34 региона · около 9 минут',
+  },
+  {
+    id: 'find-city',
+    kind: 'city',
+    exerciseType: 'find-on-map',
+    mark: '市',
+    title: 'Найти город',
+    summary:
+      'Вопрос называет город — ответ нажимается по точке на карте или выбирается из списка.',
+    volume: 'Набор выбирается перед стартом · около 10 минут',
+  },
+  {
+    id: 'name-city',
+    kind: 'city',
+    exerciseType: 'name-target',
+    mark: '认',
+    title: 'Назвать город',
+    summary:
+      'Одна точка подсвечена, четыре имени на выбор. Отвлекающие берутся из соседей, а не с другого конца страны.',
+    volume: 'Набор выбирается перед стартом · около 9 минут',
+  },
+  {
+    id: 'city-region',
+    kind: 'city',
+    exerciseType: 'match-pair',
+    mark: '属',
+    title: 'Город — регион',
+    summary:
+      'Назван город — нажать регион, в котором он стоит. Точки на карте скрыты, иначе они и есть ответ.',
+    volume: 'Без городов центрального подчинения · около 9 минут',
   },
   {
     id: 'history',

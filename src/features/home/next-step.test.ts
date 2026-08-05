@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
-import type { Attempt, ExerciseType, Level } from '../../domain/round';
+import type { QuestionLanguage } from '../../domain/question-language';
+import type { Attempt, ExerciseType } from '../../domain/round';
 import { nextStep } from './next-step';
 
 const NOW = new Date('2026-08-04T12:00:00.000Z');
@@ -9,15 +10,15 @@ function attempt(
   roundId: string,
   isCorrect: boolean,
   exerciseType: ExerciseType = 'find-on-map',
-  level: Level = 1,
+  language: QuestionLanguage = 'ru',
   answeredAt: string = NOW.toISOString(),
 ): Attempt {
   return {
     questionId: `${roundId}-${regionId}`,
     roundId,
-    regionId,
+    target: { kind: 'region', id: regionId },
     exerciseType,
-    level,
+    language,
     isCorrect,
     durationMs: 1000,
     answeredAt,
@@ -29,7 +30,7 @@ it('без истории предлагает начать с поиска на
 
   expect(step.label).toBe('Начать: найти на карте');
   expect(step.exerciseType).toBe('find-on-map');
-  expect(step.level).toBe(1);
+  expect(step.language).toBe('ru');
   expect(step.regionIds).toBeNull();
 });
 
@@ -49,25 +50,20 @@ it('при свежих ошибках предлагает повторить �
 it('без ошибок продолжает игрой последнего раунда', () => {
   const attempts = [
     attempt('hunan', 'r1', true, 'find-on-map'),
-    attempt('hubei', 'r2', true, 'match-capital'),
+    attempt('hubei', 'r2', true, 'match-pair'),
   ];
 
   const step = nextStep(attempts, NOW);
 
-  /*
-   * Номера уровня в подписи нет: уровней не существует. Число рядом со `level`
-   * — собственные правила игры «регион — столица», её набор представлений.
-   */
   expect(step.label).toBe('Продолжить: регион — столица');
-  expect(step.exerciseType).toBe('match-capital');
-  expect(step.level).toBe(2);
+  expect(step.exerciseType).toBe('match-pair');
   expect(step.regionIds).toBeNull();
 });
 
 it('ошибки старше окна повтора не тянут назад', () => {
   const old = new Date('2026-06-01T12:00:00.000Z').toISOString();
   const attempts = [
-    attempt('hunan', 'r1', false, 'find-on-map', 1, old),
+    attempt('hunan', 'r1', false, 'find-on-map', 'ru', old),
     attempt('hubei', 'r2', true, 'find-on-map'),
   ];
 
@@ -80,4 +76,17 @@ it('подпись и набор регионов считаются вмест�
 
   expect(step.label).toBe('Повторить 1 регион');
   expect(step.regionIds).toHaveLength(1);
+});
+
+it('берёт язык последней попытки', () => {
+  const attempts = [
+    attempt('sichuan', 'r1', true, 'find-on-map'),
+    attempt('gansu', 'r1', true, 'find-on-map', 'zh'),
+  ];
+
+  expect(nextStep(attempts, NOW).language).toBe('zh');
+});
+
+it('при пустой истории спрашивает по-русски', () => {
+  expect(nextStep([], NOW).language).toBe('ru');
 });

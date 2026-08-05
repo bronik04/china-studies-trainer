@@ -203,11 +203,63 @@ p {
    * уезжает вниз. Раскрытый список поэтому получает собственную прокрутку
    * (см. `.region-answer-list` ниже), а не растит страницу.
    */
+  /*
+   * Кадр раунда — одна сетка на все его части, а не сетка внутри сетки.
+   * Колонка вопроса кончается высоко: под ним оставалось до 400 px пустоты,
+   * пока равнозначный список лежал отдельной полосой под картой и отнимал у
+   * неё высоту. Теперь список встаёт в ту самую пустоту, а карта занимает обе
+   * строки — на 1440×900 её рисунок вырос с 804×600 до 1005×750.
+   */
   .round-shell {
+    column-gap: var(--s-5);
     display: grid;
     flex: 1;
+    grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto auto;
     min-block-size: 0;
+    padding-block: var(--s-4);
+    row-gap: var(--s-3);
+  }
+
+  /* Части раскладки становятся ячейками кадра, а не отдельной сетки. */
+  .round-layout[data-columns='two'] {
+    display: contents;
+  }
+
+  .round-prompt-column {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* Карта занимает правую колонку целиком: делить её теперь не с чем. */
+  .round-map {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+  }
+
+  .round-shell > .region-answer-list {
+    align-self: end;
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  /* Без карты вопрос занимает кадр целиком: делить его не с чем. */
+  .round-layout[data-columns='one'] {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  /*
+   * «Прервать раунд» стоит под колонкой вопроса, а не полосой во всю ширину:
+   * полоса отнимала у карты высоту, а разрушающее действие всё равно должно
+   * быть подальше от места, куда ученик всё время попадает мышью.
+   */
+  .round-footer {
+    border-top: 0;
+    grid-column: 1;
+    grid-row: 3;
+    margin-block-start: 0;
+    padding-block-start: 0;
   }
 
   /*
@@ -217,13 +269,6 @@ p {
   .region-answer-list {
     max-block-size: 40dvh;
     overflow-y: auto;
-  }
-
-  .round-layout[data-columns='two'] {
-    display: grid;
-    gap: var(--s-5);
-    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
-    min-block-size: 0;
   }
 
   .round-layout[data-columns='one'] {
@@ -300,8 +345,8 @@ p {
   flex-wrap: wrap;
   gap: var(--s-3) var(--s-5);
   justify-content: space-between;
-  margin-block-start: var(--s-5);
-  padding-block-start: var(--s-4);
+  margin-block-start: var(--s-3);
+  padding-block-start: var(--s-3);
 }
 
 /*
@@ -539,6 +584,7 @@ h1[tabindex]:focus:not(:focus-visible) {
 
 .region-card :focus-visible,
 .answer-feedback :focus-visible,
+.mode-dialog :focus-visible,
 .choice-list button:focus-visible {
   outline-color: var(--focus-on-paper);
 }
@@ -726,9 +772,21 @@ button.text:hover:enabled {
 
 .china-map svg {
   display: block;
-  transform-origin: center;
-  transition: transform var(--duration-quick) var(--ease-out);
   width: 100%;
+}
+
+/*
+ * Увеличенную карту можно тянуть, и курсор об этом говорит. `touch-action`
+ * снимает у пальца прокрутку страницы внутри карты — иначе на телефоне
+ * попытка сдвинуть карту листала бы страницу.
+ */
+.china-map[data-can-pan='true'] {
+  cursor: grab;
+  touch-action: none;
+}
+
+.china-map[data-can-pan='true']:active {
+  cursor: grabbing;
 }
 
 /*
@@ -918,6 +976,121 @@ button.text:hover:enabled {
 }
 
 
+/* --- Слой городов ------------------------------------------------------- */
+
+/*
+ * Знак стоит на настоящем месте города, цель нажатия может отойти, подпись
+ * появляется только у одного города за раз (`CityLayer.tsx`). Цветом здесь
+ * ничего не сообщается: канал занят типом региона, исходом ответа и
+ * освоенностью, — у знака свои каналы, размер и обводка.
+ */
+.china-map .city-mark {
+  fill: var(--map-label);
+  stroke: var(--map-sea);
+  stroke-width: 1;
+}
+
+/* Столица крупнее прочих городов: это разный вес, а не разный цвет. */
+.china-map .city[data-city-set='capital'] .city-mark {
+  r: 3.4;
+  stroke-width: 1.4;
+}
+
+/* Поводок от знака к отошедшей цели: иначе нажатие срабатывает «мимо города». */
+.china-map .city-leader {
+  stroke: var(--map-label);
+  stroke-dasharray: 2 2;
+  stroke-width: 0.7;
+}
+
+.china-map .city-hit {
+  fill: transparent;
+}
+
+.china-map .city-layer[data-interactive='true'] .city-hit {
+  cursor: pointer;
+}
+
+/*
+ * Там, где спрашивают о самой точке, подписи не рисуются вовсе: подпись
+ * подсвеченного города — готовый ответ. Скрытие в стиле, а не в разметке, —
+ * а вот утечку выносок карта закрывает в коде, потому что там она возможна и
+ * без таблицы стилей.
+ */
+.china-map .city-layer[data-labels='false'] .city-label {
+  display: none;
+}
+
+/*
+ * Подпись видна у одного города за раз — при наведении, фокусе и выборе.
+ * Обводка тоном бумаги отделяет её от заливки региона: подпись ложится на
+ * любой из четырёх тонов карты, и подкладывать под неё плашку значило бы
+ * закрывать саму карту.
+ */
+.china-map .city-label {
+  fill: var(--map-label);
+  font-family: var(--t-family-text);
+  font-size: 10px;
+  font-weight: var(--t-weight-bold);
+  opacity: 0;
+  paint-order: stroke;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 3;
+  transition: opacity var(--duration-quick) var(--ease-out);
+}
+
+.china-map .city:hover .city-label,
+.china-map .city:focus-within .city-label,
+.china-map .city[data-selected='true'] .city-label {
+  opacity: 1;
+}
+
+.china-map .city-hit:focus-visible {
+  outline: none;
+}
+
+/*
+ * Спрошенная точка обязана быть видна с другого конца карты: в «Назвать
+ * город» она и есть вопрос. Тушь по тёмной заливке для этого не годилась —
+ * знак отличался от соседних только обводкой в полтона.
+ *
+ * Каналов три, и ни один не цвет сам по себе: знак крупнее, вокруг него
+ * светлое кольцо тоном бумаги и киноварная заливка — та же, которой на карте
+ * помечена цель ответа.
+ */
+.china-map .city:focus-within .city-mark,
+.china-map .city[data-selected='true'] .city-mark {
+  fill: var(--accent);
+  r: 5;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 2.5;
+}
+
+/* Кольцо вокруг спрошенной точки: видно и на светлой, и на тёмной заливке. */
+.china-map .city[data-selected='true'] .city-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .china-map .city-label {
+    transition: none;
+  }
+}
+
+/* Города региона в карточке атласа: перечень, а не абзац. */
+.region-city-list {
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  font-size: var(--t-size-caption);
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+}
+
 .map-selection {
   font-weight: var(--t-weight-bold);
   margin: var(--s-4) 0;
@@ -940,6 +1113,23 @@ button.text:hover:enabled {
 .map-alternative button[aria-pressed='true'] {
   border-color: var(--accent-on-ground);
   font-weight: var(--t-weight-bold);
+}
+
+/*
+ * Исход ответа в списке городов помечается тем же способом, что и в списке
+ * вариантов: заливкой на верном и пунктиром на ошибочном — два канала, не
+ * один цвет.
+ */
+.map-alternative button[data-result='correct'] {
+  background: var(--state-correct);
+  border-color: var(--state-correct);
+  color: var(--map-correct-ink);
+  font-weight: var(--t-weight-bold);
+}
+
+.map-alternative button[data-result='incorrect'] {
+  border-color: var(--state-incorrect);
+  border-style: dashed;
 }
 
 /* Пауза показа: список остаётся на месте и в фокусе, но не отвечает. */
@@ -1501,9 +1691,16 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 /*
- * Карточка целиком — одна кнопка. Цель нажатия совпадает с тем, что видно, и
- * целиться в мелкое слово «подробнее» не приходится.
+ * Запуск игры — одна кнопка во всю карточку: цель нажатия совпадает с тем, что
+ * видно, и целиться в мелкое слово «подробнее» не приходится. Переключатель
+ * языка стоит рядом с ней, а не внутри: кнопка в кнопке недостижима с
+ * клавиатуры.
  */
+.mode-card {
+  display: flex;
+  flex-direction: column;
+}
+
 .mode-card button,
 .collection-card button {
   background: var(--surface-paper);
@@ -1521,6 +1718,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 .mode-card button {
+  flex: 1;
   gap: var(--s-2);
   padding: var(--s-5);
 }
@@ -1573,9 +1771,114 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   color: var(--text-on-paper-muted);
 }
 
-.mode-card-level {
+.mode-card-status {
   color: var(--text-on-paper-muted);
   font-size: var(--t-size-caption);
+}
+
+/* --- Окно перед стартом игры -------------------------------------------- */
+
+/*
+ * Выбор языка стоит окном, а не переключателем на карточке: переключатель
+ * приходилось выносить из кнопки запуска — кнопка внутри кнопки недостижима с
+ * клавиатуры, — и он оказывался на доске, тёмным по тёмному. Окно ставит его
+ * на бумагу.
+ */
+.mode-dialog {
+  background: none;
+  border: 0;
+  color: var(--text-on-paper);
+  padding: 0;
+}
+
+.mode-dialog::backdrop {
+  background: rgb(0 0 0 / 60%);
+}
+
+.mode-dialog-body {
+  background: var(--surface-paper-bright);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  max-inline-size: min(100vw - 2 * var(--s-4), 26rem);
+  padding: var(--s-6);
+}
+
+.mode-dialog h2 {
+  color: var(--text-on-paper);
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-title);
+  line-height: var(--t-leading-tight);
+}
+
+.mode-dialog-volume {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+}
+
+.mode-dialog-language {
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+}
+
+.mode-dialog-language legend {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+  padding: 0 0 var(--s-2);
+}
+
+/*
+ * Строка выбора — цель нажатия во всю ширину окна: попасть в саму кнопку
+ * радио размером с букву на телефоне нельзя (WCAG 2.5.8).
+ */
+.mode-dialog-language label {
+  align-items: center;
+  border: var(--border-solid) solid var(--line-on-paper);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-paper);
+  cursor: pointer;
+  display: flex;
+  gap: var(--s-3);
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-4);
+}
+
+.mode-dialog-language label:has(input:checked) {
+  border-color: var(--accent);
+}
+
+.mode-dialog-language label:has(input:focus-visible) {
+  outline: var(--border-focus) solid var(--focus-on-paper);
+  outline-offset: var(--s-1);
+}
+
+/* Кольцо рисует строка целиком, поэтому у самой радиокнопки его нет. */
+.mode-dialog-language input:focus-visible {
+  outline: none;
+}
+
+.mode-dialog-language input {
+  accent-color: var(--accent);
+  block-size: var(--s-4);
+  inline-size: var(--s-4);
+  margin: 0;
+}
+
+.mode-dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding-top: var(--s-2);
+}
+
+/* Отмена стоит на бумаге, а не на доске: киноварь доски здесь не читается. */
+.mode-dialog-actions button.text {
+  color: var(--accent);
 }
 
 .mode-card-title {

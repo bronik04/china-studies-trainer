@@ -1,11 +1,21 @@
 import { regionsWord } from '../../content/region-count';
-import type { Region } from '../../content/types';
 import type { RoundSummary } from '../../domain/progress-rules';
 import { formatDuration } from './format-duration';
 
+/**
+ * Всё, что экрану итогов нужно от цели: назвать её. Регион и город подходят
+ * оба — экран одинаков для игр по тем и другим, а различает их слово в
+ * подписи кнопки (`countWord`).
+ */
+export type NamedTarget = {
+  readonly id: string;
+  readonly nameRu: string;
+  readonly nameZh: string;
+};
+
 export type RoundResultsPageProps = {
   readonly summary: RoundSummary;
-  readonly regions: readonly Region[];
+  readonly targets: readonly NamedTarget[];
   readonly bestAccuracy: number;
   readonly isProgressSaved: boolean;
   /**
@@ -14,7 +24,9 @@ export type RoundResultsPageProps = {
    * не больше `MAX_REVIEW_TOPICS` тем этого раунда, — и приходит извне, чтобы
    * подпись кнопки не могла разойтись с тем, что кнопка делает.
    */
-  readonly regionIdsToRepeat: readonly string[];
+  readonly idsToRepeat: readonly string[];
+  /** Как склонять число в подписи «Повторить ошибки». */
+  readonly countWord?: (count: number) => string;
   readonly onRepeatMistakes: () => void;
   readonly onNewRound: () => void;
   readonly onExit: () => void;
@@ -26,19 +38,20 @@ function formatPercent(value: number): string {
 
 export function RoundResultsPage({
   summary,
-  regions,
+  targets,
   bestAccuracy,
   isProgressSaved,
-  regionIdsToRepeat,
+  idsToRepeat,
+  countWord = regionsWord,
   onRepeatMistakes,
   onNewRound,
   onExit,
 }: RoundResultsPageProps) {
-  const reviewRegions = summary.regionIdsToReview.flatMap(
-    (regionId) => regions.find((region) => region.id === regionId) ?? [],
+  const reviewTargets = summary.targetsToReview.flatMap(
+    (target) => targets.find((named) => named.id === target.id) ?? [],
   );
-  const repeatCount = regionIdsToRepeat.length;
-  const isRepeatWider = repeatCount > reviewRegions.length;
+  const repeatCount = idsToRepeat.length;
+  const isRepeatWider = repeatCount > reviewTargets.length;
 
   return (
     <main className="app-shell">
@@ -60,15 +73,15 @@ export function RoundResultsPage({
             Прогресс не сохранится: хранилище недоступно.
           </p>
         )}
-        {reviewRegions.length === 0 ? (
+        {reviewTargets.length === 0 ? (
           <p>Ошибок нет.</p>
         ) : (
           <>
             <h3>Стоит повторить</h3>
             <ul className="review-list">
-              {reviewRegions.map((region) => (
-                <li key={region.id}>
-                  {region.nameRu} <span lang="zh-Hans">{region.nameZh}</span>
+              {reviewTargets.map((target) => (
+                <li key={target.id}>
+                  {target.nameRu} <span lang="zh-Hans">{target.nameZh}</span>
                 </li>
               ))}
             </ul>
@@ -80,15 +93,15 @@ export function RoundResultsPage({
             {isRepeatWider ? (
               <p>
                 Здесь ошибки этого раунда. В повтор войдут все {repeatCount}{' '}
-                {regionsWord(repeatCount)} с ошибками за последние 14 дней.
+                {countWord(repeatCount)} с ошибками за последние 14 дней.
               </p>
             ) : null}
           </>
         )}
         <div className="results-actions">
-          {reviewRegions.length === 0 ? null : (
+          {reviewTargets.length === 0 ? null : (
             <button type="button" className="primary" onClick={onRepeatMistakes}>
-              Повторить ошибки: {repeatCount} {regionsWord(repeatCount)}
+              Повторить ошибки: {repeatCount} {countWord(repeatCount)}
             </button>
           )}
           <button type="button" className="secondary" onClick={onNewRound}>

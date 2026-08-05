@@ -13,6 +13,7 @@ function renderHome(attempts: readonly Attempt[] = []) {
   const handlers = {
     onStartRound: vi.fn(),
     onStartFillRound: vi.fn(),
+    onStartCityRound: vi.fn(),
     onOpenAtlas: vi.fn(),
     onOpenCollections: vi.fn(),
     onOpenCollection: vi.fn(),
@@ -38,15 +39,16 @@ it('главная кнопка называет следующий шаг и з
 
   fireEvent.click(screen.getByRole('button', { name: 'Начать: найти на карте' }));
 
-  expect(onStartRound).toHaveBeenCalledWith('find-on-map', 1, null);
+  expect(onStartRound).toHaveBeenCalledWith('find-on-map', 'ru', null);
 });
 
 it('карточка открытого режима запускает свой раунд', () => {
   const { onStartRound } = renderHome();
 
   fireEvent.click(screen.getByRole('button', { name: /Назвать регион/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
-  expect(onStartRound).toHaveBeenCalledWith('name-region', 1, null);
+  expect(onStartRound).toHaveBeenCalledWith('name-target', 'ru', null);
 });
 
 /*
@@ -60,8 +62,9 @@ it('карточка игры запускается без всякой ист�
 
   expect(card).toBeEnabled();
   fireEvent.click(card);
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
-  expect(onStartRound).toHaveBeenCalledWith('match-capital', 2, null);
+  expect(onStartRound).toHaveBeenCalledWith('match-pair', 'ru', null);
 });
 
 it('карточка ненаписанного режима не запускается и говорит почему', () => {
@@ -82,8 +85,9 @@ it('заполнение карты идёт своим раундом, а не 
   const { onStartFillRound, onStartRound } = renderHome();
 
   fireEvent.click(screen.getByRole('button', { name: /Заполнить карту/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
-  expect(onStartFillRound).toHaveBeenCalledWith(3);
+  expect(onStartFillRound).toHaveBeenCalledWith('ru');
   expect(onStartRound).not.toHaveBeenCalled();
 });
 
@@ -155,6 +159,7 @@ it('раздел режимов принимает фокус: шапка вед
       attempts={[]}
       onStartRound={vi.fn()}
       onStartFillRound={vi.fn()}
+      onStartCityRound={vi.fn()}
       onOpenAtlas={vi.fn()}
       onOpenCollections={vi.fn()}
       onOpenCollection={vi.fn()}
@@ -168,4 +173,66 @@ it('раздел режимов принимает фокус: шапка вед
   expect(within(modes as HTMLElement).getByRole('heading', { level: 2 })).toHaveTextContent(
     'Режимы',
   );
+});
+
+function openCard(title: string | RegExp): void {
+  fireEvent.click(screen.getByRole('button', { name: title }));
+}
+
+it('спрашивает язык перед стартом, а не запускает раунд сразу', () => {
+  const { onStartRound } = renderHome();
+
+  openCard(/Найти на карте/);
+
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  expect(onStartRound).not.toHaveBeenCalled();
+});
+
+it('запускает игру на выбранном языке', () => {
+  const { onStartRound } = renderHome();
+
+  openCard(/Найти на карте/);
+  fireEvent.click(screen.getByRole('radio', { name: '中文' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(onStartRound).toHaveBeenCalledWith('find-on-map', 'zh', null);
+});
+
+it('«Отмена» закрывает окно и ничего не запускает', () => {
+  const { onStartRound } = renderHome();
+
+  openCard(/Найти на карте/);
+  fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(onStartRound).not.toHaveBeenCalled();
+});
+
+it('умолчание в окне берётся из языка последней попытки', () => {
+  renderHome([
+    {
+      questionId: '1-gansu',
+      roundId: 'r1',
+      target: { kind: 'region', id: 'gansu' },
+      exerciseType: 'find-on-map',
+      language: 'zh',
+      isCorrect: true,
+      durationMs: 1000,
+      answeredAt: new Date().toISOString(),
+    },
+  ]);
+
+  openCard(/Найти на карте/);
+
+  expect(screen.getByRole<HTMLInputElement>('radio', { name: '中文' }).checked).toBe(
+    true,
+  );
+});
+
+it('окно называет игру, в которую попадёшь', () => {
+  renderHome();
+
+  openCard(/Заполнить карту/);
+
+  expect(screen.getByRole('heading', { name: 'Заполнить карту' })).toBeInTheDocument();
 });

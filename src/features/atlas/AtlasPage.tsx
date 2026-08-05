@@ -1,3 +1,4 @@
+import { cityById, citiesOfRegion } from '../../content/cities';
 import type { Region, RegionKind } from '../../content/types';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
@@ -63,9 +64,25 @@ export function AtlasPage({
                 <p lang="zh-Latn-pinyin">{selected.pinyin}</p>
                 <p className="status-note">{KIND_LABELS[selected.kind]}</p>
                 <p>
-                  Административный центр: {selected.capitalRu}{' '}
-                  <span lang="zh-Hans">({selected.capitalZh})</span>
+                  Административный центр: {cityById(selected.capitalCityId)?.nameRu}{' '}
+                  <span lang="zh-Hans">
+                    ({cityById(selected.capitalCityId)?.nameZh})
+                  </span>
                 </p>
+                {/*
+                  Города региона перечислены словами, а не только точками на
+                  карте: точка — не текст, читалке экрана её не прочесть, а
+                  делать полсотни знаков остановками Tab дороже, чем дать
+                  список там, где регион и так разглядывают.
+                */}
+                <ul className="region-city-list">
+                  {citiesOfRegion(selected.id).map((city) => (
+                    <li key={city.id}>
+                      {city.nameRu} <span lang="zh-Hans">{city.nameZh}</span>{' '}
+                      <span lang="zh-Latn-pinyin">{city.pinyin}</span>
+                    </li>
+                  ))}
+                </ul>
               </>
             ) : (
               <>
@@ -97,6 +114,7 @@ export function AtlasPage({
             zoom={zoom}
             onZoomChange={onZoomChange}
             usage="answer"
+            showsCities
           />
         </div>
       </div>

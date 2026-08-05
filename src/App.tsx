@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { citiesUpTo } from './content/cities';
 import { collectionById } from './content/collections';
 import { regions } from './content/regions';
-import type { Region } from './content/types';
+import { citiesWord } from './content/region-count';
+import type { City, CitySet, Region } from './content/types';
 import { addAttempts } from './domain/progress';
 import {
   bestAccuracy,
-  masteredRegionIds,
-  regionIdsToRepeat,
+  masteredTargets,
+  targetsToRepeat,
   summariseRound,
 } from './domain/progress-rules';
 import type { FillRound } from './domain/fill-round';
 import { createProgressStore } from './domain/progress-storage';
-import type { Attempt, ExerciseType, Level } from './domain/round';
+import type { QuestionLanguage } from './domain/question-language';
+import type { Attempt, ExerciseType } from './domain/round';
+import { CityRound } from './features/exercise/CityRound';
 import { ExerciseRound } from './features/exercise/ExerciseRound';
 import { FillMapRound } from './features/exercise/FillMapRound';
-import {
-  ALL_EXERCISE_TYPES,
-  EXERCISE_MODES,
-} from './features/exercise/exercise-modes';
 import { FillMapResultsPage } from './features/results/FillMapResultsPage';
 import { RoundResultsPage } from './features/results/RoundResultsPage';
 import { AtlasPage } from './features/atlas/AtlasPage';
@@ -27,8 +27,7 @@ import { HomePage } from './features/home/HomePage';
 import type { MapZoom } from './map/MapControls';
 import { SiteHeader, type SiteSection } from './ui/SiteHeader';
 
-/** «mixed» — смешанный раунд четвёртого уровня, где типы заданий чередуются. */
-type RoundRequest = ExerciseType | 'mixed';
+type RoundRequest = ExerciseType;
 
 type Screen =
   | 'home'
@@ -36,6 +35,7 @@ type Screen =
   | 'collections'
   | 'collection'
   | 'exercise'
+  | 'city-exercise'
   | 'results'
   | 'fill'
   | 'fill-results';
@@ -104,10 +104,11 @@ export default function App() {
   const [progress, setProgress] = useState(() => store.read());
   const [screen, setScreen] = useState<Screen>('home');
   const [roundPool, setRoundPool] = useState<readonly Region[]>(regions);
+  const [cityPool, setCityPool] = useState<readonly City[]>([]);
   const [exerciseTypes, setExerciseTypes] = useState<readonly ExerciseType[]>([
     'find-on-map',
   ]);
-  const [level, setLevel] = useState<Level>(1);
+  const [language, setLanguage] = useState<QuestionLanguage>('ru');
   const [roundId, setRoundId] = useState(newRoundId);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 31));
   const [lastAttempts, setLastAttempts] = useState<readonly Attempt[]>([]);
@@ -206,7 +207,7 @@ export default function App() {
    */
   function startRound(
     request: RoundRequest,
-    nextLevel: Level,
+    nextLanguage: QuestionLanguage,
     regionIds: readonly string[] | null,
   ) {
     setRoundPool(
@@ -214,15 +215,48 @@ export default function App() {
         ? regions
         : regions.filter((region) => regionIds.includes(region.id)),
     );
-    setExerciseTypes(request === 'mixed' ? ALL_EXERCISE_TYPES : [request]);
-    setLevel(nextLevel);
+    setExerciseTypes([request]);
+    setLanguage(nextLanguage);
     setRoundId(newRoundId());
     setSeed(Math.floor(Math.random() * 2 ** 31));
     setScreen('exercise');
   }
 
-  function startFillRound(nextLevel: Level) {
-    setLevel(nextLevel);
+  /**
+   * Города-муниципалитеты и САР не попадают в «город — регион»: спрашивать, в
+   * каком регионе стоит Шанхай, значит спрашивать, в каком регионе стоит
+   * Шанхай. Свойство выводится из каталога, а не ставится флагом.
+   */
+  function cityPoolFor(exerciseType: ExerciseType, citySet: CitySet): readonly City[] {
+    const chosen = citiesUpTo(citySet);
+    if (exerciseType !== 'match-pair') {
+      return chosen;
+    }
+
+    const singleCityKinds = new Set(
+      regions
+        .filter((region) => region.kind === 'municipality' || region.kind === 'sar')
+        .map((region) => region.id),
+    );
+
+    return chosen.filter((city) => !singleCityKinds.has(city.regionId));
+  }
+
+  function startCityRound(
+    exerciseType: ExerciseType,
+    nextLanguage: QuestionLanguage,
+    citySet: CitySet,
+  ) {
+    setCityPool(cityPoolFor(exerciseType, citySet));
+    setExerciseTypes([exerciseType]);
+    setLanguage(nextLanguage);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('city-exercise');
+  }
+
+  function startFillRound(nextLanguage: QuestionLanguage) {
+    setLanguage(nextLanguage);
     setRoundId(newRoundId());
     setSeed(Math.floor(Math.random() * 2 ** 31));
     setFillRound(null);
@@ -230,9 +264,9 @@ export default function App() {
   }
 
   /**
-   * Освоенность и открытый уровень выводятся из истории попыток. В прогрессе
-   * они всё же сохраняются: этого требует DATA_MODEL.md, — но для показа
-   * всегда вычисляются заново, чтобы отставшее поле не заперло ученика.
+   * Освоенность выводится из истории попыток. В прогрессе она всё же
+   * сохраняется: этого требует DATA_MODEL.md, — но для показа всегда
+   * вычисляется заново, чтобы отставшее поле не заперло ученика.
    *
    * Общая для всех режимов: раунд-заполнение пишет по одной попытке на
    * регион, поэтому правила применяются к нему без изменений.
@@ -241,7 +275,7 @@ export default function App() {
     const withAttempts = addAttempts(progress, attempts);
     const updated = {
       ...withAttempts,
-      masteredRegionIds: masteredRegionIds(withAttempts.attempts, new Date()),
+      masteredTargets: masteredTargets(withAttempts.attempts, new Date(), 'region'),
     };
     setProgress(updated);
     store.write(updated);
@@ -255,6 +289,15 @@ export default function App() {
     setScreen('fill-results');
   }
 
+  function finishCityRound(attempts: readonly Attempt[]) {
+    const updated = commitAttempts(attempts);
+    setLastAttempts(attempts);
+    setRepeatRegionIds(
+      targetsToRepeat(updated.attempts, new Date(), 'city').map((target) => target.id),
+    );
+    setScreen('results');
+  }
+
   function finishRound(attempts: readonly Attempt[]) {
     const updated = commitAttempts(attempts);
     setLastAttempts(attempts);
@@ -263,7 +306,9 @@ export default function App() {
      * в теле компонента — нечистый вызов. Заодно подпись кнопки и её действие
      * получают один и тот же список, а не два вычисления одного правила.
      */
-    setRepeatRegionIds(regionIdsToRepeat(updated.attempts, new Date()));
+    setRepeatRegionIds(
+      targetsToRepeat(updated.attempts, new Date(), 'region').map((target) => target.id),
+    );
     setScreen('results');
   }
 
@@ -272,7 +317,7 @@ export default function App() {
       <AppFrame fillsFrame current={null} onNavigate={navigate}>
         <FillMapRound
           regions={regions}
-          level={level}
+          language={language}
           roundId={roundId}
           seed={seed}
           onFinish={finishFillRound}
@@ -289,7 +334,7 @@ export default function App() {
           round={fillRound}
           regions={regions}
           isProgressSaved={store.isAvailable}
-          onNewRound={() => startFillRound(level)}
+          onNewRound={() => startFillRound(language)}
           onExit={() => setScreen('home')}
         />
       </AppFrame>
@@ -302,7 +347,7 @@ export default function App() {
         <ExerciseRound
           regions={roundPool}
           exerciseTypes={exerciseTypes}
-          level={level}
+          language={language}
           roundId={roundId}
           seed={seed}
           onFinish={finishRound}
@@ -312,30 +357,57 @@ export default function App() {
     );
   }
 
+  if (screen === 'city-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <CityRound
+          cities={cityPool}
+          exerciseType={exerciseTypes[0]}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishCityRound}
+          onExit={() => setScreen('home')}
+        />
+      </AppFrame>
+    );
+  }
+
   if (screen === 'results') {
     const summary = summariseRound(lastAttempts);
+    /*
+     * Итог одинаков для регионов и городов; различает их только то, чем
+     * называть цели и как склонять их число. Вид берётся из самих попыток, а
+     * не из отдельного признака: раунд по городам пишет городские цели, и
+     * второй источник правды разошёлся бы с ними.
+     */
+    const isCityRound = lastAttempts[0]?.target.kind === 'city';
+    const repeatCities = cityPool.filter((city) => repeatRegionIds.includes(city.id));
 
     return (
       <AppFrame fillsFrame={false} current={null} onNavigate={navigate}>
         <RoundResultsPage
           summary={summary}
-          regions={regions}
+          targets={isCityRound ? cityPool : regions}
+          countWord={isCityRound ? citiesWord : undefined}
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
-          regionIdsToRepeat={repeatRegionIds}
+          idsToRepeat={repeatRegionIds}
           onRepeatMistakes={() => {
-            startRound(
-              exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
-              level,
-              repeatRegionIds,
-            );
+            if (isCityRound) {
+              setCityPool(repeatCities);
+              setScreen('city-exercise');
+              setRoundId(newRoundId());
+              setSeed(Math.floor(Math.random() * 2 ** 31));
+              return;
+            }
+
+            startRound(exerciseTypes[0], language, repeatRegionIds);
           }}
           onNewRound={() =>
-            startRound(
-              exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
-              level,
-              null,
-            )
+            isCityRound
+              ? startCityRound(exerciseTypes[0], language, 'capital')
+              : startRound(exerciseTypes[0], language, null)
           }
           onExit={() => setScreen('home')}
         />
@@ -349,10 +421,9 @@ export default function App() {
    * открытыми в двух местах и однажды разошлись бы.
    */
   /*
-   * И атлас, и страница коллекции ведут в «найти на карте»: уровень берётся у
-   * самой игры, а не у ученика — открытых и закрытых уровней не существует.
+   * И атлас, и страница коллекции ведут в «найти на карте» по-русски: выбирать
+   * язык там негде, а переключатель стоит на карточке игры.
    */
-  const findOnMapLevel = EXERCISE_MODES['find-on-map'].level;
   const collection =
     collectionId === null ? null : (collectionById(collectionId) ?? null);
   /*
@@ -378,7 +449,7 @@ export default function App() {
           zoom={zoom}
           onZoomChange={setZoom}
           onExit={() => setScreen('home')}
-          onTrain={() => startRound('find-on-map', findOnMapLevel, null)}
+          onTrain={() => startRound('find-on-map', 'ru', null)}
         />
       ) : activeScreen === 'collections' ? (
         <CollectionsPage regions={regions} onOpenCollection={openCollection} />
@@ -389,7 +460,7 @@ export default function App() {
           onOpenCollections={() => setScreen('collections')}
           onOpenCollection={openCollection}
           onTrainRegions={(regionIds) =>
-            startRound('find-on-map', findOnMapLevel, regionIds)
+            startRound('find-on-map', 'ru', regionIds)
           }
         />
       ) : (
@@ -398,6 +469,7 @@ export default function App() {
           attempts={progress.attempts}
           onStartRound={startRound}
           onStartFillRound={startFillRound}
+          onStartCityRound={startCityRound}
           onOpenAtlas={() => setScreen('atlas')}
           onOpenCollections={() => setScreen('collections')}
           onOpenCollection={openCollection}

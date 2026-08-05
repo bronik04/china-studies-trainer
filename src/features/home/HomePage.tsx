@@ -5,23 +5,30 @@ import {
   collections,
   type CollectionGroupId,
 } from '../../content/collections';
-import type { Region } from '../../content/types';
-import type { Attempt, ExerciseType, Level } from '../../domain/round';
+import type { CitySet, Region } from '../../content/types';
+import type { QuestionLanguage } from '../../domain/question-language';
+import type { Attempt, ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { SiteFooter } from '../../ui/SiteFooter';
-import { MODE_CARDS } from '../exercise/exercise-modes';
+import { MODE_CARDS, type ModeCard } from '../exercise/exercise-modes';
 import { CollectionCard } from './CollectionCard';
+import { ModeStartDialog } from './ModeStartDialog';
 import { nextStep } from './next-step';
 
 export type HomePageProps = {
   readonly regions: readonly Region[];
   readonly attempts: readonly Attempt[];
   readonly onStartRound: (
-    request: ExerciseType | 'mixed',
-    level: Level,
+    request: ExerciseType,
+    language: QuestionLanguage,
     regionIds: readonly string[] | null,
   ) => void;
-  readonly onStartFillRound: (level: Level) => void;
+  readonly onStartFillRound: (language: QuestionLanguage) => void;
+  readonly onStartCityRound: (
+    exerciseType: ExerciseType,
+    language: QuestionLanguage,
+    citySet: CitySet,
+  ) => void;
   readonly onOpenAtlas: () => void;
   readonly onOpenCollections: () => void;
   readonly onOpenCollection: (collectionId: string) => void;
@@ -46,6 +53,7 @@ export function HomePage({
   attempts,
   onStartRound,
   onStartFillRound,
+  onStartCityRound,
   onOpenAtlas,
   onOpenCollections,
   onOpenCollection,
@@ -53,6 +61,24 @@ export function HomePage({
   const [filter, setFilter] = useState<CollectionFilter>('all');
 
   const step = nextStep(attempts, new Date());
+
+  /*
+   * Карточка не запускает раунд сразу: сначала спрашивается язык. Открытая
+   * карточка живёт в состоянии целиком, а не одним признаком, — окну нужны и
+   * название, и объём, и то, каким вызовом её запускать.
+   */
+  const [startingCard, setStartingCard] = useState<ModeCard | null>(null);
+
+  function start(card: ModeCard, language: QuestionLanguage, citySet: CitySet) {
+    setStartingCard(null);
+    if (card.kind === 'exercise') {
+      onStartRound(card.exerciseType, language, null);
+    } else if (card.kind === 'fill') {
+      onStartFillRound(language);
+    } else if (card.kind === 'city') {
+      onStartCityRound(card.exerciseType, language, citySet);
+    }
+  }
 
   const shown =
     filter === 'all'
@@ -75,15 +101,15 @@ export function HomePage({
           </h1>
           <p className="lead">
             34 единицы провинциального уровня, столицы, иероглифы, места и
-            явления. Короткий раунд на 5–15 минут, разбор после каждого ответа и
-            повтор того, что не запомнилось.
+            явления. Короткий раунд на 5–15 минут, разбор после ошибки и повтор
+            того, что не запомнилось.
           </p>
           <div className="landing-hero-actions">
             <button
               type="button"
               className="primary"
               onClick={() =>
-                onStartRound(step.exerciseType, step.level, step.regionIds)
+                onStartRound(step.exerciseType, step.language, step.regionIds)
               }
             >
               {step.label}
@@ -130,8 +156,8 @@ export function HomePage({
           <h2>Режимы</h2>
           <p>
             Карта — только начало. География, история и культура спрашиваются по
-            одним правилам: три попытки, разбор после каждого ответа, повтор
-            ошибок через день.
+            одним правилам: три попытки, разбор после ошибки, повтор ошибок
+            через день.
           </p>
         </div>
         <ul className="mode-card-grid">
@@ -143,13 +169,7 @@ export function HomePage({
                 <button
                   type="button"
                   disabled={isPlanned}
-                  onClick={() => {
-                    if (card.kind === 'exercise') {
-                      onStartRound(card.exerciseType, card.level, null);
-                    } else if (card.kind === 'fill') {
-                      onStartFillRound(card.level);
-                    }
-                  }}
+                  onClick={() => setStartingCard(card)}
                 >
                   <span className="mode-card-head">
                     <span lang="zh-Hans" className="mode-card-mark">
@@ -163,7 +183,7 @@ export function HomePage({
                       нажимается, незачем.
                     */}
                     {isPlanned ? (
-                      <span className="mode-card-level">Готовится</span>
+                      <span className="mode-card-status">Готовится</span>
                     ) : null}
                   </span>
                   <span className="mode-card-title">{card.title}</span>
@@ -174,6 +194,16 @@ export function HomePage({
             );
           })}
         </ul>
+        {startingCard === null ? null : (
+          <ModeStartDialog
+            title={startingCard.title}
+            volume={startingCard.volume}
+            defaultLanguage={step.language}
+            defaultCitySet={startingCard.kind === 'city' ? 'capital' : null}
+            onStart={(language, citySet) => start(startingCard, language, citySet)}
+            onClose={() => setStartingCard(null)}
+          />
+        )}
       </section>
 
       {/*

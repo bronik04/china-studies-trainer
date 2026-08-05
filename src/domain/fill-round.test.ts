@@ -12,7 +12,7 @@ import { createSeededRandom } from './random';
 function newRound(): FillRound {
   return createFillRound(regions, {
     roundId: 'r1',
-    level: 1,
+    language: 'ru',
     random: createSeededRandom(1),
   });
 }

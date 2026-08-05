@@ -1,7 +1,23 @@
-import { useEffect, useRef } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
+import { createPortal } from 'react-dom';
 import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
+import { CityLayer } from './CityLayer';
+import { cityPointsOfRegions } from './city-points';
+import {
+  clampView,
+  keyboardStep,
+  panView,
+  unitsPerPixel,
+  viewBoxOf,
+  WHOLE_MAP,
+} from './map-view';
 import { MapControls, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
 import { MEMBERSHIP_LABELS } from './membership';
@@ -66,6 +82,14 @@ type ChinaMapProps = {
    * фокус клавиатуры на body и заставить проходить табом заново.
    */
   readonly paused?: boolean;
+  /**
+   * Показывать ли города. В играх по регионам слой скрыт: точка в середине
+   * Сычуани там подсказка, а не цель.
+   */
+  readonly showsCities?: boolean;
+  readonly selectedCityId?: string | null;
+  readonly onSelectCity?: (cityId: string) => void;
+  readonly showsCityLabels?: boolean;
 };
 
 /**
@@ -76,6 +100,31 @@ const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
 const NO_OUTCOMES: Readonly<Record<string, RegionOutcome>> = {};
 const NO_PROGRESS_STATES: Readonly<Record<string, RegionProgressState>> = {};
 const NO_MEMBERS: readonly string[] = [];
+
+/**
+ * Насколько рука должна уехать, чтобы это считалось перетаскиванием, а не
+ * нажатием. Без порога дрожь руки на нажатии отменяла бы выбор региона.
+ */
+const DRAG_THRESHOLD_PX = 4;
+
+/** Куда двигать вид по стрелкам: карта уезжает противоходом. */
+const PAN_KEYS: Readonly<Record<string, readonly [number, number]>> = {
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+};
+
+/*
+ * Разметка карты объявлена один раз на модуль, а не литералом в разметке.
+ * Новый объект на каждом рендере React считает новым содержимым и
+ * переустанавливает `innerHTML`: узлы создаются заново, а вместе с ними
+ * пропадает всё, что расставил эффект, — русские имена областей, состояния
+ * ответа и признак выбора. Эффект после этого не перезапускается, потому что
+ * его зависимости не менялись, и карта остаётся с английскими подписями из
+ * исходного файла.
+ */
+const MAP_HTML = { __html: mapMarkup };
 
 /**
  * Нажатие принимает и сам контур, и увеличенная цель для мелких областей.
@@ -112,14 +161,60 @@ export function ChinaMap({
   memberRegionIds = NO_MEMBERS,
   highlight = null,
   paused = false,
+  showsCities = false,
+  selectedCityId = null,
+  onSelectCity,
+  showsCityLabels = true,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  /*
+   * Разметка карты вставляется строкой, поэтому слой городов рисуется в неё
+   * порталом: система координат и увеличение достаются ему от самой карты, а
+   * не подгоняются вторым `svg` поверх. Узел находится после первой отрисовки,
+   * отсюда состояние.
+   */
+  const [citySvg, setCitySvg] = useState<SVGSVGElement | null>(null);
+  /*
+   * Середина вида. Увеличение приходит снаружи — им управляет экран, — а
+   * сдвиг живёт здесь: он не меняет ни ответа, ни состояния раунда, и
+   * поднимать его в `App` значило бы протаскивать через пять экранов то, что
+   * нужно одной карте.
+   *
+   * Хранится только середина, а сам вид считается на отрисовке: держать в
+   * состоянии ещё и увеличение значило бы синхронизировать его эффектом с
+   * приходящим свойством — лишний круг перерисовки на каждое нажатие «плюса».
+   * Уменьшение до единицы возвращает карту целиком само: `clampView`
+   * приводит середину на место.
+   */
+  const [center, setCenter] = useState({
+    x: WHOLE_MAP.centerX,
+    y: WHOLE_MAP.centerY,
+  });
+  const view = clampView({ zoom, centerX: center.x, centerY: center.y });
+  /*
+   * Тянут ли карту прямо сейчас. В ссылке, а не в состоянии: значение читается
+   * и пишется в обработчиках указателя между кадрами, и перерисовка на каждое
+   * движение мыши тащила бы за собой все 34 области.
+   */
+  const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
 
   useEffect(() => {
-    const svg = mapRef.current?.querySelector<SVGElement>('svg');
-    svg?.style.setProperty('transform', `scale(${zoom})`);
+    setCitySvg(mapRef.current?.querySelector<SVGSVGElement>('svg') ?? null);
+  }, []);
 
+  /*
+   * Вид применяется к самой разметке, а не к состоянию React: карта вставлена
+   * строкой, и `viewBox` у неё — внешняя система, которую эффект и обязан
+   * приводить в согласие с состоянием.
+   */
+  const viewBox = viewBoxOf(view);
+
+  useEffect(() => {
+    mapRef.current?.querySelector<SVGSVGElement>('svg')?.setAttribute('viewBox', viewBox);
+  }, [viewBox]);
+
+  useEffect(() => {
     /*
      * Там, где на карте отвечают, подписи выносок скрываются: иначе карта
      * печатает «Макао» и «Гонконг» рядом с маркерами и выдаёт два ответа из
@@ -231,12 +326,94 @@ export function ChinaMap({
     selectedRegionId,
     usage,
     variant,
-    zoom,
   ]);
+
+  /** Сдвигать нечего, пока карта показана целиком. */
+  const canPan = view.zoom > 1;
+
+  function beginDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!canPan || event.button !== 0) {
+      return;
+    }
+
+    /*
+     * Указатель здесь намеренно не захватывается, и карта пока не едет.
+     * Захват на нажатии сбивает прицел: `click` после него уходит не в точку
+     * города и не в область, а в саму карту — общего предка нажатия и
+     * отпускания. Ровно так же вредит и сдвиг на первый же пиксель: узел под
+     * курсором успевает уехать, отпускание приходится на соседний, и клика по
+     * городу не случается вовсе. Поэтому и то и другое начинается только
+     * после порога.
+     */
+    drag.current = { x: event.clientX, y: event.clientY, moved: false };
+  }
+
+  function continueDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    const from = drag.current;
+    if (from === null) {
+      return;
+    }
+
+    if (
+      !from.moved &&
+      Math.abs(event.clientX - from.x) <= DRAG_THRESHOLD_PX &&
+      Math.abs(event.clientY - from.y) <= DRAG_THRESHOLD_PX
+    ) {
+      // Дрожь руки на нажатии — не перетаскивание: карта стоит.
+      return;
+    }
+
+    if (!from.moved) {
+      /*
+       * Тянуть можно и за пределами карты: захват доводит движение до конца,
+       * даже если рука ушла на соседний блок и вернулась.
+       */
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
+    const scale = unitsPerPixel(view, event.currentTarget.clientWidth);
+    const dx = event.clientX - from.x;
+    const dy = event.clientY - from.y;
+
+    drag.current = { x: event.clientX, y: event.clientY, moved: true };
+
+    /*
+     * Тянут за карту, поэтому вид едет навстречу движению руки. Считается от
+     * предыдущего значения, а не от вида этой отрисовки: между кадрами
+     * приходит несколько событий указателя, и все они читали бы одну и ту же
+     * середину — быстрый рывок терял бы почти весь путь.
+     */
+    setCenter((previous) => {
+      const moved = panView(
+        { zoom, centerX: previous.x, centerY: previous.y },
+        -dx * scale,
+        -dy * scale,
+      );
+
+      return { x: moved.centerX, y: moved.centerY };
+    });
+  }
+
+  function endDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
 
   const selectionRules = { interactive, paused, answerStates, outcomes };
 
   function selectTarget(target: EventTarget | null) {
+    /*
+     * Нажатие после перетаскивания не выбирает регион: рука остановилась над
+     * областью, но выбирать её не собиралась. Признак снимается здесь, а не
+     * при отпускании указателя, — иначе он пропадёт раньше, чем придёт click.
+     */
+    const dragged = drag.current?.moved === true;
+    drag.current = null;
+    if (dragged) {
+      return;
+    }
+
     const regionId = getRegionId(target);
     if (regionId !== null && isRegionSelectable(selectionRules, regionId)) {
       onSelect(regionId);
@@ -291,8 +468,13 @@ export function ChinaMap({
         <div
           className="china-map"
           data-map-variant={variant}
+          data-can-pan={canPan}
           ref={mapRef}
           onClick={(event) => selectTarget(event.target)}
+          onPointerDown={beginDrag}
+          onPointerMove={continueDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
               onClear();
@@ -302,20 +484,53 @@ export function ChinaMap({
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
               selectTarget(event.target);
+              return;
+            }
+
+            /*
+             * Стрелки двигают карту, когда её увеличили. На целом виде они
+             * остаются прокруткой страницы: перехватывать их там значило бы
+             * отнять привычное поведение, ничего не дав взамен.
+             */
+            const step = PAN_KEYS[event.key];
+            if (step !== undefined && canPan) {
+              event.preventDefault();
+              const units = keyboardStep(view);
+              setCenter((previous) => {
+                const moved = panView(
+                  { zoom, centerX: previous.x, centerY: previous.y },
+                  step[0] * units,
+                  step[1] * units,
+                );
+
+                return { x: moved.centerX, y: moved.centerY };
+              });
             }
           }}
-          dangerouslySetInnerHTML={{ __html: mapMarkup }}
+          dangerouslySetInnerHTML={MAP_HTML}
         />
+        {showsCities && citySvg !== null
+          ? createPortal(
+              <CityLayer
+                points={cityPointsOfRegions(regions.map((region) => region.id))}
+                selectedCityId={selectedCityId}
+                onSelect={onSelectCity}
+                showsLabels={showsCityLabels}
+                zoom={view.zoom}
+              />,
+              citySvg,
+            )
+          : null}
         {/* Зум идёт после карты в разметке: сначала предмет, потом управление им. */}
         {/*
-          Условие спрашивает и про `interactive`, а не только про наличие
-          колбэка: карта, которая «только показывает», не отдаёт управление
-          собой. На главной колбэк доставался витрине в герое, и три бумажные
-          кнопки по 44 px оказывались самым тяжёлым предметом правой половины
-          первого экрана — рядом с единственным главным шагом и поверх юга
-          карты.
+          Управление показывается тому, кто его попросил, — и только ему.
+          Прежде условие спрашивало ещё и про `interactive`: витрине в герое
+          доставался колбэк, и три бумажные кнопки по 44 px оказывались самым
+          тяжёлым предметом правой половины первого экрана. Колбэк оттуда убран,
+          а `interactive` в условии мешал: в «найти город» карту не выбирают
+          областями, но увеличивать и двигать её нужно как раз там.
         */}
-        {interactive && onZoomChange ? (
+        {onZoomChange ? (
           <MapControls zoom={zoom} onZoomChange={onZoomChange} />
         ) : null}
       </div>

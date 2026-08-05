@@ -7,7 +7,7 @@ function renderRound() {
   return render(
     <FillMapRound
       regions={regions}
-      level={1}
+      language="ru"
       roundId="r1"
       seed={1}
       onFinish={() => {}}

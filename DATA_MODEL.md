@@ -9,32 +9,53 @@ type Region = {
   nameRu: string;
   nameZh: string;
   pinyin: string;
-  capitalRu: string;
-  capitalZh: string;
+  capitalCityId: string;   // chengdu
   mapAreaId: string;       // id элемента SVG
   facts: Fact[];
   sourceIds: string[];
 };
 
+type City = {
+  id: string;              // chengdu
+  regionId: string;        // sichuan
+  set: 'capital' | 'notable' | 'border';
+  nameRu: string;
+  nameZh: string;
+  pinyin: string;
+  lon: number;             // градусы, не единицы карты
+  lat: number;
+  sourceIds: string[];
+};
+
+type Target = {
+  kind: 'region' | 'city';
+  id: string;              // sichuan | chengdu
+};
+
 type Attempt = {
   questionId: string;
   roundId: string;         // к какому раунду относится попытка
-  regionId: string;
-  exerciseType: 'find-on-map' | 'name-region' | 'match-capital';
-  level: 1 | 2 | 3 | 4;
+  target: Target;
+  exerciseType: 'find-on-map' | 'name-target' | 'match-pair';
+  language: 'ru' | 'zh';
   isCorrect: boolean;
   durationMs: number;
   answeredAt: string;      // ISO 8601
 };
 
 type Progress = {
-  schemaVersion: 1;
+  schemaVersion: 3;
   attempts: Attempt[];    // последние 500
-  masteredRegionIds: string[];
-  unlockedLevel: 1 | 2 | 3 | 4;
+  masteredTargets: Target[];
 };
 ```
 
 `Fact` содержит `title`, `body`, `sourceIds` и опционально `imageAlt`; он не может содержать HTML. Столица указывается в учебной форме, принятой в утверждённом источнике. Данные регионов проходят проверку: уникальность `id` и `mapAreaId`, непустые переводы, существование всех `sourceIds`.
 
-Миграции прогресса обязательны при смене `schemaVersion`. Неудачная миграция не уничтожает исходные данные: резервная копия сохраняется отдельно, пользователю предлагается сбросить только прогресс.
+Столица — ссылка `capitalCityId` в справочник городов, а не пара имён у региона: у Чэнду иначе два места правды. Поле `set` у города говорит, откуда он взялся в каталоге, и оно же задаёт объём партии — ученик выбирает набор в окне перед стартом. Координаты хранятся в градусах: проекция применяется на границе с картой (`src/map/city-points.ts`), поэтому замена карты переносит города пересчётом, а не оставляет их молча неверными.
+
+Вид цели входит в саму цель, а не выводится из идентификатора: `beijing` существует и как регион, и как город, и по одной строке их не различить. `exerciseType` называет форму вопроса — найти по имени, назвать по месту, связать с другим каталогом, — а не то, что спрашивают: формы одинаковы для регионов и городов.
+
+Попытка хранит язык вопроса, а не уровень: уровней в продукте нет. Переход со второй версии на третью отбрасывает сохранённое поле уровня и проставляет русский — восстановить по нему язык нельзя, не вернув понятие, от которого отказались.
+
+Миграции прогресса обязательны при смене `schemaVersion`. Неудачная миграция не уничтожает исходные данные: резервная копия сохраняется отдельно, пользователю предлагается сбросить только прогресс. Переход с первой версии на вторую переводит `regionId` в цель-регион и переименовывает типы упражнений.

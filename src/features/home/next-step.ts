@@ -1,6 +1,7 @@
 import { regionsWord } from '../../content/region-count';
-import { regionIdsToRepeat } from '../../domain/progress-rules';
-import type { Attempt, ExerciseType, Level } from '../../domain/round';
+import { targetsToRepeat } from '../../domain/progress-rules';
+import type { QuestionLanguage } from '../../domain/question-language';
+import type { Attempt, ExerciseType } from '../../domain/round';
 import { EXERCISE_MODES } from '../exercise/exercise-modes';
 
 /**
@@ -11,7 +12,7 @@ import { EXERCISE_MODES } from '../exercise/exercise-modes';
 export type NextStep = {
   readonly label: string;
   readonly exerciseType: ExerciseType;
-  readonly level: Level;
+  readonly language: QuestionLanguage;
   /** `null` — раунд по всем регионам темы. */
   readonly regionIds: readonly string[] | null;
 };
@@ -29,20 +30,24 @@ function lastExerciseType(attempts: readonly Attempt[]): ExerciseType {
   return attempts.at(-1)?.exerciseType ?? 'find-on-map';
 }
 
-/*
- * Уровень берётся у самой игры, а не из истории: он означает, какими
- * представлениями она спрашивает, и меняться от прогресса ученика не может.
+/**
+ * Язык берётся из истории по тому же правилу, что и последняя игра: ученик,
+ * перешедший на иероглифы, не должен возвращать их вручную каждый раз.
  */
+function lastLanguage(attempts: readonly Attempt[]): QuestionLanguage {
+  return attempts.at(-1)?.language ?? 'ru';
+}
+
 export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
   const exerciseType = lastExerciseType(attempts);
   const mode = EXERCISE_MODES[exerciseType];
 
-  const toRepeat = regionIdsToRepeat(attempts, now);
+  const toRepeat = targetsToRepeat(attempts, now, 'region').map((target) => target.id);
   if (toRepeat.length > 0) {
     return {
       label: `Повторить ${toRepeat.length} ${regionsWord(toRepeat.length)}`,
       exerciseType,
-      level: mode.level,
+      language: lastLanguage(attempts),
       regionIds: toRepeat,
     };
   }
@@ -51,7 +56,7 @@ export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
     return {
       label: `Начать: ${lowerFirst(EXERCISE_MODES['find-on-map'].title)}`,
       exerciseType: 'find-on-map',
-      level: EXERCISE_MODES['find-on-map'].level,
+      language: lastLanguage(attempts),
       regionIds: null,
     };
   }
@@ -59,7 +64,7 @@ export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
   return {
     label: `Продолжить: ${lowerFirst(mode.title)}`,
     exerciseType,
-    level: mode.level,
+    language: lastLanguage(attempts),
     regionIds: null,
   };
 }

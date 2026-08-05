@@ -1,7 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
 import App from './App';
+import { cityById } from './content/cities';
 import { regions } from './content/regions';
+import type { Region } from './content/types';
 
 /**
  * Хранилище подменяется картой в памяти: приложение читает прогресс при
@@ -159,47 +161,69 @@ it('главная кнопка запускает раунд и возвращ�
  * отрисовываются четыре кнопки вместо карты с 34 областями и списка-дублёра.
  * Проверяемое поведение от режима не зависит, а раунд идёт в разы быстрее.
  *
- * Режим живёт на втором уровне, поэтому прогресс засевается заранее: на
- * первом визите его карточка закрыта и об этом прямо написано.
  */
+/** Название административного центра региона: оно живёт в справочнике городов. */
+function capitalOf(region: Region): string {
+  return cityById(region.capitalCityId)!.nameRu;
+}
+
 function answerCapital(correct: boolean): void {
   const asked = screen.getByTestId('exercise-target').textContent;
   /*
-   * На втором уровне вопрос называет регион иероглифами, а не по-русски
-   * (`REPRESENTATIONS_BY_LEVEL`), поэтому регион ищется по любому из его
-   * представлений — тест не должен зависеть от того, каким уровнем идёт раунд.
+   * Регион ищется по обоим названиям: тест не должен зависеть от того, на
+   * каком языке идёт раунд.
    */
   const target = regions.find(
-    (region) =>
-      region.nameRu === asked ||
-      region.nameZh === asked ||
-      region.pinyin === asked,
+    (region) => region.nameRu === asked || region.nameZh === asked,
   )!;
   const options = screen.getAllByTestId('choice-option');
 
   fireEvent.click(
     options.find((option) =>
       correct
-        ? option.textContent === target.capitalRu
-        : option.textContent !== target.capitalRu,
+        ? option.textContent === capitalOf(target)
+        : option.textContent !== capitalOf(target),
     )!,
   );
 }
 
+/*
+ * Верный ответ переводит вопрос сам, по таймеру; ошибка ждёт «Далее». Поэтому
+ * раунд из одних верных ответов проходится на поддельных часах, а раунд из
+ * ошибок — нажатиями, как и раньше.
+ */
 function finishRound(correct: boolean): void {
-  for (let index = 0; index < 34; index += 1) {
-    answerCapital(correct);
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: index === 33 ? 'Завершить раунд' : 'Далее',
-      }),
-    );
+  if (!correct) {
+    for (let index = 0; index < 34; index += 1) {
+      answerCapital(false);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: index === 33 ? 'Завершить раунд' : 'Далее',
+        }),
+      );
+    }
+
+    return;
+  }
+
+  vi.useFakeTimers();
+  try {
+    for (let index = 0; index < 34; index += 1) {
+      answerCapital(true);
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+    }
+  } finally {
+    vi.useRealTimers();
   }
 }
 
 function startCapitalRound(): void {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /Регион — столица/ }));
+  // Карточка спрашивает язык окном, и раунд начинается из него.
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 }
 
 it('показывает итог после раунда и возвращает на главную', () => {
