@@ -85,3 +85,40 @@ it('стирает только свой ключ', () => {
   expect(store.read()).toEqual(EMPTY_PROGRESS);
   expect(storage.getItem('чужой-ключ')).toBe('останется');
 });
+
+it('переводит сохранённый прогресс первой версии и сохраняет исходник', () => {
+  const raw = JSON.stringify({
+    schemaVersion: 1,
+    attempts: [
+      {
+        questionId: '1-sichuan',
+        roundId: 'round-1',
+        regionId: 'sichuan',
+        exerciseType: 'find-on-map',
+        level: 1,
+        isCorrect: true,
+        durationMs: 1000,
+        answeredAt: '2026-08-03T10:00:00.000Z',
+      },
+    ],
+    masteredRegionIds: ['sichuan'],
+  });
+  const storage = memoryStorage({ [PROGRESS_KEY]: raw });
+  const store = createProgressStore(storage);
+
+  const progress = store.read();
+
+  expect(progress.attempts[0].target).toEqual({ kind: 'region', id: 'sichuan' });
+  expect(progress.masteredTargets).toEqual([{ kind: 'region', id: 'sichuan' }]);
+  expect(storage.getItem(BACKUP_KEY)).toBe(raw);
+  expect(storage.getItem(PROGRESS_KEY)).toBe(raw);
+});
+
+it('не резервирует прогресс текущей версии при каждом чтении', () => {
+  const raw = JSON.stringify({ ...EMPTY_PROGRESS, masteredTargets: [] });
+  const storage = memoryStorage({ [PROGRESS_KEY]: raw });
+
+  createProgressStore(storage).read();
+
+  expect(storage.getItem(BACKUP_KEY)).toBeNull();
+});

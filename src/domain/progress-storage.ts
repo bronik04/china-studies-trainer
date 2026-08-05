@@ -1,4 +1,5 @@
-import { EMPTY_PROGRESS, PROGRESS_SCHEMA_VERSION, type Progress } from './progress';
+import { EMPTY_PROGRESS, type Progress } from './progress';
+import { isCurrentVersion, migrateProgress } from './progress-migration';
 
 export const PROGRESS_KEY = 'china-studies-trainer/progress';
 export const BACKUP_KEY = 'china-studies-trainer/progress-backup';
@@ -61,11 +62,23 @@ export function createProgressStore(storage: Storage | null): ProgressStore {
       }
 
       try {
-        const parsed = JSON.parse(raw) as Progress;
+        const parsed: unknown = JSON.parse(raw);
+        const migrated = migrateProgress(parsed);
+        if (migrated === null) {
+          return setAside(raw);
+        }
 
-        return parsed.schemaVersion === PROGRESS_SCHEMA_VERSION
-          ? { ...EMPTY_PROGRESS, ...parsed }
-          : setAside(raw);
+        /*
+         * Исходник переживает миграцию: она может оказаться неверной, а данные
+         * ученика восстановить будет неоткуда (DATA_MODEL.md). Прогресс, уже
+         * бывший текущей версии, ничего не резервирует — копия каждого чтения
+         * затирала бы единственную полезную.
+         */
+        if (!isCurrentVersion(parsed)) {
+          available.setItem(BACKUP_KEY, raw);
+        }
+
+        return { ...EMPTY_PROGRESS, ...migrated };
       } catch {
         return setAside(raw);
       }
