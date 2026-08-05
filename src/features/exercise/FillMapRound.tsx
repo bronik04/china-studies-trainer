@@ -12,7 +12,6 @@ import {
 import { createSeededRandom } from '../../domain/random';
 import { labelOf, langOf, type QuestionLanguage } from '../../domain/question-language';
 import { ChinaMap, type MapHighlight } from '../../map/ChinaMap';
-import { MapAttribution } from '../../map/MapAttribution';
 import { RegionAnswerList } from '../../map/RegionAnswerList';
 import { RoundStopwatch } from './RoundStopwatch';
 
@@ -239,11 +238,6 @@ export function FillMapRound({
             interactive={!finished}
             paused={isRevealing}
           />
-          {/*
-            Атрибуция стоит под своей картой, а не в подвале: она относится к
-            рисунку, а не к экрану, и в подвале съедала у него высоту.
-          */}
-          <MapAttribution />
         </div>
       </div>
       <RegionAnswerList

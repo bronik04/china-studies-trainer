@@ -16,7 +16,6 @@ import {
   type Round,
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
-import { MapAttribution } from '../../map/MapAttribution';
 import { RegionAnswerList } from '../../map/RegionAnswerList';
 import { AnswerFeedback } from './AnswerFeedback';
 import { answerStatesFor } from './answer-states';
@@ -261,7 +260,6 @@ export function ExerciseRound({
         <button type="button" className="secondary" onClick={onExit}>
           Прервать раунд
         </button>
-        {showsMap ? <MapAttribution /> : null}
       </footer>
     </main>
   );

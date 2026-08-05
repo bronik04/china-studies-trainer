@@ -16,7 +16,6 @@ import {
   type Round,
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
-import { MapAttribution } from '../../map/MapAttribution';
 import type { MapZoom } from '../../map/MapControls';
 import { CityAnswerList } from './CityAnswerList';
 import { CITY_MODES } from './exercise-modes';
@@ -277,11 +276,6 @@ export function CityRound({
             showsCityLabels={false}
             onSelectCity={exerciseType === 'find-on-map' ? handleCitySelect : undefined}
           />
-          {/*
-            Атрибуция стоит под своей картой, а не в подвале: она относится к
-            рисунку, а не к экрану, и в подвале съедала у него высоту.
-          */}
-          <MapAttribution />
         </div>
       </div>
       {/*

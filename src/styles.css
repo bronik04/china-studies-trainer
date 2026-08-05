@@ -214,7 +214,7 @@ p {
     column-gap: var(--s-5);
     display: grid;
     flex: 1;
-    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto auto;
     min-block-size: 0;
     padding-block: var(--s-4);
@@ -231,16 +231,10 @@ p {
     grid-row: 1;
   }
 
-  /*
-   * Атрибуция занимает свою строку, а карта — остаток: иначе рисунок с
-   * `block-size: 100%` вылез бы за ячейку на высоту этой строки.
-   */
+  /* Карта занимает правую колонку целиком: делить её теперь не с чем. */
   .round-map {
-    display: grid;
     grid-column: 2;
-    grid-row: 1 / span 2;
-    grid-template-rows: minmax(0, 1fr) auto;
-    row-gap: var(--s-2);
+    grid-row: 1 / span 3;
   }
 
   .round-shell > .region-answer-list {
@@ -255,9 +249,17 @@ p {
     grid-row: 1;
   }
 
+  /*
+   * «Прервать раунд» стоит под колонкой вопроса, а не полосой во всю ширину:
+   * полоса отнимала у карты высоту, а разрушающее действие всё равно должно
+   * быть подальше от места, куда ученик всё время попадает мышью.
+   */
   .round-footer {
-    grid-column: 1 / -1;
+    border-top: 0;
+    grid-column: 1;
     grid-row: 3;
+    margin-block-start: 0;
+    padding-block-start: 0;
   }
 
   /*
@@ -352,26 +354,11 @@ p {
  * три строки внизу справа и весила столько же, сколько сам ответ. Ссылки
  * внутри сохраняют свой цвет и проверенный контраст.
  */
-.round-map .map-attribution,
 .round-footer .map-attribution {
   color: var(--text-on-ground-muted);
   font-size: var(--t-size-caption);
   margin: 0;
   max-inline-size: 60ch;
-}
-
-/*
- * Под картой атрибуция идёт одной строкой во всю её ширину: в 60ch она
- * ломалась на три и забирала у рисунка больше высоты, чем освободила, уйдя из
- * подвала. Строка длинная и не помещается — обрезается многоточием: ссылки
- * остаются нажимаемыми, а полный текст есть в `docs/sources/map.md` и в
- * подвале атласа.
- */
-.round-map .map-attribution {
-  max-inline-size: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /*
