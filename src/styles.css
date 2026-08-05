@@ -231,9 +231,16 @@ p {
     grid-row: 1;
   }
 
+  /*
+   * Атрибуция занимает свою строку, а карта — остаток: иначе рисунок с
+   * `block-size: 100%` вылез бы за ячейку на высоту этой строки.
+   */
   .round-map {
+    display: grid;
     grid-column: 2;
     grid-row: 1 / span 2;
+    grid-template-rows: minmax(0, 1fr) auto;
+    row-gap: var(--s-2);
   }
 
   .round-shell > .region-answer-list {
@@ -336,8 +343,8 @@ p {
   flex-wrap: wrap;
   gap: var(--s-3) var(--s-5);
   justify-content: space-between;
-  margin-block-start: var(--s-5);
-  padding-block-start: var(--s-4);
+  margin-block-start: var(--s-3);
+  padding-block-start: var(--s-3);
 }
 
 /*
@@ -345,11 +352,26 @@ p {
  * три строки внизу справа и весила столько же, сколько сам ответ. Ссылки
  * внутри сохраняют свой цвет и проверенный контраст.
  */
+.round-map .map-attribution,
 .round-footer .map-attribution {
   color: var(--text-on-ground-muted);
   font-size: var(--t-size-caption);
   margin: 0;
   max-inline-size: 60ch;
+}
+
+/*
+ * Под картой атрибуция идёт одной строкой во всю её ширину: в 60ch она
+ * ломалась на три и забирала у рисунка больше высоты, чем освободила, уйдя из
+ * подвала. Строка длинная и не помещается — обрезается многоточием: ссылки
+ * остаются нажимаемыми, а полный текст есть в `docs/sources/map.md` и в
+ * подвале атласа.
+ */
+.round-map .map-attribution {
+  max-inline-size: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /*

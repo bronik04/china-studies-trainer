@@ -277,6 +277,11 @@ export function CityRound({
             showsCityLabels={false}
             onSelectCity={exerciseType === 'find-on-map' ? handleCitySelect : undefined}
           />
+          {/*
+            Атрибуция стоит под своей картой, а не в подвале: она относится к
+            рисунку, а не к экрану, и в подвале съедала у него высоту.
+          */}
+          <MapAttribution />
         </div>
       </div>
       {/*
@@ -297,7 +302,6 @@ export function CityRound({
         <button type="button" className="secondary" onClick={onExit}>
           Прервать раунд
         </button>
-        <MapAttribution />
       </footer>
     </main>
   );

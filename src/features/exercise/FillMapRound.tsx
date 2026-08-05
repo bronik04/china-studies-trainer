@@ -239,6 +239,11 @@ export function FillMapRound({
             interactive={!finished}
             paused={isRevealing}
           />
+          {/*
+            Атрибуция стоит под своей картой, а не в подвале: она относится к
+            рисунку, а не к экрану, и в подвале съедала у него высоту.
+          */}
+          <MapAttribution />
         </div>
       </div>
       <RegionAnswerList
@@ -254,7 +259,6 @@ export function FillMapRound({
         <button type="button" className="secondary" onClick={onExit}>
           Прервать раунд
         </button>
-        <MapAttribution />
       </footer>
     </main>
   );
