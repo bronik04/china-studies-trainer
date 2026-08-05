@@ -16,11 +16,16 @@ type Region = {
   sourceIds: string[];
 };
 
+type Target = {
+  kind: 'region' | 'city';
+  id: string;              // sichuan | chengdu
+};
+
 type Attempt = {
   questionId: string;
   roundId: string;         // к какому раунду относится попытка
-  regionId: string;
-  exerciseType: 'find-on-map' | 'name-region' | 'match-capital';
+  target: Target;
+  exerciseType: 'find-on-map' | 'name-target' | 'match-pair';
   level: 1 | 2 | 3 | 4;
   isCorrect: boolean;
   durationMs: number;
@@ -28,13 +33,14 @@ type Attempt = {
 };
 
 type Progress = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   attempts: Attempt[];    // последние 500
-  masteredRegionIds: string[];
-  unlockedLevel: 1 | 2 | 3 | 4;
+  masteredTargets: Target[];
 };
 ```
 
 `Fact` содержит `title`, `body`, `sourceIds` и опционально `imageAlt`; он не может содержать HTML. Столица указывается в учебной форме, принятой в утверждённом источнике. Данные регионов проходят проверку: уникальность `id` и `mapAreaId`, непустые переводы, существование всех `sourceIds`.
 
-Миграции прогресса обязательны при смене `schemaVersion`. Неудачная миграция не уничтожает исходные данные: резервная копия сохраняется отдельно, пользователю предлагается сбросить только прогресс.
+Вид цели входит в саму цель, а не выводится из идентификатора: `beijing` существует и как регион, и как город, и по одной строке их не различить. `exerciseType` называет форму вопроса — найти по имени, назвать по месту, связать с другим каталогом, — а не то, что спрашивают: формы одинаковы для регионов и городов.
+
+Миграции прогресса обязательны при смене `schemaVersion`. Неудачная миграция не уничтожает исходные данные: резервная копия сохраняется отдельно, пользователю предлагается сбросить только прогресс. Переход с первой версии на вторую переводит `regionId` в цель-регион и переименовывает типы упражнений.
