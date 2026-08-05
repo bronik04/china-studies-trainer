@@ -1,7 +1,12 @@
 import { shuffle } from './random';
 import { representationsFor, type Representation } from './representations';
 
-export type ExerciseType = 'find-on-map' | 'name-region' | 'match-capital';
+/**
+ * Форма вопроса, а не его цель: найти по имени, назвать по месту, связать с
+ * другим каталогом. Одинакова для регионов и городов, поэтому в названии нет
+ * ни региона, ни столицы.
+ */
+export type ExerciseType = 'find-on-map' | 'name-target' | 'match-pair';
 export type Level = 1 | 2 | 3 | 4;
 
 /**

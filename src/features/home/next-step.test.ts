@@ -49,7 +49,7 @@ it('при свежих ошибках предлагает повторить �
 it('без ошибок продолжает игрой последнего раунда', () => {
   const attempts = [
     attempt('hunan', 'r1', true, 'find-on-map'),
-    attempt('hubei', 'r2', true, 'match-capital'),
+    attempt('hubei', 'r2', true, 'match-pair'),
   ];
 
   const step = nextStep(attempts, NOW);
@@ -59,7 +59,7 @@ it('без ошибок продолжает игрой последнего р�
    * — собственные правила игры «регион — столица», её набор представлений.
    */
   expect(step.label).toBe('Продолжить: регион — столица');
-  expect(step.exerciseType).toBe('match-capital');
+  expect(step.exerciseType).toBe('match-pair');
   expect(step.level).toBe(2);
   expect(step.regionIds).toBeNull();
 });

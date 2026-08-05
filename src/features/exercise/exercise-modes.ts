@@ -19,14 +19,14 @@ export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
     eyebrow: 'Найдите на карте',
     level: 1,
   },
-  'name-region': {
-    exerciseType: 'name-region',
+  'name-target': {
+    exerciseType: 'name-target',
     title: 'Назвать регион',
     eyebrow: 'Какой регион подсвечен',
     level: 1,
   },
-  'match-capital': {
-    exerciseType: 'match-capital',
+  'match-pair': {
+    exerciseType: 'match-pair',
     title: 'Регион — столица',
     eyebrow: 'Выберите административный центр',
     level: 2,
@@ -35,8 +35,8 @@ export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
 
 export const ALL_EXERCISE_TYPES: readonly ExerciseType[] = [
   'find-on-map',
-  'name-region',
-  'match-capital',
+  'name-target',
+  'match-pair',
 ];
 
 /**
@@ -82,9 +82,9 @@ export const MODE_CARDS: readonly ModeCard[] = [
     volume: '34 региона · около 7 минут',
   },
   {
-    id: 'name-region',
+    id: 'name-target',
     kind: 'exercise',
-    exerciseType: 'name-region',
+    exerciseType: 'name-target',
     level: 1,
     mark: '名',
     title: 'Назвать регион',
@@ -93,9 +93,9 @@ export const MODE_CARDS: readonly ModeCard[] = [
     volume: '34 региона · около 6 минут',
   },
   {
-    id: 'match-capital',
+    id: 'match-pair',
     kind: 'exercise',
-    exerciseType: 'match-capital',
+    exerciseType: 'match-pair',
     level: 2,
     mark: '都',
     title: 'Регион — столица',

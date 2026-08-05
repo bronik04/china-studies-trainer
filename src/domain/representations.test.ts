@@ -30,18 +30,18 @@ it('растит сложность от уровня к уровню', () => {
 });
 
 it('не даёт вопросу «регион — столица» показывать собственный ответ', () => {
-  expect(representationsFor(3, 'match-capital')).toEqual(['pinyin']);
-  expect(representationsFor(4, 'match-capital')).not.toContain('capital');
+  expect(representationsFor(3, 'match-pair')).toEqual(['pinyin']);
+  expect(representationsFor(4, 'match-pair')).not.toContain('capital');
 });
 
 it('оставляет столицу доступной остальным заданиям', () => {
   expect(representationsFor(3, 'find-on-map')).toContain('capital');
-  expect(representationsFor(3, 'name-region')).toContain('capital');
+  expect(representationsFor(3, 'name-target')).toContain('capital');
 });
 
 it('никогда не оставляет задание без представления', () => {
   const levels = [1, 2, 3, 4] as const;
-  const types = ['find-on-map', 'name-region', 'match-capital'] as const;
+  const types = ['find-on-map', 'name-target', 'match-pair'] as const;
 
   for (const level of levels) {
     for (const type of types) {

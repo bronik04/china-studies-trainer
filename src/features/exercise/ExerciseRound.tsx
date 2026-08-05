@@ -90,7 +90,7 @@ export function ExerciseRound({
   const targetRegion = regions.find((region) => region.id === question.target.id)!;
   const mode = EXERCISE_MODES[question.exerciseType];
   const isMapAnswer = question.exerciseType === 'find-on-map';
-  const showsMap = isMapAnswer || question.exerciseType === 'name-region';
+  const showsMap = isMapAnswer || question.exerciseType === 'name-target';
   const isLastQuestion = round.currentIndex === round.questions.length - 1;
 
   const answerStates = useMemo(
@@ -144,12 +144,12 @@ export function ExerciseRound({
             <h1
               data-testid="exercise-target"
               lang={
-                question.exerciseType === 'name-region'
+                question.exerciseType === 'name-target'
                   ? undefined
                   : langOf(question.representation)
               }
             >
-              {question.exerciseType === 'name-region'
+              {question.exerciseType === 'name-target'
                 ? 'Регион на карте'
                 : labelOf(targetRegion, question.representation)}
             </h1>
@@ -178,7 +178,7 @@ export function ExerciseRound({
                     disabled={round.status !== 'ready'}
                     onClick={handleChoice}
                   >
-                    {question.exerciseType === 'match-capital'
+                    {question.exerciseType === 'match-pair'
                       ? choice.capitalRu
                       : labelOf(choice, question.representation)}
                   </button>

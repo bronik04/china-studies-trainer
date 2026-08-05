@@ -57,7 +57,7 @@ export function representationsFor(
 ): readonly Representation[] {
   const available = REPRESENTATIONS_BY_LEVEL[level];
 
-  return exerciseType === 'match-capital'
+  return exerciseType === 'match-pair'
     ? available.filter((representation) => representation !== 'capital')
     : available;
 }

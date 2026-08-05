@@ -62,7 +62,7 @@ it('в режиме «найти на карте» отвечают выборо
 });
 
 it('в режиме «регион — столица» отвечают выбором варианта', () => {
-  renderRound(['match-capital']);
+  renderRound(['match-pair']);
   const target = askedRegion();
 
   fireEvent.click(
@@ -75,7 +75,7 @@ it('в режиме «регион — столица» отвечают выб�
 });
 
 it('в смешанном раунде меняет вид задания от вопроса к вопросу', () => {
-  renderRound(['find-on-map', 'match-capital'], 4);
+  renderRound(['find-on-map', 'match-pair'], 4);
 
   expect(screen.queryAllByTestId('choice-option')).toHaveLength(0);
 
@@ -138,7 +138,7 @@ it('карточка ответа стоит в разметке до карты
 });
 
 it('без карты макет схлопывается в одну колонку и не печатает атрибуцию', () => {
-  const { container } = renderRound(['match-capital']);
+  const { container } = renderRound(['match-pair']);
 
   expect(container.querySelector('.china-map')).toBeNull();
   expect(container.querySelector('.round-layout')).toHaveAttribute(
@@ -181,7 +181,7 @@ it('на экране темы выноски подписаны: там кар�
 
 it('сообщает о завершении раунда', () => {
   const finish = vi.fn();
-  renderRound(['match-capital'], 1, finish, SHORT_POOL);
+  renderRound(['match-pair'], 1, finish, SHORT_POOL);
 
   for (let index = 0; index < SHORT_POOL.length; index += 1) {
     const target = askedRegion();

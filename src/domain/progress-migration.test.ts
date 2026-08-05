@@ -49,3 +49,21 @@ it('не понимает чужие и будущие данные', () => {
   expect(migrateProgress({ schemaVersion: 1, attempts: 'не массив' })).toBeNull();
   expect(migrateProgress({ schemaVersion: 1, attempts: [{ нет: 'региона' }] })).toBeNull();
 });
+
+it('переименовывает типы упражнений первой версии', () => {
+  const migrated = migrateProgress({
+    schemaVersion: 1,
+    attempts: [
+      { ...v1.attempts[0], exerciseType: 'name-region' },
+      { ...v1.attempts[0], exerciseType: 'match-capital' },
+      { ...v1.attempts[0], exerciseType: 'find-on-map' },
+    ],
+    masteredRegionIds: [],
+  });
+
+  expect(migrated?.attempts.map((attempt) => attempt.exerciseType)).toEqual([
+    'name-target',
+    'match-pair',
+    'find-on-map',
+  ]);
+});

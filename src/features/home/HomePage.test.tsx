@@ -46,7 +46,7 @@ it('карточка открытого режима запускает свой
 
   fireEvent.click(screen.getByRole('button', { name: /Назвать регион/ }));
 
-  expect(onStartRound).toHaveBeenCalledWith('name-region', 1, null);
+  expect(onStartRound).toHaveBeenCalledWith('name-target', 1, null);
 });
 
 /*
@@ -61,7 +61,7 @@ it('карточка игры запускается без всякой ист�
   expect(card).toBeEnabled();
   fireEvent.click(card);
 
-  expect(onStartRound).toHaveBeenCalledWith('match-capital', 2, null);
+  expect(onStartRound).toHaveBeenCalledWith('match-pair', 2, null);
 });
 
 it('карточка ненаписанного режима не запускается и говорит почему', () => {

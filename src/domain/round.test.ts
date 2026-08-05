@@ -151,15 +151,15 @@ it('помечает вопросы и попытки признаком рау�
 it('чередует типы заданий в смешанном раунде', () => {
   const round = createRound(targets, {
     roundId: 'round-1',
-    exerciseTypes: ['find-on-map', 'name-region', 'match-capital'],
+    exerciseTypes: ['find-on-map', 'name-target', 'match-pair'],
     level: 4,
     random: createSeededRandom(1),
   });
 
   expect(round.questions.slice(0, 4).map((question) => question.exerciseType)).toEqual([
     'find-on-map',
-    'name-region',
-    'match-capital',
+    'name-target',
+    'match-pair',
     'find-on-map',
   ]);
 });
@@ -180,7 +180,7 @@ it('даёт каждому вопросу представление из св�
 it('не показывает столицу в вопросе «регион — столица»', () => {
   const round = createRound(targets, {
     roundId: 'round-1',
-    exerciseTypes: ['match-capital'],
+    exerciseTypes: ['match-pair'],
     level: 4,
     random: createSeededRandom(1),
   });

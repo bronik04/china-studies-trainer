@@ -14,6 +14,12 @@ function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** Значения первой версии называли цель, а не форму вопроса. */
+const RENAMED_EXERCISE_TYPES: Readonly<Record<string, string>> = {
+  'name-region': 'name-target',
+  'match-capital': 'match-pair',
+};
+
 /** Попытка версии 1: цель хранилась голым идентификатором региона. */
 function migrateAttempt(value: unknown): Attempt | null {
   if (!isRecord(value) || typeof value.regionId !== 'string') {
@@ -21,8 +27,16 @@ function migrateAttempt(value: unknown): Attempt | null {
   }
 
   const { regionId, ...rest } = value;
+  const exerciseType =
+    typeof value.exerciseType === 'string'
+      ? (RENAMED_EXERCISE_TYPES[value.exerciseType] ?? value.exerciseType)
+      : value.exerciseType;
 
-  return { ...rest, target: { kind: 'region', id: regionId } } as unknown as Attempt;
+  return {
+    ...rest,
+    exerciseType,
+    target: { kind: 'region', id: regionId },
+  } as unknown as Attempt;
 }
 
 /** Данные уже текущей версии: переводить нечего, резервировать нечего. */
