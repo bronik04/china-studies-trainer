@@ -49,3 +49,11 @@ it('никогда не оставляет задание без предста�
     }
   }
 });
+
+it('делает ярлык из любой структуры с именами, не только из региона', () => {
+  const city = { nameRu: 'Ланьчжоу', nameZh: '兰州', pinyin: 'Lánzhōu' };
+
+  expect(labelOf(city, 'name-ru')).toBe('Ланьчжоу');
+  expect(labelOf(city, 'name-zh')).toBe('兰州');
+  expect(labelOf(city, 'pinyin')).toBe('Lánzhōu');
+});

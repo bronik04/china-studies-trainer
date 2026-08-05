@@ -1,4 +1,3 @@
-import type { Region } from '../content/types';
 import type { ExerciseType, Level } from './round';
 
 export type Representation = 'name-ru' | 'name-zh' | 'pinyin' | 'capital';
@@ -13,16 +12,32 @@ export const REPRESENTATIONS_BY_LEVEL: Readonly<
   4: ['name-ru', 'name-zh', 'pinyin', 'capital'],
 };
 
-export function labelOf(region: Region, representation: Representation): string {
+/**
+ * Всё, что нужно ярлыку: три имени и, у региона, столица. Домен не знает
+ * каталога контента — иначе город пришлось бы объявлять регионом.
+ */
+export type Nameable = {
+  readonly nameRu: string;
+  readonly nameZh: string;
+  readonly pinyin: string;
+  readonly capitalRu?: string;
+};
+
+export function labelOf(named: Nameable, representation: Representation): string {
   switch (representation) {
     case 'name-ru':
-      return region.nameRu;
+      return named.nameRu;
     case 'name-zh':
-      return region.nameZh;
+      return named.nameZh;
     case 'pinyin':
-      return region.pinyin;
+      return named.pinyin;
     case 'capital':
-      return region.capitalRu;
+      /*
+       * Столица есть только у региона. Представление `capital` выдаётся лишь
+       * играм по регионам, поэтому пустая строка сюда не доходит; она стоит
+       * здесь как честное значение, а не как заглушка поведения.
+       */
+      return named.capitalRu ?? '';
   }
 }
 
