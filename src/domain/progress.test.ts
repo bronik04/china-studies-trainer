@@ -7,7 +7,7 @@ function attempt(index: number): Attempt {
     roundId: `round-${index}`,
     target: { kind: 'region', id: 'sichuan' },
     exerciseType: 'find-on-map',
-    level: 1,
+    language: 'ru',
     isCorrect: true,
     durationMs: 1000,
     answeredAt: '2026-08-03T10:00:00.000Z',

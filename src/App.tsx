@@ -11,13 +11,10 @@ import {
 } from './domain/progress-rules';
 import type { FillRound } from './domain/fill-round';
 import { createProgressStore } from './domain/progress-storage';
-import type { Attempt, ExerciseType, Level } from './domain/round';
+import type { QuestionLanguage } from './domain/question-language';
+import type { Attempt, ExerciseType } from './domain/round';
 import { ExerciseRound } from './features/exercise/ExerciseRound';
 import { FillMapRound } from './features/exercise/FillMapRound';
-import {
-  ALL_EXERCISE_TYPES,
-  EXERCISE_MODES,
-} from './features/exercise/exercise-modes';
 import { FillMapResultsPage } from './features/results/FillMapResultsPage';
 import { RoundResultsPage } from './features/results/RoundResultsPage';
 import { AtlasPage } from './features/atlas/AtlasPage';
@@ -27,8 +24,7 @@ import { HomePage } from './features/home/HomePage';
 import type { MapZoom } from './map/MapControls';
 import { SiteHeader, type SiteSection } from './ui/SiteHeader';
 
-/** «mixed» — смешанный раунд четвёртого уровня, где типы заданий чередуются. */
-type RoundRequest = ExerciseType | 'mixed';
+type RoundRequest = ExerciseType;
 
 type Screen =
   | 'home'
@@ -107,7 +103,7 @@ export default function App() {
   const [exerciseTypes, setExerciseTypes] = useState<readonly ExerciseType[]>([
     'find-on-map',
   ]);
-  const [level, setLevel] = useState<Level>(1);
+  const [language, setLanguage] = useState<QuestionLanguage>('ru');
   const [roundId, setRoundId] = useState(newRoundId);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 31));
   const [lastAttempts, setLastAttempts] = useState<readonly Attempt[]>([]);
@@ -206,7 +202,7 @@ export default function App() {
    */
   function startRound(
     request: RoundRequest,
-    nextLevel: Level,
+    nextLanguage: QuestionLanguage,
     regionIds: readonly string[] | null,
   ) {
     setRoundPool(
@@ -214,15 +210,15 @@ export default function App() {
         ? regions
         : regions.filter((region) => regionIds.includes(region.id)),
     );
-    setExerciseTypes(request === 'mixed' ? ALL_EXERCISE_TYPES : [request]);
-    setLevel(nextLevel);
+    setExerciseTypes([request]);
+    setLanguage(nextLanguage);
     setRoundId(newRoundId());
     setSeed(Math.floor(Math.random() * 2 ** 31));
     setScreen('exercise');
   }
 
-  function startFillRound(nextLevel: Level) {
-    setLevel(nextLevel);
+  function startFillRound(nextLanguage: QuestionLanguage) {
+    setLanguage(nextLanguage);
     setRoundId(newRoundId());
     setSeed(Math.floor(Math.random() * 2 ** 31));
     setFillRound(null);
@@ -230,9 +226,9 @@ export default function App() {
   }
 
   /**
-   * Освоенность и открытый уровень выводятся из истории попыток. В прогрессе
-   * они всё же сохраняются: этого требует DATA_MODEL.md, — но для показа
-   * всегда вычисляются заново, чтобы отставшее поле не заперло ученика.
+   * Освоенность выводится из истории попыток. В прогрессе она всё же
+   * сохраняется: этого требует DATA_MODEL.md, — но для показа всегда
+   * вычисляется заново, чтобы отставшее поле не заперло ученика.
    *
    * Общая для всех режимов: раунд-заполнение пишет по одной попытке на
    * регион, поэтому правила применяются к нему без изменений.
@@ -274,7 +270,7 @@ export default function App() {
       <AppFrame fillsFrame current={null} onNavigate={navigate}>
         <FillMapRound
           regions={regions}
-          level={level}
+          language={language}
           roundId={roundId}
           seed={seed}
           onFinish={finishFillRound}
@@ -291,7 +287,7 @@ export default function App() {
           round={fillRound}
           regions={regions}
           isProgressSaved={store.isAvailable}
-          onNewRound={() => startFillRound(level)}
+          onNewRound={() => startFillRound(language)}
           onExit={() => setScreen('home')}
         />
       </AppFrame>
@@ -304,7 +300,7 @@ export default function App() {
         <ExerciseRound
           regions={roundPool}
           exerciseTypes={exerciseTypes}
-          level={level}
+          language={language}
           roundId={roundId}
           seed={seed}
           onFinish={finishRound}
@@ -327,15 +323,15 @@ export default function App() {
           regionIdsToRepeat={repeatRegionIds}
           onRepeatMistakes={() => {
             startRound(
-              exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
-              level,
+              exerciseTypes[0],
+              language,
               repeatRegionIds,
             );
           }}
           onNewRound={() =>
             startRound(
-              exerciseTypes.length > 1 ? 'mixed' : exerciseTypes[0],
-              level,
+              exerciseTypes[0],
+              language,
               null,
             )
           }
@@ -351,10 +347,9 @@ export default function App() {
    * открытыми в двух местах и однажды разошлись бы.
    */
   /*
-   * И атлас, и страница коллекции ведут в «найти на карте»: уровень берётся у
-   * самой игры, а не у ученика — открытых и закрытых уровней не существует.
+   * И атлас, и страница коллекции ведут в «найти на карте» по-русски: выбирать
+   * язык там негде, а переключатель стоит на карточке игры.
    */
-  const findOnMapLevel = EXERCISE_MODES['find-on-map'].level;
   const collection =
     collectionId === null ? null : (collectionById(collectionId) ?? null);
   /*
@@ -380,7 +375,7 @@ export default function App() {
           zoom={zoom}
           onZoomChange={setZoom}
           onExit={() => setScreen('home')}
-          onTrain={() => startRound('find-on-map', findOnMapLevel, null)}
+          onTrain={() => startRound('find-on-map', 'ru', null)}
         />
       ) : activeScreen === 'collections' ? (
         <CollectionsPage regions={regions} onOpenCollection={openCollection} />
@@ -391,7 +386,7 @@ export default function App() {
           onOpenCollections={() => setScreen('collections')}
           onOpenCollection={openCollection}
           onTrainRegions={(regionIds) =>
-            startRound('find-on-map', findOnMapLevel, regionIds)
+            startRound('find-on-map', 'ru', regionIds)
           }
         />
       ) : (

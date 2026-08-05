@@ -1,8 +1,8 @@
 import type { Region } from '../content/types';
 import { MAX_REVIEW_TOPICS } from './progress-rules';
 import { shuffle } from './random';
-import { representationsFor, type Representation } from './representations';
-import { regionTarget, type Attempt, type Level } from './round';
+import type { QuestionLanguage } from './question-language';
+import { regionTarget, type Attempt } from './round';
 
 /**
  * Раунд-заполнение карты: каждый регион остаётся в игре, пока не закрыт, и
@@ -21,13 +21,12 @@ export type FillQuestion = {
   readonly id: string;
   readonly roundId: string;
   readonly regionId: string;
-  readonly representation: Representation;
-  readonly level: Level;
+  readonly language: QuestionLanguage;
 };
 
 export type FillRound = {
   readonly roundId: string;
-  readonly level: Level;
+  readonly language: QuestionLanguage;
   readonly order: readonly FillQuestion[];
   readonly currentIndex: number;
   /** Потрачено попыток на текущий регион: 0, 1 или 2. */
@@ -58,7 +57,7 @@ export type FillAnswerInput = {
 
 export type FillRoundOptions = {
   readonly roundId: string;
-  readonly level: Level;
+  readonly language: QuestionLanguage;
   readonly random: () => number;
 };
 
@@ -79,19 +78,16 @@ export function createFillRound(
     throw new Error('Раунд не создан: нет регионов');
   }
 
-  const available = representationsFor(options.level, 'find-on-map');
   const order = shuffle(regions, options.random).map((region, index) => ({
     id: `${index + 1}-${region.id}`,
     roundId: options.roundId,
     regionId: region.id,
-    representation:
-      available[Math.floor(options.random() * available.length)],
-    level: options.level,
+    language: options.language,
   }));
 
   return {
     roundId: options.roundId,
-    level: options.level,
+    language: options.language,
     order,
     currentIndex: 0,
     usedAttempts: 0,
@@ -152,7 +148,7 @@ export function answerFillRound(
     roundId: question.roundId,
     target: regionTarget(question.regionId),
     exerciseType: 'find-on-map',
-    level: question.level,
+    language: question.language,
     // «Освоил» значит «берёт с первой». Ответ со второй попадает в повтор.
     isCorrect: outcome === 'first-try',
     durationMs: input.durationMs,

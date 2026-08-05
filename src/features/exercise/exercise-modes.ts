@@ -1,15 +1,13 @@
-import type { ExerciseType, Level } from '../../domain/round';
+import type { ExerciseType } from '../../domain/round';
 
 /**
- * `level` — не ступень лестницы, а собственные правила игры: какими
- * представлениями она спрашивает (`REPRESENTATIONS_BY_LEVEL`). Лестницы нет,
- * закрытых игр нет, и снаружи это число не показывается никогда.
+ * Описание игры для экрана раунда. Числа сложности здесь нет: чем спрашивать,
+ * выбирает ученик, а не игра.
  */
 export type ExerciseMode = {
   readonly exerciseType: ExerciseType;
   readonly title: string;
   readonly eyebrow: string;
-  readonly level: Level;
 };
 
 export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
@@ -17,27 +15,18 @@ export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
     exerciseType: 'find-on-map',
     title: 'Найти на карте',
     eyebrow: 'Найдите на карте',
-    level: 1,
   },
   'name-target': {
     exerciseType: 'name-target',
     title: 'Назвать регион',
     eyebrow: 'Какой регион подсвечен',
-    level: 1,
   },
   'match-pair': {
     exerciseType: 'match-pair',
     title: 'Регион — столица',
     eyebrow: 'Выберите административный центр',
-    level: 2,
   },
 };
-
-export const ALL_EXERCISE_TYPES: readonly ExerciseType[] = [
-  'find-on-map',
-  'name-target',
-  'match-pair',
-];
 
 /**
  * Карточка режима на главной. Описывает игру для того, кто ещё не пробовал:
@@ -63,8 +52,8 @@ export type ModeCard = {
   /** Что спрашивают и сколько: «34 региона · около 7 минут». */
   readonly volume: string;
 } & (
-  | { readonly kind: 'exercise'; readonly exerciseType: ExerciseType; readonly level: Level }
-  | { readonly kind: 'fill'; readonly level: Level }
+  | { readonly kind: 'exercise'; readonly exerciseType: ExerciseType }
+  | { readonly kind: 'fill' }
   /** Режим объявлен, но ещё не написан: карточка не запускается. */
   | { readonly kind: 'planned' }
 );
@@ -74,7 +63,6 @@ export const MODE_CARDS: readonly ModeCard[] = [
     id: 'find-on-map',
     kind: 'exercise',
     exerciseType: 'find-on-map',
-    level: 1,
     mark: '地',
     title: 'Найти на карте',
     summary:
@@ -85,7 +73,6 @@ export const MODE_CARDS: readonly ModeCard[] = [
     id: 'name-target',
     kind: 'exercise',
     exerciseType: 'name-target',
-    level: 1,
     mark: '名',
     title: 'Назвать регион',
     summary:
@@ -96,7 +83,6 @@ export const MODE_CARDS: readonly ModeCard[] = [
     id: 'match-pair',
     kind: 'exercise',
     exerciseType: 'match-pair',
-    level: 2,
     mark: '都',
     title: 'Регион — столица',
     summary:
@@ -106,7 +92,6 @@ export const MODE_CARDS: readonly ModeCard[] = [
   {
     id: 'fill-map',
     kind: 'fill',
-    level: 3,
     mark: '填',
     title: 'Заполнить карту',
     summary:

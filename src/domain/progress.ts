@@ -1,6 +1,6 @@
 import type { Attempt, Target } from './round';
 
-export const PROGRESS_SCHEMA_VERSION = 2;
+export const PROGRESS_SCHEMA_VERSION = 3;
 
 /** Ограничение из DATA_MODEL.md: история не растёт бесконечно. */
 export const MAX_ATTEMPTS = 500;

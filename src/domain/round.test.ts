@@ -15,7 +15,7 @@ import {
 const OPTIONS = {
   roundId: 'round-1',
   exerciseTypes: ['find-on-map'],
-  level: 1,
+  language: 'ru',
 } as const;
 
 const targets = regions.map((region) => regionTarget(region.id));
@@ -74,7 +74,7 @@ it('записывает верный ответ', () => {
       roundId: 'round-1',
       target: question.target,
       exerciseType: 'find-on-map',
-      level: 1,
+      language: 'ru',
       isCorrect: true,
       durationMs: 1200,
       answeredAt: '2026-08-03T10:00:00.000Z',
@@ -148,11 +148,11 @@ it('помечает вопросы и попытки признаком рау�
   expect(answerCurrent(round, true).attempts[0].roundId).toBe('round-7');
 });
 
-it('чередует типы заданий в смешанном раунде', () => {
+it('чередует типы заданий, когда их несколько', () => {
   const round = createRound(targets, {
     roundId: 'round-1',
     exerciseTypes: ['find-on-map', 'name-target', 'match-pair'],
-    level: 4,
+    language: 'ru',
     random: createSeededRandom(1),
   });
 
@@ -164,30 +164,14 @@ it('чередует типы заданий в смешанном раунде'
   ]);
 });
 
-it('даёт каждому вопросу представление из своего уровня', () => {
+it('задаёт весь раунд на одном языке', () => {
   const round = createRound(targets, {
-    roundId: 'round-1',
-    exerciseTypes: ['find-on-map'],
-    level: 2,
+    ...OPTIONS,
+    language: 'zh',
     random: createSeededRandom(1),
   });
 
-  expect(round.questions.every((question) => question.representation === 'name-zh')).toBe(
-    true,
-  );
-});
-
-it('не показывает столицу в вопросе «регион — столица»', () => {
-  const round = createRound(targets, {
-    roundId: 'round-1',
-    exerciseTypes: ['match-pair'],
-    level: 4,
-    random: createSeededRandom(1),
-  });
-
-  expect(round.questions.some((question) => question.representation === 'capital')).toBe(
-    false,
-  );
+  expect(round.questions.every((question) => question.language === 'zh')).toBe(true);
 });
 
 it('делает целью вопроса регион с явным видом', () => {
@@ -209,7 +193,7 @@ it('не создаёт раунд без типов заданий', () => {
     createRound(targets, {
       roundId: 'round-1',
       exerciseTypes: [],
-      level: 1,
+      language: 'ru',
       random: createSeededRandom(1),
     }),
   ).toThrow(/Раунд не создан: не заданы типы заданий/);

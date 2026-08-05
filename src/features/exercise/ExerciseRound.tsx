@@ -2,7 +2,7 @@ import { useMemo, useState, type MouseEvent } from 'react';
 import type { Region } from '../../content/types';
 import { buildChoices } from '../../domain/choices';
 import { createSeededRandom } from '../../domain/random';
-import { labelOf, langOf } from '../../domain/representations';
+import { labelOf, langOf, type QuestionLanguage } from '../../domain/question-language';
 import {
   answerQuestion,
   createRound,
@@ -12,7 +12,6 @@ import {
   regionTarget,
   type Attempt,
   type ExerciseType,
-  type Level,
   type Round,
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
@@ -26,7 +25,7 @@ import { RoundProgressTrail } from './RoundProgressTrail';
 export type ExerciseRoundProps = {
   readonly regions: readonly Region[];
   readonly exerciseTypes: readonly ExerciseType[];
-  readonly level: Level;
+  readonly language: QuestionLanguage;
   readonly roundId: string;
   readonly seed: number;
   readonly onFinish: (attempts: readonly Attempt[]) => void;
@@ -50,13 +49,13 @@ function resultOf(
 }
 
 /**
- * Один контейнер на все задания: на смешанном уровне типы чередуются внутри
- * раунда, поэтому вид вопроса решается на каждом вопросе, а не на экране.
+ * Один контейнер на все задания: типы могут чередоваться внутри раунда,
+ * поэтому вид вопроса решается на каждом вопросе, а не на экране.
  */
 export function ExerciseRound({
   regions,
   exerciseTypes,
-  level,
+  language,
   roundId,
   seed,
   onFinish,
@@ -68,7 +67,7 @@ export function ExerciseRound({
       {
         roundId,
         exerciseTypes,
-        level,
+        language,
         random: createSeededRandom(seed),
       },
     ),
@@ -146,12 +145,12 @@ export function ExerciseRound({
               lang={
                 question.exerciseType === 'name-target'
                   ? undefined
-                  : langOf(question.representation)
+                  : langOf(question.language)
               }
             >
               {question.exerciseType === 'name-target'
                 ? 'Регион на карте'
-                : labelOf(targetRegion, question.representation)}
+                : labelOf(targetRegion, question.language)}
             </h1>
             {/*
               Номера уровня здесь больше нет: уровней в продукте не существует,
@@ -180,7 +179,7 @@ export function ExerciseRound({
                   >
                     {question.exerciseType === 'match-pair'
                       ? choice.capitalRu
-                      : labelOf(choice, question.representation)}
+                      : labelOf(choice, question.language)}
                   </button>
                 </li>
               ))}

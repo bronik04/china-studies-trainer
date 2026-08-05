@@ -2,13 +2,6 @@ import { targetKey, type Attempt, type Target, type TargetKind } from './round';
 
 export const REVIEW_WINDOW_DAYS = 14;
 export const MASTERY_CORRECT_ROUNDS = 3;
-/**
- * Освоенность требует верного ответа в игре, которая спрашивает не русским
- * названием: узнать регион по подписи и назвать его по иероглифам — разное
- * знание. Число — набор представлений игры (`REPRESENTATIONS_BY_LEVEL`), а не
- * ступень лестницы: лестницы больше нет, все игры открыты сразу.
- */
-export const MASTERY_MIN_LEVEL = 2;
 export const MAX_REVIEW_TOPICS = 5;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -93,9 +86,9 @@ export function targetsToRepeat(
 
 /**
  * Цель освоена после трёх верных ответов в разных завершённых раундах, из
- * которых хотя бы один — в игре, спрашивающей не русским названием. Одна
- * ошибка за последние 14 дней снимает статус, но историю не стирает
- * (PROGRESS_SYSTEM.md).
+ * которых хотя бы один — на вопрос иероглифами: узнать регион по русской
+ * подписи и назвать его по иероглифам разное знание (PROGRESS_SYSTEM.md).
+ * Одна ошибка за последние 14 дней снимает статус, но историю не стирает.
  */
 export function masteredTargets(
   attempts: readonly Attempt[],
@@ -117,11 +110,9 @@ export function masteredTargets(
 
     const correct = targetAttempts.filter((attempt) => attempt.isCorrect);
     const rounds = new Set(correct.map((attempt) => attempt.roundId));
-    const hasHigherLevel = correct.some(
-      (attempt) => attempt.level >= MASTERY_MIN_LEVEL,
-    );
+    const answeredInChinese = correct.some((attempt) => attempt.language === 'zh');
 
-    if (rounds.size >= MASTERY_CORRECT_ROUNDS && hasHigherLevel) {
+    if (rounds.size >= MASTERY_CORRECT_ROUNDS && answeredInChinese) {
       mastered.push(targetAttempts[0].target);
     }
   }

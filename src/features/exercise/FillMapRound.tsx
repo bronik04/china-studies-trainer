@@ -10,8 +10,7 @@ import {
   type Move,
 } from '../../domain/fill-round';
 import { createSeededRandom } from '../../domain/random';
-import { labelOf, langOf } from '../../domain/representations';
-import type { Level } from '../../domain/round';
+import { labelOf, langOf, type QuestionLanguage } from '../../domain/question-language';
 import { ChinaMap, type MapHighlight } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
 import { RegionAnswerList } from '../../map/RegionAnswerList';
@@ -29,7 +28,7 @@ export const MISS_FLASH_MS = 600;
 
 export type FillMapRoundProps = {
   readonly regions: readonly Region[];
-  readonly level: Level;
+  readonly language: QuestionLanguage;
   readonly roundId: string;
   readonly seed: number;
   readonly onFinish: (round: FillRound) => void;
@@ -38,7 +37,7 @@ export type FillMapRoundProps = {
 
 export function FillMapRound({
   regions,
-  level,
+  language,
   roundId,
   seed,
   onFinish,
@@ -47,7 +46,7 @@ export function FillMapRound({
   const [round, setRound] = useState<FillRound>(() =>
     createFillRound(regions, {
       roundId,
-      level,
+      language,
       random: createSeededRandom(seed),
     }),
   );
@@ -201,11 +200,11 @@ export function FillMapRound({
             <p className="eyebrow">Найдите на карте</p>
             <h1
               data-testid="fill-target"
-              lang={question === null ? undefined : langOf(question.representation)}
+              lang={question === null ? undefined : langOf(question.language)}
             >
               {targetRegion === null
                 ? 'Карта заполнена'
-                : labelOf(targetRegion, question!.representation)}
+                : labelOf(targetRegion, question!.language)}
             </h1>
             <div className="fill-meta">
               <p className="exercise-progress" data-testid="fill-progress">

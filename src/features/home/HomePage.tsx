@@ -6,7 +6,8 @@ import {
   type CollectionGroupId,
 } from '../../content/collections';
 import type { Region } from '../../content/types';
-import type { Attempt, ExerciseType, Level } from '../../domain/round';
+import type { QuestionLanguage } from '../../domain/question-language';
+import type { Attempt, ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { SiteFooter } from '../../ui/SiteFooter';
 import { MODE_CARDS } from '../exercise/exercise-modes';
@@ -17,11 +18,11 @@ export type HomePageProps = {
   readonly regions: readonly Region[];
   readonly attempts: readonly Attempt[];
   readonly onStartRound: (
-    request: ExerciseType | 'mixed',
-    level: Level,
+    request: ExerciseType,
+    language: QuestionLanguage,
     regionIds: readonly string[] | null,
   ) => void;
-  readonly onStartFillRound: (level: Level) => void;
+  readonly onStartFillRound: (language: QuestionLanguage) => void;
   readonly onOpenAtlas: () => void;
   readonly onOpenCollections: () => void;
   readonly onOpenCollection: (collectionId: string) => void;
@@ -83,7 +84,7 @@ export function HomePage({
               type="button"
               className="primary"
               onClick={() =>
-                onStartRound(step.exerciseType, step.level, step.regionIds)
+                onStartRound(step.exerciseType, step.language, step.regionIds)
               }
             >
               {step.label}
@@ -145,9 +146,9 @@ export function HomePage({
                   disabled={isPlanned}
                   onClick={() => {
                     if (card.kind === 'exercise') {
-                      onStartRound(card.exerciseType, card.level, null);
+                      onStartRound(card.exerciseType, 'ru', null);
                     } else if (card.kind === 'fill') {
-                      onStartFillRound(card.level);
+                      onStartFillRound('ru');
                     }
                   }}
                 >

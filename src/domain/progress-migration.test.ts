@@ -20,7 +20,7 @@ const v1 = {
 
 it('переводит попытки и освоенное на цели-регионы', () => {
   expect(migrateProgress(v1)).toEqual({
-    schemaVersion: 2,
+    schemaVersion: 3,
     attempts: [
       {
         questionId: '1-sichuan',
@@ -38,9 +38,9 @@ it('переводит попытки и освоенное на цели-рег
 });
 
 it('пропускает прогресс текущей версии без изменений', () => {
-  const v2 = { schemaVersion: 2, attempts: [], masteredTargets: [] };
+  const v3 = { schemaVersion: 3, attempts: [], masteredTargets: [] };
 
-  expect(migrateProgress(v2)).toEqual(v2);
+  expect(migrateProgress(v3)).toEqual(v3);
 });
 
 it('не понимает чужие и будущие данные', () => {

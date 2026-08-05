@@ -38,7 +38,7 @@ it('главная кнопка называет следующий шаг и з
 
   fireEvent.click(screen.getByRole('button', { name: 'Начать: найти на карте' }));
 
-  expect(onStartRound).toHaveBeenCalledWith('find-on-map', 1, null);
+  expect(onStartRound).toHaveBeenCalledWith('find-on-map', 'ru', null);
 });
 
 it('карточка открытого режима запускает свой раунд', () => {
@@ -46,7 +46,7 @@ it('карточка открытого режима запускает свой
 
   fireEvent.click(screen.getByRole('button', { name: /Назвать регион/ }));
 
-  expect(onStartRound).toHaveBeenCalledWith('name-target', 1, null);
+  expect(onStartRound).toHaveBeenCalledWith('name-target', 'ru', null);
 });
 
 /*
@@ -61,7 +61,7 @@ it('карточка игры запускается без всякой ист�
   expect(card).toBeEnabled();
   fireEvent.click(card);
 
-  expect(onStartRound).toHaveBeenCalledWith('match-pair', 2, null);
+  expect(onStartRound).toHaveBeenCalledWith('match-pair', 'ru', null);
 });
 
 it('карточка ненаписанного режима не запускается и говорит почему', () => {
@@ -83,7 +83,7 @@ it('заполнение карты идёт своим раундом, а не 
 
   fireEvent.click(screen.getByRole('button', { name: /Заполнить карту/ }));
 
-  expect(onStartFillRound).toHaveBeenCalledWith(3);
+  expect(onStartFillRound).toHaveBeenCalledWith('ru');
   expect(onStartRound).not.toHaveBeenCalled();
 });
 

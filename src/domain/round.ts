@@ -1,5 +1,5 @@
 import { shuffle } from './random';
-import { representationsFor, type Representation } from './representations';
+import type { QuestionLanguage } from './question-language';
 
 /**
  * Форма вопроса, а не его цель: найти по имени, назвать по месту, связать с
@@ -7,7 +7,6 @@ import { representationsFor, type Representation } from './representations';
  * ни региона, ни столицы.
  */
 export type ExerciseType = 'find-on-map' | 'name-target' | 'match-pair';
-export type Level = 1 | 2 | 3 | 4;
 
 /**
  * Вид цели. Регионы и города — разные наборы: «путает Ланьчжоу с Синином» не
@@ -46,8 +45,7 @@ export type Question = {
   readonly roundId: string;
   readonly target: Target;
   readonly exerciseType: ExerciseType;
-  readonly representation: Representation;
-  readonly level: Level;
+  readonly language: QuestionLanguage;
 };
 
 export type Attempt = {
@@ -55,7 +53,7 @@ export type Attempt = {
   readonly roundId: string;
   readonly target: Target;
   readonly exerciseType: ExerciseType;
-  readonly level: Level;
+  readonly language: QuestionLanguage;
   readonly isCorrect: boolean;
   readonly durationMs: number;
   readonly answeredAt: string;
@@ -72,7 +70,7 @@ export type RoundOptions = {
   readonly roundId: string;
   /** Больше одного типа — смешанный раунд: типы чередуются (EXERCISES.md). */
   readonly exerciseTypes: readonly ExerciseType[];
-  readonly level: Level;
+  readonly language: QuestionLanguage;
   readonly random: () => number;
 };
 
@@ -100,20 +98,13 @@ export function createRound(
     throw new Error('Раунд не создан: не заданы типы заданий');
   }
 
-  const questions = shuffle(targets, options.random).map((target, index) => {
-    const exerciseType = options.exerciseTypes[index % options.exerciseTypes.length];
-    const available = representationsFor(options.level, exerciseType);
-    const representation = available[Math.floor(options.random() * available.length)];
-
-    return {
-      id: `${index + 1}-${target.id}`,
-      roundId: options.roundId,
-      target,
-      exerciseType,
-      representation,
-      level: options.level,
-    };
-  });
+  const questions = shuffle(targets, options.random).map((target, index) => ({
+    id: `${index + 1}-${target.id}`,
+    roundId: options.roundId,
+    target,
+    exerciseType: options.exerciseTypes[index % options.exerciseTypes.length],
+    language: options.language,
+  }));
 
   return { questions, currentIndex: 0, status: 'ready', attempts: [] };
 }
@@ -142,7 +133,7 @@ export function answerQuestion(round: Round, input: AnswerInput): Round {
     roundId: question.roundId,
     target: question.target,
     exerciseType: question.exerciseType,
-    level: question.level,
+    language: question.language,
     isCorrect: input.answeredId === question.target.id,
     durationMs: input.durationMs,
     answeredAt: input.answeredAt,

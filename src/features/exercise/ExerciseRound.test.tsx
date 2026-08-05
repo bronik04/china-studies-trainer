@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../../content/regions';
 import type { Region } from '../../content/types';
-import type { ExerciseType, Level } from '../../domain/round';
+import type { QuestionLanguage } from '../../domain/question-language';
+import type { ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { ExerciseRound } from './ExerciseRound';
 
@@ -9,7 +10,7 @@ const SHORT_POOL = regions.slice(0, 3);
 
 function renderRound(
   exerciseTypes: readonly ExerciseType[] = ['find-on-map'],
-  level: Level = 1,
+  language: QuestionLanguage = 'ru',
   onFinish = () => {},
   pool: readonly Region[] = regions,
 ) {
@@ -17,7 +18,7 @@ function renderRound(
     <ExerciseRound
       regions={pool}
       exerciseTypes={exerciseTypes}
-      level={level}
+      language={language}
       roundId="round-1"
       seed={1}
       onFinish={onFinish}
@@ -34,18 +35,18 @@ function askedRegion(): Region {
   const label = asked();
 
   return regions.find((region) =>
-    [region.nameRu, region.nameZh, region.pinyin, region.capitalRu].includes(label),
+    [region.nameRu, region.nameZh].includes(label),
   )!;
 }
 
-it('на первом уровне спрашивает русским названием', () => {
+it('на русском спрашивает русским названием', () => {
   renderRound();
 
   expect(regions.map((region) => region.nameRu)).toContain(asked());
 });
 
-it('на втором уровне спрашивает китайским названием', () => {
-  renderRound(['find-on-map'], 2);
+it('на китайском спрашивает иероглифами', () => {
+  renderRound(['find-on-map'], 'zh');
 
   expect(regions.map((region) => region.nameZh)).toContain(asked());
 });
@@ -74,8 +75,8 @@ it('в режиме «регион — столица» отвечают выб�
   expect(screen.getByRole('heading', { name: 'Верно' })).toBeInTheDocument();
 });
 
-it('в смешанном раунде меняет вид задания от вопроса к вопросу', () => {
-  renderRound(['find-on-map', 'match-pair'], 4);
+it('меняет вид задания от вопроса к вопросу, когда типов несколько', () => {
+  renderRound(['find-on-map', 'match-pair']);
 
   expect(screen.queryAllByTestId('choice-option')).toHaveLength(0);
 
@@ -89,12 +90,12 @@ it('в смешанном раунде меняет вид задания от �
 });
 
 it('заголовок вопроса помечен языком, когда спрашивают иероглифами', () => {
-  renderRound(['find-on-map'], 2);
+  renderRound(['find-on-map'], 'zh');
 
   expect(screen.getByTestId('exercise-target')).toHaveAttribute('lang', 'zh-Hans');
 });
 
-it('на первом уровне заголовок вопроса языком не помечен', () => {
+it('на русском заголовок вопроса языком не помечен', () => {
   renderRound();
 
   expect(screen.getByTestId('exercise-target')).not.toHaveAttribute('lang');
@@ -181,7 +182,7 @@ it('на экране темы выноски подписаны: там кар�
 
 it('сообщает о завершении раунда', () => {
   const finish = vi.fn();
-  renderRound(['match-pair'], 1, finish, SHORT_POOL);
+  renderRound(['match-pair'], 'ru', finish, SHORT_POOL);
 
   for (let index = 0; index < SHORT_POOL.length; index += 1) {
     const target = askedRegion();

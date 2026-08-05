@@ -1,4 +1,4 @@
-import { regionTarget, type Attempt, type Level } from './round';
+import { regionTarget, type Attempt } from './round';
 import {
   bestAccuracy,
   masteredTargets,
@@ -19,7 +19,7 @@ function attempt(overrides: Partial<Attempt> = {}): Attempt {
     roundId: 'round-1',
     target: regionTarget('sichuan'),
     exerciseType: 'find-on-map',
-    level: 1 as Level,
+    language: 'ru',
     isCorrect: true,
     durationMs: 1000,
     answeredAt: daysAgo(0),
@@ -85,18 +85,22 @@ it('возвращает в повторение регионы с ошибко�
   expect(targetsToRepeat(attempts, NOW, 'region')).toEqual([regionTarget('sichuan')]);
 });
 
-it('не осваивает регион без ответа на уровне не ниже второго', () => {
-  const attempts = [1, 2, 3].map((index) =>
-    attempt({ roundId: `round-${index}`, isCorrect: true }),
+it('не считает цель освоенной без верного ответа на иероглифах', () => {
+  const attempts = [1, 2, 3].map((round) =>
+    attempt({ roundId: `r${round}`, isCorrect: true, language: 'ru' }),
   );
 
   expect(masteredTargets(attempts, NOW, 'region')).toEqual([]);
+
+  const withChinese = [...attempts, attempt({ roundId: 'r4', isCorrect: true, language: 'zh' })];
+
+  expect(masteredTargets(withChinese, NOW, 'region')).toEqual([regionTarget('sichuan')]);
 });
 
 it('осваивает регион после трёх верных ответов в разных раундах', () => {
   const attempts = [
     attempt({ roundId: 'round-1', isCorrect: true }),
-    attempt({ roundId: 'round-2', isCorrect: true, level: 2 as Level }),
+    attempt({ roundId: 'round-2', isCorrect: true, language: 'zh' }),
     attempt({ roundId: 'round-3', isCorrect: true }),
   ];
 
@@ -106,7 +110,7 @@ it('осваивает регион после трёх верных ответ�
 it('снимает освоенность после ошибки за последние 14 дней', () => {
   const attempts = [
     attempt({ roundId: 'round-1', isCorrect: true }),
-    attempt({ roundId: 'round-2', isCorrect: true, level: 2 as Level }),
+    attempt({ roundId: 'round-2', isCorrect: true, language: 'zh' }),
     attempt({ roundId: 'round-3', isCorrect: true }),
     attempt({ roundId: 'round-4', isCorrect: false, answeredAt: daysAgo(2) }),
   ];
