@@ -30,6 +30,14 @@ function lastExerciseType(attempts: readonly Attempt[]): ExerciseType {
   return attempts.at(-1)?.exerciseType ?? 'find-on-map';
 }
 
+/**
+ * Язык берётся из истории по тому же правилу, что и последняя игра: ученик,
+ * перешедший на иероглифы, не должен возвращать их вручную каждый раз.
+ */
+function lastLanguage(attempts: readonly Attempt[]): QuestionLanguage {
+  return attempts.at(-1)?.language ?? 'ru';
+}
+
 export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
   const exerciseType = lastExerciseType(attempts);
   const mode = EXERCISE_MODES[exerciseType];
@@ -39,7 +47,7 @@ export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
     return {
       label: `Повторить ${toRepeat.length} ${regionsWord(toRepeat.length)}`,
       exerciseType,
-      language: 'ru',
+      language: lastLanguage(attempts),
       regionIds: toRepeat,
     };
   }
@@ -48,7 +56,7 @@ export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
     return {
       label: `Начать: ${lowerFirst(EXERCISE_MODES['find-on-map'].title)}`,
       exerciseType: 'find-on-map',
-      language: 'ru',
+      language: lastLanguage(attempts),
       regionIds: null,
     };
   }
@@ -56,7 +64,7 @@ export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {
   return {
     label: `Продолжить: ${lowerFirst(mode.title)}`,
     exerciseType,
-    language: 'ru',
+    language: lastLanguage(attempts),
     regionIds: null,
   };
 }

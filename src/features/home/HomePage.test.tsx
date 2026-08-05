@@ -169,3 +169,48 @@ it('раздел режимов принимает фокус: шапка вед
     'Режимы',
   );
 });
+
+/** Карточка целиком — `<li>`; внутри и кнопка запуска, и своя радиогруппа. */
+function cardOf(title: string): HTMLElement {
+  return screen
+    .getAllByRole('listitem')
+    .find((item) => item.textContent?.includes(title))!;
+}
+
+it('запускает игру на выбранном языке', () => {
+  const { onStartRound } = renderHome();
+  const card = cardOf('Найти на карте');
+
+  fireEvent.click(within(card).getByRole('radio', { name: '中文' }));
+  fireEvent.click(within(card).getByRole('button', { name: /Найти на карте/ }));
+
+  expect(onStartRound).toHaveBeenCalledWith('find-on-map', 'zh', null);
+});
+
+it('переключение языка само не запускает раунд', () => {
+  const { onStartRound } = renderHome();
+
+  fireEvent.click(within(cardOf('Найти на карте')).getByRole('radio', { name: '中文' }));
+
+  expect(onStartRound).not.toHaveBeenCalled();
+});
+
+it('умолчание карточки берётся из языка последней попытки', () => {
+  renderHome([
+    {
+      questionId: '1-gansu',
+      roundId: 'r1',
+      target: { kind: 'region', id: 'gansu' },
+      exerciseType: 'find-on-map',
+      language: 'zh',
+      isCorrect: true,
+      durationMs: 1000,
+      answeredAt: new Date().toISOString(),
+    },
+  ]);
+
+  expect(
+    within(cardOf('Найти на карте')).getByRole<HTMLInputElement>('radio', { name: '中文' })
+      .checked,
+  ).toBe(true);
+});

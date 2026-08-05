@@ -1501,9 +1501,16 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 /*
- * Карточка целиком — одна кнопка. Цель нажатия совпадает с тем, что видно, и
- * целиться в мелкое слово «подробнее» не приходится.
+ * Запуск игры — одна кнопка во всю карточку: цель нажатия совпадает с тем, что
+ * видно, и целиться в мелкое слово «подробнее» не приходится. Переключатель
+ * языка стоит рядом с ней, а не внутри: кнопка в кнопке недостижима с
+ * клавиатуры.
  */
+.mode-card {
+  display: flex;
+  flex-direction: column;
+}
+
 .mode-card button,
 .collection-card button {
   background: var(--surface-paper);
@@ -1521,6 +1528,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 .mode-card button {
+  flex: 1;
   gap: var(--s-2);
   padding: var(--s-5);
 }
@@ -1573,9 +1581,37 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   color: var(--text-on-paper-muted);
 }
 
-.mode-card-level {
+.mode-card-status {
   color: var(--text-on-paper-muted);
   font-size: var(--t-size-caption);
+}
+
+/*
+ * Переключатель языка стоит под кнопкой карточки, а не внутри неё:
+ * интерактивный элемент внутри кнопки недостижим с клавиатуры.
+ */
+.mode-card-language {
+  display: flex;
+  gap: var(--s-3);
+  align-items: baseline;
+  margin: 0;
+  padding: var(--s-3) var(--s-5) 0;
+  border: 0;
+}
+
+.mode-card-language legend {
+  padding: 0;
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+}
+
+.mode-card-language label {
+  display: inline-flex;
+  gap: var(--s-2);
+  align-items: baseline;
+  color: var(--c-ink-700);
+  font-size: var(--t-size-caption);
+  cursor: pointer;
 }
 
 .mode-card-title {

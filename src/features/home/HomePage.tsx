@@ -55,6 +55,19 @@ export function HomePage({
 
   const step = nextStep(attempts, new Date());
 
+  /*
+   * Язык у каждой карточки свой: «Найти на карте» можно держать на русском,
+   * пока «Регион — столица» уже идёт иероглифами. Умолчание общее — язык
+   * последней попытки, он же в главном шаге.
+   */
+  const [languageByCard, setLanguageByCard] = useState<Record<string, QuestionLanguage>>(
+    {},
+  );
+
+  function languageOf(cardId: string): QuestionLanguage {
+    return languageByCard[cardId] ?? step.language;
+  }
+
   const shown =
     filter === 'all'
       ? collections
@@ -131,8 +144,8 @@ export function HomePage({
           <h2>Режимы</h2>
           <p>
             Карта — только начало. География, история и культура спрашиваются по
-            одним правилам: три попытки, разбор после каждого ответа, повтор
-            ошибок через день.
+            одним правилам: три попытки, разбор после ошибки, повтор ошибок
+            через день.
           </p>
         </div>
         <ul className="mode-card-grid">
@@ -146,9 +159,9 @@ export function HomePage({
                   disabled={isPlanned}
                   onClick={() => {
                     if (card.kind === 'exercise') {
-                      onStartRound(card.exerciseType, 'ru', null);
+                      onStartRound(card.exerciseType, languageOf(card.id), null);
                     } else if (card.kind === 'fill') {
-                      onStartFillRound('ru');
+                      onStartFillRound(languageOf(card.id));
                     }
                   }}
                 >
@@ -164,13 +177,37 @@ export function HomePage({
                       нажимается, незачем.
                     */}
                     {isPlanned ? (
-                      <span className="mode-card-level">Готовится</span>
+                      <span className="mode-card-status">Готовится</span>
                     ) : null}
                   </span>
                   <span className="mode-card-title">{card.title}</span>
                   <span className="mode-card-summary">{card.summary}</span>
                   <span className="mode-card-volume">{card.volume}</span>
                 </button>
+                {isPlanned ? null : (
+                  <fieldset className="mode-card-language">
+                    <legend>Чем спрашивать</legend>
+                    {(
+                      [
+                        ['ru', 'Русское'],
+                        ['zh', '中文'],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <label key={value}>
+                        <input
+                          type="radio"
+                          name={`mode-language-${card.id}`}
+                          value={value}
+                          checked={languageOf(card.id) === value}
+                          onChange={() =>
+                            setLanguageByCard((current) => ({ ...current, [card.id]: value }))
+                          }
+                        />
+                        <span lang={value === 'zh' ? 'zh-Hans' : undefined}>{label}</span>
+                      </label>
+                    ))}
+                  </fieldset>
+                )}
               </li>
             );
           })}

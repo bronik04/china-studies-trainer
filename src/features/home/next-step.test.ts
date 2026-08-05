@@ -77,3 +77,16 @@ it('подпись и набор регионов считаются вмест�
   expect(step.label).toBe('Повторить 1 регион');
   expect(step.regionIds).toHaveLength(1);
 });
+
+it('берёт язык последней попытки', () => {
+  const attempts = [
+    attempt('sichuan', 'r1', true, 'find-on-map'),
+    attempt('gansu', 'r1', true, 'find-on-map', 'zh'),
+  ];
+
+  expect(nextStep(attempts, NOW).language).toBe('zh');
+});
+
+it('при пустой истории спрашивает по-русски', () => {
+  expect(nextStep([], NOW).language).toBe('ru');
+});
