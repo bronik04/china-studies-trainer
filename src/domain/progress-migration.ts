@@ -21,7 +21,7 @@ const RENAMED_EXERCISE_TYPES: Readonly<Record<string, string>> = {
 };
 
 /** Попытка версии 1: цель хранилась голым идентификатором региона. */
-function migrateAttempt(value: unknown): Attempt | null {
+function migrateAttemptToV2(value: unknown): Attempt | null {
   if (!isRecord(value) || typeof value.regionId !== 'string') {
     return null;
   }
@@ -37,6 +37,61 @@ function migrateAttempt(value: unknown): Attempt | null {
     exerciseType,
     target: { kind: 'region', id: regionId },
   } as unknown as Attempt;
+}
+
+/** Первая версия: цель хранилась голым идентификатором региона. */
+function toV2(progress: UnknownRecord): UnknownRecord | null {
+  if (!Array.isArray(progress.attempts)) {
+    return null;
+  }
+
+  const attempts = progress.attempts.map(migrateAttemptToV2);
+  if (attempts.some((attempt) => attempt === null)) {
+    return null;
+  }
+
+  const mastered = Array.isArray(progress.masteredRegionIds)
+    ? progress.masteredRegionIds.filter((id): id is string => typeof id === 'string')
+    : [];
+
+  return {
+    schemaVersion: 2,
+    attempts,
+    // `unlockedLevel` из первой версии не переносится: уровней больше нет.
+    masteredTargets: mastered.map((id) => ({ kind: 'region', id })),
+  };
+}
+
+/**
+ * Вторая версия: попытка хранила уровень. Перевода «второй уровень — это
+ * иероглифы» нет намеренно: чтобы его сделать, миграция обязана знать, что
+ * такое уровень, а от уровней продукт отказался. Поле отбрасывается, попытке
+ * проставляется русский.
+ *
+ * Цена: цель, освоенная прежде через иероглифы, потребует одного верного
+ * ответа на 中文 заново. Это честнее, чем выдать признак за вопрос, которого
+ * больше не существует.
+ */
+function toV3(progress: UnknownRecord): UnknownRecord | null {
+  if (!Array.isArray(progress.attempts)) {
+    return null;
+  }
+
+  return {
+    ...progress,
+    schemaVersion: 3,
+    attempts: progress.attempts.map((attempt: unknown) => {
+      if (!isRecord(attempt)) {
+        return attempt;
+      }
+
+      const rest = Object.fromEntries(
+        Object.entries(attempt).filter(([key]) => key !== 'level'),
+      );
+
+      return { ...rest, language: 'ru' };
+    }),
+  };
 }
 
 /** Данные уже текущей версии: переводить нечего, резервировать нечего. */
@@ -58,23 +113,23 @@ export function migrateProgress(parsed: unknown): Progress | null {
     return parsed as unknown as Progress;
   }
 
-  if (parsed.schemaVersion !== 1 || !Array.isArray(parsed.attempts)) {
+  /*
+   * Цепочка, а не набор отдельных переводов: прогресс первой версии может
+   * лежать в браузере с прошлой недели, и обрывать путь до текущей схемы
+   * нельзя.
+   */
+  let current: UnknownRecord | null = parsed;
+  if (current !== null && current.schemaVersion === 1) {
+    current = toV2(current);
+  }
+
+  if (current !== null && current.schemaVersion === 2) {
+    current = toV3(current);
+  }
+
+  if (current === null || current.schemaVersion !== PROGRESS_SCHEMA_VERSION) {
     return null;
   }
 
-  const attempts = parsed.attempts.map(migrateAttempt);
-  if (attempts.some((attempt) => attempt === null)) {
-    return null;
-  }
-
-  const mastered = Array.isArray(parsed.masteredRegionIds)
-    ? parsed.masteredRegionIds.filter((id): id is string => typeof id === 'string')
-    : [];
-
-  return {
-    schemaVersion: PROGRESS_SCHEMA_VERSION,
-    attempts: attempts as Attempt[],
-    // `unlockedLevel` из первой версии не переносится: уровней больше нет.
-    masteredTargets: mastered.map((id) => ({ kind: 'region', id }) as const),
-  };
+  return current as unknown as Progress;
 }

@@ -109,6 +109,7 @@ it('переводит сохранённый прогресс первой ве
   const progress = store.read();
 
   expect(progress.attempts[0].target).toEqual({ kind: 'region', id: 'sichuan' });
+  expect(progress.attempts[0].language).toBe('ru');
   expect(progress.masteredTargets).toEqual([{ kind: 'region', id: 'sichuan' }]);
   expect(storage.getItem(BACKUP_KEY)).toBe(raw);
   expect(storage.getItem(PROGRESS_KEY)).toBe(raw);
