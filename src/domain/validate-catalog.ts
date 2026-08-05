@@ -1,4 +1,4 @@
-import type { City, Region, Source } from '../content/types';
+import type { City, PhysicalFeature, Region, Source } from '../content/types';
 
 type ValidationOptions = {
   expectedRegionCount?: number;
@@ -175,6 +175,111 @@ export function validateCities(
         `Регион ${region.id} называет центром ${region.capitalCityId}, ` +
           `а в справочнике городов центр — ${capitals[0]}`,
       );
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new ContentValidationError(errors);
+  }
+}
+
+/**
+ * Проверка справочника физической географии. Отдельной функцией, как и у
+ * городов: объекты ссылаются на регионы, но не наоборот.
+ *
+ * Геометрию здесь не проверить — для неё нужна сама карта, и живёт та
+ * проверка в `validate:map`. Здесь — то, что видно по одному справочнику.
+ */
+export function validatePhysicalFeatures(
+  features: readonly PhysicalFeature[],
+  regions: readonly Region[],
+  sources: readonly Source[],
+  options: { readonly expectedCount?: number } = {},
+): void {
+  const errors: string[] = [];
+  const featureIds = new Set<string>();
+  const regionIds = new Set(regions.map((region) => region.id));
+  const sourceIds = new Set(sources.map((source) => source.id));
+  const ownerOfSegment = new Map<number, string>();
+
+  if (features.length === 0) {
+    errors.push('Справочник физической географии пуст.');
+  }
+
+  if (
+    options.expectedCount !== undefined &&
+    features.length !== options.expectedCount
+  ) {
+    errors.push(
+      `Ожидалось физических целей: ${options.expectedCount}; получено: ${features.length}`,
+    );
+  }
+
+  for (const feature of features) {
+    if (featureIds.has(feature.id)) {
+      errors.push(`Повторяющийся id физической цели: ${feature.id}`);
+    }
+    featureIds.add(feature.id);
+
+    for (const field of [
+      ['id', feature.id],
+      ['nameRu', feature.nameRu],
+      ['nameZh', feature.nameZh],
+      ['pinyin', feature.pinyin],
+    ] as const) {
+      if (field[1].trim().length === 0) {
+        errors.push(
+          `Пустое поле ${field[0]} у физической цели: ${feature.id || 'без id'}`,
+        );
+      }
+    }
+
+    if (feature.regionIds.length === 0) {
+      errors.push(`Не заявлено ни одного региона у цели: ${feature.id}`);
+    }
+
+    for (const regionId of feature.regionIds) {
+      if (!regionIds.has(regionId)) {
+        errors.push(`Неизвестный регион у цели ${feature.id}: ${regionId}`);
+      }
+    }
+
+    if (feature.sourceIds.length === 0) {
+      errors.push(`Нет источников у физической цели: ${feature.nameRu}`);
+    }
+
+    for (const sourceId of [
+      ...feature.sourceIds,
+      ...feature.facts.flatMap((fact) => fact.sourceIds),
+    ]) {
+      if (!sourceIds.has(sourceId)) {
+        errors.push(`Неизвестный источник: ${sourceId}`);
+      }
+    }
+
+    if (feature.kind === 'river') {
+      if (feature.riverNums.length === 0) {
+        errors.push(`У реки ${feature.id} не указано ни одного отрезка`);
+      }
+
+      for (const num of feature.riverNums) {
+        if (!Number.isInteger(num)) {
+          errors.push(`Номер отрезка не целое число у реки ${feature.id}: ${num}`);
+        }
+
+        /*
+         * Отрезок принадлежит ровно одной реке. Отданный двум, он вошёл бы в
+         * обе линии, и обе стали бы неверны — а на карте это выглядело бы
+         * правдоподобно.
+         */
+        const owner = ownerOfSegment.get(num);
+        if (owner !== undefined) {
+          errors.push(`Отрезок ${num} отдан и реке ${owner}, и реке ${feature.id}`);
+        }
+        ownerOfSegment.set(num, feature.id);
+      }
+    } else if (![1, 2, 3].includes(feature.step)) {
+      errors.push(`Ступень рельефа у ${feature.id} вне 1..3: ${feature.step}`);
     }
   }
 
