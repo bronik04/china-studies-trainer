@@ -20,6 +20,33 @@ export type Source = {
   readonly covers: readonly string[];
 };
 
+/**
+ * Набор, в который город входит. Это и происхождение города в каталоге, и
+ * объём партии: ученик выбирает набор в окне перед стартом — только столицы,
+ * столицы и значимые города или всё вместе с приграничными.
+ *
+ * `capital` не флаг «столица ли»: он выводился бы из региона. Это ответ на
+ * «откуда взялся этот город в списке», и потому лежит рядом с двумя другими.
+ */
+export type CitySet = 'capital' | 'notable' | 'border';
+
+export type City = {
+  readonly id: string;         // chengdu
+  readonly regionId: string;   // sichuan
+  readonly set: CitySet;
+  readonly nameRu: string;
+  readonly nameZh: string;
+  readonly pinyin: string;
+  /**
+   * Градусы, а не единицы viewBox: проекция применяется генератором слоя. Если
+   * карта заменится, города переедут пересчётом, а не станут молча неверными —
+   * как уже случилось с прежним контуром Тайваня.
+   */
+  readonly lon: number;
+  readonly lat: number;
+  readonly sourceIds: readonly string[];
+};
+
 export type Region = {
   readonly id: string;
   readonly kind: RegionKind;

@@ -1,4 +1,5 @@
-import { validateCatalog } from './validate-catalog';
+import { validateCatalog, validateCities } from './validate-catalog';
+import { cities } from '../content/cities';
 import { regions } from '../content/regions';
 import { sources } from '../content/sources';
 
@@ -88,4 +89,56 @@ it('validates all 34 production regions', () => {
     validateCatalog(regions, sources, { expectedRegionCount: 34 }),
   ).not.toThrow();
   expect(regions).toHaveLength(34);
+});
+
+const city = {
+  id: 'chengdu',
+  regionId: 'sichuan',
+  set: 'capital' as const,
+  nameRu: 'Чэнду',
+  nameZh: '成都',
+  pinyin: 'Chéngdū',
+  lon: 104.068074,
+  lat: 30.671946,
+  sourceIds: ['example-educational-source'],
+};
+
+it('accepts a city with a known region and source', () => {
+  expect(() => validateCities([city], [region], [source])).not.toThrow();
+});
+
+it('rejects a city pointing at an unknown region', () => {
+  expect(() =>
+    validateCities([{ ...city, regionId: 'atlantis' }], [region], [source]),
+  ).toThrow(/Неизвестный регион/);
+});
+
+it('rejects duplicate city identifiers', () => {
+  expect(() =>
+    validateCities([city, { ...city, regionId: 'sichuan' }], [region], [source]),
+  ).toThrow(/Повторяющийся id города/);
+});
+
+/*
+ * Перепутанные местами долгота и широта дают точку в Индийском океане, а не
+ * заметную опечатку в цифре: рамка ловит именно это.
+ */
+it('rejects coordinates outside China', () => {
+  expect(() =>
+    validateCities([{ ...city, lon: city.lat, lat: city.lon }], [region], [source]),
+  ).toThrow(/Координаты вне Китая/);
+});
+
+it('requires exactly one administrative centre per region', () => {
+  expect(() => validateCities([], [region], [source])).toThrow(
+    /административных центров: 0/,
+  );
+
+  expect(() =>
+    validateCities([city, { ...city, id: 'leshan' }], [region], [source]),
+  ).toThrow(/административных центров: 2/);
+});
+
+it('validates the production city catalog', () => {
+  expect(() => validateCities(cities, regions, sources)).not.toThrow();
 });
