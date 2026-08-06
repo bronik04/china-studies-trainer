@@ -20,16 +20,22 @@ const river: PhysicalFeature = {
 describe('validatePhysicalFeatures', () => {
   it('принимает настоящий справочник', () => {
     expect(() =>
-      validatePhysicalFeatures(physicalFeatures, regions, sources, { expectedCount: 12 }),
+      validatePhysicalFeatures(physicalFeatures, regions, sources, { expectedCount: 18 }),
     ).not.toThrow();
   });
 
-  it('в справочнике шесть рек и шесть форм рельефа', () => {
+  it('в справочнике шесть рек, шесть форм и шесть хребтов', () => {
     const rivers = physicalFeatures.filter((feature) => feature.kind === 'river');
-    const landforms = physicalFeatures.filter((feature) => feature.kind === 'landform');
+    const landforms = physicalFeatures.filter(
+      (feature) => feature.kind === 'landform',
+    );
+    const ranges = landforms.filter(
+      (feature) => feature.kind === 'landform' && feature.landform === 'range',
+    );
 
     expect(rivers).toHaveLength(6);
-    expect(landforms).toHaveLength(6);
+    expect(landforms).toHaveLength(12);
+    expect(ranges).toHaveLength(6);
   });
 
   it('ловит повторяющийся id', () => {

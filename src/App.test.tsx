@@ -290,5 +290,5 @@ it('запускает раунд по физической географии �
   // Точное имя, а не «начинается с»: в герое стоит «Начать: найти на карте».
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
-  expect(screen.getByText(/Вопрос 1 из 12/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 18/)).toBeInTheDocument();
 });

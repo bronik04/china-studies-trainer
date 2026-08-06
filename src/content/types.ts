@@ -105,6 +105,12 @@ export type PhysicalFeature = PhysicalCommon &
     | {
         readonly kind: 'landform';
         readonly step: ReliefStep;
-        readonly landform: 'plateau' | 'plain' | 'basin' | 'desert';
+        /**
+         * `range` — горный хребет. Он такая же форма рельефа, как плато или
+         * котловина, и отличается только вытянутостью: заводить ему отдельный
+         * род значило бы развести по разным группам то, что на карте
+         * нарисовано одинаково, — и подсказать ответ видом подсветки.
+         */
+        readonly landform: 'plateau' | 'plain' | 'basin' | 'desert' | 'range';
       }
   );

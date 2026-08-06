@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { cityById, citiesOfRegion } from '../../content/cities';
 import { physicalFeatures } from '../../content/physical-features';
 import type {
+  PhysicalFeature,
   PhysicalKind,
   Region,
   RegionKind,
@@ -45,6 +46,18 @@ const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
   river: 'Река',
   landform: 'Форма рельефа',
 };
+
+/**
+ * Слово рода в карточке. Одного `kind` мало: хребет — тоже `landform` и
+ * получил бы «Форма рельефа», хотя ученик ищет глазами именно хребет.
+ */
+function kindLabelOf(feature: PhysicalFeature): string {
+  if (feature.kind === 'landform' && feature.landform === 'range') {
+    return 'Горный хребет';
+  }
+
+  return PHYSICAL_KIND_LABELS[feature.kind];
+}
 
 const MAP_KINDS = [
   ['political', 'Политическая'],
@@ -135,7 +148,7 @@ export function AtlasPage({
                 </h1>
                 <p lang="zh-Latn-pinyin">{selectedFeature.pinyin}</p>
                 <p className="status-note">
-                  {PHYSICAL_KIND_LABELS[selectedFeature.kind]}
+                  {kindLabelOf(selectedFeature)}
                 </p>
                 {/*
                   Регионы перечислены словами: по какой земле проходит река —

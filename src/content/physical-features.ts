@@ -48,7 +48,7 @@ function landform(
   nameZh: string,
   pinyin: string,
   step: ReliefStep,
-  shape: 'plateau' | 'plain' | 'basin' | 'desert',
+  shape: 'plateau' | 'plain' | 'basin' | 'desert' | 'range',
   regionIds: readonly string[],
 ): PhysicalFeature {
   return {
@@ -137,4 +137,41 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
     'plain',
     ['hebei', 'henan', 'shandong'],
   ),
+
+  /*
+   * Хребты взяты не по высоте: шесть самых высоких лежали бы все на западе, и
+   * восточная половина карты осталась бы пустой. Эти шесть закрывают все
+   * четыре направления школьной классификации 山脉走向, включают Циньлин —
+   * границу севера и юга — и попутно распределены по всем трём ступеням, то
+   * есть сами показывают ту лестницу, ради которой режим и сделан.
+   */
+  landform('himalayas', 'Гималаи', '喜马拉雅山脉', 'Xǐmǎlāyǎ Shānmài', 1, 'range', [
+    'tibet',
+  ]),
+  landform('kunlun', 'Куньлунь', '昆仑山脉', 'Kūnlún Shānmài', 1, 'range', [
+    'xinjiang',
+    'tibet',
+    'qinghai',
+  ]),
+  landform('tian-shan', 'Тянь-Шань', '天山', 'Tiān Shān', 2, 'range', ['xinjiang']),
+  landform('qinling', 'Циньлин', '秦岭', 'Qín Lǐng', 2, 'range', [
+    'shaanxi',
+    'gansu',
+    'henan',
+  ]),
+  landform(
+    'greater-khingan',
+    'Большой Хинган',
+    '大兴安岭',
+    'Dà Xīng’ān Lǐng',
+    2,
+    'range',
+    ['inner-mongolia', 'heilongjiang'],
+  ),
+  landform('nanling', 'Наньлин', '南岭', 'Nán Lǐng', 3, 'range', [
+    'hunan',
+    'jiangxi',
+    'guangdong',
+    'guangxi',
+  ]),
 ];

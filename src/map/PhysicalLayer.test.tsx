@@ -26,8 +26,8 @@ describe('PhysicalLayer', () => {
     );
     const targets = container.querySelectorAll('.relief-shape[data-feature-id]');
 
-    expect(decorative).toHaveLength(32);
-    expect(targets).toHaveLength(6);
+    expect(decorative).toHaveLength(26);
+    expect(targets).toHaveLength(12);
     for (const shape of decorative) {
       expect(shape).toHaveAttribute('aria-hidden', 'true');
     }
@@ -68,10 +68,10 @@ describe('PhysicalLayer', () => {
     expect(onSelect).toHaveBeenNthCalledWith(2, 'gobi');
   });
 
-  it('подпись есть у каждой из двенадцати целей и ни у одной декоративной', () => {
+  it('подпись есть у каждой цели и ни у одной декоративной формы', () => {
     const { container } = renderLayer();
 
-    expect(container.querySelectorAll('.physical-label')).toHaveLength(12);
+    expect(container.querySelectorAll('.physical-label')).toHaveLength(18);
   });
 
   it('подпись помечена как видная только у выбранного объекта', () => {

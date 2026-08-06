@@ -6,9 +6,15 @@ import { RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
 import {
   containsPoint,
   distanceToBoundary,
+  largestInscribedCircle,
   parseMapPath,
   type Point,
 } from './svg-path';
+import {
+  MIN_TARGET_PX,
+  REFERENCE_MAP_WIDTH,
+  unitsToPixels,
+} from './target-size';
 import {
   validateCityPlacement,
   validateMapAreaIds,
@@ -302,7 +308,7 @@ describe('validatePhysicalGeometry', () => {
 it('у каждой формы-цели есть точка подписи, и она лежит внутри контура', () => {
   const targets = RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined);
 
-  expect(targets).toHaveLength(6);
+  expect(targets).toHaveLength(12);
 
   for (const shape of targets) {
     expect(shape.labelX, `${shape.key}: нет labelX`).toBeTypeOf('number');
@@ -317,5 +323,24 @@ it('у каждой формы-цели есть точка подписи, и �
 it('декоративная форма точки подписи не несёт: её никто не подписывает', () => {
   for (const shape of RELIEF_SHAPES.filter((s) => s.featureId === undefined)) {
     expect(shape.labelX, `${shape.key}`).toBeUndefined();
+  }
+});
+
+it('шесть хребтов — цели, и каждый крупнее порога нажатия', () => {
+  const ranges = physicalFeatures.filter(
+    (feature) => feature.kind === 'landform' && feature.landform === 'range',
+  );
+
+  expect(ranges).toHaveLength(6);
+
+  for (const range of ranges) {
+    const shape = RELIEF_SHAPES.find((item) => item.featureId === range.id);
+    expect(shape, `${range.id}: нет формы с таким featureId`).toBeDefined();
+
+    const circle = largestInscribedCircle(parseMapPath(shape!.d));
+    const px = unitsToPixels(circle.radius * 2, REFERENCE_MAP_WIDTH);
+    expect(px, `${range.id}: цель ${px.toFixed(1)} px`).toBeGreaterThanOrEqual(
+      MIN_TARGET_PX,
+    );
   }
 });
