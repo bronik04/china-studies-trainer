@@ -224,6 +224,18 @@ describe('карта', () => {
     }
   });
 
+  /*
+   * Исход ответа на физической карте помечается штриховкой поверх ступени:
+   * перекрасить форму нельзя, цвет там означает ступень. Значит, штрих ложится
+   * на любую из четырёх заливок и обязан быть виден на каждой.
+   */
+  it('метки исхода видны на каждой ступени рельефа', () => {
+    for (const fill of RELIEF_FILLS) {
+      expectAtLeast('--map-correct-mark', fill, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-incorrect-mark-relief', fill, GRAPHIC_CONTRAST);
+    }
+  });
+
   it('граница региона видна на каждой ступени рельефа', () => {
     for (const fill of RELIEF_FILLS) {
       expectAtLeast('--map-border', fill, GRAPHIC_CONTRAST);

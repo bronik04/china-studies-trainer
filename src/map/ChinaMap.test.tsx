@@ -676,3 +676,24 @@ it('река под курсором помечается, хотя курсор
     container.querySelector('.river-line[data-feature-id="yellow-river"]'),
   ).toHaveAttribute('data-hovered', 'true');
 });
+
+it('в физическом виде нажатие по форме отвечает формой', () => {
+  const onSelectFeature = vi.fn();
+  const { container } = renderPhysical(onSelectFeature);
+
+  const tibet = container.querySelector('[data-feature-id="tibetan-plateau"]')!;
+  fireEvent.click(tibet, { clientX: 0, clientY: 0 });
+
+  expect(onSelectFeature).toHaveBeenCalledWith('tibetan-plateau');
+});
+
+it('река перехватывает нажатие у формы, через которую идёт', () => {
+  // Хуанхэ идёт через Лёссовое плато. Промах по реке при вопросе о плато —
+  // честный промах, а не дефект: молча пропускать его значило бы подсказывать.
+  const onSelectFeature = vi.fn();
+  const { map, at } = renderPhysical(onSelectFeature);
+
+  fireEvent.click(map, at(pointOnRiver('yellow-river')));
+
+  expect(onSelectFeature).toHaveBeenCalledWith('yellow-river');
+});

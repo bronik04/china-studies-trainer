@@ -298,3 +298,24 @@ describe('validatePhysicalGeometry', () => {
     expect(() => validateRealPhysicalGeometry()).not.toThrow();
   });
 });
+
+it('у каждой формы-цели есть точка подписи, и она лежит внутри контура', () => {
+  const targets = RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined);
+
+  expect(targets).toHaveLength(6);
+
+  for (const shape of targets) {
+    expect(shape.labelX, `${shape.key}: нет labelX`).toBeTypeOf('number');
+    expect(shape.labelY, `${shape.key}: нет labelY`).toBeTypeOf('number');
+    expect(
+      containsPoint(parseMapPath(shape.d), shape.labelX!, shape.labelY!),
+      `${shape.key}: точка подписи вне контура`,
+    ).toBe(true);
+  }
+});
+
+it('декоративная форма точки подписи не несёт: её никто не подписывает', () => {
+  for (const shape of RELIEF_SHAPES.filter((s) => s.featureId === undefined)) {
+    expect(shape.labelX, `${shape.key}`).toBeUndefined();
+  }
+});

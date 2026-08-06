@@ -282,3 +282,13 @@ it('все написанные игры открыты сразу, без вс�
     screen.getByRole('button', { name: /История: династии и даты/ }),
   ).toBeDisabled();
 });
+
+it('запускает раунд по физической географии с главной', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /Найти на физической карте/ }));
+  // Точное имя, а не «начинается с»: в герое стоит «Начать: найти на карте».
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(screen.getByText(/Вопрос 1 из 12/)).toBeInTheDocument();
+});

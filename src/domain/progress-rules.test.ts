@@ -1,4 +1,4 @@
-import { regionTarget, type Attempt } from './round';
+import { cityTarget, physicalTarget, regionTarget, type Attempt } from './round';
 import {
   bestAccuracy,
   masteredTargets,
@@ -130,4 +130,17 @@ it('не смешивает регионы и города в списке на 
   expect(targetsToRepeat(attempts, NOW, 'city')).toEqual([
     { kind: 'city', id: 'lanzhou' },
   ]);
+});
+
+it('не смешивает физические цели с регионами и городами', () => {
+  const attempts = [
+    attempt({ target: physicalTarget('yangtze'), isCorrect: false }),
+    attempt({ target: regionTarget('hunan'), isCorrect: false }),
+    attempt({ target: cityTarget('wuhan'), isCorrect: false }),
+  ];
+
+  expect(targetsToRepeat(attempts, NOW, 'physical')).toEqual([
+    physicalTarget('yangtze'),
+  ]);
+  expect(targetsToRepeat(attempts, NOW, 'region')).toEqual([regionTarget('hunan')]);
 });

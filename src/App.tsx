@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { citiesUpTo } from './content/cities';
 import { collectionById } from './content/collections';
+import { physicalFeatures } from './content/physical-features';
 import { regions } from './content/regions';
-import { citiesWord } from './content/region-count';
-import type { City, CitySet, Region } from './content/types';
+import { citiesWord, featuresWord } from './content/region-count';
+import type { City, CitySet, PhysicalFeature, Region } from './content/types';
 import { addAttempts } from './domain/progress';
 import {
   bestAccuracy,
@@ -16,6 +17,7 @@ import { createProgressStore } from './domain/progress-storage';
 import type { QuestionLanguage } from './domain/question-language';
 import type { Attempt, ExerciseType } from './domain/round';
 import { CityRound } from './features/exercise/CityRound';
+import { PhysicalRound } from './features/exercise/PhysicalRound';
 import { ExerciseRound } from './features/exercise/ExerciseRound';
 import { FillMapRound } from './features/exercise/FillMapRound';
 import { FillMapResultsPage } from './features/results/FillMapResultsPage';
@@ -36,6 +38,7 @@ type Screen =
   | 'collection'
   | 'exercise'
   | 'city-exercise'
+  | 'physical-exercise'
   | 'results'
   | 'fill'
   | 'fill-results';
@@ -105,6 +108,13 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
   const [roundPool, setRoundPool] = useState<readonly Region[]>(regions);
   const [cityPool, setCityPool] = useState<readonly City[]>([]);
+  /*
+   * Двенадцать целей всегда; сужается пул только «Повторить ошибки». Набор
+   * перед стартом не выбирается: реки и формы спрашиваются вперемешку одним
+   * раундом.
+   */
+  const [physicalPool, setPhysicalPool] =
+    useState<readonly PhysicalFeature[]>(physicalFeatures);
   const [exerciseTypes, setExerciseTypes] = useState<readonly ExerciseType[]>([
     'find-on-map',
   ]);
@@ -255,6 +265,19 @@ export default function App() {
     setScreen('city-exercise');
   }
 
+  function startPhysicalRound(
+    exerciseType: 'find-on-map' | 'name-target',
+    nextLanguage: QuestionLanguage,
+    features: readonly PhysicalFeature[] = physicalFeatures,
+  ) {
+    setPhysicalPool(features);
+    setExerciseTypes([exerciseType]);
+    setLanguage(nextLanguage);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('physical-exercise');
+  }
+
   function startFillRound(nextLanguage: QuestionLanguage) {
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
@@ -289,11 +312,17 @@ export default function App() {
     setScreen('fill-results');
   }
 
-  function finishCityRound(attempts: readonly Attempt[]) {
+  /**
+   * Завершение раунда по целям, которые не регионы: города и объекты
+   * физической географии. Вид берётся из самих попыток — раунд пишет цели
+   * своего вида, и второй источник правды разошёлся бы с ними.
+   */
+  function finishTargetRound(attempts: readonly Attempt[]) {
     const updated = commitAttempts(attempts);
+    const kind = attempts[0]?.target.kind ?? 'city';
     setLastAttempts(attempts);
     setRepeatRegionIds(
-      targetsToRepeat(updated.attempts, new Date(), 'city').map((target) => target.id),
+      targetsToRepeat(updated.attempts, new Date(), kind).map((target) => target.id),
     );
     setScreen('results');
   }
@@ -366,7 +395,23 @@ export default function App() {
           language={language}
           roundId={roundId}
           seed={seed}
-          onFinish={finishCityRound}
+          onFinish={finishTargetRound}
+          onExit={() => setScreen('home')}
+        />
+      </AppFrame>
+    );
+  }
+
+  if (screen === 'physical-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <PhysicalRound
+          features={physicalPool}
+          exerciseType={exerciseTypes[0] as 'find-on-map' | 'name-target'}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishTargetRound}
           onExit={() => setScreen('home')}
         />
       </AppFrame>
@@ -381,15 +426,22 @@ export default function App() {
      * не из отдельного признака: раунд по городам пишет городские цели, и
      * второй источник правды разошёлся бы с ними.
      */
-    const isCityRound = lastAttempts[0]?.target.kind === 'city';
+    const roundKind = lastAttempts[0]?.target.kind ?? 'region';
+    const isCityRound = roundKind === 'city';
+    const isPhysicalRound = roundKind === 'physical';
     const repeatCities = cityPool.filter((city) => repeatRegionIds.includes(city.id));
+    const repeatFeatures = physicalPool.filter((feature) =>
+      repeatRegionIds.includes(feature.id),
+    );
 
     return (
       <AppFrame fillsFrame={false} current={null} onNavigate={navigate}>
         <RoundResultsPage
           summary={summary}
-          targets={isCityRound ? cityPool : regions}
-          countWord={isCityRound ? citiesWord : undefined}
+          targets={isCityRound ? cityPool : isPhysicalRound ? physicalPool : regions}
+          countWord={
+            isCityRound ? citiesWord : isPhysicalRound ? featuresWord : undefined
+          }
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
           idsToRepeat={repeatRegionIds}
@@ -402,13 +454,33 @@ export default function App() {
               return;
             }
 
+            if (isPhysicalRound) {
+              startPhysicalRound(
+                exerciseTypes[0] as 'find-on-map' | 'name-target',
+                language,
+                repeatFeatures,
+              );
+              return;
+            }
+
             startRound(exerciseTypes[0], language, repeatRegionIds);
           }}
-          onNewRound={() =>
-            isCityRound
-              ? startCityRound(exerciseTypes[0], language, 'capital')
-              : startRound(exerciseTypes[0], language, null)
-          }
+          onNewRound={() => {
+            if (isCityRound) {
+              startCityRound(exerciseTypes[0], language, 'capital');
+              return;
+            }
+
+            if (isPhysicalRound) {
+              startPhysicalRound(
+                exerciseTypes[0] as 'find-on-map' | 'name-target',
+                language,
+              );
+              return;
+            }
+
+            startRound(exerciseTypes[0], language, null);
+          }}
           onExit={() => setScreen('home')}
         />
       </AppFrame>
@@ -470,6 +542,7 @@ export default function App() {
           onStartRound={startRound}
           onStartFillRound={startFillRound}
           onStartCityRound={startCityRound}
+          onStartPhysicalRound={startPhysicalRound}
           onOpenAtlas={() => setScreen('atlas')}
           onOpenCollections={() => setScreen('collections')}
           onOpenCollection={openCollection}

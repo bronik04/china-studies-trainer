@@ -15,6 +15,8 @@ const INCORRECT_PATTERN_ID = 'map-hatch-incorrect';
 const SECOND_TRY_PATTERN_ID = 'map-hatch-second-try';
 const FAILED_PATTERN_ID = 'map-hatch-failed';
 const IN_PROGRESS_PATTERN_ID = 'map-hatch-in-progress';
+const PHYSICAL_CORRECT_PATTERN_ID = 'map-hatch-physical-correct';
+const PHYSICAL_INCORRECT_PATTERN_ID = 'map-hatch-physical-incorrect';
 
 export function MapDefs() {
   return (
@@ -105,6 +107,47 @@ export function MapDefs() {
         >
           <rect width="8" height="8" fill="var(--map-progress-in-progress)" />
           <line x1="0" y1="0" x2="0" y2="8" stroke="var(--map-border)" strokeWidth="1" />
+        </pattern>
+        {/*
+          Исход на физической карте. Фона у образца нет намеренно: под ним
+          лежит копия того же контура со своей ступенью, и она обязана
+          просвечивать — перекрасить форму значило бы соврать про её высоту.
+          Различают исходы наклон и частота штриха, а не только цвет: пара
+          «верно — неверно» одной светлоты неразличима при дальтонизме, а
+          здесь оба тона ещё и тёмные, потому что светлее им нельзя (см.
+          `--map-correct-mark` в tokens.css).
+        */}
+        <pattern
+          id={PHYSICAL_CORRECT_PATTERN_ID}
+          width="8"
+          height="8"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="8"
+            stroke="var(--map-correct-mark)"
+            strokeWidth="2"
+          />
+        </pattern>
+        <pattern
+          id={PHYSICAL_INCORRECT_PATTERN_ID}
+          width="4"
+          height="4"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(-45)"
+        >
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="4"
+            stroke="var(--map-incorrect-mark-relief)"
+            strokeWidth="2"
+          />
         </pattern>
       </defs>
     </svg>
