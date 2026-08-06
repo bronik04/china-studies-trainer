@@ -5,6 +5,7 @@ import { regions } from '../src/content/regions';
 import { CALLOUT_TARGETS } from '../src/map/callout-targets';
 import {
   INPUTS_FINGERPRINT,
+  LAKE_SHAPES,
   RELIEF_SHAPES,
   RIVER_LINES,
 } from '../src/map/physical-geometry';
@@ -146,6 +147,15 @@ const physical = validatePhysicalGeometry(
       RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined).map((shape) => [
         shape.featureId as string,
         parseMapPath(shape.d),
+      ]),
+    ),
+    lakes: new Map(
+      LAKE_SHAPES.map((shape) => [shape.featureId, parseMapPath(shape.d)]),
+    ),
+    lakeMarks: new Map(
+      LAKE_SHAPES.map((shape) => [
+        shape.featureId,
+        [shape.markX, shape.markY] as Point,
       ]),
     ),
   },

@@ -20,6 +20,7 @@ import type { PhysicalFeature, ReliefStep } from './types';
 
 const RIVERS = ['natural-earth-rivers-5.1.2'] as const;
 const LANDFORMS = ['natural-earth-geography-regions-5.1.2'] as const;
+const LAKES = ['natural-earth-lakes-5.1.2'] as const;
 
 function river(
   id: string,
@@ -62,6 +63,27 @@ function landform(
     regionIds,
     facts: [],
     sourceIds: LANDFORMS,
+  };
+}
+
+function lake(
+  id: string,
+  nameRu: string,
+  nameZh: string,
+  pinyin: string,
+  lakeIds: readonly number[],
+  regionIds: readonly string[],
+): PhysicalFeature {
+  return {
+    id,
+    kind: 'lake',
+    nameRu,
+    nameZh,
+    pinyin,
+    lakeIds,
+    regionIds,
+    facts: [],
+    sourceIds: LAKES,
   };
 }
 
@@ -174,4 +196,22 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
     'guangdong',
     'guangxi',
   ]),
+
+  /*
+   * Пять пресных — 五大淡水湖 — в китайской школе заучивают списком целиком, и
+   * разрывать его ради географического разброса значило бы менять готовый
+   * учебный предмет на собственную выдумку. Цинхай добавлен шестым: без него
+   * набор не знает ни самого большого озера страны, ни запада вовсе.
+   *
+   * Номера получены из самого набора, а не набраны по памяти: неверный номер
+   * дал бы на карте чужое озеро при зелёной сборке.
+   */
+  lake('qinghai-lake', 'Цинхай', '青海湖', 'Qīnghǎi Hú', [1159126725], [
+    'qinghai',
+  ]),
+  lake('poyang', 'Поянху', '鄱阳湖', 'Póyáng Hú', [1159114015], ['jiangxi']),
+  lake('dongting', 'Дунтинху', '洞庭湖', 'Dòngtíng Hú', [1159116351], ['hunan']),
+  lake('taihu', 'Тайху', '太湖', 'Tài Hú', [1159113611], ['jiangsu', 'zhejiang']),
+  lake('hongze', 'Хунцзэху', '洪泽湖', 'Hóngzé Hú', [1159113359], ['jiangsu']),
+  lake('chaohu', 'Чаоху', '巢湖', 'Cháo Hú', [1159115069], ['anhui']),
 ];

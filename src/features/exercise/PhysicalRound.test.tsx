@@ -25,10 +25,10 @@ function renderRound(
   return { container, onFinish, onExit };
 }
 
-it('спрашивает восемнадцать объектов подряд', () => {
+it('спрашивает двадцать четыре объекта подряд', () => {
   renderRound('find-on-map');
 
-  expect(screen.getByText(/Вопрос 1 из 18/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 24/)).toBeInTheDocument();
 });
 
 it('в «найти» вопрос называет объект, а карта его не подписывает', () => {
@@ -75,7 +75,7 @@ it('верный ответ из списка ведёт к следующему
 
   answerFromList(asked);
 
-  expect(screen.getByText(/Вопрос 1 из 18/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 24/)).toBeInTheDocument();
 });
 
 it('неверный ответ показывает разбор с правильным именем', () => {

@@ -70,7 +70,7 @@ export type Region = {
  */
 export type ReliefStep = 1 | 2 | 3;
 
-export type PhysicalKind = 'river' | 'landform';
+export type PhysicalKind = 'river' | 'landform' | 'lake';
 
 type PhysicalCommon = {
   readonly id: string;
@@ -112,5 +112,14 @@ export type PhysicalFeature = PhysicalCommon &
          * нарисовано одинаково, — и подсказать ответ видом подсветки.
          */
         readonly landform: 'plateau' | 'plain' | 'basin' | 'desert' | 'range';
+      }
+    | {
+        readonly kind: 'lake';
+        /**
+         * Номера объектов в Natural Earth. Именно номера, а не имена: имена
+         * там не уникальны — то же правило, по которому река задаётся
+         * `rivernum`. Список, потому что крупное озеро набор режет на части.
+         */
+        readonly lakeIds: readonly number[];
       }
   );

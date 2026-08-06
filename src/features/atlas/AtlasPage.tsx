@@ -45,6 +45,7 @@ const RELIEF_LEGEND: readonly {
 const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
   river: 'Река',
   landform: 'Форма рельефа',
+  lake: 'Озеро',
 };
 
 /**

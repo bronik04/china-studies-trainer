@@ -10,7 +10,7 @@ import {
 
 validateCatalog(regions, sources, { expectedRegionCount: 34 });
 validateCities(cities, regions, sources);
-validatePhysicalFeatures(physicalFeatures, regions, sources, { expectedCount: 18 });
+validatePhysicalFeatures(physicalFeatures, regions, sources, { expectedCount: 24 });
 console.info(
   `Проверено регионов: ${regions.length}; городов: ${cities.length}; ` +
     `физических целей: ${physicalFeatures.length}`,
