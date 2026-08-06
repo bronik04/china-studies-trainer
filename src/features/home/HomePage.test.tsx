@@ -14,6 +14,7 @@ function renderHome(attempts: readonly Attempt[] = []) {
     onStartRound: vi.fn(),
     onStartFillRound: vi.fn(),
     onStartCityRound: vi.fn(),
+    onStartPhysicalRound: vi.fn(),
     onOpenAtlas: vi.fn(),
     onOpenCollections: vi.fn(),
     onOpenCollection: vi.fn(),
@@ -160,6 +161,7 @@ it('раздел режимов принимает фокус: шапка вед
       onStartRound={vi.fn()}
       onStartFillRound={vi.fn()}
       onStartCityRound={vi.fn()}
+      onStartPhysicalRound={vi.fn()}
       onOpenAtlas={vi.fn()}
       onOpenCollections={vi.fn()}
       onOpenCollection={vi.fn()}
@@ -235,4 +237,13 @@ it('окно называет игру, в которую попадёшь', () 
   openCard(/Заполнить карту/);
 
   expect(screen.getByRole('heading', { name: 'Заполнить карту' })).toBeInTheDocument();
+});
+
+it('показывает обе игры по физической географии', () => {
+  renderHome();
+
+  expect(
+    screen.getByRole('button', { name: /Найти на физической карте/ }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Назвать объект/ })).toBeInTheDocument();
 });

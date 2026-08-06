@@ -24,6 +24,10 @@ export type HomePageProps = {
     regionIds: readonly string[] | null,
   ) => void;
   readonly onStartFillRound: (language: QuestionLanguage) => void;
+  readonly onStartPhysicalRound: (
+    exerciseType: 'find-on-map' | 'name-target',
+    language: QuestionLanguage,
+  ) => void;
   readonly onStartCityRound: (
     exerciseType: ExerciseType,
     language: QuestionLanguage,
@@ -54,6 +58,7 @@ export function HomePage({
   onStartRound,
   onStartFillRound,
   onStartCityRound,
+  onStartPhysicalRound,
   onOpenAtlas,
   onOpenCollections,
   onOpenCollection,
@@ -77,6 +82,8 @@ export function HomePage({
       onStartFillRound(language);
     } else if (card.kind === 'city') {
       onStartCityRound(card.exerciseType, language, citySet);
+    } else if (card.kind === 'physical') {
+      onStartPhysicalRound(card.exerciseType, language);
     }
   }
 
