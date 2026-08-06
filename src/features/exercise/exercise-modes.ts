@@ -82,6 +82,25 @@ export const CITY_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
   },
 };
 
+/**
+ * Две игры по физической географии. `match-pair` здесь нет и не будет: у реки
+ * нет второго каталога, с которым её связывают.
+ */
+export const PHYSICAL_MODES: Readonly<
+  Record<'find-on-map' | 'name-target', ExerciseMode>
+> = {
+  'find-on-map': {
+    exerciseType: 'find-on-map',
+    title: 'Найти на физической карте',
+    eyebrow: 'Найдите объект на карте',
+  },
+  'name-target': {
+    exerciseType: 'name-target',
+    title: 'Назвать объект',
+    eyebrow: 'Какой объект подсвечен',
+  },
+};
+
 export const MODE_CARDS: readonly ModeCard[] = [
   {
     id: 'find-on-map',
