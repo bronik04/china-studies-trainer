@@ -36,3 +36,19 @@ export function citiesWord(count: number): string {
 
   return last >= 2 && last <= 4 ? 'города' : 'городов';
 }
+
+/** 1 объект, 2–4 объекта, 5+ объектов. */
+export function featuresWord(count: number): string {
+  const teens = count % 100;
+  const last = count % 10;
+
+  if (teens >= 11 && teens <= 14) {
+    return 'объектов';
+  }
+
+  if (last === 1) {
+    return 'объект';
+  }
+
+  return last >= 2 && last <= 4 ? 'объекта' : 'объектов';
+}

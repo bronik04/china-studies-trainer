@@ -1,3 +1,4 @@
+import { physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
 import { createSeededRandom } from './random';
 import {
@@ -7,6 +8,7 @@ import {
   currentQuestion,
   goToNextQuestion,
   isRoundFinished,
+  physicalTarget,
   regionTarget,
   sameTarget,
   targetKey,
@@ -219,4 +221,22 @@ it('принимает ответ другого вида, когда игра �
 
   expect(answered.attempts[0].isCorrect).toBe(true);
   expect(answered.attempts[0].target).toEqual({ kind: 'city', id: 'chengdu' });
+});
+
+it('физическая цель не смешивается с одноимённой целью другого вида', () => {
+  expect(targetKey(physicalTarget('yangtze'))).toBe('physical:yangtze');
+  expect(sameTarget(physicalTarget('gobi'), regionTarget('gobi'))).toBe(false);
+});
+
+it('раунд по физическим целям спрашивает каждую ровно один раз', () => {
+  const targets = physicalFeatures.map((feature) => physicalTarget(feature.id));
+  const round = createRound(targets, {
+    roundId: 'r1',
+    exerciseTypes: ['find-on-map'],
+    language: 'ru',
+    random: createSeededRandom(7),
+  });
+
+  expect(round.questions).toHaveLength(12);
+  expect(new Set(round.questions.map((question) => question.target.id)).size).toBe(12);
 });
