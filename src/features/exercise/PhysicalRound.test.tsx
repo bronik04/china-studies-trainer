@@ -3,13 +3,16 @@ import { expect, it, vi } from 'vitest';
 import { physicalFeatures } from '../../content/physical-features';
 import { PhysicalRound } from './PhysicalRound';
 
-function renderRound(exerciseType: 'find-on-map' | 'name-target') {
+function renderRound(
+  exerciseType: 'find-on-map' | 'name-target',
+  features: readonly (typeof physicalFeatures)[number][] = physicalFeatures,
+) {
   const onFinish = vi.fn();
   const onExit = vi.fn();
 
   const { container } = render(
     <PhysicalRound
-      features={physicalFeatures}
+      features={features}
       exerciseType={exerciseType}
       language="ru"
       roundId="r1"
@@ -97,4 +100,16 @@ it('даёт прервать раунд', () => {
   fireEvent.click(screen.getByRole('button', { name: /Прервать раунд/ }));
 
   expect(onExit).toHaveBeenCalled();
+});
+
+it('сузившийся пул не сужает выбор: отвлекающие берутся из всех двенадцати', () => {
+  // Так выглядит «Повторить ошибки» после двух промахов — по реке и по форме.
+  // Своими же отвлекающими на вопросе про реку остался бы один вариант.
+  const pool = physicalFeatures.filter(
+    (feature) => feature.id === 'yangtze' || feature.id === 'gobi',
+  );
+
+  renderRound('name-target', pool);
+
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
 });

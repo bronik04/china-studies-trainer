@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { physicalFeatures } from '../../content/physical-features';
 import { regions } from '../../content/regions';
 import type { PhysicalFeature } from '../../content/types';
 import { buildPhysicalChoices } from '../../domain/physical-choices';
@@ -104,13 +105,20 @@ export function PhysicalRound({
     [],
   );
 
+  /*
+   * Отвлекающие берутся из полного справочника, а не из пула раунда. Пул
+   * сужается на «Повторить ошибки», и своими же отвлекающими вопрос остался бы
+   * без вариантов: две ошибки — река и форма — дают на вопросе про реку пустой
+   * список отвлекающих того же вида, то есть одну кнопку, всегда правильную.
+   * Спрашиваются цели пула, а выбирают из всех двенадцати.
+   */
   const choicesByQuestion = useMemo(() => {
     const random = createSeededRandom(seed + 1);
 
     return round.questions.map((question) =>
-      buildPhysicalChoices(features, question.target.id, random),
+      buildPhysicalChoices(physicalFeatures, question.target.id, random),
     );
-  }, [features, round.questions, seed]);
+  }, [round.questions, seed]);
 
   const question = currentQuestion(round);
   const targetFeature = features.find((feature) => feature.id === question.target.id)!;

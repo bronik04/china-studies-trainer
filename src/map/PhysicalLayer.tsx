@@ -113,8 +113,15 @@ export function PhysicalLayer({
   showsLabels = true,
   featureOutcomes = NO_OUTCOMES,
 }: PhysicalLayerProps) {
-  const [hoveredShapeId, setHoveredShapeId] = useState<string | null>(null);
-  const hovered = hoveredFeatureId ?? hoveredShapeId;
+  /*
+   * Узел под указателем или в фокусе — по его собственным событиям. Он идёт
+   * первым, а вычисленная карте река второй: пока указатель стоит на узле
+   * слоя, `hoveredFeatureId` не обновляется вовсе — события React не всплывают
+   * из портала до `.china-map`, — и без этого порядка залипшее имя реки
+   * закрывало бы имя формы, на которую навели.
+   */
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const hovered = hoveredNodeId ?? hoveredFeatureId;
 
   return (
     <g
@@ -157,11 +164,11 @@ export function PhysicalLayer({
               tabIndex={answers ? 0 : -1}
               onClick={answers ? () => onSelect(shape.featureId!) : undefined}
               onPointerEnter={
-                answers ? () => setHoveredShapeId(shape.featureId!) : undefined
+                answers ? () => setHoveredNodeId(shape.featureId!) : undefined
               }
-              onPointerLeave={answers ? () => setHoveredShapeId(null) : undefined}
-              onFocus={answers ? () => setHoveredShapeId(shape.featureId!) : undefined}
-              onBlur={answers ? () => setHoveredShapeId(null) : undefined}
+              onPointerLeave={answers ? () => setHoveredNodeId(null) : undefined}
+              onFocus={answers ? () => setHoveredNodeId(shape.featureId!) : undefined}
+              onBlur={answers ? () => setHoveredNodeId(null) : undefined}
               onKeyDown={
                 answers
                   ? (event) => {
@@ -191,7 +198,7 @@ export function PhysicalLayer({
 
       {/*
         Копия контура под штриховку исхода. Заливка нарисованной формы
-        заменяется целиком: поставить ей `fill: url(#…)` — и ступень исчезнет,
+        заменяется целиком: поставить ей `fill: url(#id)` — и ступень исчезнет,
         а между штрихами покажется область региона под слоем. Поэтому форма с
         исходом рисуется дважды. Копий не больше двух за вопрос: правильный
         объект и, если ученик промахнулся, выбранный.
@@ -223,12 +230,14 @@ export function PhysicalLayer({
                 d={line.d}
                 data-feature-id={line.featureId}
                 data-selected={line.featureId === selectedFeatureId}
-                data-hovered={line.featureId === hoveredFeatureId}
+                data-hovered={line.featureId === hovered}
                 data-outcome={featureOutcomes[line.featureId]}
                 role={onSelect ? 'button' : undefined}
                 aria-label={label}
                 tabIndex={onSelect ? 0 : -1}
                 onClick={onSelect ? () => onSelect(line.featureId) : undefined}
+                onFocus={onSelect ? () => setHoveredNodeId(line.featureId) : undefined}
+                onBlur={onSelect ? () => setHoveredNodeId(null) : undefined}
                 onKeyDown={
                   onSelect
                     ? (event) => {

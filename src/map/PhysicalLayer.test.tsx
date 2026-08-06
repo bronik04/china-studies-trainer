@@ -99,6 +99,40 @@ describe('PhysicalLayer', () => {
     expect(container.querySelectorAll('.region-outlines use')).toHaveLength(34);
   });
 
+  it('фокус показывает подпись и у формы, и у реки', () => {
+    const { container } = renderLayer({ onSelect: vi.fn() });
+    const shown = () =>
+      [...container.querySelectorAll('.physical-label[data-hovered="true"]')].map(
+        (label) => (label as HTMLElement).dataset.featureId,
+      );
+
+    fireEvent.focus(screen.getByLabelText(/Янцзы/));
+    expect(shown()).toEqual(['yangtze']);
+
+    fireEvent.focus(screen.getByLabelText(/Гоби/));
+    expect(shown()).toEqual(['gobi']);
+  });
+
+  it('узел под указателем важнее реки, посчитанной картой', () => {
+    // Указатель ушёл с реки на форму: карта о том не узнает — события React не
+    // всплывают из портала, — и без верного порядка имя реки залипало бы.
+    const { container } = renderLayer({
+      onSelect: vi.fn(),
+      hoveredFeatureId: 'yellow-river',
+    });
+
+    fireEvent.pointerEnter(
+      container.querySelector('.relief-shape[data-feature-id="loess-plateau"]')!,
+    );
+
+    expect(
+      container.querySelector('.physical-label[data-feature-id="loess-plateau"]'),
+    ).toHaveAttribute('data-hovered', 'true');
+    expect(
+      container.querySelector('.river-line[data-feature-id="yellow-river"]'),
+    ).toHaveAttribute('data-hovered', 'false');
+  });
+
   it('исход ответа помечает и форму, и реку', () => {
     const { container } = renderLayer({
       featureOutcomes: { gobi: 'incorrect', yangtze: 'correct' },

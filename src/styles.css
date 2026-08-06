@@ -1186,11 +1186,6 @@ button.text:hover:enabled {
   stroke-width: var(--map-river-width-strong);
 }
 
-.china-map .physical-layer .river-line:focus-visible {
-  outline: none;
-  stroke: var(--focus-on-paper);
-}
-
 /*
  * Исход у формы — штриховка поверх её ступени, у реки — толщина и штрих.
  * Второй канал обязателен: цвет здесь занят тремя ступенями, и перекрасить
@@ -1220,6 +1215,17 @@ button.text:hover:enabled {
 .china-map .physical-layer .river-line[data-outcome='incorrect'] {
   stroke: var(--map-incorrect-mark-relief);
   stroke-dasharray: 6 3;
+}
+
+/*
+ * Фокус идёт после исхода намеренно: специфичность у них равная, и побеждает
+ * то правило, что ниже. Иначе у отвеченной реки, оставшейся в фокусе, цвет
+ * фокуса заменялся бы цветом исхода — толщина у них и так одна, и видимого
+ * признака фокуса не оставалось бы вовсе, хотя следующий Tab идёт от неё.
+ */
+.china-map .physical-layer .river-line:focus-visible {
+  outline: none;
+  stroke: var(--focus-on-paper);
 }
 
 /* В игре подпись объекта и есть ответ — та же утечка, что у подписей городов. */

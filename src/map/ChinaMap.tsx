@@ -164,19 +164,6 @@ function getRegionId(target: EventTarget | null): string | null {
   return target.closest<SVGElement>('[data-region-id]')?.dataset.regionId ?? null;
 }
 
-/**
- * Какой объект физической географии под узлом. В отличие от реки, у формы
- * есть контур, и цель нажатия у неё — он сам: вписанная окружность каждой из
- * шести проверена на сборке и не мельче 24 px.
- */
-function getFeatureId(target: EventTarget | null): string | null {
-  if (!(target instanceof Element)) {
-    return null;
-  }
-
-  return target.closest<SVGElement>('[data-feature-id]')?.dataset.featureId ?? null;
-}
-
 export function ChinaMap({
   regions,
   selectedRegionId,
@@ -481,10 +468,14 @@ export function ChinaMap({
      * Река идёт перед областью: она нарисована поверх, и рука, целившая в
      * линию, метила в неё, а не в подложку. Точки без реки поблизости
      * достаются области, как и на любом другом виде.
+     *
+     * Узлы самого слоя сюда не приходят и разрешать их здесь нечем: слой
+     * вставлен порталом, события React всплывают по дереву React, а не DOM, и
+     * до этого обработчика нажатие по реке или форме не доходит — на него
+     * отвечает сам узел (`PhysicalLayer`).
      */
     if (resolvesFeatures && point !== undefined) {
-      const featureId =
-        featureAtClient(point.clientX, point.clientY) ?? getFeatureId(target);
+      const featureId = featureAtClient(point.clientX, point.clientY);
       if (featureId !== null) {
         onSelectFeature?.(featureId);
         return;
@@ -554,9 +545,7 @@ export function ChinaMap({
             continueDrag(event);
 
             if (resolvesFeatures && drag.current === null) {
-              const featureId =
-                featureAtClient(event.clientX, event.clientY) ??
-                getFeatureId(event.target);
+              const featureId = featureAtClient(event.clientX, event.clientY);
               setHoveredFeatureId((previous) =>
                 previous === featureId ? previous : featureId,
               );
