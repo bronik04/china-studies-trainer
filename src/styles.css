@@ -1104,14 +1104,47 @@ button.text:hover:enabled {
  * несамостоятельный канал, как у типов региона.
  */
 /*
- * Форма рельефа не цель нажатия, а заливка: спрашивают о ней пока нигде, а
- * область под ней выбирают и в физическом виде — карточка слева рассказывает о
- * регионе в обоих. Без этого 72 % суши перестали бы отвечать на нажатие: цель
- * находится по `[data-region-id]`, а у формы такого признака нет.
+ * Декоративная форма не цель нажатия, а заливка: цель ищется по
+ * `[data-region-id]` и `[data-feature-id]`, и у декоративной нет ни того, ни
+ * другого. Без этого 66 % суши перестали бы отвечать: нажатие приходилось бы
+ * в заливку, под которой лежит невыбираемый регион.
  */
 .china-map .physical-layer .relief-shape {
   pointer-events: none;
   stroke: none;
+}
+
+/* Шесть спрашиваемых форм — цели, и нажатие им нужно. */
+.china-map .physical-layer[data-interactive='true'] .relief-shape[data-feature-id] {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/*
+ * Выбранная форма обведена, а не перекрашена: цветовой канал занят тремя
+ * ступенями, и перекрасить её значило бы соврать про ступень.
+ */
+.china-map .physical-layer .relief-shape[data-selected='true'],
+.china-map .physical-layer .relief-shape:focus-visible {
+  stroke: var(--focus-on-paper);
+  stroke-width: var(--map-border-width-strong);
+}
+
+.china-map .physical-layer .relief-shape:focus-visible {
+  outline: none;
+}
+
+/*
+ * Заливка снимается с копии, а не наследуется: правило области ставит ей тон
+ * `--map-relief-rest`, но CSS документа не достаёт внутрь клона `<use>`, и
+ * `fill` клон берёт наследованием от самого `<use>`. Отсюда `fill: none`
+ * здесь — единственный способ получить только черту.
+ */
+.china-map .physical-layer .region-outlines use {
+  fill: none;
+  pointer-events: none;
+  stroke: var(--map-border);
+  stroke-width: var(--map-border-width);
 }
 
 .china-map .physical-layer .relief-shape[data-step='1'] {
@@ -1163,15 +1196,38 @@ button.text:hover:enabled {
   display: none;
 }
 
+/*
+ * Подпись видна у одного объекта за раз — при наведении, фокусе и выборе, как
+ * у городов. Постоянные подписи здесь не держатся: Тарим течёт по Таримской
+ * впадине, Хуанхэ идёт через Лёссовое плато, и двенадцать имён накладываются
+ * друг на друга.
+ *
+ * Обводка тоном бумаги отделяет буквы от заливки: подпись ложится на любую из
+ * четырёх ступеней, а подкладывать под неё плашку значило бы закрывать саму
+ * карту.
+ */
 .china-map .physical-label {
   fill: var(--map-label);
   font-family: var(--t-family-text);
   font-size: 10px;
   font-weight: var(--t-weight-bold);
+  opacity: 0;
   paint-order: stroke;
   pointer-events: none;
   stroke: var(--surface-paper-bright);
   stroke-width: 3;
+  transition: opacity var(--duration-quick) var(--ease-out);
+}
+
+.china-map .physical-label[data-hovered='true'],
+.china-map .physical-label[data-selected='true'] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .china-map .physical-label {
+    transition: none;
+  }
 }
 
 /* Города региона в карточке атласа: перечень, а не абзац. */

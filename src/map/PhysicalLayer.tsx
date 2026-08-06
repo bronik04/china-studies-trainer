@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
 import { RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
@@ -43,6 +44,24 @@ const LABEL_POINTS = new Map(
   }),
 );
 
+/**
+ * Где стоит подпись каждой из двенадцати целей. У реки это середина самого
+ * длинного куска линии, поднятая над ней; у формы — точка, посчитанная
+ * генератором как середина наибольшей вписанной окружности.
+ */
+const LABELLED: readonly { featureId: string; x: number; y: number }[] = [
+  ...RIVER_SHAPES.map((river) => {
+    const [x, y] = LABEL_POINTS.get(river.featureId) ?? [0, 0];
+
+    return { featureId: river.featureId, x, y: y - LABEL_OFFSET };
+  }),
+  ...RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined).map((shape) => ({
+    featureId: shape.featureId!,
+    x: shape.labelX ?? 0,
+    y: shape.labelY ?? 0,
+  })),
+];
+
 const CLIP_ID = 'china-land-clip';
 
 export type PhysicalLayerProps = {
@@ -51,6 +70,11 @@ export type PhysicalLayerProps = {
    * Река под указателем. Приходит снаружи, потому что наводятся не на саму
    * линию, а на полосу вокруг неё: попасть рукой в полторы единицы ширины
    * нельзя, и какая река под курсором, решает расстояние, а не браузер.
+   *
+   * У формы всё наоборот: она сама знает, что на неё навели, — и знает только
+   * она. Слой вставлен порталом, события React всплывают по дереву React, и до
+   * карты наведение на узел слоя не доходит. Поэтому источников два, и это не
+   * дублирование: у реки цель считают, у формы она есть.
    */
   readonly hoveredFeatureId?: string | null;
   /**
@@ -59,10 +83,11 @@ export type PhysicalLayerProps = {
    * чужой поверхности — нет. Имя объекта при этом остаётся: реки — то главное,
    * что говорит эта карта, и читалке экрана они названы в обоих случаях.
    *
-   * Сам обработчик здесь отвечает только клавиатуре. Указатель разрешается
-   * расстоянием в `ChinaMap`: линия слишком тонка, чтобы быть целью, и
-   * ставить на неё `onClick` значило бы завести вторую дорогу к тому же
-   * действию — с другим правилом попадания.
+   * Указателю узлы слоя отвечают сами, и это не вторая дорога к тому же
+   * действию: слой вставлен порталом, а события React всплывают по дереву
+   * React, а не DOM, — до обработчика карты нажатие по узлу слоя не доходит
+   * вовсе. Карта разрешает расстоянием ровно те нажатия, что пришлись мимо
+   * узлов: линия шириной в полторы единицы почти всегда мимо.
    */
   readonly onSelect?: (featureId: string) => void;
   /** Ложь — подписи скрыты: в игре подпись объекта и есть ответ. */
@@ -75,6 +100,9 @@ export function PhysicalLayer({
   onSelect,
   showsLabels = true,
 }: PhysicalLayerProps) {
+  const [hoveredShapeId, setHoveredShapeId] = useState<string | null>(null);
+  const hovered = hoveredFeatureId ?? hoveredShapeId;
+
   return (
     <g
       className="physical-layer"
@@ -90,22 +118,64 @@ export function PhysicalLayer({
       </defs>
 
       <g className="relief" clipPath={`url(#${CLIP_ID})`}>
-        {RELIEF_SHAPES.map((shape) => (
-          <path
-            key={shape.key}
-            className="relief-shape"
-            d={shape.d}
-            data-step={shape.step}
-            data-feature-id={shape.featureId}
-            aria-hidden="true"
-          />
+        {RELIEF_SHAPES.map((shape) => {
+          /*
+           * Спрашиваются шесть форм из тридцати восьми. Остальные тридцать две
+           * заливают фон и молчат: имён у них на экране нет, иначе пришлось бы
+           * сверять тридцать восемь имён вместо шести ради подложки.
+           */
+          const isTarget = shape.featureId !== undefined;
+          const answers = isTarget && onSelect !== undefined;
+
+          return (
+            <path
+              key={shape.key}
+              className="relief-shape"
+              d={shape.d}
+              data-step={shape.step}
+              data-feature-id={shape.featureId}
+              data-selected={isTarget && shape.featureId === selectedFeatureId}
+              role={answers ? 'button' : undefined}
+              aria-label={isTarget ? NAME_OF.get(shape.featureId!) : undefined}
+              aria-hidden={isTarget ? undefined : 'true'}
+              tabIndex={answers ? 0 : -1}
+              onClick={answers ? () => onSelect(shape.featureId!) : undefined}
+              onPointerEnter={
+                answers ? () => setHoveredShapeId(shape.featureId!) : undefined
+              }
+              onPointerLeave={answers ? () => setHoveredShapeId(null) : undefined}
+              onFocus={answers ? () => setHoveredShapeId(shape.featureId!) : undefined}
+              onBlur={answers ? () => setHoveredShapeId(null) : undefined}
+              onKeyDown={
+                answers
+                  ? (event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onSelect(shape.featureId!);
+                      }
+                    }
+                  : undefined
+              }
+            />
+          );
+        })}
+      </g>
+
+      {/*
+        Границы регионов поверх ступеней. Без них физическая карта перестаёт
+        связывать новый материал со старым: ученик видит рельеф, но не видит,
+        где он. Геометрия та же, что у clipPath, — `<use>` на те же контуры,
+        второй копии путей на карте не появляется.
+      */}
+      <g className="region-outlines" clipPath={`url(#${CLIP_ID})`} aria-hidden="true">
+        {regions.map((region) => (
+          <use key={region.mapAreaId} href={`#${region.mapAreaId}`} />
         ))}
       </g>
 
       <g className="rivers" clipPath={`url(#${CLIP_ID})`}>
         {RIVER_LINES.map((line) => {
           const label = NAME_OF.get(line.featureId) ?? line.featureId;
-          const [labelX, labelY] = LABEL_POINTS.get(line.featureId) ?? [0, 0];
 
           return (
             <g key={line.featureId} className="river">
@@ -118,6 +188,7 @@ export function PhysicalLayer({
                 role={onSelect ? 'button' : undefined}
                 aria-label={label}
                 tabIndex={onSelect ? 0 : -1}
+                onClick={onSelect ? () => onSelect(line.featureId) : undefined}
                 onKeyDown={
                   onSelect
                     ? (event) => {
@@ -129,18 +200,38 @@ export function PhysicalLayer({
                     : undefined
                 }
               />
-              <text
-                className="physical-label"
-                x={labelX}
-                y={labelY - LABEL_OFFSET}
-                textAnchor="middle"
-                aria-hidden="true"
-              >
-                {NAME_RU_OF.get(line.featureId)}
-              </text>
             </g>
           );
         })}
+      </g>
+
+      {/*
+        Подписи объектов — последними и без обрезки по границе.
+        Без обрезки: «Великая Китайская равнина» длиннее самой равнины, и
+        clipPath съедал у неё хвост. Последними: буквы не должны уходить под
+        линию реки.
+
+        Видна подпись у одного объекта за раз — при наведении, фокусе и
+        выборе, как у городов. Постоянные подписи здесь не держатся: Тарим
+        течёт по Таримской впадине, Хуанхэ идёт через Лёссовое плато, и имена
+        накладываются друг на друга.
+      */}
+      <g className="physical-labels">
+        {LABELLED.map((label) => (
+          <text
+            key={label.featureId}
+            className="physical-label"
+            x={label.x}
+            y={label.y}
+            data-feature-id={label.featureId}
+            data-selected={label.featureId === selectedFeatureId}
+            data-hovered={label.featureId === hovered}
+            textAnchor="middle"
+            aria-hidden="true"
+          >
+            {NAME_RU_OF.get(label.featureId)}
+          </text>
+        ))}
       </g>
     </g>
   );

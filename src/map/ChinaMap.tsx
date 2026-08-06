@@ -161,6 +161,19 @@ function getRegionId(target: EventTarget | null): string | null {
   return target.closest<SVGElement>('[data-region-id]')?.dataset.regionId ?? null;
 }
 
+/**
+ * Какой объект физической географии под узлом. В отличие от реки, у формы
+ * есть контур, и цель нажатия у неё — он сам: вписанная окружность каждой из
+ * шести проверена на сборке и не мельче 24 px.
+ */
+function getFeatureId(target: EventTarget | null): string | null {
+  if (!(target instanceof Element)) {
+    return null;
+  }
+
+  return target.closest<SVGElement>('[data-feature-id]')?.dataset.featureId ?? null;
+}
+
 export function ChinaMap({
   regions,
   selectedRegionId,
@@ -466,7 +479,8 @@ export function ChinaMap({
      * достаются области, как и на любом другом виде.
      */
     if (resolvesFeatures && point !== undefined) {
-      const featureId = featureAtClient(point.clientX, point.clientY);
+      const featureId =
+        featureAtClient(point.clientX, point.clientY) ?? getFeatureId(target);
       if (featureId !== null) {
         onSelectFeature?.(featureId);
         return;
@@ -536,7 +550,9 @@ export function ChinaMap({
             continueDrag(event);
 
             if (resolvesFeatures && drag.current === null) {
-              const featureId = featureAtClient(event.clientX, event.clientY);
+              const featureId =
+                featureAtClient(event.clientX, event.clientY) ??
+                getFeatureId(event.target);
               setHoveredFeatureId((previous) =>
                 previous === featureId ? previous : featureId,
               );
