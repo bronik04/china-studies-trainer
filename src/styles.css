@@ -465,12 +465,21 @@ p {
     min-block-size: 0;
   }
 
+  /*
+   * Три строки: переключатель вида, карта, легенда ступеней. Карта берёт
+   * остаток и потому стоит средней строкой — при `block-size: 100%` у рамки
+   * одной строки на всё не хватило бы, и легенда уехала бы под нижний край
+   * кадра, который здесь не прокручивается.
+   */
   .atlas-map {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     min-block-size: 0;
   }
 
   .atlas-map .map-section {
     block-size: 100%;
+    min-block-size: 0;
   }
 
   /*
@@ -872,6 +881,16 @@ button.text:hover:enabled {
 }
 
 /*
+ * На физической карте область — уже не предмет разговора, а подложка: тип
+ * региона тут ничего не значит, значит ступень рельефа. Нейтральный тон
+ * достаётся тем 27.8 % суши, которых нет ни в одной названной форме, — поверх
+ * него ложится слой ступеней, обрезанный по границе.
+ */
+.china-map[data-map-variant='physical'] [data-region-id] {
+  fill: var(--map-relief-rest);
+}
+
+/*
  * Промах вспыхивает киноварью и гаснет. Гашение — переход в правиле области
  * выше, поэтому при prefers-reduced-motion токен длительности обнуляется и
  * отметка снимается мгновенно; саму вспышку это не отменяет, её длительность
@@ -1077,6 +1096,82 @@ button.text:hover:enabled {
   .china-map .city-label {
     transition: none;
   }
+}
+
+/*
+ * Физическая карта. Заливка формы означает ступень рельефа, а не тип региона;
+ * ступень названа словом в легенде, поэтому цвет здесь такой же
+ * несамостоятельный канал, как у типов региона.
+ */
+/*
+ * Форма рельефа не цель нажатия, а заливка: спрашивают о ней пока нигде, а
+ * область под ней выбирают и в физическом виде — карточка слева рассказывает о
+ * регионе в обоих. Без этого 72 % суши перестали бы отвечать на нажатие: цель
+ * находится по `[data-region-id]`, а у формы такого признака нет.
+ */
+.china-map .physical-layer .relief-shape {
+  pointer-events: none;
+  stroke: none;
+}
+
+.china-map .physical-layer .relief-shape[data-step='1'] {
+  fill: var(--map-relief-step-1);
+}
+
+.china-map .physical-layer .relief-shape[data-step='2'] {
+  fill: var(--map-relief-step-2);
+}
+
+.china-map .physical-layer .relief-shape[data-step='3'] {
+  fill: var(--map-relief-step-3);
+}
+
+.china-map .physical-layer .river-line {
+  fill: none;
+  stroke: var(--map-river);
+  stroke-width: var(--map-river-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/*
+ * Курсор ставится на всю карту, а не на линию: наводятся на полосу вокруг
+ * реки, и знать о ней может только тот, кто её и посчитал.
+ */
+.china-map[data-feature-hover='true'] {
+  cursor: pointer;
+}
+
+/*
+ * Толщина — второй канал у выбранной реки: одного цвета мало, а линия и есть
+ * весь объект, подсветить её заливкой нечем. Наведение помечено признаком, а
+ * не `:hover`: в полутора единицах ширины браузеру нечего ловить.
+ */
+.china-map .physical-layer .river-line[data-selected='true'],
+.china-map .physical-layer .river-line[data-hovered='true'],
+.china-map .physical-layer .river-line:focus-visible {
+  stroke-width: var(--map-river-width-strong);
+}
+
+.china-map .physical-layer .river-line:focus-visible {
+  outline: none;
+  stroke: var(--focus-on-paper);
+}
+
+/* В игре подпись объекта и есть ответ — та же утечка, что у подписей городов. */
+.china-map .physical-layer[data-labels='false'] .physical-label {
+  display: none;
+}
+
+.china-map .physical-label {
+  fill: var(--map-label);
+  font-family: var(--t-family-text);
+  font-size: 10px;
+  font-weight: var(--t-weight-bold);
+  paint-order: stroke;
+  pointer-events: none;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 3;
 }
 
 /* Города региона в карточке атласа: перечень, а не абзац. */
@@ -2223,6 +2318,79 @@ button.chip[aria-pressed='true'] {
 
 .membership-legend span[data-membership='outside'] {
   background: var(--map-outside);
+}
+
+/*
+ * Вид карты в атласе. Строка выбора — цель нажатия во всю свою ширину: попасть
+ * в кнопку радио размером с букву на телефоне нельзя (WCAG 2.5.8). Оба вида
+ * стоят рядом, а не переключателем «вкл/выкл»: у них равные права, и какой
+ * сейчас показан, видно по отметке, а не по догадке.
+ */
+.atlas-map-kind {
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-3);
+  padding: 0;
+}
+
+.atlas-map-kind legend {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  padding: 0 0 var(--s-2);
+}
+
+.atlas-map-kind label {
+  align-items: center;
+  border: var(--border-solid) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground);
+  cursor: pointer;
+  display: flex;
+  gap: var(--s-2);
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-4);
+}
+
+/*
+ * Легенда ступеней. Образец заливки идёт рядом со словом, а не вместо него:
+ * ступень названа словом, и цвет здесь — второй канал, а не единственный.
+ */
+.relief-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+}
+
+.relief-legend li {
+  align-items: center;
+  color: var(--text-on-ground);
+  display: flex;
+  font-size: var(--t-size-caption);
+  gap: var(--s-2);
+}
+
+.relief-legend .relief-swatch {
+  block-size: 12px;
+  border: var(--border-hair) solid var(--map-border);
+  display: inline-block;
+  inline-size: 16px;
+}
+
+.relief-legend .relief-swatch[data-step='1'] {
+  background: var(--map-relief-step-1);
+}
+
+.relief-legend .relief-swatch[data-step='2'] {
+  background: var(--map-relief-step-2);
+}
+
+.relief-legend .relief-swatch[data-step='3'] {
+  background: var(--map-relief-step-3);
 }
 
 .member-list {

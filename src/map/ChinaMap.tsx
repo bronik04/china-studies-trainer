@@ -9,11 +9,13 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
 import { CityLayer } from './CityLayer';
+import { PhysicalLayer } from './PhysicalLayer';
 import { cityPointsOfRegions } from './city-points';
 import {
   clampView,
   keyboardStep,
   panView,
+  pointAtClient,
   unitsPerPixel,
   viewBoxOf,
   WHOLE_MAP,
@@ -27,6 +29,7 @@ import {
   type RegionProgressState,
 } from './region-progress';
 import { isRegionSelectable, type AnswerState } from './region-selection';
+import { RIVER_HIT_RADIUS_UNITS, riverAt } from './river-hit';
 import { RegionAnswerList } from './RegionAnswerList';
 
 export type { AnswerState } from './region-selection';
@@ -52,8 +55,14 @@ type ChinaMapProps = {
    * `progress` — карта освоенности в кабинете: цвет означает, что ученик уже
    * успел с этим регионом.
    * `membership` — карта коллекции: цвет означает, входит ли регион в неё.
+   * `physical` — физическая: заливка означает ступень рельефа, поверх неё реки.
    */
-  readonly variant?: 'reference' | 'fill' | 'progress' | 'membership';
+  readonly variant?:
+    | 'reference'
+    | 'fill'
+    | 'progress'
+    | 'membership'
+    | 'physical';
   readonly progressStates?: Readonly<Record<string, RegionProgressState>>;
   /**
    * Регионы коллекции для `variant="membership"`. Пустой список — законное
@@ -90,6 +99,10 @@ type ChinaMapProps = {
   readonly selectedCityId?: string | null;
   readonly onSelectCity?: (cityId: string) => void;
   readonly showsCityLabels?: boolean;
+  /** Выбранный объект физической географии — река или форма рельефа. */
+  readonly selectedFeatureId?: string | null;
+  readonly onSelectFeature?: (featureId: string) => void;
+  readonly showsPhysicalLabels?: boolean;
 };
 
 /**
@@ -125,6 +138,9 @@ const PAN_KEYS: Readonly<Record<string, readonly [number, number]>> = {
  * исходного файла.
  */
 const MAP_HTML = { __html: mapMarkup };
+
+/** Где случилось нажатие. Всё, что нужно от события указателя. */
+type PointerPoint = { readonly clientX: number; readonly clientY: number };
 
 /**
  * Нажатие принимает и сам контур, и увеличенная цель для мелких областей.
@@ -165,6 +181,9 @@ export function ChinaMap({
   selectedCityId = null,
   onSelectCity,
   showsCityLabels = true,
+  selectedFeatureId = null,
+  onSelectFeature,
+  showsPhysicalLabels = true,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   /*
@@ -197,6 +216,11 @@ export function ChinaMap({
    * движение мыши тащила бы за собой все 34 области.
    */
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  /*
+   * Река под указателем. Держится здесь, а не в CSS `:hover`: наводятся не на
+   * саму линию, а на полосу вокруг неё, и браузер о такой цели не знает.
+   */
+  const [hoveredFeatureId, setHoveredFeatureId] = useState<string | null>(null);
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
 
   useEffect(() => {
@@ -402,7 +426,29 @@ export function ChinaMap({
 
   const selectionRules = { interactive, paused, answerStates, outcomes };
 
-  function selectTarget(target: EventTarget | null) {
+  /**
+   * Какой объект физической географии под указателем.
+   *
+   * У реки нет узла-цели: линия шириной в полторы единицы на экране уже 1 px,
+   * и попасть в неё рукой нельзя, а лента в 24 px вокруг каждой невыполнима —
+   * Янцзы и Ланьцанцзян сближаются до 4 единиц (решение от 2026-08-05). Точку
+   * разрешает расстояние, и порог считается от текущего увеличения: на
+   * увеличении те же 24 px занимают меньше единиц карты.
+   */
+  function featureAtClient(clientX: number, clientY: number): string | null {
+    const svg = mapRef.current?.querySelector<SVGSVGElement>('svg');
+    if (svg === null || svg === undefined) {
+      return null;
+    }
+
+    const [x, y] = pointAtClient(view, svg.getBoundingClientRect(), clientX, clientY);
+
+    return riverAt(x, y, RIVER_HIT_RADIUS_UNITS / view.zoom);
+  }
+
+  const resolvesFeatures = variant === 'physical' && onSelectFeature !== undefined;
+
+  function selectTarget(target: EventTarget | null, point?: PointerPoint) {
     /*
      * Нажатие после перетаскивания не выбирает регион: рука остановилась над
      * областью, но выбирать её не собиралась. Признак снимается здесь, а не
@@ -412,6 +458,19 @@ export function ChinaMap({
     drag.current = null;
     if (dragged) {
       return;
+    }
+
+    /*
+     * Река идёт перед областью: она нарисована поверх, и рука, целившая в
+     * линию, метила в неё, а не в подложку. Точки без реки поблизости
+     * достаются области, как и на любом другом виде.
+     */
+    if (resolvesFeatures && point !== undefined) {
+      const featureId = featureAtClient(point.clientX, point.clientY);
+      if (featureId !== null) {
+        onSelectFeature?.(featureId);
+        return;
+      }
     }
 
     const regionId = getRegionId(target);
@@ -469,10 +528,21 @@ export function ChinaMap({
           className="china-map"
           data-map-variant={variant}
           data-can-pan={canPan}
+          data-feature-hover={hoveredFeatureId !== null}
           ref={mapRef}
-          onClick={(event) => selectTarget(event.target)}
+          onClick={(event) => selectTarget(event.target, event)}
           onPointerDown={beginDrag}
-          onPointerMove={continueDrag}
+          onPointerMove={(event) => {
+            continueDrag(event);
+
+            if (resolvesFeatures && drag.current === null) {
+              const featureId = featureAtClient(event.clientX, event.clientY);
+              setHoveredFeatureId((previous) =>
+                previous === featureId ? previous : featureId,
+              );
+            }
+          }}
+          onPointerLeave={() => setHoveredFeatureId(null)}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onKeyDown={(event) => {
@@ -517,6 +587,23 @@ export function ChinaMap({
                 onSelect={onSelectCity}
                 showsLabels={showsCityLabels}
                 zoom={view.zoom}
+              />,
+              citySvg,
+            )
+          : null}
+        {/*
+          Слой физической карты идёт тем же порталом и по той же причине, что
+          слой городов: система координат и увеличение достаются ему от самой
+          карты. Области под ним уже нарисованы и дают нейтральный тон тем
+          27.8 % суши, которых нет ни в одной названной форме.
+        */}
+        {variant === 'physical' && citySvg !== null
+          ? createPortal(
+              <PhysicalLayer
+                selectedFeatureId={selectedFeatureId}
+                hoveredFeatureId={hoveredFeatureId}
+                onSelect={onSelectFeature}
+                showsLabels={showsPhysicalLabels}
               />,
               citySvg,
             )
