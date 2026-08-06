@@ -465,12 +465,21 @@ p {
     min-block-size: 0;
   }
 
+  /*
+   * Три строки: переключатель вида, карта, легенда ступеней. Карта берёт
+   * остаток и потому стоит средней строкой — при `block-size: 100%` у рамки
+   * одной строки на всё не хватило бы, и легенда уехала бы под нижний край
+   * кадра, который здесь не прокручивается.
+   */
   .atlas-map {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     min-block-size: 0;
   }
 
   .atlas-map .map-section {
     block-size: 100%;
+    min-block-size: 0;
   }
 
   /*
@@ -1094,7 +1103,14 @@ button.text:hover:enabled {
  * ступень названа словом в легенде, поэтому цвет здесь такой же
  * несамостоятельный канал, как у типов региона.
  */
+/*
+ * Форма рельефа не цель нажатия, а заливка: спрашивают о ней пока нигде, а
+ * область под ней выбирают и в физическом виде — карточка слева рассказывает о
+ * регионе в обоих. Без этого 72 % суши перестали бы отвечать на нажатие: цель
+ * находится по `[data-region-id]`, а у формы такого признака нет.
+ */
 .china-map .physical-layer .relief-shape {
+  pointer-events: none;
   stroke: none;
 }
 
@@ -2297,6 +2313,79 @@ button.chip[aria-pressed='true'] {
 
 .membership-legend span[data-membership='outside'] {
   background: var(--map-outside);
+}
+
+/*
+ * Вид карты в атласе. Строка выбора — цель нажатия во всю свою ширину: попасть
+ * в кнопку радио размером с букву на телефоне нельзя (WCAG 2.5.8). Оба вида
+ * стоят рядом, а не переключателем «вкл/выкл»: у них равные права, и какой
+ * сейчас показан, видно по отметке, а не по догадке.
+ */
+.atlas-map-kind {
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-3);
+  padding: 0;
+}
+
+.atlas-map-kind legend {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  padding: 0 0 var(--s-2);
+}
+
+.atlas-map-kind label {
+  align-items: center;
+  border: var(--border-solid) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground);
+  cursor: pointer;
+  display: flex;
+  gap: var(--s-2);
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-4);
+}
+
+/*
+ * Легенда ступеней. Образец заливки идёт рядом со словом, а не вместо него:
+ * ступень названа словом, и цвет здесь — второй канал, а не единственный.
+ */
+.relief-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+}
+
+.relief-legend li {
+  align-items: center;
+  color: var(--text-on-ground);
+  display: flex;
+  font-size: var(--t-size-caption);
+  gap: var(--s-2);
+}
+
+.relief-legend .relief-swatch {
+  block-size: 12px;
+  border: var(--border-hair) solid var(--map-border);
+  display: inline-block;
+  inline-size: 16px;
+}
+
+.relief-legend .relief-swatch[data-step='1'] {
+  background: var(--map-relief-step-1);
+}
+
+.relief-legend .relief-swatch[data-step='2'] {
+  background: var(--map-relief-step-2);
+}
+
+.relief-legend .relief-swatch[data-step='3'] {
+  background: var(--map-relief-step-3);
 }
 
 .member-list {

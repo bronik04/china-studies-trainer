@@ -81,3 +81,16 @@ it('даёт выход в кабинет и в тренировку', () => {
   expect(onExit).toHaveBeenCalled();
   expect(onTrain).toHaveBeenCalled();
 });
+
+it('переключает карту между политической и физической', () => {
+  const { container } = renderAtlas();
+
+  expect(container.querySelector('.physical-layer')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+
+  expect(container.querySelector('.physical-layer')).toBeInTheDocument();
+  expect(screen.getByText('Нагорье')).toBeInTheDocument();
+  expect(screen.getByText('Плато и котловины')).toBeInTheDocument();
+  expect(screen.getByText('Равнины')).toBeInTheDocument();
+});

@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { cityById, citiesOfRegion } from '../../content/cities';
-import type { Region, RegionKind } from '../../content/types';
+import type { Region, RegionKind, ReliefStep } from '../../content/types';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
 import type { MapZoom } from '../../map/MapControls';
@@ -16,6 +17,29 @@ const KIND_LABELS: Readonly<Record<RegionKind, string>> = {
   municipality: 'Город центрального подчинения',
   sar: 'Специальный административный район',
 };
+
+/**
+ * Ступени рельефа словами. Легенда обязательна: ступень — главное, что говорит
+ * физическая карта, и цвет не может быть единственным её каналом. Высоты даны
+ * как подсказка, а не как определение: ступени Китая — принятое членение, их
+ * границы идут по формам рельефа, а не по горизонтали.
+ */
+const RELIEF_LEGEND: readonly {
+  readonly step: ReliefStep;
+  readonly title: string;
+  readonly hint: string;
+}[] = [
+  { step: 1, title: 'Нагорье', hint: 'выше 4000 м' },
+  { step: 2, title: 'Плато и котловины', hint: '1000–2000 м' },
+  { step: 3, title: 'Равнины', hint: 'ниже 500 м' },
+];
+
+const MAP_KINDS = [
+  ['political', 'Политическая'],
+  ['physical', 'Физическая'],
+] as const;
+
+type MapKind = (typeof MAP_KINDS)[number][0];
 
 export type AtlasPageProps = {
   readonly regions: readonly Region[];
@@ -46,6 +70,11 @@ export function AtlasPage({
   onExit,
   onTrain,
 }: AtlasPageProps) {
+  /*
+   * Вид карты живёт здесь, а не в `App`: он не меняет ни прогресса, ни раунда
+   * и нужен одной этой поверхности.
+   */
+  const [mapKind, setMapKind] = useState<MapKind>('political');
   const selected = regions.find((region) => region.id === selectedRegionId);
   const ordered = [...regions].sort((left, right) =>
     left.nameRu.localeCompare(right.nameRu, 'ru'),
@@ -106,6 +135,21 @@ export function AtlasPage({
           О выбранном регионе рассказывает карточка слева.
         */}
         <div className="atlas-map">
+          <fieldset className="atlas-map-kind">
+            <legend>Вид карты</legend>
+            {MAP_KINDS.map(([value, label]) => (
+              <label key={value}>
+                <input
+                  type="radio"
+                  name="atlas-map-kind"
+                  value={value}
+                  checked={mapKind === value}
+                  onChange={() => setMapKind(value)}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+          </fieldset>
           <ChinaMap
             regions={regions}
             selectedRegionId={selectedRegionId}
@@ -114,8 +158,30 @@ export function AtlasPage({
             zoom={zoom}
             onZoomChange={onZoomChange}
             usage="answer"
-            showsCities
+            variant={mapKind === 'physical' ? 'physical' : 'reference'}
+            /*
+             * Города прячутся вместе с политическим видом не ради чистоты
+             * картинки: слой ступеней рисуется после слоя городов и заливкой
+             * закрыл бы их знаки — остались бы подписи без точек.
+             */
+            showsCities={mapKind === 'political'}
           />
+          {/*
+            Легенда стоит под картой и только у физического вида: на
+            политической тип региона назван словом в карточке слева, а ступень
+            рельефа назвать негде — форма не выбирается и карточки у неё нет.
+          */}
+          {mapKind === 'physical' ? (
+            <ul className="relief-legend">
+              {RELIEF_LEGEND.map((entry) => (
+                <li key={entry.step}>
+                  <span className="relief-swatch" data-step={entry.step} />
+                  <span>{entry.title}</span>
+                  <span className="status-note">{entry.hint}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </div>
       <footer className="atlas-footer">
