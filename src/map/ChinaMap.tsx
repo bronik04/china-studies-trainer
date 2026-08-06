@@ -9,7 +9,7 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
 import { CityLayer } from './CityLayer';
-import { PhysicalLayer } from './PhysicalLayer';
+import { PhysicalLayer, type FeatureOutcome } from './PhysicalLayer';
 import { cityPointsOfRegions } from './city-points';
 import {
   clampView,
@@ -103,6 +103,8 @@ type ChinaMapProps = {
   readonly selectedFeatureId?: string | null;
   readonly onSelectFeature?: (featureId: string) => void;
   readonly showsPhysicalLabels?: boolean;
+  /** Исход ответа по объектам физической карты: помечается штриховкой и штрихом. */
+  readonly featureOutcomes?: Readonly<Record<string, FeatureOutcome>>;
 };
 
 /**
@@ -113,6 +115,7 @@ const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
 const NO_OUTCOMES: Readonly<Record<string, RegionOutcome>> = {};
 const NO_PROGRESS_STATES: Readonly<Record<string, RegionProgressState>> = {};
 const NO_MEMBERS: readonly string[] = [];
+const NO_FEATURE_OUTCOMES: Readonly<Record<string, FeatureOutcome>> = {};
 
 /**
  * Насколько рука должна уехать, чтобы это считалось перетаскиванием, а не
@@ -197,6 +200,7 @@ export function ChinaMap({
   selectedFeatureId = null,
   onSelectFeature,
   showsPhysicalLabels = true,
+  featureOutcomes = NO_FEATURE_OUTCOMES,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   /*
@@ -620,6 +624,7 @@ export function ChinaMap({
                 hoveredFeatureId={hoveredFeatureId}
                 onSelect={onSelectFeature}
                 showsLabels={showsPhysicalLabels}
+                featureOutcomes={featureOutcomes}
               />,
               citySvg,
             )

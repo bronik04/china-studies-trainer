@@ -99,6 +99,27 @@ describe('PhysicalLayer', () => {
     expect(container.querySelectorAll('.region-outlines use')).toHaveLength(34);
   });
 
+  it('исход ответа помечает и форму, и реку', () => {
+    const { container } = renderLayer({
+      featureOutcomes: { gobi: 'incorrect', yangtze: 'correct' },
+    });
+
+    expect(
+      container.querySelector('.relief-shape[data-feature-id="gobi"]'),
+    ).toHaveAttribute('data-outcome', 'incorrect');
+    expect(
+      container.querySelector('.river-line[data-feature-id="yangtze"]'),
+    ).toHaveAttribute('data-outcome', 'correct');
+    // Копия контура под штриховку: у самой формы заливка остаётся ступенью.
+    expect(container.querySelectorAll('.relief-outcome')).toHaveLength(1);
+  });
+
+  it('без исходов признака нет ни у кого', () => {
+    const { container } = renderLayer();
+
+    expect(container.querySelector('[data-outcome]')).toBeNull();
+  });
+
   it('подписи скрываются по требованию: в игре имя объекта и есть ответ', () => {
     const { container } = renderLayer({ showsLabels: false });
 

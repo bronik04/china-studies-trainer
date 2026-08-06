@@ -1191,6 +1191,37 @@ button.text:hover:enabled {
   stroke: var(--focus-on-paper);
 }
 
+/*
+ * Исход у формы — штриховка поверх её ступени, у реки — толщина и штрих.
+ * Второй канал обязателен: цвет здесь занят тремя ступенями, и перекрасить
+ * форму значило бы соврать про её высоту.
+ */
+.china-map .physical-layer .relief-outcome {
+  pointer-events: none;
+  stroke: none;
+}
+
+.china-map .physical-layer .relief-outcome[data-outcome='correct'] {
+  fill: url('#map-hatch-physical-correct');
+}
+
+.china-map .physical-layer .relief-outcome[data-outcome='incorrect'] {
+  fill: url('#map-hatch-physical-incorrect');
+}
+
+.china-map .physical-layer .river-line[data-outcome] {
+  stroke-width: var(--map-river-width-strong);
+}
+
+.china-map .physical-layer .river-line[data-outcome='correct'] {
+  stroke: var(--map-correct-mark);
+}
+
+.china-map .physical-layer .river-line[data-outcome='incorrect'] {
+  stroke: var(--map-incorrect-mark-relief);
+  stroke-dasharray: 6 3;
+}
+
 /* В игре подпись объекта и есть ответ — та же утечка, что у подписей городов. */
 .china-map .physical-layer[data-labels='false'] .physical-label {
   display: none;

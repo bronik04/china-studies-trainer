@@ -64,6 +64,12 @@ const LABELLED: readonly { featureId: string; x: number; y: number }[] = [
 
 const CLIP_ID = 'china-land-clip';
 
+/** Литерал `{}` в параметрах создавал бы новый объект на каждой отрисовке. */
+const NO_OUTCOMES: Readonly<Record<string, FeatureOutcome>> = {};
+
+/** Чем кончился ответ по объекту. */
+export type FeatureOutcome = 'correct' | 'incorrect';
+
 export type PhysicalLayerProps = {
   readonly selectedFeatureId?: string | null;
   /**
@@ -92,6 +98,12 @@ export type PhysicalLayerProps = {
   readonly onSelect?: (featureId: string) => void;
   /** Ложь — подписи скрыты: в игре подпись объекта и есть ответ. */
   readonly showsLabels?: boolean;
+  /**
+   * Чем кончился ответ по объекту. Пусто до ответа: на физической карте
+   * состояние не бывает цветом — он занят тремя ступенями, — и до ответа
+   * помечать нечего.
+   */
+  readonly featureOutcomes?: Readonly<Record<string, FeatureOutcome>>;
 };
 
 export function PhysicalLayer({
@@ -99,6 +111,7 @@ export function PhysicalLayer({
   hoveredFeatureId = null,
   onSelect,
   showsLabels = true,
+  featureOutcomes = NO_OUTCOMES,
 }: PhysicalLayerProps) {
   const [hoveredShapeId, setHoveredShapeId] = useState<string | null>(null);
   const hovered = hoveredFeatureId ?? hoveredShapeId;
@@ -135,6 +148,9 @@ export function PhysicalLayer({
               data-step={shape.step}
               data-feature-id={shape.featureId}
               data-selected={isTarget && shape.featureId === selectedFeatureId}
+              data-outcome={
+                isTarget ? featureOutcomes[shape.featureId!] : undefined
+              }
               role={answers ? 'button' : undefined}
               aria-label={isTarget ? NAME_OF.get(shape.featureId!) : undefined}
               aria-hidden={isTarget ? undefined : 'true'}
@@ -173,6 +189,29 @@ export function PhysicalLayer({
         ))}
       </g>
 
+      {/*
+        Копия контура под штриховку исхода. Заливка нарисованной формы
+        заменяется целиком: поставить ей `fill: url(#…)` — и ступень исчезнет,
+        а между штрихами покажется область региона под слоем. Поэтому форма с
+        исходом рисуется дважды. Копий не больше двух за вопрос: правильный
+        объект и, если ученик промахнулся, выбранный.
+      */}
+      <g className="relief-outcomes" clipPath={`url(#${CLIP_ID})`}>
+        {RELIEF_SHAPES.filter(
+          (shape) =>
+            shape.featureId !== undefined &&
+            featureOutcomes[shape.featureId] !== undefined,
+        ).map((shape) => (
+          <path
+            key={shape.key}
+            className="relief-outcome"
+            d={shape.d}
+            data-outcome={featureOutcomes[shape.featureId!]}
+            aria-hidden="true"
+          />
+        ))}
+      </g>
+
       <g className="rivers" clipPath={`url(#${CLIP_ID})`}>
         {RIVER_LINES.map((line) => {
           const label = NAME_OF.get(line.featureId) ?? line.featureId;
@@ -185,6 +224,7 @@ export function PhysicalLayer({
                 data-feature-id={line.featureId}
                 data-selected={line.featureId === selectedFeatureId}
                 data-hovered={line.featureId === hoveredFeatureId}
+                data-outcome={featureOutcomes[line.featureId]}
                 role={onSelect ? 'button' : undefined}
                 aria-label={label}
                 tabIndex={onSelect ? 0 : -1}
