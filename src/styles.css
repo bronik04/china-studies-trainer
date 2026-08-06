@@ -1079,6 +1079,70 @@ button.text:hover:enabled {
   }
 }
 
+/*
+ * Физическая карта. Заливка формы означает ступень рельефа, а не тип региона;
+ * ступень названа словом в легенде, поэтому цвет здесь такой же
+ * несамостоятельный канал, как у типов региона.
+ */
+.china-map .physical-layer .relief-shape {
+  stroke: none;
+}
+
+.china-map .physical-layer .relief-shape[data-step='1'] {
+  fill: var(--map-relief-step-1);
+}
+
+.china-map .physical-layer .relief-shape[data-step='2'] {
+  fill: var(--map-relief-step-2);
+}
+
+.china-map .physical-layer .relief-shape[data-step='3'] {
+  fill: var(--map-relief-step-3);
+}
+
+.china-map .physical-layer .river-line {
+  fill: none;
+  stroke: var(--map-river);
+  stroke-width: var(--map-river-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.china-map .physical-layer[data-interactive='true'] .river-line {
+  cursor: pointer;
+}
+
+/*
+ * Толщина — второй канал у выбранной реки: одного цвета мало, а линия и есть
+ * весь объект, подсветить её заливкой нечем.
+ */
+.china-map .physical-layer .river-line[data-selected='true'],
+.china-map .physical-layer .river-line:hover,
+.china-map .physical-layer .river-line:focus-visible {
+  stroke-width: var(--map-river-width-strong);
+}
+
+.china-map .physical-layer .river-line:focus-visible {
+  outline: none;
+  stroke: var(--focus-on-paper);
+}
+
+/* В игре подпись объекта и есть ответ — та же утечка, что у подписей городов. */
+.china-map .physical-layer[data-labels='false'] .physical-label {
+  display: none;
+}
+
+.china-map .physical-label {
+  fill: var(--map-label);
+  font-family: var(--t-family-text);
+  font-size: 10px;
+  font-weight: var(--t-weight-bold);
+  paint-order: stroke;
+  pointer-events: none;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 3;
+}
+
 /* Города региона в карточке атласа: перечень, а не абзац. */
 .region-city-list {
   color: var(--text-on-ground-muted);
