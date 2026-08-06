@@ -25,7 +25,11 @@ import {
   type Frame,
 } from '../src/map/polyline';
 import { projectLonLat } from '../src/map/projection';
-import type { Point } from '../src/map/svg-path';
+import {
+  largestInscribedCircle,
+  type InscribedCircle,
+  type Point,
+} from '../src/map/svg-path';
 import {
   MAP_VIEWBOX_HEIGHT,
   MAP_VIEWBOX_MIN_X,
@@ -175,11 +179,23 @@ const shapes = source.landforms
       )
       .filter((ring) => ring.length > 3);
 
+    const featureId = SHAPE_FEATURE_IDS[landform.key];
+
     return {
       key: landform.key,
       step: RELIEF_STEPS[landform.key],
-      featureId: SHAPE_FEATURE_IDS[landform.key],
+      featureId,
       rings,
+      /*
+       * Точка подписи считается здесь, а не на отрисовке: `largestInscribedCircle`
+       * — перебор по сетке в три прохода, и для региона его тоже считают на
+       * сборке (`generate-region-palette.ts`), а не в браузере. Нужна она только
+       * шести спрашиваемым формам: остальные тридцать две не подписываются.
+       */
+      label:
+        featureId === undefined
+          ? undefined
+          : (largestInscribedCircle(rings) as InscribedCircle),
       area: rings.reduce((sum, ring) => sum + ringArea(ring), 0),
     };
   })
@@ -216,6 +232,14 @@ export type ReliefShape = {
   readonly d: string;
   /** Задан — форма не только заливает фон, но и спрашивается. */
   readonly featureId?: string;
+  /**
+   * Куда ставить подпись: середина наибольшей вписанной окружности. Есть
+   * ровно у тех форм, у которых есть \`featureId\`, — декоративные не
+   * подписываются. Габаритная середина не годится: у формы-подковы она
+   * оказалась бы вне контура.
+   */
+  readonly labelX?: number;
+  readonly labelY?: number;
 };
 
 export type RiverLine = {
@@ -237,6 +261,10 @@ ${shapes
     (shape) =>
       `  { key: ${quote(shape.key)}, step: ${shape.step}, ${
         shape.featureId ? `featureId: ${quote(shape.featureId)}, ` : ''
+      }${
+        shape.label
+          ? `labelX: ${shape.label.x.toFixed(2)}, labelY: ${shape.label.y.toFixed(2)}, `
+          : ''
       }d: ${quote(toPathData(shape.rings, { closed: true }))} },`,
   )
   .join('\n')}
