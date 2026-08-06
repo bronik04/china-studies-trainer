@@ -1228,6 +1228,74 @@ button.text:hover:enabled {
   stroke: var(--focus-on-paper);
 }
 
+/*
+ * Озеро заливается тоном линии реки: он уже проверен на 3:1 ко всем четырём
+ * заливкам ступеней, и заводить пятую краску ради воды незачем — вода на этой
+ * карте одна.
+ */
+.china-map .physical-layer .lake-shape {
+  fill: var(--map-river);
+  pointer-events: none;
+  stroke: none;
+}
+
+/*
+ * Знак нужен там, где контур меньше пятна: на целом виде Чаоху занимает около
+ * пяти пикселей, и без знака его не видно вовсе.
+ */
+.china-map .physical-layer .lake-mark {
+  fill: var(--map-river);
+  pointer-events: none;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 1;
+}
+
+.china-map .physical-layer .lake-hit {
+  fill: transparent;
+}
+
+.china-map .physical-layer[data-interactive='true'] .lake-hit {
+  cursor: pointer;
+}
+
+.china-map .physical-layer .lake-leader {
+  pointer-events: none;
+  stroke: var(--map-label);
+  stroke-dasharray: 2 2;
+  stroke-width: 0.7;
+}
+
+/*
+ * Исход у озера — кольцо, а не штриховка: на пятне в пять пикселей штриховку
+ * не разглядеть. Тот же приём, которым помечается спрошенный город.
+ */
+.china-map .physical-layer .lake-halo {
+  fill: none;
+  pointer-events: none;
+  stroke: none;
+}
+
+.china-map .physical-layer .lake-halo[data-outcome='correct'] {
+  stroke: var(--map-correct-mark);
+  stroke-width: 2;
+}
+
+.china-map .physical-layer .lake-halo[data-outcome='incorrect'] {
+  stroke: var(--map-incorrect-mark-relief);
+  stroke-dasharray: 3 2;
+  stroke-width: 2;
+}
+
+.china-map .physical-layer .lake-hit:focus-visible {
+  outline: none;
+}
+
+.china-map .physical-layer .lake-hit:focus-visible + .lake-mark,
+.china-map .physical-layer .lake-mark[data-selected='true'] {
+  stroke: var(--focus-on-paper);
+  stroke-width: 2;
+}
+
 /* В игре подпись объекта и есть ответ — та же утечка, что у подписей городов. */
 .china-map .physical-layer[data-labels='false'] .physical-label {
   display: none;

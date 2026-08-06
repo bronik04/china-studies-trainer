@@ -614,6 +614,7 @@ export function ChinaMap({
                 onSelect={onSelectFeature}
                 showsLabels={showsPhysicalLabels}
                 featureOutcomes={featureOutcomes}
+                zoom={view.zoom}
               />,
               citySvg,
             )
