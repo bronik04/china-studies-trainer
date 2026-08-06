@@ -2,6 +2,7 @@ import {
   clampView,
   keyboardStep,
   panView,
+  pointAtClient,
   unitsPerPixel,
   viewBoxOf,
   WHOLE_MAP,
@@ -81,4 +82,60 @@ it('шаг клавиатуры уменьшается вместе с види�
 
 it('не двигает вид, у которого середина уже на месте', () => {
   expect(clampView(WHOLE_MAP)).toEqual(WHOLE_MAP);
+});
+
+describe('pointAtClient', () => {
+  /** Рамка ровно по пропорции карты: полей нет, масштаб единый. */
+  const EXACT = { left: 100, top: 50, width: 806, height: 601 } as const;
+
+  it('середина рамки — середина вида', () => {
+    const [x, y] = pointAtClient(
+      WHOLE_MAP,
+      EXACT,
+      EXACT.left + EXACT.width / 2,
+      EXACT.top + EXACT.height / 2,
+    );
+
+    expect(x).toBeCloseTo(WHOLE_MAP.centerX, 6);
+    expect(y).toBeCloseTo(WHOLE_MAP.centerY, 6);
+  });
+
+  it('левый верхний угол рамки — начало viewBox', () => {
+    const [x, y] = pointAtClient(WHOLE_MAP, EXACT, EXACT.left, EXACT.top);
+
+    expect(x).toBeCloseTo(MAP_VIEWBOX_MIN_X, 6);
+    expect(y).toBeCloseTo(MAP_VIEWBOX_MIN_Y, 6);
+  });
+
+  it('на увеличении единиц в пикселе меньше', () => {
+    const zoomed = zoomView(WHOLE_MAP, 2);
+    const [x] = pointAtClient(zoomed, EXACT, EXACT.left + 100, EXACT.top);
+    const [whole] = pointAtClient(WHOLE_MAP, EXACT, EXACT.left + 100, EXACT.top);
+
+    expect(x - MAP_VIEWBOX_MIN_X - MAP_VIEWBOX_WIDTH / 4).toBeCloseTo(
+      (whole - MAP_VIEWBOX_MIN_X) / 2,
+      6,
+    );
+  });
+
+  /**
+   * Рамка шире пропорции: `preserveAspectRatio` по умолчанию вписывает карту
+   * целиком и оставляет поля по бокам. Без учёта полей нажатие уезжало бы тем
+   * сильнее, чем шире окно.
+   */
+  it('поле от вписывания не сдвигает ответ', () => {
+    const wide = { left: 0, top: 0, width: 1612, height: 601 } as const;
+    const [x, y] = pointAtClient(WHOLE_MAP, wide, wide.width / 2, wide.height / 2);
+
+    expect(x).toBeCloseTo(WHOLE_MAP.centerX, 6);
+    expect(y).toBeCloseTo(WHOLE_MAP.centerY, 6);
+  });
+
+  it('и по высоте тоже', () => {
+    const tall = { left: 0, top: 0, width: 806, height: 1202 } as const;
+    const [x, y] = pointAtClient(WHOLE_MAP, tall, tall.width / 2, tall.height / 2);
+
+    expect(x).toBeCloseTo(WHOLE_MAP.centerX, 6);
+    expect(y).toBeCloseTo(WHOLE_MAP.centerY, 6);
+  });
 });

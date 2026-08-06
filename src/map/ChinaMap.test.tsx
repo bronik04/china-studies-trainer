@@ -1,6 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../content/regions';
 import { ChinaMap } from './ChinaMap';
+import { RIVER_SHAPES } from './river-hit';
+import {
+  MAP_VIEWBOX_HEIGHT,
+  MAP_VIEWBOX_MIN_X,
+  MAP_VIEWBOX_MIN_Y,
+  MAP_VIEWBOX_WIDTH,
+} from './target-size';
 
 it('selects Sichuan when its map area receives Enter', () => {
   const select = vi.fn();
@@ -593,4 +600,79 @@ it('в остальных видах физического слоя нет', ()
   );
 
   expect(container.querySelector('.physical-layer')).not.toBeInTheDocument();
+});
+
+/** Точка на самой длинной части линии реки: берём её из настоящей геометрии. */
+function pointOnRiver(featureId: string): readonly [number, number] {
+  const parts = RIVER_SHAPES.find((river) => river.featureId === featureId)!.parts;
+  const longest = parts.reduce(
+    (best, part) => (part.length > best.length ? part : best),
+    parts[0],
+  );
+
+  return longest[Math.floor(longest.length / 2)];
+}
+
+/**
+ * Карта в jsdom не имеет размеров, а перевод координат без них невозможен.
+ * Рамка задаётся ровно по viewBox: единица карты равна пикселю, и точку из
+ * геометрии можно подставить в событие без пересчёта.
+ */
+function renderPhysical(onSelectFeature: (featureId: string) => void) {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="physical"
+      onSelectFeature={onSelectFeature}
+    />,
+  );
+
+  const map = container.querySelector('.china-map')!;
+  const svg = map.querySelector('svg')!;
+  svg.getBoundingClientRect = () =>
+    ({
+      left: 0,
+      top: 0,
+      width: MAP_VIEWBOX_WIDTH,
+      height: MAP_VIEWBOX_HEIGHT,
+    }) as DOMRect;
+
+  const at = (point: readonly [number, number], dy = 0) => ({
+    clientX: point[0] - MAP_VIEWBOX_MIN_X,
+    clientY: point[1] - MAP_VIEWBOX_MIN_Y + dy,
+  });
+
+  return { container, map, at };
+}
+
+it('в физическом виде нажатие рядом с рекой отвечает рекой', () => {
+  const onSelectFeature = vi.fn();
+  const { map, at } = renderPhysical(onSelectFeature);
+
+  // Мимо линии на три единицы: в саму её ширину не попали, лента накрывает.
+  fireEvent.click(map, at(pointOnRiver('yangtze'), 3));
+
+  expect(onSelectFeature).toHaveBeenCalledWith('yangtze');
+});
+
+it('нажатие вдали от всех рек рекой не отвечает', () => {
+  const onSelectFeature = vi.fn();
+  const { map, at } = renderPhysical(onSelectFeature);
+
+  fireEvent.click(map, at([-10, -10]));
+
+  expect(onSelectFeature).not.toHaveBeenCalled();
+});
+
+it('река под курсором помечается, хотя курсор не на самой линии', () => {
+  const { container, map, at } = renderPhysical(() => {});
+
+  fireEvent.pointerMove(map, at(pointOnRiver('yellow-river'), 3));
+
+  expect(
+    container.querySelector('.river-line[data-feature-id="yellow-river"]'),
+  ).toHaveAttribute('data-hovered', 'true');
 });

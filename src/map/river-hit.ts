@@ -9,6 +9,14 @@
 import { RIVER_LINES } from './physical-geometry';
 import { distanceToPolylines } from './polyline';
 import { parseMapPath, type Point } from './svg-path';
+import { TARGET_DIAMETER_UNITS } from './city-hit-targets';
+
+/**
+ * Насколько далеко от линии точка ещё принадлежит реке — в единицах карты при
+ * опорной ширине. Половина той же ленты в 24 px, которой мерят цель города:
+ * порог задаёт ширину полосы вокруг линии, а не её радиус.
+ */
+export const RIVER_HIT_RADIUS_UNITS = TARGET_DIAMETER_UNITS / 2;
 
 export type RiverShape = {
   readonly featureId: string;

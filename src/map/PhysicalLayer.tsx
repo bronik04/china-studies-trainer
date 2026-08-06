@@ -48,10 +48,21 @@ const CLIP_ID = 'china-land-clip';
 export type PhysicalLayerProps = {
   readonly selectedFeatureId?: string | null;
   /**
+   * Река под указателем. Приходит снаружи, потому что наводятся не на саму
+   * линию, а на полосу вокруг неё: попасть рукой в полторы единицы ширины
+   * нельзя, и какая река под курсором, решает расстояние, а не браузер.
+   */
+  readonly hoveredFeatureId?: string | null;
+  /**
    * Задан — объекты отвечают на нажатие и получают фокус. Не задан — слой
    * только показывает: в атласе шесть новых остановок `Tab` оправданы, а на
    * чужой поверхности — нет. Имя объекта при этом остаётся: реки — то главное,
    * что говорит эта карта, и читалке экрана они названы в обоих случаях.
+   *
+   * Сам обработчик здесь отвечает только клавиатуре. Указатель разрешается
+   * расстоянием в `ChinaMap`: линия слишком тонка, чтобы быть целью, и
+   * ставить на неё `onClick` значило бы завести вторую дорогу к тому же
+   * действию — с другим правилом попадания.
    */
   readonly onSelect?: (featureId: string) => void;
   /** Ложь — подписи скрыты: в игре подпись объекта и есть ответ. */
@@ -60,6 +71,7 @@ export type PhysicalLayerProps = {
 
 export function PhysicalLayer({
   selectedFeatureId = null,
+  hoveredFeatureId = null,
   onSelect,
   showsLabels = true,
 }: PhysicalLayerProps) {
@@ -102,10 +114,10 @@ export function PhysicalLayer({
                 d={line.d}
                 data-feature-id={line.featureId}
                 data-selected={line.featureId === selectedFeatureId}
+                data-hovered={line.featureId === hoveredFeatureId}
                 role={onSelect ? 'button' : undefined}
                 aria-label={label}
                 tabIndex={onSelect ? 0 : -1}
-                onClick={onSelect ? () => onSelect(line.featureId) : undefined}
                 onKeyDown={
                   onSelect
                     ? (event) => {

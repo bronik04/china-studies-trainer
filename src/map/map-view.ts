@@ -95,3 +95,45 @@ export function unitsPerPixel(view: MapView, mapWidthPx: number): number {
 export function keyboardStep(view: MapView): number {
   return FULL.width / view.zoom / 10;
 }
+
+/** Прямоугольник карты на экране — та часть `DOMRect`, что здесь нужна. */
+export type ScreenRect = {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+};
+
+/**
+ * Где на карте оказалась точка экрана.
+ *
+ * Нужно там, где цель нажатия — не узел разметки: у реки её нет, и какая река
+ * под курсором, решает расстояние (`riverAt`). Считается тут, а не через
+ * `getScreenCTM`, по двум причинам: функция остаётся чистой и проверяемой, а
+ * `viewBox` и так живёт в этом модуле — двух источников правды о нём быть не
+ * должно.
+ *
+ * Поля учитываются: `preserveAspectRatio` по умолчанию (`xMidYMid meet`)
+ * вписывает карту целиком и делит остаток рамки поровну. Рамка атласа держит
+ * пропорцию карты, полей там нет, но полагаться на это нельзя — на другой
+ * поверхности рамка может оказаться любой.
+ */
+export function pointAtClient(
+  view: MapView,
+  rect: ScreenRect,
+  clientX: number,
+  clientY: number,
+): readonly [number, number] {
+  const { zoom, centerX, centerY } = clampView(view);
+  const boxWidth = FULL.width / zoom;
+  const boxHeight = FULL.height / zoom;
+
+  const scale = Math.min(rect.width / boxWidth, rect.height / boxHeight);
+  const padX = (rect.width - boxWidth * scale) / 2;
+  const padY = (rect.height - boxHeight * scale) / 2;
+
+  return [
+    centerX - boxWidth / 2 + (clientX - rect.left - padX) / scale,
+    centerY - boxHeight / 2 + (clientY - rect.top - padY) / scale,
+  ];
+}

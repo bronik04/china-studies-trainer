@@ -1134,16 +1134,21 @@ button.text:hover:enabled {
   stroke-linejoin: round;
 }
 
-.china-map .physical-layer[data-interactive='true'] .river-line {
+/*
+ * Курсор ставится на всю карту, а не на линию: наводятся на полосу вокруг
+ * реки, и знать о ней может только тот, кто её и посчитал.
+ */
+.china-map[data-feature-hover='true'] {
   cursor: pointer;
 }
 
 /*
  * Толщина — второй канал у выбранной реки: одного цвета мало, а линия и есть
- * весь объект, подсветить её заливкой нечем.
+ * весь объект, подсветить её заливкой нечем. Наведение помечено признаком, а
+ * не `:hover`: в полутора единицах ширины браузеру нечего ловить.
  */
 .china-map .physical-layer .river-line[data-selected='true'],
-.china-map .physical-layer .river-line:hover,
+.china-map .physical-layer .river-line[data-hovered='true'],
 .china-map .physical-layer .river-line:focus-visible {
   stroke-width: var(--map-river-width-strong);
 }

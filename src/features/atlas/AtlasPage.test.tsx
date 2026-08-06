@@ -94,3 +94,28 @@ it('переключает карту между политической и ф�
   expect(screen.getByText('Плато и котловины')).toBeInTheDocument();
   expect(screen.getByText('Равнины')).toBeInTheDocument();
 });
+
+it('в физическом виде выбранная река открывает свою карточку', () => {
+  renderAtlas();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+  fireEvent.keyDown(screen.getByLabelText(/Хуанхэ/), { key: 'Enter' });
+
+  const card = screen.getByTestId('atlas-region-card');
+
+  expect(card).toHaveTextContent('Хуанхэ');
+  expect(card).toHaveTextContent('黄河');
+  expect(card).toHaveTextContent('Река');
+});
+
+it('возврат к политической карте сбрасывает выбранный объект', () => {
+  renderAtlas('hunan');
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+  fireEvent.keyDown(screen.getByLabelText(/Хуанхэ/), { key: 'Enter' });
+  fireEvent.click(screen.getByRole('radio', { name: 'Политическая' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+
+  // Река осталась бы выбранной, если бы переключение вида её не снимало.
+  expect(screen.getByTestId('atlas-region-card')).toHaveTextContent('Хунань');
+});
