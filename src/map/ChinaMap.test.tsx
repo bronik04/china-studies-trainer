@@ -566,3 +566,31 @@ it('в режиме освоенности размечает области с�
   expect(hubei.getAttribute('data-progress-state')).toBe('in-progress');
   expect(sichuan.getAttribute('data-progress-state')).toBe('untouched');
 });
+
+it('вид physical показывает ступени рельефа и реки', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="physical"
+    />,
+  );
+
+  expect(container.querySelector('.physical-layer')).toBeInTheDocument();
+  expect(container.querySelectorAll('.river-line')).toHaveLength(6);
+});
+
+it('в остальных видах физического слоя нет', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+    />,
+  );
+
+  expect(container.querySelector('.physical-layer')).not.toBeInTheDocument();
+});

@@ -9,6 +9,7 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
 import { CityLayer } from './CityLayer';
+import { PhysicalLayer } from './PhysicalLayer';
 import { cityPointsOfRegions } from './city-points';
 import {
   clampView,
@@ -52,8 +53,14 @@ type ChinaMapProps = {
    * `progress` — карта освоенности в кабинете: цвет означает, что ученик уже
    * успел с этим регионом.
    * `membership` — карта коллекции: цвет означает, входит ли регион в неё.
+   * `physical` — физическая: заливка означает ступень рельефа, поверх неё реки.
    */
-  readonly variant?: 'reference' | 'fill' | 'progress' | 'membership';
+  readonly variant?:
+    | 'reference'
+    | 'fill'
+    | 'progress'
+    | 'membership'
+    | 'physical';
   readonly progressStates?: Readonly<Record<string, RegionProgressState>>;
   /**
    * Регионы коллекции для `variant="membership"`. Пустой список — законное
@@ -90,6 +97,10 @@ type ChinaMapProps = {
   readonly selectedCityId?: string | null;
   readonly onSelectCity?: (cityId: string) => void;
   readonly showsCityLabels?: boolean;
+  /** Выбранный объект физической географии — река или форма рельефа. */
+  readonly selectedFeatureId?: string | null;
+  readonly onSelectFeature?: (featureId: string) => void;
+  readonly showsPhysicalLabels?: boolean;
 };
 
 /**
@@ -165,6 +176,9 @@ export function ChinaMap({
   selectedCityId = null,
   onSelectCity,
   showsCityLabels = true,
+  selectedFeatureId = null,
+  onSelectFeature,
+  showsPhysicalLabels = true,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   /*
@@ -517,6 +531,22 @@ export function ChinaMap({
                 onSelect={onSelectCity}
                 showsLabels={showsCityLabels}
                 zoom={view.zoom}
+              />,
+              citySvg,
+            )
+          : null}
+        {/*
+          Слой физической карты идёт тем же порталом и по той же причине, что
+          слой городов: система координат и увеличение достаются ему от самой
+          карты. Области под ним уже нарисованы и дают нейтральный тон тем
+          27.8 % суши, которых нет ни в одной названной форме.
+        */}
+        {variant === 'physical' && citySvg !== null
+          ? createPortal(
+              <PhysicalLayer
+                selectedFeatureId={selectedFeatureId}
+                onSelect={onSelectFeature}
+                showsLabels={showsPhysicalLabels}
               />,
               citySvg,
             )
