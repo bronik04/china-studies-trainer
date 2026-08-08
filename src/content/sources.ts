@@ -49,4 +49,12 @@ export const sources = [
     accessedAt: '2026-08-05',
     covers: ['контуры форм рельефа Китая', 'русские и китайские названия форм для сверки'],
   },
+  {
+    id: 'natural-earth-lakes-5.1.2',
+    title: 'Natural Earth 10m Lakes and Reservoirs, версия 5.1.2',
+    organization: 'Natural Earth',
+    url: 'https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-lakes/',
+    accessedAt: '2026-08-06',
+    covers: ['контуры шести крупнейших озёр Китая'],
+  },
 ] as const satisfies readonly Source[];

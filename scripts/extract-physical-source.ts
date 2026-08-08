@@ -125,6 +125,35 @@ if (missing.length > 0) {
   throw new Error(`Не найдены формы рельефа: ${missing.join(', ')}`);
 }
 
+const lakeIds = new Set(
+  physicalFeatures.flatMap((feature) =>
+    feature.kind === 'lake' ? feature.lakeIds : [],
+  ),
+);
+
+const lakeFeatures = await load('ne_10m_lakes');
+const lakes = lakeFeatures
+  .filter(
+    (feature) =>
+      feature.geometry !== null && lakeIds.has(feature.properties.ne_id as number),
+  )
+  .map((feature) => ({
+    neId: feature.properties.ne_id as number,
+    rings: polygonRings(feature.geometry as Geometry).map((ring) => ring.map(round)),
+  }));
+
+/*
+ * Проверка на ненайденное обязательна и здесь: молча пропущенное озеро дало бы
+ * цель без геометрии, и поймал бы это уже `validate:map` — шагом позже и
+ * сообщением не о том.
+ */
+const missingLakes = [...lakeIds].filter(
+  (id) => !lakes.some((item) => item.neId === id),
+);
+if (missingLakes.length > 0) {
+  throw new Error(`Не найдены озёра: ${missingLakes.join(', ')}`);
+}
+
 const foundNums = new Set(rivers.map((river) => river.rivernum));
 const missingNums = [...riverNums].filter((num) => !foundNums.has(num));
 if (missingNums.length > 0) {
@@ -144,12 +173,15 @@ writeFileSync(
     generatedBy: 'scripts/extract-physical-source.ts (npm run extract:physical) — не править руками',
     rivers,
     landforms,
+    lakes,
   })}\n`,
 );
 
 const points =
   rivers.reduce((n, river) => n + river.parts.flat().length, 0) +
-  landforms.reduce((n, landform) => n + landform.rings.flat().length, 0);
+  landforms.reduce((n, landform) => n + landform.rings.flat().length, 0) +
+  lakes.reduce((n, lake) => n + lake.rings.flat().length, 0);
 console.info(
-  `Выжимка записана: отрезков рек ${rivers.length}, форм ${landforms.length}, точек ${points}`,
+  `Выжимка записана: отрезков рек ${rivers.length}, форм ${landforms.length}, ` +
+    `озёр ${lakes.length}, точек ${points}`,
 );

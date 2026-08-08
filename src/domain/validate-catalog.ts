@@ -278,6 +278,20 @@ export function validatePhysicalFeatures(
         }
         ownerOfSegment.set(num, feature.id);
       }
+    } else if (feature.kind === 'lake') {
+      /*
+       * У озера номер играет ту же роль, что у реки: имена в наборе не
+       * уникальны, и озеро без номера означало бы цель без геометрии.
+       */
+      if (feature.lakeIds.length === 0) {
+        errors.push(`У озера ${feature.id} не указано ни одного номера`);
+      }
+
+      for (const id of feature.lakeIds) {
+        if (!Number.isInteger(id)) {
+          errors.push(`Номер объекта не целое число у озера ${feature.id}: ${id}`);
+        }
+      }
     } else if (![1, 2, 3].includes(feature.step)) {
       errors.push(`Ступень рельефа у ${feature.id} вне 1..3: ${feature.step}`);
     }

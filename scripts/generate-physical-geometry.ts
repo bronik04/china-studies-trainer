@@ -52,6 +52,7 @@ const sourceJson = readFileSync(
 const source = JSON.parse(sourceJson) as {
   rivers: { rivernum: number; parts: [number, number][][] }[];
   landforms: { key: string; nameRu: string; nameZh: string; rings: [number, number][][] }[];
+  lakes: { neId: number; rings: [number, number][][] }[];
 };
 
 const OUT = new URL('../src/map/physical-geometry.ts', import.meta.url);
@@ -206,6 +207,35 @@ const shapes = source.landforms
    */
   .sort((left, right) => right.area - left.area);
 
+/*
+ * Озёра. Контур нужен, чтобы вода была водой, но целью он быть не может: 24 px
+ * на опорной ширине — это около 120 км, а Цинхай, самое большое озеро страны,
+ * даёт вписанную окружность около 13 px. Поэтому вместе с контуром считается
+ * точка знака, вокруг которой слой и строит цель нажатия.
+ */
+const lakesById = new Map<number, [number, number][][]>(
+  source.lakes.map((lake) => [lake.neId, lake.rings]),
+);
+
+const lakes = physicalFeatures
+  .filter((feature) => feature.kind === 'lake')
+  .map((feature) => {
+    const rings = (feature.kind === 'lake' ? feature.lakeIds : [])
+      .flatMap((neId) => lakesById.get(neId) ?? [])
+      .map((ring) =>
+        clipRingToFrame(simplifyRing(project(ring), SIMPLIFY_TOLERANCE_UNITS), FRAME),
+      )
+      .filter((ring) => ring.length > 3);
+
+    if (rings.length === 0) {
+      throw new Error(
+        `Нет колец у озера ${feature.id}. Запустите npm run extract:physical`,
+      );
+    }
+
+    return { featureId: feature.id, rings, mark: largestInscribedCircle(rings) };
+  });
+
 // --- Запись -----------------------------------------------------------------
 
 /*
@@ -275,6 +305,28 @@ ${shapes
  * ступеней и выжимка. \`validate:map\` сверяет его заново и роняет сборку, если
  * входы поменялись, а генератор не запускали.
  */
+export type LakeShape = {
+  readonly featureId: string;
+  readonly d: string;
+  /**
+   * Куда ставить знак: середина наибольшей вписанной окружности. Знак нужен
+   * потому, что сам контур меньше порога нажатия — 24 px на опорной ширине это
+   * около 120 км, а Цинхай, самое большое озеро страны, даёт около 13 px.
+   */
+  readonly markX: number;
+  readonly markY: number;
+};
+
+export const LAKE_SHAPES: readonly LakeShape[] = [
+${lakes
+  .map(
+    (lake) =>
+      `  { featureId: ${quote(lake.featureId)}, markX: ${lake.mark.x.toFixed(2)}, ` +
+      `markY: ${lake.mark.y.toFixed(2)}, d: ${quote(toPathData(lake.rings, { closed: true }))} },`,
+  )
+  .join('\n')}
+];
+
 export const INPUTS_FINGERPRINT = '${fingerprint}';
 
 export const RIVER_LINES: readonly RiverLine[] = [
@@ -287,5 +339,6 @@ ${riverLines
 writeFileSync(OUT, module);
 console.info(
   `Записано: форм ${shapes.length}, рек ${riverLines.length}, ` +
-    `размер ${(module.length / 1024).toFixed(0)} КБ, отпечаток входов ${fingerprint}`,
+    `озёр ${lakes.length}, размер ${(module.length / 1024).toFixed(0)} КБ, ` +
+    `отпечаток входов ${fingerprint}`,
 );

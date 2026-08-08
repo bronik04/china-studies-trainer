@@ -12,7 +12,8 @@ import { RELIEF_STEPS, SHAPE_FEATURE_IDS } from './data/relief-steps';
  * получена ли эта геометрия из тех входов, что лежат в репозитории сейчас.
  *
  * В отпечаток входит всё, что меняет результат: состав целей и номера
- * отрезков, разметка ступеней, привязка форм к целям и сама выжимка. Порядок
+ * отрезков, номера озёр, разметка ступеней, привязка форм к целям и сама
+ * выжимка. Порядок
  * ключей фиксируется сортировкой — иначе отпечаток менялся бы от перестановки
  * строк в справочнике, ничего не меняя по существу.
  */
@@ -21,11 +22,17 @@ export function physicalInputsFingerprint(
   sourceJson: string,
 ): string {
   const catalog = features
-    .map((feature) =>
-      feature.kind === 'river'
-        ? `river:${feature.id}:${[...feature.riverNums].sort((a, b) => a - b).join(',')}`
-        : `landform:${feature.id}:${feature.step}`,
-    )
+    .map((feature) => {
+      if (feature.kind === 'river') {
+        return `river:${feature.id}:${[...feature.riverNums].sort((a, b) => a - b).join(',')}`;
+      }
+
+      if (feature.kind === 'lake') {
+        return `lake:${feature.id}:${[...feature.lakeIds].sort((a, b) => a - b).join(',')}`;
+      }
+
+      return `landform:${feature.id}:${feature.step}`;
+    })
     .sort();
 
   const steps = Object.entries(RELIEF_STEPS)

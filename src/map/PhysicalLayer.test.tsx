@@ -26,8 +26,8 @@ describe('PhysicalLayer', () => {
     );
     const targets = container.querySelectorAll('.relief-shape[data-feature-id]');
 
-    expect(decorative).toHaveLength(32);
-    expect(targets).toHaveLength(6);
+    expect(decorative).toHaveLength(26);
+    expect(targets).toHaveLength(12);
     for (const shape of decorative) {
       expect(shape).toHaveAttribute('aria-hidden', 'true');
     }
@@ -68,10 +68,10 @@ describe('PhysicalLayer', () => {
     expect(onSelect).toHaveBeenNthCalledWith(2, 'gobi');
   });
 
-  it('подпись есть у каждой из двенадцати целей и ни у одной декоративной', () => {
+  it('подпись есть у каждой цели и ни у одной декоративной формы', () => {
     const { container } = renderLayer();
 
-    expect(container.querySelectorAll('.physical-label')).toHaveLength(12);
+    expect(container.querySelectorAll('.physical-label')).toHaveLength(24);
   });
 
   it('подпись помечена как видная только у выбранного объекта', () => {
@@ -131,6 +131,31 @@ describe('PhysicalLayer', () => {
     expect(
       container.querySelector('.river-line[data-feature-id="yellow-river"]'),
     ).toHaveAttribute('data-hovered', 'false');
+  });
+
+  it('рисует контур и знак каждого озера', () => {
+    const { container } = renderLayer();
+
+    expect(container.querySelectorAll('.lake-shape')).toHaveLength(6);
+    expect(container.querySelectorAll('.lake-mark')).toHaveLength(6);
+  });
+
+  it('озеро названо читалке экрана и отвечает на Enter', () => {
+    const onSelect = vi.fn();
+    renderLayer({ onSelect });
+
+    const lake = screen.getByLabelText(/Поянху, 鄱阳湖/);
+    fireEvent.keyDown(lake, { key: 'Enter' });
+
+    expect(onSelect).toHaveBeenCalledWith('poyang');
+  });
+
+  it('исход у озера помечается кольцом, а не штриховкой', () => {
+    const { container } = renderLayer({ featureOutcomes: { taihu: 'incorrect' } });
+
+    expect(
+      container.querySelector('.lake-halo[data-feature-id="taihu"]'),
+    ).toHaveAttribute('data-outcome', 'incorrect');
   });
 
   it('исход ответа помечает и форму, и реку', () => {

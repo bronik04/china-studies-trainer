@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
-import { RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
+import { lakeMarks } from './lake-marks';
+import { LAKE_SHAPES, RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
 import { RIVER_SHAPES } from './river-hit';
 
 /**
@@ -28,6 +29,9 @@ const NAME_RU_OF = new Map(
 
 /** Подпись отходит от линии вверх, иначе буквы садятся на саму реку. */
 const LABEL_OFFSET = 4;
+
+/** Радиус знака озера: виден на целом виде, но не спорит с контуром. */
+const LAKE_MARK_RADIUS = 2.5;
 
 /**
  * Точка подписи — середина самого длинного куска линии. У реки, разрезанной
@@ -59,6 +63,13 @@ const LABELLED: readonly { featureId: string; x: number; y: number }[] = [
     featureId: shape.featureId!,
     x: shape.labelX ?? 0,
     y: shape.labelY ?? 0,
+  })),
+  /* Подпись озера ставится у знака, а не у середины контура: у Поянху они
+     разойдутся — контур вытянут, а знак стоит там, куда целятся. */
+  ...LAKE_SHAPES.map((shape) => ({
+    featureId: shape.featureId,
+    x: shape.markX,
+    y: shape.markY - LABEL_OFFSET,
   })),
 ];
 
@@ -99,6 +110,12 @@ export type PhysicalLayerProps = {
   /** Ложь — подписи скрыты: в игре подпись объекта и есть ответ. */
   readonly showsLabels?: boolean;
   /**
+   * Во сколько раз увеличена карта. Нужно одним целям нажатия озёр: порог
+   * задан в пикселях экрана, и на увеличении те же 24 px занимают меньше
+   * единиц карты. Правило и приём те же, что у слоя городов.
+   */
+  readonly zoom?: number;
+  /**
    * Чем кончился ответ по объекту. Пусто до ответа: на физической карте
    * состояние не бывает цветом — он занят тремя ступенями, — и до ответа
    * помечать нечего.
@@ -112,6 +129,7 @@ export function PhysicalLayer({
   onSelect,
   showsLabels = true,
   featureOutcomes = NO_OUTCOMES,
+  zoom = 1,
 }: PhysicalLayerProps) {
   /*
    * Узел под указателем или в фокусе — по его собственным событиям. Он идёт
@@ -248,6 +266,80 @@ export function PhysicalLayer({
                       }
                     : undefined
                 }
+              />
+            </g>
+          );
+        })}
+      </g>
+
+      {/*
+        Озеро — четыре узла. Контур заливает воду, но целью быть не может:
+        24 px на опорной ширине это около 120 км, а Цинхай даёт 13 px. Целится
+        ученик в знак, а невидимый круг вокруг него и принимает нажатие; когда
+        круг отошёл от знака, их связывает поводок — как у города.
+      */}
+      <g className="lakes" clipPath={`url(#${CLIP_ID})`}>
+        {lakeMarks(zoom).map((mark) => {
+          const shape = LAKE_SHAPES.find((item) => item.featureId === mark.featureId)!;
+          const label = NAME_OF.get(mark.featureId) ?? mark.featureId;
+          const answers = onSelect !== undefined;
+
+          return (
+            <g key={mark.featureId} className="lake">
+              <path className="lake-shape" d={shape.d} aria-hidden="true" />
+              <circle
+                className="lake-halo"
+                cx={mark.x}
+                cy={mark.y}
+                r={LAKE_MARK_RADIUS * 3}
+                data-feature-id={mark.featureId}
+                data-outcome={featureOutcomes[mark.featureId]}
+                aria-hidden="true"
+              />
+              {mark.hitX !== mark.x || mark.hitY !== mark.y ? (
+                <line
+                  className="lake-leader"
+                  x1={mark.x}
+                  y1={mark.y}
+                  x2={mark.hitX}
+                  y2={mark.hitY}
+                  aria-hidden="true"
+                />
+              ) : null}
+              <circle
+                className="lake-hit"
+                cx={mark.hitX}
+                cy={mark.hitY}
+                r={mark.radius}
+                data-feature-id={mark.featureId}
+                role={answers ? 'button' : undefined}
+                aria-label={label}
+                tabIndex={answers ? 0 : -1}
+                onClick={answers ? () => onSelect(mark.featureId) : undefined}
+                onPointerEnter={
+                  answers ? () => setHoveredNodeId(mark.featureId) : undefined
+                }
+                onPointerLeave={answers ? () => setHoveredNodeId(null) : undefined}
+                onFocus={answers ? () => setHoveredNodeId(mark.featureId) : undefined}
+                onBlur={answers ? () => setHoveredNodeId(null) : undefined}
+                onKeyDown={
+                  answers
+                    ? (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          onSelect(mark.featureId);
+                        }
+                      }
+                    : undefined
+                }
+              />
+              <circle
+                className="lake-mark"
+                cx={mark.x}
+                cy={mark.y}
+                r={LAKE_MARK_RADIUS}
+                data-selected={mark.featureId === selectedFeatureId}
+                aria-hidden="true"
               />
             </g>
           );

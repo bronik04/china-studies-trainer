@@ -20,6 +20,7 @@ import type { PhysicalFeature, ReliefStep } from './types';
 
 const RIVERS = ['natural-earth-rivers-5.1.2'] as const;
 const LANDFORMS = ['natural-earth-geography-regions-5.1.2'] as const;
+const LAKES = ['natural-earth-lakes-5.1.2'] as const;
 
 function river(
   id: string,
@@ -48,7 +49,7 @@ function landform(
   nameZh: string,
   pinyin: string,
   step: ReliefStep,
-  shape: 'plateau' | 'plain' | 'basin' | 'desert',
+  shape: 'plateau' | 'plain' | 'basin' | 'desert' | 'range',
   regionIds: readonly string[],
 ): PhysicalFeature {
   return {
@@ -62,6 +63,27 @@ function landform(
     regionIds,
     facts: [],
     sourceIds: LANDFORMS,
+  };
+}
+
+function lake(
+  id: string,
+  nameRu: string,
+  nameZh: string,
+  pinyin: string,
+  lakeIds: readonly number[],
+  regionIds: readonly string[],
+): PhysicalFeature {
+  return {
+    id,
+    kind: 'lake',
+    nameRu,
+    nameZh,
+    pinyin,
+    lakeIds,
+    regionIds,
+    facts: [],
+    sourceIds: LAKES,
   };
 }
 
@@ -137,4 +159,84 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
     'plain',
     ['hebei', 'henan', 'shandong'],
   ),
+
+  /*
+   * Хребты взяты не по высоте: шесть самых высоких лежали бы все на западе, и
+   * восточная половина карты осталась бы пустой. Эти шесть закрывают все
+   * четыре направления школьной классификации 山脉走向, включают Циньлин —
+   * границу севера и юга — и попутно распределены по всем трём ступеням, то
+   * есть сами показывают ту лестницу, ради которой режим и сделан.
+   */
+  landform('himalayas', 'Гималаи', '喜马拉雅山脉', 'Xǐmǎlāyǎ Shānmài', 1, 'range', [
+    'tibet',
+  ]),
+  landform('kunlun', 'Куньлунь', '昆仑山脉', 'Kūnlún Shānmài', 1, 'range', [
+    'xinjiang',
+    'tibet',
+    'qinghai',
+  ]),
+  landform('tian-shan', 'Тянь-Шань', '天山', 'Tiān Shān', 2, 'range', ['xinjiang']),
+  landform('qinling', 'Циньлин', '秦岭', 'Qín Lǐng', 2, 'range', [
+    'shaanxi',
+    'gansu',
+    'henan',
+  ]),
+  landform(
+    'greater-khingan',
+    'Большой Хинган',
+    '大兴安岭',
+    'Dà Xīng’ān Lǐng',
+    2,
+    'range',
+    ['inner-mongolia', 'heilongjiang'],
+  ),
+  landform('nanling', 'Наньлин', '南岭', 'Nán Lǐng', 3, 'range', [
+    'hunan',
+    'jiangxi',
+    'guangdong',
+    'guangxi',
+  ]),
+
+  /*
+   * Пять пресных — 五大淡水湖 — в китайской школе заучивают списком целиком, и
+   * разрывать его ради географического разброса значило бы менять готовый
+   * учебный предмет на собственную выдумку. Цинхай добавлен шестым: без него
+   * набор не знает ни самого большого озера страны, ни запада вовсе.
+   *
+   * Номера получены из самого набора, а не набраны по памяти: неверный номер
+   * дал бы на карте чужое озеро при зелёной сборке.
+   */
+  lake('qinghai-lake', 'Цинхай', '青海湖', 'Qīnghǎi Hú', [1159126725], [
+    'qinghai',
+  ]),
+  lake('poyang', 'Поянху', '鄱阳湖', 'Póyáng Hú', [1159114015], ['jiangxi']),
+  lake('dongting', 'Дунтинху', '洞庭湖', 'Dòngtíng Hú', [1159116351], ['hunan']),
+  lake('taihu', 'Тайху', '太湖', 'Tài Hú', [1159113611], ['jiangsu', 'zhejiang']),
+  lake('hongze', 'Хунцзэху', '洪泽湖', 'Hóngzé Hú', [1159113359], ['jiangsu']),
+  lake('chaohu', 'Чаоху', '巢湖', 'Cháo Hú', [1159115069], ['anhui']),
 ];
+
+/**
+ * Наборы вложены: каждый следующий включает предыдущий. Ученик выбирает,
+ * докуда, а не какой один, — то же устройство, что у наборов городов. Внутри
+ * раунда роды идут вперемешку: разделять их значило бы разорвать связь между
+ * рельефом и течением рек, ради которой режим и сделан.
+ */
+export type PhysicalSet = 'base' | 'ranges' | 'all';
+
+export function physicalFeaturesUpTo(
+  set: PhysicalSet,
+): readonly PhysicalFeature[] {
+  if (set === 'all') {
+    return physicalFeatures;
+  }
+
+  const withoutLakes = physicalFeatures.filter((feature) => feature.kind !== 'lake');
+  if (set === 'ranges') {
+    return withoutLakes;
+  }
+
+  return withoutLakes.filter(
+    (feature) => feature.kind !== 'landform' || feature.landform !== 'range',
+  );
+}

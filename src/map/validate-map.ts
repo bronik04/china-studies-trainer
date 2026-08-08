@@ -241,6 +241,12 @@ export const MIN_FREE_SHARE = 0.8;
 export type PhysicalGeometry = {
   readonly rivers: ReadonlyMap<string, Point[][]>;
   readonly landforms: ReadonlyMap<string, Point[][]>;
+  readonly lakes: ReadonlyMap<string, Point[][]>;
+  /**
+   * Знак озера. Отдельно от колец, потому что цель нажатия строится вокруг
+   * него, а не вокруг контура: контур озера меньше порога.
+   */
+  readonly lakeMarks: ReadonlyMap<string, Point>;
 };
 
 export type PhysicalShapes = {
@@ -276,10 +282,15 @@ export function validatePhysicalGeometry(
     maxY: MAP_VIEWBOX_MIN_Y + MAP_VIEWBOX_HEIGHT,
   };
 
-  const pointsOf = (feature: PhysicalFeature): Point[][] | undefined =>
-    feature.kind === 'river'
-      ? geometry.rivers.get(feature.id)
+  const pointsOf = (feature: PhysicalFeature): Point[][] | undefined => {
+    if (feature.kind === 'river') {
+      return geometry.rivers.get(feature.id);
+    }
+
+    return feature.kind === 'lake'
+      ? geometry.lakes.get(feature.id)
       : geometry.landforms.get(feature.id);
+  };
 
   for (const feature of features) {
     const rings = pointsOf(feature);
@@ -334,6 +345,24 @@ export function validatePhysicalGeometry(
       if (!touches) {
         errors.push(
           `Цель ${feature.id} заявляет регион ${regionId}, но не касается его`,
+        );
+      }
+    }
+
+    /*
+     * Знак озера обязан лежать в воде: цель нажатия строится вокруг него, и
+     * знак на суше означал бы, что ученик попадает мимо озера. Порог 24 px к
+     * самому контуру при этом не применяется — ему не отвечает ни одно озеро
+     * Китая, и требовать этого значило бы выкинуть их все разом.
+     */
+    if (feature.kind === 'lake') {
+      const mark = geometry.lakeMarks.get(feature.id);
+      if (mark === undefined) {
+        errors.push(`Нет знака у озера ${feature.id}`);
+      } else if (!containsPoint(rings, mark[0], mark[1])) {
+        errors.push(
+          `Знак озера ${feature.id} вне его контура: ` +
+            `${mark[0].toFixed(1)}, ${mark[1].toFixed(1)}`,
         );
       }
     }

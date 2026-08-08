@@ -73,4 +73,10 @@ export const SHAPE_FEATURE_IDS: Readonly<Record<string, string>> = {
   'SICHUAN BASIN': 'sichuan-basin',
   'GOBI DESERT': 'gobi',
   'NORTH CHINA PLAIN': 'north-china-plain',
+  HIMALAYAS: 'himalayas',
+  'KUNLUN MOUNTAINS': 'kunlun',
+  'TIAN SHAN': 'tian-shan',
+  'Qinling Mountains': 'qinling',
+  'GREATER KHINGAN RANGE': 'greater-khingan',
+  'Nan Ling Mts.': 'nanling',
 };

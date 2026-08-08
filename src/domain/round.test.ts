@@ -237,6 +237,6 @@ it('раунд по физическим целям спрашивает каж�
     random: createSeededRandom(7),
   });
 
-  expect(round.questions).toHaveLength(12);
-  expect(new Set(round.questions.map((question) => question.target.id)).size).toBe(12);
+  expect(round.questions).toHaveLength(24);
+  expect(new Set(round.questions.map((question) => question.target.id)).size).toBe(24);
 });

@@ -2,13 +2,23 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import { physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
 import type { PhysicalFeature } from '../content/types';
-import { RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
+import { LAKE_SHAPES, RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
 import {
   containsPoint,
   distanceToBoundary,
+  largestInscribedCircle,
   parseMapPath,
   type Point,
 } from './svg-path';
+import {
+  MAP_VIEWBOX_HEIGHT,
+  MAP_VIEWBOX_MIN_X,
+  MAP_VIEWBOX_MIN_Y,
+  MAP_VIEWBOX_WIDTH,
+  MIN_TARGET_PX,
+  REFERENCE_MAP_WIDTH,
+  unitsToPixels,
+} from './target-size';
 import {
   validateCityPlacement,
   validateMapAreaIds,
@@ -174,6 +184,15 @@ function validateRealPhysicalGeometry(): void {
           parseMapPath(shape.d),
         ]),
       ),
+      lakes: new Map(
+        LAKE_SHAPES.map((shape) => [shape.featureId, parseMapPath(shape.d)]),
+      ),
+      lakeMarks: new Map(
+        LAKE_SHAPES.map((shape) => [
+          shape.featureId,
+          [shape.markX, shape.markY] as Point,
+        ]),
+      ),
     },
     {
       contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),
@@ -218,7 +237,7 @@ describe('validatePhysicalGeometry', () => {
     expect(() =>
       validatePhysicalGeometry(
         [river],
-        { rivers: new Map([['straight-river', [line]]]), landforms: new Map() },
+        { rivers: new Map([['straight-river', [line]]]), landforms: new Map(), lakes: new Map(), lakeMarks: new Map() },
         shapes,
       ),
     ).not.toThrow();
@@ -228,7 +247,7 @@ describe('validatePhysicalGeometry', () => {
     expect(() =>
       validatePhysicalGeometry(
         [river],
-        { rivers: new Map(), landforms: new Map() },
+        { rivers: new Map(), landforms: new Map(), lakes: new Map(), lakeMarks: new Map() },
         shapes,
       ),
     ).toThrow(/straight-river/);
@@ -238,7 +257,7 @@ describe('validatePhysicalGeometry', () => {
     expect(() =>
       validatePhysicalGeometry(
         [{ ...river, regionIds: ['tibet'] }],
-        { rivers: new Map([['straight-river', [line]]]), landforms: new Map() },
+        { rivers: new Map([['straight-river', [line]]]), landforms: new Map(), lakes: new Map(), lakeMarks: new Map() },
         shapes,
       ),
     ).toThrow(/tibet/);
@@ -261,6 +280,8 @@ describe('validatePhysicalGeometry', () => {
             ],
           ]),
           landforms: new Map(),
+          lakes: new Map(),
+          lakeMarks: new Map(),
         },
         shapes,
       ),
@@ -287,6 +308,8 @@ describe('validatePhysicalGeometry', () => {
             ],
           ]),
           landforms: new Map(),
+          lakes: new Map(),
+          lakeMarks: new Map(),
         },
         shapes,
       ),
@@ -302,7 +325,7 @@ describe('validatePhysicalGeometry', () => {
 it('у каждой формы-цели есть точка подписи, и она лежит внутри контура', () => {
   const targets = RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined);
 
-  expect(targets).toHaveLength(6);
+  expect(targets).toHaveLength(12);
 
   for (const shape of targets) {
     expect(shape.labelX, `${shape.key}: нет labelX`).toBeTypeOf('number');
@@ -317,5 +340,55 @@ it('у каждой формы-цели есть точка подписи, и �
 it('декоративная форма точки подписи не несёт: её никто не подписывает', () => {
   for (const shape of RELIEF_SHAPES.filter((s) => s.featureId === undefined)) {
     expect(shape.labelX, `${shape.key}`).toBeUndefined();
+  }
+});
+
+it('шесть хребтов — цели, и каждый крупнее порога нажатия', () => {
+  const ranges = physicalFeatures.filter(
+    (feature) => feature.kind === 'landform' && feature.landform === 'range',
+  );
+
+  expect(ranges).toHaveLength(6);
+
+  for (const range of ranges) {
+    const shape = RELIEF_SHAPES.find((item) => item.featureId === range.id);
+    expect(shape, `${range.id}: нет формы с таким featureId`).toBeDefined();
+
+    const circle = largestInscribedCircle(parseMapPath(shape!.d));
+    const px = unitsToPixels(circle.radius * 2, REFERENCE_MAP_WIDTH);
+    expect(px, `${range.id}: цель ${px.toFixed(1)} px`).toBeGreaterThanOrEqual(
+      MIN_TARGET_PX,
+    );
+  }
+});
+
+it('у каждого озера есть контур, и он лежит в рамке карты', () => {
+  const lakes = physicalFeatures.filter((feature) => feature.kind === 'lake');
+
+  expect(lakes).toHaveLength(6);
+
+  for (const lake of lakes) {
+    const shape = LAKE_SHAPES.find((item) => item.featureId === lake.id);
+    expect(shape, `${lake.id}: нет контура`).toBeDefined();
+
+    for (const [x, y] of parseMapPath(shape!.d).flat()) {
+      expect(x, `${lake.id}: точка вне рамки`).toBeGreaterThanOrEqual(
+        MAP_VIEWBOX_MIN_X,
+      );
+      expect(x).toBeLessThanOrEqual(MAP_VIEWBOX_MIN_X + MAP_VIEWBOX_WIDTH);
+      expect(y).toBeGreaterThanOrEqual(MAP_VIEWBOX_MIN_Y);
+      expect(y).toBeLessThanOrEqual(MAP_VIEWBOX_MIN_Y + MAP_VIEWBOX_HEIGHT);
+    }
+  }
+});
+
+it('знак озера стоит внутри своего контура, а не рядом с ним', () => {
+  // Знак — то, во что целятся: контур озера меньше порога нажатия, и цель
+  // строится вокруг знака. Знак вне воды означал бы, что нажимают по суше.
+  for (const shape of LAKE_SHAPES) {
+    expect(
+      containsPoint(parseMapPath(shape.d), shape.markX, shape.markY),
+      `${shape.featureId}: знак вне контура`,
+    ).toBe(true);
   }
 });

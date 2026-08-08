@@ -1,5 +1,11 @@
 import { useState } from 'react';
+import { citiesUpTo } from '../../content/cities';
 import { collectionCardSubtitle } from '../../content/collection-scope';
+import {
+  physicalFeaturesUpTo,
+  type PhysicalSet,
+} from '../../content/physical-features';
+import { citiesWord, featuresWord } from '../../content/region-count';
 import {
   COLLECTION_GROUPS,
   collections,
@@ -27,6 +33,7 @@ export type HomePageProps = {
   readonly onStartPhysicalRound: (
     exerciseType: 'find-on-map' | 'name-target',
     language: QuestionLanguage,
+    set: PhysicalSet,
   ) => void;
   readonly onStartCityRound: (
     exerciseType: ExerciseType,
@@ -52,6 +59,52 @@ const SHOWCASE_LIMIT = 4;
  * и коллекций стоят на бумаге и запускают то же самое другим путём — для тех,
  * кто уже знает, чего хочет.
  */
+/**
+ * Наборы вложены: значимые включают столицы, приграничные — и то и другое;
+ * хребты включают реки и формы, озёра — всё. Ученик выбирает, докуда, а не
+ * какой один. Числа считаются из каталогов, а не пишутся руками, — иначе они
+ * разойдутся с ними при первом же новом объекте.
+ */
+const CITY_SETS: readonly (readonly [CitySet, string])[] = [
+  ['capital', 'Только центры регионов'],
+  ['notable', 'И значимые города'],
+  ['border', 'И приграничные с Россией'],
+];
+
+const PHYSICAL_SETS: readonly (readonly [PhysicalSet, string])[] = [
+  ['base', 'Реки и формы'],
+  ['ranges', 'И хребты'],
+  ['all', 'И озёра'],
+];
+
+function setChoiceFor(card: ModeCard) {
+  if (card.kind === 'city') {
+    return {
+      legend: 'Какие города',
+      value: 'capital',
+      options: CITY_SETS.map(([value, label]) => {
+        const count = citiesUpTo(value).length;
+
+        return [value, `${label} — ${count} ${citiesWord(count)}`] as const;
+      }),
+    };
+  }
+
+  if (card.kind === 'physical') {
+    return {
+      legend: 'Какие объекты',
+      value: 'base',
+      options: PHYSICAL_SETS.map(([value, label]) => {
+        const count = physicalFeaturesUpTo(value).length;
+
+        return [value, `${label} — ${count} ${featuresWord(count)}`] as const;
+      }),
+    };
+  }
+
+  return null;
+}
+
 export function HomePage({
   regions,
   attempts,
@@ -74,16 +127,16 @@ export function HomePage({
    */
   const [startingCard, setStartingCard] = useState<ModeCard | null>(null);
 
-  function start(card: ModeCard, language: QuestionLanguage, citySet: CitySet) {
+  function start(card: ModeCard, language: QuestionLanguage, set: string) {
     setStartingCard(null);
     if (card.kind === 'exercise') {
       onStartRound(card.exerciseType, language, null);
     } else if (card.kind === 'fill') {
       onStartFillRound(language);
     } else if (card.kind === 'city') {
-      onStartCityRound(card.exerciseType, language, citySet);
+      onStartCityRound(card.exerciseType, language, set as CitySet);
     } else if (card.kind === 'physical') {
-      onStartPhysicalRound(card.exerciseType, language);
+      onStartPhysicalRound(card.exerciseType, language, set as PhysicalSet);
     }
   }
 
@@ -206,8 +259,8 @@ export function HomePage({
             title={startingCard.title}
             volume={startingCard.volume}
             defaultLanguage={step.language}
-            defaultCitySet={startingCard.kind === 'city' ? 'capital' : null}
-            onStart={(language, citySet) => start(startingCard, language, citySet)}
+            setChoice={setChoiceFor(startingCard)}
+            onStart={(language, set) => start(startingCard, language, set)}
             onClose={() => setStartingCard(null)}
           />
         )}

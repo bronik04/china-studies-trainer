@@ -290,5 +290,16 @@ it('запускает раунд по физической географии �
   // Точное имя, а не «начинается с»: в герое стоит «Начать: найти на карте».
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
+  // Без выбора берётся первый набор — реки и формы, двенадцать целей.
   expect(screen.getByText(/Вопрос 1 из 12/)).toBeInTheDocument();
+});
+
+it('набор перед стартом задаёт длину физического раунда', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /Найти на физической карте/ }));
+  fireEvent.click(screen.getByRole('radio', { name: /И озёра/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(screen.getByText(/Вопрос 1 из 24/)).toBeInTheDocument();
 });

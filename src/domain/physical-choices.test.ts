@@ -58,9 +58,24 @@ describe('buildPhysicalChoices', () => {
     expect(first.map((c) => c.id)).toEqual(second.map((c) => c.id));
   });
 
+  it('хребет отвлекают формами и хребтами: и то и другое — заливка', () => {
+    // Правило смотрит на род, а хребет — форма рельефа. Разбиение выходит из
+    // типов само: ответ не должен читаться по виду подсветки, а заливка от
+    // заливки видом не отличается.
+    const choices = buildPhysicalChoices(
+      physicalFeatures,
+      'qinling',
+      createSeededRandom(11),
+    );
+
+    expect(choices).toHaveLength(4);
+    expect(choices.every((choice) => choice.kind === 'landform')).toBe(true);
+    expect(choices.map((choice) => choice.id)).toContain('qinling');
+  });
+
   it('падает на неизвестной цели, а не молча даёт три варианта', () => {
     expect(() =>
-      buildPhysicalChoices(physicalFeatures, 'himalayas', createSeededRandom(6)),
-    ).toThrow(/himalayas/);
+      buildPhysicalChoices(physicalFeatures, 'not-a-feature', createSeededRandom(6)),
+    ).toThrow(/not-a-feature/);
   });
 });
