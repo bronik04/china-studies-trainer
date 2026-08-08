@@ -1,7 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { citiesUpTo } from '../../content/cities';
-import { citiesWord } from '../../content/region-count';
-import type { CitySet } from '../../content/types';
 import type { QuestionLanguage } from '../../domain/question-language';
 
 export type ModeStartDialogProps = {
@@ -9,26 +6,24 @@ export type ModeStartDialogProps = {
   /** «34 региона · около 7 минут» — то же, что на карточке. */
   readonly volume: string;
   readonly defaultLanguage: QuestionLanguage;
-  /** Задан — игра по городам: в окне появляется выбор набора. */
-  readonly defaultCitySet?: CitySet | null;
-  readonly onStart: (language: QuestionLanguage, citySet: CitySet) => void;
+  /**
+   * Вторая группа окна: чем глубже набор, тем больше целей. Задана списком
+   * пар, а не видом игры: наборы есть и у городов, и у физической географии, и
+   * третья почти такая же группа была бы копией. Подписи с числами собирает
+   * вызывающая сторона — считать цели окну незачем, а знать о них неоткуда.
+   */
+  readonly setChoice?: {
+    readonly legend: string;
+    readonly options: readonly (readonly [string, string])[];
+    readonly value: string;
+  } | null;
+  readonly onStart: (language: QuestionLanguage, set: string) => void;
   readonly onClose: () => void;
 };
 
 const LANGUAGES: readonly (readonly [QuestionLanguage, string])[] = [
   ['ru', 'Русское название'],
   ['zh', '中文'],
-];
-
-/**
- * Наборы вложены: значимые включают столицы, приграничные — и то и другое.
- * Ученик выбирает, докуда, а не какой один. Числа берутся из каталога, а не
- * пишутся руками, — иначе они разойдутся с ним при первом же новом городе.
- */
-const CITY_SETS: readonly (readonly [CitySet, string])[] = [
-  ['capital', 'Только центры регионов'],
-  ['notable', 'И значимые города'],
-  ['border', 'И приграничные с Россией'],
 ];
 
 /**
@@ -47,14 +42,14 @@ export function ModeStartDialog({
   title,
   volume,
   defaultLanguage,
-  defaultCitySet = null,
+  setChoice = null,
   onStart,
   onClose,
 }: ModeStartDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const startRef = useRef<HTMLButtonElement>(null);
   const [language, setLanguage] = useState<QuestionLanguage>(defaultLanguage);
-  const [citySet, setCitySet] = useState<CitySet>(defaultCitySet ?? 'capital');
+  const [set, setSet] = useState(setChoice?.value ?? '');
 
   useEffect(() => {
     dialogRef.current?.showModal();
@@ -101,27 +96,21 @@ export function ModeStartDialog({
             </label>
           ))}
         </fieldset>
-        {defaultCitySet === null ? null : (
+        {setChoice === null ? null : (
           <fieldset className="mode-dialog-language">
-            <legend>Какие города</legend>
-            {CITY_SETS.map(([value, label]) => {
-              const count = citiesUpTo(value).length;
-
-              return (
-                <label key={value}>
-                  <input
-                    type="radio"
-                    name="mode-dialog-city-set"
-                    value={value}
-                    checked={citySet === value}
-                    onChange={() => setCitySet(value)}
-                  />
-                  <span>
-                    {label} — {count} {citiesWord(count)}
-                  </span>
-                </label>
-              );
-            })}
+            <legend>{setChoice.legend}</legend>
+            {setChoice.options.map(([value, label]) => (
+              <label key={value}>
+                <input
+                  type="radio"
+                  name="mode-dialog-set"
+                  value={value}
+                  checked={set === value}
+                  onChange={() => setSet(value)}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
           </fieldset>
         )}
         <div className="mode-dialog-actions">
@@ -129,7 +118,7 @@ export function ModeStartDialog({
             type="button"
             className="primary"
             ref={startRef}
-            onClick={() => onStart(language, citySet)}
+            onClick={() => onStart(language, set)}
           >
             Начать
           </button>

@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { citiesUpTo } from './content/cities';
 import { collectionById } from './content/collections';
-import { physicalFeatures } from './content/physical-features';
+import {
+  physicalFeatures,
+  physicalFeaturesUpTo,
+  type PhysicalSet,
+} from './content/physical-features';
 import { regions } from './content/regions';
 import { citiesWord, featuresWord } from './content/region-count';
 import type { City, CitySet, PhysicalFeature, Region } from './content/types';
@@ -268,7 +272,19 @@ export default function App() {
   function startPhysicalRound(
     exerciseType: 'find-on-map' | 'name-target',
     nextLanguage: QuestionLanguage,
-    features: readonly PhysicalFeature[] = physicalFeatures,
+    set: PhysicalSet = 'all',
+  ) {
+    startPhysicalPool(exerciseType, nextLanguage, physicalFeaturesUpTo(set));
+  }
+
+  /**
+   * Запуск по готовому пулу. Отдельно от выбора набора, потому что «Повторить
+   * ошибки» задаёт пул напрямую и никакому набору не соответствует.
+   */
+  function startPhysicalPool(
+    exerciseType: 'find-on-map' | 'name-target',
+    nextLanguage: QuestionLanguage,
+    features: readonly PhysicalFeature[],
   ) {
     setPhysicalPool(features);
     setExerciseTypes([exerciseType]);
@@ -455,7 +471,7 @@ export default function App() {
             }
 
             if (isPhysicalRound) {
-              startPhysicalRound(
+              startPhysicalPool(
                 exerciseTypes[0] as 'find-on-map' | 'name-target',
                 language,
                 repeatFeatures,
@@ -472,9 +488,12 @@ export default function App() {
             }
 
             if (isPhysicalRound) {
-              startPhysicalRound(
+              /* Тот же набор, что и был: он выводится из пула, а второй
+                 источник правды разошёлся бы с ним. */
+              startPhysicalPool(
                 exerciseTypes[0] as 'find-on-map' | 'name-target',
                 language,
+                physicalPool,
               );
               return;
             }

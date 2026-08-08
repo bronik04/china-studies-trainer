@@ -215,3 +215,28 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
   lake('hongze', 'Хунцзэху', '洪泽湖', 'Hóngzé Hú', [1159113359], ['jiangsu']),
   lake('chaohu', 'Чаоху', '巢湖', 'Cháo Hú', [1159115069], ['anhui']),
 ];
+
+/**
+ * Наборы вложены: каждый следующий включает предыдущий. Ученик выбирает,
+ * докуда, а не какой один, — то же устройство, что у наборов городов. Внутри
+ * раунда роды идут вперемешку: разделять их значило бы разорвать связь между
+ * рельефом и течением рек, ради которой режим и сделан.
+ */
+export type PhysicalSet = 'base' | 'ranges' | 'all';
+
+export function physicalFeaturesUpTo(
+  set: PhysicalSet,
+): readonly PhysicalFeature[] {
+  if (set === 'all') {
+    return physicalFeatures;
+  }
+
+  const withoutLakes = physicalFeatures.filter((feature) => feature.kind !== 'lake');
+  if (set === 'ranges') {
+    return withoutLakes;
+  }
+
+  return withoutLakes.filter(
+    (feature) => feature.kind !== 'landform' || feature.landform !== 'range',
+  );
+}
