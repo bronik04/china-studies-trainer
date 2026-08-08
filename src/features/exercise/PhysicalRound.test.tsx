@@ -1,6 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
-import { physicalFeatures } from '../../content/physical-features';
+import {
+  physicalFeatures,
+  physicalFeaturesUpTo,
+} from '../../content/physical-features';
+import { createSeededRandom } from '../../domain/random';
+import { createRound, physicalTarget } from '../../domain/round';
 import { PhysicalRound } from './PhysicalRound';
 
 function renderRound(
@@ -112,4 +117,51 @@ it('сузившийся пул не сужает выбор: отвлекающ
   renderRound('name-target', pool);
 
   expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+it('озеро отвлекают только озёрами: знак от заливки отличается видом', () => {
+  renderRound(
+    'name-target',
+    physicalFeatures.filter((feature) => feature.kind === 'lake'),
+  );
+
+  const options = screen.getAllByTestId('choice-option');
+  const kinds = options.map(
+    (option) =>
+      physicalFeatures.find((feature) => feature.id === option.dataset.choiceId)!
+        .kind,
+  );
+
+  expect(options).toHaveLength(4);
+  expect(new Set(kinds)).toEqual(new Set(['lake']));
+});
+
+it('на 320 px список отвечает за все двадцать четыре объекта', () => {
+  renderRound('find-on-map', physicalFeaturesUpTo('all'));
+
+  const list = screen.getByRole('list', { name: 'Список объектов' });
+
+  expect(within(list).getAllByRole('button')).toHaveLength(24);
+});
+
+it('каждый набор спрашивает свои цели ровно по разу', () => {
+  for (const [set, length] of [
+    ['base', 12],
+    ['ranges', 18],
+    ['all', 24],
+  ] as const) {
+    const pool = physicalFeaturesUpTo(set);
+    const round = createRound(
+      pool.map((feature) => physicalTarget(feature.id)),
+      {
+        roundId: 'r1',
+        exerciseTypes: ['find-on-map'],
+        language: 'ru',
+        random: createSeededRandom(5),
+      },
+    );
+
+    expect(round.questions, `набор ${set}`).toHaveLength(length);
+    expect(new Set(round.questions.map((q) => q.target.id)).size).toBe(length);
+  }
 });
