@@ -157,6 +157,9 @@
   --radius-md: 10px;
   --radius-lg: 16px;
 
+  /* Тень плавающих плашек поверх карты: чернила с прозрачностью. */
+  --shadow-float: 0 4px 18px rgb(20 17 16 / 35%);
+
   --border-hair: 1px;
   --border-solid: 2px;
   --border-focus: 3px;

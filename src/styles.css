@@ -2699,3 +2699,209 @@ button.chip[aria-pressed='true'] {
 .landing-section[tabindex]:focus:not(:focus-visible) {
   outline: none;
 }
+
+/* --- Экран раунда: оболочка RoundStage ---------------------------------- */
+
+/*
+ * Кадр раунда: карта забирает остаток колонки, плашка вопроса плавает поверх
+ * неё, полоса вариантов и служебная строка стоят под картой и её не
+ * перекрывают (спек RoundStage, 2026-08-17).
+ */
+.round-stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  position: relative;
+}
+
+/* Полный экран отдаёт кадр оболочке: фон обязан быть её, а не прозрачным. */
+.round-stage:fullscreen {
+  background: var(--surface-ground);
+}
+
+.stage-prompt {
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+  inset-block-start: var(--s-3);
+  inset-inline-start: 50%;
+  max-inline-size: min(90%, 40rem);
+  padding: var(--s-2) var(--s-5) var(--s-3);
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.stage-prompt .eyebrow {
+  margin-bottom: var(--s-1);
+}
+
+/* Показ верного ответа отмечен кромкой, а не только текстом. */
+.stage-prompt[data-state='answer'] {
+  border-inline-start: var(--border-solid) solid var(--accent-on-ground);
+}
+
+/* Название цели: то же слово-вопрос, что было в колонке. */
+.stage-target {
+  color: var(--text-on-ground-strong);
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-question);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.stage-target [lang='zh-Hans'] {
+  color: var(--text-on-ground-muted);
+}
+
+.stage-map {
+  background: var(--map-sea);
+  flex: 1;
+  min-block-size: 0;
+  position: relative;
+}
+
+.stage-map .map-section {
+  block-size: 100%;
+  margin-bottom: 0;
+}
+
+/*
+ * Пропорция живёт на рамке, а не на карте: рамка — система координат зума
+ * (правило перенесено из прежнего .round-map).
+ */
+.stage-map .china-map-frame {
+  aspect-ratio: var(--map-aspect);
+  block-size: 100%;
+  inline-size: auto;
+  margin-inline: auto;
+  max-inline-size: 100%;
+}
+
+.stage-map .china-map {
+  block-size: 100%;
+}
+
+.stage-map .china-map svg {
+  block-size: 100%;
+}
+
+/* Панель «Ответить из списка»: поверх карты у правого края, со своей прокруткой. */
+.stage-answer-panel {
+  background: var(--surface-ground);
+  border-inline-start: var(--border-hair) solid var(--line-on-ground);
+  box-shadow: var(--shadow-float);
+  inline-size: min(24rem, 90%);
+  inset-block: 0;
+  inset-inline-end: 0;
+  overflow-y: auto;
+  padding: var(--s-3) var(--s-4);
+  position: absolute;
+  z-index: 3;
+}
+
+.stage-choices-band {
+  background: var(--surface-ground);
+  border-block-start: var(--border-hair) solid var(--line-on-ground);
+  padding: var(--s-3) var(--s-4);
+}
+
+.stage-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stage-choices button {
+  align-items: center;
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground-strong);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: var(--s-2);
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-3);
+  transition: border-color var(--duration-quick) var(--ease-out);
+}
+
+.stage-choices button:hover:enabled {
+  border-color: var(--accent-on-ground);
+}
+
+.stage-choices kbd {
+  background: var(--surface-ground);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground-muted);
+  font-family: var(--t-family-text);
+  font-size: var(--t-size-caption);
+  padding: 0 var(--s-1);
+}
+
+/*
+ * Исход — как у ленты следа: верный набран нефритом для доски и жирным,
+ * ошибочный — киноварью и пунктиром. Не только цвет: жирность и штрих.
+ */
+.stage-choices button[data-result='correct'] {
+  border-color: var(--state-correct-on-ground);
+  color: var(--state-correct-on-ground);
+  font-weight: var(--t-weight-bold);
+}
+
+.stage-choices button[data-result='incorrect'] {
+  border-color: var(--accent-on-ground);
+  border-style: dashed;
+}
+
+.stage-strip {
+  align-items: center;
+  background: var(--surface-ground);
+  border-block-start: var(--border-hair) solid var(--line-on-ground);
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--t-size-caption);
+  gap: var(--s-2) var(--s-4);
+  padding: var(--s-2) var(--s-4);
+}
+
+.stage-strip .exercise-progress,
+.stage-strip .fill-status {
+  margin: 0;
+}
+
+.stage-strip .round-trail {
+  margin-block-start: 0;
+}
+
+.stage-strip-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--s-3);
+  margin-inline-start: auto;
+}
+
+.stage-strip-button {
+  background: none;
+  border: var(--border-hair) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground);
+  cursor: pointer;
+  font: inherit;
+  padding: var(--s-1) var(--s-3);
+  transition: border-color var(--duration-quick) var(--ease-out);
+}
+
+.stage-strip-button:hover {
+  border-color: var(--accent-on-ground);
+}
