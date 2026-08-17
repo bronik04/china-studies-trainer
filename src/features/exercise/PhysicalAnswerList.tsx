@@ -24,6 +24,8 @@ export type PhysicalAnswerListProps = {
   readonly answeredId: string | null;
   readonly disabled: boolean;
   readonly onSelect: (featureId: string) => void;
+  /** `disclosure` — свёрнутый блок; `inline` — голый список для панели. */
+  readonly presentation?: 'disclosure' | 'inline';
 };
 
 /**
@@ -44,11 +46,46 @@ export function PhysicalAnswerList({
   answeredId,
   disabled,
   onSelect,
+  presentation = 'disclosure',
 }: PhysicalAnswerListProps) {
   const [open, setOpen] = useState(defaultOpen);
   const ordered = [...features].sort((left, right) =>
     left.nameRu.localeCompare(right.nameRu, 'ru'),
   );
+
+  const list = (
+    <ul className="map-alternative" aria-label="Список объектов">
+      {ordered.map((feature) => (
+        <li key={feature.id}>
+          <button
+            type="button"
+            data-feature-id={feature.id}
+            data-result={
+              answeredId === null
+                ? undefined
+                : feature.id === targetId
+                  ? 'correct'
+                  : feature.id === answeredId
+                    ? 'incorrect'
+                    : undefined
+            }
+            aria-disabled={disabled ? 'true' : undefined}
+            onClick={() => {
+              if (!disabled) {
+                onSelect(feature.id);
+              }
+            }}
+          >
+            <span lang={langOf(language)}>{labelOf(feature, language)}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+
+  if (presentation === 'inline') {
+    return list;
+  }
 
   return (
     <details
@@ -59,33 +96,7 @@ export function PhysicalAnswerList({
       <summary>
         Ответить из списка ({features.length} {featuresWord(features.length)})
       </summary>
-      <ul className="map-alternative" aria-label="Список объектов">
-        {ordered.map((feature) => (
-          <li key={feature.id}>
-            <button
-              type="button"
-              data-feature-id={feature.id}
-              data-result={
-                answeredId === null
-                  ? undefined
-                  : feature.id === targetId
-                    ? 'correct'
-                    : feature.id === answeredId
-                      ? 'incorrect'
-                      : undefined
-              }
-              aria-disabled={disabled ? 'true' : undefined}
-              onClick={() => {
-                if (!disabled) {
-                  onSelect(feature.id);
-                }
-              }}
-            >
-              <span lang={langOf(language)}>{labelOf(feature, language)}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {list}
     </details>
   );
 }

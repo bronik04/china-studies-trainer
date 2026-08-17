@@ -24,6 +24,8 @@ export type CityAnswerListProps = {
   readonly answeredId: string | null;
   readonly disabled: boolean;
   readonly onSelect: (cityId: string) => void;
+  /** `disclosure` — свёрнутый блок; `inline` — голый список для панели. */
+  readonly presentation?: 'disclosure' | 'inline';
 };
 
 /**
@@ -45,11 +47,46 @@ export function CityAnswerList({
   answeredId,
   disabled,
   onSelect,
+  presentation = 'disclosure',
 }: CityAnswerListProps) {
   const [open, setOpen] = useState(defaultOpen);
   const ordered = [...cities].sort((left, right) =>
     left.nameRu.localeCompare(right.nameRu, 'ru'),
   );
+
+  const list = (
+    <ul className="map-alternative" aria-label="Список городов">
+      {ordered.map((city) => (
+        <li key={city.id}>
+          <button
+            type="button"
+            data-city-id={city.id}
+            data-result={
+              answeredId === null
+                ? undefined
+                : city.id === targetId
+                  ? 'correct'
+                  : city.id === answeredId
+                    ? 'incorrect'
+                    : undefined
+            }
+            aria-disabled={disabled ? 'true' : undefined}
+            onClick={() => {
+              if (!disabled) {
+                onSelect(city.id);
+              }
+            }}
+          >
+            <span lang={langOf(language)}>{labelOf(city, language)}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+
+  if (presentation === 'inline') {
+    return list;
+  }
 
   return (
     <details
@@ -60,33 +97,7 @@ export function CityAnswerList({
       <summary>
         Ответить из списка ({cities.length} {citiesWord(cities.length)})
       </summary>
-      <ul className="map-alternative" aria-label="Список городов">
-        {ordered.map((city) => (
-          <li key={city.id}>
-            <button
-              type="button"
-              data-city-id={city.id}
-              data-result={
-                answeredId === null
-                  ? undefined
-                  : city.id === targetId
-                    ? 'correct'
-                    : city.id === answeredId
-                      ? 'incorrect'
-                      : undefined
-              }
-              aria-disabled={disabled ? 'true' : undefined}
-              onClick={() => {
-                if (!disabled) {
-                  onSelect(city.id);
-                }
-              }}
-            >
-              <span lang={langOf(language)}>{labelOf(city, language)}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {list}
     </details>
   );
 }
