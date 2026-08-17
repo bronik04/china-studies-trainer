@@ -13,7 +13,7 @@ import { createSeededRandom } from '../../domain/random';
 import { labelOf, langOf, type QuestionLanguage } from '../../domain/question-language';
 import { ChinaMap, type MapHighlight } from '../../map/ChinaMap';
 import { RegionAnswerList } from '../../map/RegionAnswerList';
-import { RoundStopwatch } from './RoundStopwatch';
+import { RoundStage } from './RoundStage';
 
 /**
  * Пауза, на которой карта показывает регион, который так и не нашли.
@@ -191,69 +191,70 @@ export function FillMapRound({
       : 'Верно, но не с первой попытки.';
   }
 
+  const prompt = (
+    <>
+      <p className="eyebrow">Найдите на карте</p>
+      <p
+        className="stage-target"
+        data-testid="fill-target"
+        lang={question === null ? undefined : langOf(question.language)}
+      >
+        {targetRegion === null
+          ? 'Карта заполнена'
+          : labelOf(targetRegion, question!.language)}
+      </p>
+    </>
+  );
+
   return (
-    <main className="round-shell">
-      <div className="round-layout" data-columns="two">
-        <div className="round-prompt-column">
-          <header className="round-prompt">
-            <p className="eyebrow">Найдите на карте</p>
-            <h1
-              data-testid="fill-target"
-              lang={question === null ? undefined : langOf(question.language)}
-            >
-              {targetRegion === null
-                ? 'Карта заполнена'
-                : labelOf(targetRegion, question!.language)}
-            </h1>
-            <div className="fill-meta">
-              <p className="exercise-progress" data-testid="fill-progress">
-                Закрашено {closed} из {round.order.length}
-              </p>
-              <p className="attempt-dots">
-                <span aria-hidden="true">
-                  {'●'.repeat(attemptsLeft)}
-                  {'○'.repeat(round.usedAttempts)}
-                </span>
-                <span className="visually-hidden">
-                  Попытка {round.usedAttempts + 1} из {MAX_ATTEMPTS_PER_REGION}
-                </span>
-              </p>
-              <RoundStopwatch startedAt={startedAt} />
-            </div>
-            <p className="fill-status" role="status" aria-live="polite">
-              {statusText()}
-            </p>
-          </header>
-        </div>
-        <div className="round-map">
-          <ChinaMap
-            regions={regions}
-            selectedRegionId={null}
-            onSelect={handleSelect}
-            onClear={() => {}}
-            variant="fill"
-            usage="answer"
-            outcomes={round.outcomes}
-            highlight={mapHighlight}
-            interactive={!finished}
-            paused={isRevealing}
-          />
-        </div>
-      </div>
-      <RegionAnswerList
-        presentation="disclosure"
+    <RoundStage
+      prompt={prompt}
+      promptState={isRevealing ? 'answer' : 'question'}
+      startedAt={startedAt}
+      progress={
+        <>
+          <p className="exercise-progress" data-testid="fill-progress">
+            Закрашено {closed} из {round.order.length}
+          </p>
+          <p className="attempt-dots">
+            <span aria-hidden="true">
+              {'●'.repeat(attemptsLeft)}
+              {'○'.repeat(round.usedAttempts)}
+            </span>
+            <span className="visually-hidden">
+              Попытка {round.usedAttempts + 1} из {MAX_ATTEMPTS_PER_REGION}
+            </span>
+          </p>
+          <p className="fill-status" role="status" aria-live="polite">
+            {statusText()}
+          </p>
+        </>
+      }
+      answerList={
+        <RegionAnswerList
+          presentation="inline"
+          regions={regions}
+          selectedRegionId={null}
+          onSelect={handleSelect}
+          outcomes={round.outcomes}
+          interactive={!finished}
+          paused={isRevealing}
+        />
+      }
+      onExit={onExit}
+    >
+      <ChinaMap
         regions={regions}
         selectedRegionId={null}
         onSelect={handleSelect}
+        onClear={() => {}}
+        variant="fill"
+        usage="answer"
         outcomes={round.outcomes}
+        highlight={mapHighlight}
         interactive={!finished}
         paused={isRevealing}
       />
-      <footer className="round-footer">
-        <button type="button" className="secondary" onClick={onExit}>
-          Прервать раунд
-        </button>
-      </footer>
-    </main>
+    </RoundStage>
   );
 }
