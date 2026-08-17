@@ -26,6 +26,14 @@ function renderRound(
   );
 }
 
+/** Список — в панели оболочки: перед ответом её нужно открыть. */
+function openAnswerList() {
+  const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
+  if (toggle.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.click(toggle);
+  }
+}
+
 function asked(): string {
   return screen.getByTestId('exercise-target').textContent ?? '';
 }
@@ -39,6 +47,7 @@ it('спрашивает город по имени и принимает отв
   try {
     renderRound();
     const before = asked();
+    openAnswerList();
     const list = screen.getByRole('list', { name: 'Список городов' });
 
     fireEvent.click(within(list).getByRole('button', { name: askedCity().nameRu }));
@@ -71,20 +80,31 @@ it('в «найти город» отвечают и нажатием по то�
   }
 });
 
-it('на ошибке называет и город, и его регион', () => {
-  renderRound();
-  const target = askedCity();
-  const other = capitals.find((city) => city.id !== target.id)!;
-  const list = screen.getByRole('list', { name: 'Список городов' });
+it('после ошибки называет верный ответ и едет дальше сам', () => {
+  vi.useFakeTimers();
+  try {
+    renderRound();
+    const target = askedCity();
+    const other = capitals.find((city) => city.id !== target.id)!;
 
-  fireEvent.click(within(list).getByRole('button', { name: other.nameRu }));
+    openAnswerList();
+    const list = screen.getByRole('list', { name: 'Список городов' });
+    fireEvent.click(within(list).getByRole('button', { name: other.nameRu }));
 
-  const feedback = screen.getByText('Этот город стоит повторить').closest('section')!;
+    expect(screen.getByText('Этот город стоит повторить')).toBeTruthy();
+    expect(asked()).toContain(target.nameRu);
+    expect(asked()).toContain(target.nameZh);
+    expect(screen.queryByRole('button', { name: 'Далее' })).toBeNull();
 
-  expect(within(feedback).getByText(new RegExp(target.nameRu))).toBeTruthy();
-  expect(
-    within(feedback).getByText(new RegExp(regionNameOf(target.regionId))),
-  ).toBeTruthy();
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(screen.queryByText('Этот город стоит повторить')).toBeNull();
+    expect(asked()).not.toContain(target.nameRu);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('в «назвать город» показывает четыре имени и подсвечивает спрошенную точку', () => {
@@ -129,6 +149,7 @@ it('сообщает о завершении раунда', () => {
 
     for (let index = 0; index < shortPool.length; index += 1) {
       const target = shortPool.find((city) => city.nameRu === asked())!;
+      openAnswerList();
       const list = screen.getByRole('list', { name: 'Список городов' });
       fireEvent.click(within(list).getByRole('button', { name: target.nameRu }));
       act(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { regions } from '../../content/regions';
 import type { City } from '../../content/types';
 import { buildCityChoices } from '../../domain/city-choices';
@@ -19,10 +19,10 @@ import { ChinaMap } from '../../map/ChinaMap';
 import type { MapZoom } from '../../map/MapControls';
 import { CityAnswerList } from './CityAnswerList';
 import { CITY_MODES } from './exercise-modes';
+import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { RoundProgressTrail } from './RoundProgressTrail';
-
-/** Столько же, сколько в раунде по регионам: ритм у игр общий. */
-const CORRECT_PAUSE_MS = 500;
+import { RoundStage } from './RoundStage';
+import { StageChoices, type StageChoice } from './StageChoices';
 
 /*
  * Часы раунда живут в модуле, а не в теле компонента. `performance.now`
@@ -62,6 +62,9 @@ export type CityRoundProps = {
  * | `find-on-map` | имя города | нажатие по точке |
  * | `name-target` | подсвеченная точка | одно из четырёх имён |
  * | `match-pair` | имя города | нажатие по области региона |
+ *
+ * Паузы-разбора больше нет (спек RoundStage): после ошибки плашка вопроса
+ * называет верный город, и раунд идёт дальше сам.
  */
 export function CityRound({
   cities,
@@ -92,6 +95,7 @@ export function CityRound({
   const [zoom, setZoom] = useState<MapZoom>(1);
   const [answeredId, setAnsweredId] = useState<string | null>(null);
   const [askedAt, setAskedAt] = useState(startClock);
+  const [startedAt] = useState(startClock);
   const advanceTimer = useRef<number | null>(null);
 
   useEffect(
@@ -114,9 +118,7 @@ export function CityRound({
   const question = currentQuestion(round);
   const targetCity = cities.find((city) => city.id === question.target.id)!;
   const mode = CITY_MODES[exerciseType];
-  const isLastQuestion = round.currentIndex === round.questions.length - 1;
   const lastAttempt = round.attempts[round.attempts.length - 1];
-  const showsFeedback = round.status === 'feedback' && lastAttempt?.isCorrect === false;
 
   /** Чем отвечают: точкой города, именем из списка или областью региона. */
   const answersWithRegion = exerciseType === 'match-pair';
@@ -148,16 +150,14 @@ export function CityRound({
     });
     setRound(answered);
 
-    if (answered.attempts[answered.attempts.length - 1].isCorrect) {
-      advanceTimer.current = window.setTimeout(() => {
+    const isCorrect = answered.attempts[answered.attempts.length - 1].isCorrect;
+    advanceTimer.current = window.setTimeout(
+      () => {
         advanceTimer.current = null;
         goNext(answered);
-      }, CORRECT_PAUSE_MS);
-    }
-  }
-
-  function handleChoice(event: MouseEvent<HTMLButtonElement>) {
-    answer(event.currentTarget.dataset.choiceId ?? '');
+      },
+      isCorrect ? CORRECT_PAUSE_MS : WRONG_PAUSE_MS,
+    );
   }
 
   /*
@@ -176,127 +176,105 @@ export function CityRound({
     answer(cityId);
   }
 
-  function handleNext() {
-    goNext(round);
-  }
+  const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
 
-  const regionOfTarget = regions.find((region) => region.id === targetCity.regionId)!;
+  const stageChoices: readonly StageChoice[] = showsChoices
+    ? choicesByQuestion[round.currentIndex].map((choice) => ({
+        id: choice.id,
+        label: labelOf(choice, question.language),
+        lang: langOf(question.language),
+        result:
+          answeredId === null
+            ? undefined
+            : choice.id === targetCity.id
+              ? 'correct'
+              : choice.id === answeredId
+                ? 'incorrect'
+                : undefined,
+      }))
+    : [];
+
+  const prompt = showsAnswer ? (
+    <>
+      <p className="eyebrow">Этот город стоит повторить</p>
+      <p className="stage-target" data-testid="exercise-target">
+        Это {targetCity.nameRu} <span lang="zh-Hans">{targetCity.nameZh}</span>
+      </p>
+    </>
+  ) : (
+    <>
+      <p className="eyebrow">{mode.eyebrow}</p>
+      <p
+        className="stage-target"
+        data-testid="exercise-target"
+        lang={showsChoices ? undefined : langOf(question.language)}
+      >
+        {showsChoices ? 'Город на карте' : labelOf(targetCity, question.language)}
+      </p>
+    </>
+  );
 
   return (
-    <main className="round-shell">
-      <div className="round-layout" data-columns="two">
-        <div className="round-prompt-column">
-          <header className="round-prompt">
-            <p className="eyebrow">{mode.eyebrow}</p>
-            <h1
-              data-testid="exercise-target"
-              lang={showsChoices ? undefined : langOf(question.language)}
-            >
-              {showsChoices ? 'Город на карте' : labelOf(targetCity, question.language)}
-            </h1>
-            <p className="exercise-progress">
-              Вопрос {round.currentIndex + 1} из {round.questions.length}
-            </p>
-          </header>
-          {showsChoices ? (
-            <ul className="choice-list" aria-label="Варианты ответа">
-              {choicesByQuestion[round.currentIndex].map((choice) => (
-                <li key={choice.id}>
-                  <button
-                    type="button"
-                    data-testid="choice-option"
-                    data-choice-id={choice.id}
-                    data-result={
-                      answeredId === null
-                        ? undefined
-                        : choice.id === targetCity.id
-                          ? 'correct'
-                          : choice.id === answeredId
-                            ? 'incorrect'
-                            : undefined
-                    }
-                    disabled={round.status !== 'ready'}
-                    onClick={handleChoice}
-                  >
-                    {labelOf(choice, question.language)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          {showsFeedback ? (
-            <section
-              className="answer-feedback"
-              data-result="incorrect"
-              aria-labelledby="city-feedback-heading"
-            >
-              <p className="answer-feedback-icon" role="img" aria-label="Стоит повторить">
-                ↻
-              </p>
-              <h3 id="city-feedback-heading" tabIndex={-1}>
-                Этот город стоит повторить
-              </h3>
-              <p>
-                Правильный ответ: {targetCity.nameRu}{' '}
-                <span lang="zh-Hans">{targetCity.nameZh}</span>.
-              </p>
-              <p>
-                Регион: {regionOfTarget.nameRu}{' '}
-                <span lang="zh-Hans">({regionOfTarget.nameZh})</span>.
-              </p>
-              <button type="button" className="primary" onClick={handleNext}>
-                {isLastQuestion ? 'Завершить раунд' : 'Далее'}
-              </button>
-            </section>
-          ) : null}
+    <RoundStage
+      prompt={prompt}
+      promptState={showsAnswer ? 'answer' : 'question'}
+      startedAt={startedAt}
+      progress={
+        <>
+          <p className="exercise-progress">
+            Вопрос {round.currentIndex + 1} из {round.questions.length}
+          </p>
           <RoundProgressTrail
             total={round.questions.length}
             attempts={round.attempts}
           />
-        </div>
-        <div className="round-map">
-          {/*
-            В «город — регион» точки скрыты вовсе: подсвеченный кружок в
-            середине области — готовый ответ. В остальных двух играх точки
-            есть, но без подписей: в «назвать город» подпись назвала бы
-            спрошенный город, в «найти город» — выдала бы его наведением
-            курсора. Та же утечка, что у выносок Макао и Гонконга.
-          */}
-          <ChinaMap
-            regions={regions}
-            selectedRegionId={answersWithRegion ? answeredId : null}
-            onSelect={handleRegionSelect}
-            onClear={() => {}}
-            interactive={answersWithRegion}
-            zoom={zoom}
-            onZoomChange={setZoom}
-            usage="answer"
-            showsCities={!answersWithRegion}
-            selectedCityId={showsChoices ? targetCity.id : answeredId}
-            showsCityLabels={false}
-            onSelectCity={exerciseType === 'find-on-map' ? handleCitySelect : undefined}
+        </>
+      }
+      choices={
+        showsChoices ? (
+          <StageChoices
+            choices={stageChoices}
+            disabled={round.status !== 'ready'}
+            onChoose={answer}
           />
-        </div>
-      </div>
+        ) : undefined
+      }
+      answerList={
+        exerciseType === 'find-on-map' ? (
+          <CityAnswerList
+            presentation="inline"
+            cities={cities}
+            language={question.language}
+            answeredId={answeredId}
+            targetId={targetCity.id}
+            disabled={round.status !== 'ready'}
+            onSelect={handleCitySelect}
+          />
+        ) : undefined
+      }
+      onExit={onExit}
+    >
       {/*
-        Равнозначный список: на узком экране и с клавиатуры карта городами не
-        отвечает — цели на 320 px мельче порога (спек городов).
+        В «город — регион» точки скрыты вовсе: подсвеченный кружок в
+        середине области — готовый ответ. В остальных двух играх точки
+        есть, но без подписей: в «назвать город» подпись назвала бы
+        спрошенный город, в «найти город» — выдала бы его наведением
+        курсора. Та же утечка, что у выносок Макао и Гонконга.
       */}
-      {exerciseType === 'find-on-map' ? (
-        <CityAnswerList
-          cities={cities}
-          language={question.language}
-          answeredId={answeredId}
-          targetId={targetCity.id}
-          disabled={round.status !== 'ready'}
-          onSelect={handleCitySelect}
-        />
-      ) : null}
-      <footer className="round-footer">
-        <button type="button" className="secondary" onClick={onExit}>
-          Прервать раунд
-        </button>
-      </footer>
-    </main>
+      <ChinaMap
+        regions={regions}
+        selectedRegionId={answersWithRegion ? answeredId : null}
+        onSelect={handleRegionSelect}
+        onClear={() => {}}
+        interactive={answersWithRegion}
+        zoom={zoom}
+        onZoomChange={setZoom}
+        usage="answer"
+        showsCities={!answersWithRegion}
+        selectedCityId={showsChoices ? targetCity.id : answeredId}
+        showsCityLabels={false}
+        onSelectCity={exerciseType === 'find-on-map' ? handleCitySelect : undefined}
+      />
+    </RoundStage>
   );
 }
