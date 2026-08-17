@@ -14,7 +14,8 @@ export function useFullscreen(target: RefObject<HTMLElement | null>) {
 
   useEffect(() => {
     function syncState() {
-      setIsFullscreen(document.fullscreenElement !== null);
+      // jsdom отдаёт undefined, браузер — null
+      setIsFullscreen(document.fullscreenElement != null);
     }
 
     document.addEventListener('fullscreenchange', syncState);
@@ -23,7 +24,8 @@ export function useFullscreen(target: RefObject<HTMLElement | null>) {
   }, []);
 
   const toggle = useCallback(() => {
-    if (document.fullscreenElement !== null) {
+    // jsdom отдаёт undefined, браузер — null
+    if (document.fullscreenElement != null) {
       void document.exitFullscreen();
 
       return;
