@@ -37,6 +37,12 @@ export type RoundStageProps = {
  *
  * Полноэкранная кнопка разворачивает корень оболочки: шапка сайта остаётся
  * вне полного экрана, решение 2026-08-05 о шапке не отменяется.
+ *
+ * `data-list-open` на корне — крючок для CSS: пока панель «Ответить из
+ * списка» открыта, плашка вопроса должна снова принимать нажатия (см.
+ * `.round-stage[data-list-open='true'] .stage-prompt` в styles.css) —
+ * иначе тап по плашке на узком экране «проваливался» бы сквозь неё в
+ * скрытую под ней кнопку списка.
  */
 export function RoundStage({
   prompt,
@@ -73,7 +79,7 @@ export function RoundStage({
   }
 
   return (
-    <main className="round-stage" ref={stageRef}>
+    <main className="round-stage" data-list-open={isListOpen} ref={stageRef}>
       <div className="stage-prompt" data-state={promptState} aria-live="polite">
         {prompt}
       </div>

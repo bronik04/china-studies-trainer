@@ -100,3 +100,22 @@ it('без слота списка кнопки «Ответить из спис
 
   expect(screen.queryByRole('button', { name: 'Ответить из списка' })).toBeNull();
 });
+
+/*
+ * jsdom не считает CSS-каскад, поэтому саму «сквозность» плашки не
+ * проверить здесь — но крючок для неё, атрибут на корне, проверить можно.
+ * Правило `.round-stage[data-list-open='true'] .stage-prompt { pointer-
+ * events: auto; }` в styles.css делает плашку «твёрдой», пока панель
+ * открыта — иначе клик по ней на узком экране проваливался бы сквозь в
+ * скрытую под ней кнопку списка.
+ */
+it('открытая панель списка помечает корень data-list-open', () => {
+  const { container } = renderStage({ answerList: <p>список целей</p> });
+  const stage = container.querySelector('.round-stage')!;
+
+  expect(stage.getAttribute('data-list-open')).toBe('false');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Ответить из списка' }));
+
+  expect(stage.getAttribute('data-list-open')).toBe('true');
+});
