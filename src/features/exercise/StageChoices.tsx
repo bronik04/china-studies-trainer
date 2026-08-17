@@ -31,6 +31,11 @@ export function StageChoices({ choices, disabled, onChoose }: StageChoicesProps)
     }
 
     function handleKey(event: KeyboardEvent) {
+      // Cmd+1/Ctrl+1/Alt+1 переключают вкладки браузера — это не ответ.
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
       const index = Number.parseInt(event.key, 10) - 1;
       const choice = Number.isNaN(index) ? undefined : choices[index];
       if (choice !== undefined) {
@@ -60,6 +65,7 @@ export function StageChoices({ choices, disabled, onChoose }: StageChoicesProps)
             data-choice-id={choice.id}
             data-result={choice.result}
             disabled={disabled}
+            aria-keyshortcuts={String(index + 1)}
             onClick={handleClick}
           >
             <kbd aria-hidden="true">{index + 1}</kbd>

@@ -1,21 +1,5 @@
-import { useState } from 'react';
-import { citiesWord } from '../../content/region-count';
 import type { City } from '../../content/types';
-import { TWO_COLUMN_QUERY } from '../../design/breakpoints';
 import { labelOf, langOf, type QuestionLanguage } from '../../domain/question-language';
-
-/**
- * Начальное состояние блока — то же правило, что у списка регионов: в jsdom
- * `matchMedia` нет, и его отсутствие читается как узкий экран, чтобы проверки
- * ответа не зависели от вёрстки.
- */
-function defaultOpen(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return true;
-  }
-
-  return !window.matchMedia(TWO_COLUMN_QUERY).matches;
-}
 
 export type CityAnswerListProps = {
   readonly cities: readonly City[];
@@ -24,8 +8,6 @@ export type CityAnswerListProps = {
   readonly answeredId: string | null;
   readonly disabled: boolean;
   readonly onSelect: (cityId: string) => void;
-  /** `disclosure` — свёрнутый блок; `inline` — голый список для панели. */
-  readonly presentation?: 'disclosure' | 'inline';
 };
 
 /**
@@ -33,9 +15,9 @@ export type CityAnswerListProps = {
  *
  * Нужен по той же причине, что и список регионов: цель на карте бывает меньше
  * порога нажатия (на 320 px это все города разом), а ответить с клавиатуры и
- * через читалку экрана нужно всегда. Разметка и стили общие с ним — свёрнутый
- * блок и `.map-alternative` внутри: полсотни кнопок не должны занимать экран
- * там, где работает карта.
+ * через читалку экрана нужно всегда. Разметка и стили общие с ним —
+ * `.map-alternative`. На экране раунда список стоит в панели `RoundStage`
+ * («Ответить из списка»), которая открывается и закрывается снаружи.
  *
  * Порядок — алфавитный по русскому имени: искать глазами среди полусотни
  * приходится именно так.
@@ -47,14 +29,12 @@ export function CityAnswerList({
   answeredId,
   disabled,
   onSelect,
-  presentation = 'disclosure',
 }: CityAnswerListProps) {
-  const [open, setOpen] = useState(defaultOpen);
   const ordered = [...cities].sort((left, right) =>
     left.nameRu.localeCompare(right.nameRu, 'ru'),
   );
 
-  const list = (
+  return (
     <ul className="map-alternative" aria-label="Список городов">
       {ordered.map((city) => (
         <li key={city.id}>
@@ -82,22 +62,5 @@ export function CityAnswerList({
         </li>
       ))}
     </ul>
-  );
-
-  if (presentation === 'inline') {
-    return list;
-  }
-
-  return (
-    <details
-      className="region-answer-list"
-      open={open}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-    >
-      <summary>
-        Ответить из списка ({cities.length} {citiesWord(cities.length)})
-      </summary>
-      {list}
-    </details>
   );
 }

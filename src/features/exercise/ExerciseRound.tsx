@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { cityById } from '../../content/cities';
 import type { Region } from '../../content/types';
 import { buildChoices } from '../../domain/choices';
@@ -19,10 +19,10 @@ import { ChinaMap } from '../../map/ChinaMap';
 import { RegionAnswerList } from '../../map/RegionAnswerList';
 import { answerStatesFor } from './answer-states';
 import { EXERCISE_MODES } from './exercise-modes';
-import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
+import { useAutoAdvance } from './use-auto-advance';
 
 export type ExerciseRoundProps = {
   readonly regions: readonly Region[];
@@ -80,21 +80,7 @@ export function ExerciseRound({
   const [answeredRegionId, setAnsweredRegionId] = useState<string | null>(null);
   const [askedAt, setAskedAt] = useState(() => performance.now());
   const [startedAt] = useState(() => performance.now());
-
-  /*
-   * Таймер живёт в ссылке: уход с экрана посреди паузы не должен переводить
-   * раунд, которого уже нет.
-   */
-  const advanceTimer = useRef<number | null>(null);
-
-  useEffect(
-    () => () => {
-      if (advanceTimer.current !== null) {
-        window.clearTimeout(advanceTimer.current);
-      }
-    },
-    [],
-  );
+  const { schedule } = useAutoAdvance();
 
   // Варианты считаются один раз на раунд: иначе перерисовка тасовала бы их
   // прямо под курсором.
@@ -145,13 +131,7 @@ export function ExerciseRound({
     setRound(answered);
 
     const isCorrect = answered.attempts[answered.attempts.length - 1].isCorrect;
-    advanceTimer.current = window.setTimeout(
-      () => {
-        advanceTimer.current = null;
-        goNext(answered);
-      },
-      isCorrect ? CORRECT_PAUSE_MS : WRONG_PAUSE_MS,
-    );
+    schedule(isCorrect, () => goNext(answered));
   }
 
   const stageChoices: readonly StageChoice[] = isMapAnswer
@@ -169,17 +149,34 @@ export function ExerciseRound({
         result: resultOf(choice.id, question.target.id, answeredRegionId),
       }));
 
+  /*
+   * Плашка всегда называет верный ответ, а не цель вопроса: в «регион —
+   * столица» цель — регион, она уже названа в самом вопросе, а ответ,
+   * который проверяют, — столица.
+   */
+  const capital = cityById(targetRegion.capitalCityId)!;
+  const answerLabel =
+    question.exerciseType === 'match-pair' ? (
+      <>
+        Это {capital.nameRu} <span lang="zh-Hans">{capital.nameZh}</span>
+      </>
+    ) : (
+      <>
+        Это {targetRegion.nameRu} <span lang="zh-Hans">{targetRegion.nameZh}</span>
+      </>
+    );
+
   const prompt = showsAnswer ? (
     <>
       <p className="eyebrow">Этот регион стоит повторить</p>
-      <p className="stage-target" data-testid="exercise-target">
-        Это {targetRegion.nameRu} <span lang="zh-Hans">{targetRegion.nameZh}</span>
-      </p>
+      <h1 className="stage-target" data-testid="exercise-target">
+        {answerLabel}
+      </h1>
     </>
   ) : (
     <>
       <p className="eyebrow">{mode.eyebrow}</p>
-      <p
+      <h1
         className="stage-target"
         data-testid="exercise-target"
         lang={
@@ -191,7 +188,7 @@ export function ExerciseRound({
         {question.exerciseType === 'name-target'
           ? 'Регион на карте'
           : labelOf(targetRegion, question.language)}
-      </p>
+      </h1>
     </>
   );
 

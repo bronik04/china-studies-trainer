@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { regions } from '../../content/regions';
 import type { City } from '../../content/types';
 import { buildCityChoices } from '../../domain/city-choices';
@@ -17,12 +17,13 @@ import {
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import type { MapZoom } from '../../map/MapControls';
+import { answerStatesFor } from './answer-states';
 import { CityAnswerList } from './CityAnswerList';
 import { CITY_MODES } from './exercise-modes';
-import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
+import { useAutoAdvance } from './use-auto-advance';
 
 /*
  * Часы раунда живут в модуле, а не в теле компонента. `performance.now`
@@ -96,16 +97,7 @@ export function CityRound({
   const [answeredId, setAnsweredId] = useState<string | null>(null);
   const [askedAt, setAskedAt] = useState(startClock);
   const [startedAt] = useState(startClock);
-  const advanceTimer = useRef<number | null>(null);
-
-  useEffect(
-    () => () => {
-      if (advanceTimer.current !== null) {
-        window.clearTimeout(advanceTimer.current);
-      }
-    },
-    [],
-  );
+  const { schedule } = useAutoAdvance();
 
   const choicesByQuestion = useMemo(() => {
     const random = createSeededRandom(seed + 1);
@@ -123,6 +115,19 @@ export function CityRound({
   /** Чем отвечают: точкой города, именем из списка или областью региона. */
   const answersWithRegion = exerciseType === 'match-pair';
   const showsChoices = exerciseType === 'name-target';
+  const regionOfTarget = regions.find((region) => region.id === targetCity.regionId)!;
+
+  /*
+   * После ошибки в «город — регион» карта штрихует верную область и метит
+   * ошибочную — то же правило, что в ExerciseRound (answer-states.ts).
+   */
+  const answerStates = useMemo(
+    () =>
+      answersWithRegion && answeredId !== null
+        ? answerStatesFor(regions, targetCity.regionId, answeredId)
+        : {},
+    [answersWithRegion, answeredId, targetCity.regionId],
+  );
 
   function goNext(from: Round) {
     const next = goToNextQuestion(from);
@@ -151,13 +156,7 @@ export function CityRound({
     setRound(answered);
 
     const isCorrect = answered.attempts[answered.attempts.length - 1].isCorrect;
-    advanceTimer.current = window.setTimeout(
-      () => {
-        advanceTimer.current = null;
-        goNext(answered);
-      },
-      isCorrect ? CORRECT_PAUSE_MS : WRONG_PAUSE_MS,
-    );
+    schedule(isCorrect, () => goNext(answered));
   }
 
   /*
@@ -197,20 +196,29 @@ export function CityRound({
   const prompt = showsAnswer ? (
     <>
       <p className="eyebrow">Этот город стоит повторить</p>
-      <p className="stage-target" data-testid="exercise-target">
-        Это {targetCity.nameRu} <span lang="zh-Hans">{targetCity.nameZh}</span>
-      </p>
+      <h1 className="stage-target" data-testid="exercise-target">
+        {answersWithRegion ? (
+          <>
+            Это {targetCity.nameRu} <span lang="zh-Hans">{targetCity.nameZh}</span> —{' '}
+            {regionOfTarget.nameRu} <span lang="zh-Hans">{regionOfTarget.nameZh}</span>
+          </>
+        ) : (
+          <>
+            Это {targetCity.nameRu} <span lang="zh-Hans">{targetCity.nameZh}</span>
+          </>
+        )}
+      </h1>
     </>
   ) : (
     <>
       <p className="eyebrow">{mode.eyebrow}</p>
-      <p
+      <h1
         className="stage-target"
         data-testid="exercise-target"
         lang={showsChoices ? undefined : langOf(question.language)}
       >
         {showsChoices ? 'Город на карте' : labelOf(targetCity, question.language)}
-      </p>
+      </h1>
     </>
   );
 
@@ -242,7 +250,6 @@ export function CityRound({
       answerList={
         exerciseType === 'find-on-map' ? (
           <CityAnswerList
-            presentation="inline"
             cities={cities}
             language={question.language}
             answeredId={answeredId}
@@ -266,6 +273,7 @@ export function CityRound({
         selectedRegionId={answersWithRegion ? answeredId : null}
         onSelect={handleRegionSelect}
         onClear={() => {}}
+        answerStates={answerStates}
         interactive={answersWithRegion}
         zoom={zoom}
         onZoomChange={setZoom}

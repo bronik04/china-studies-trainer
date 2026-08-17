@@ -54,3 +54,30 @@ it('выключенная полоса не слушает ни мышь, ни 
 
   expect(onChoose).not.toHaveBeenCalled();
 });
+
+it('⌘1 не отвечает: это переключение вкладки браузера, а не ответ', () => {
+  const onChoose = vi.fn();
+  render(<StageChoices choices={CHOICES} disabled={false} onChoose={onChoose} />);
+
+  fireEvent.keyDown(document, { key: '1', metaKey: true });
+
+  expect(onChoose).not.toHaveBeenCalled();
+});
+
+it('Ctrl+1 не отвечает по той же причине', () => {
+  const onChoose = vi.fn();
+  render(<StageChoices choices={CHOICES} disabled={false} onChoose={onChoose} />);
+
+  fireEvent.keyDown(document, { key: '1', ctrlKey: true });
+
+  expect(onChoose).not.toHaveBeenCalled();
+});
+
+it('кнопки называют свою клавишу для читалок экрана', () => {
+  render(<StageChoices choices={CHOICES} disabled={false} onChoose={() => {}} />);
+
+  const buttons = screen.getAllByTestId('choice-option');
+
+  expect(buttons[0]).toHaveAttribute('aria-keyshortcuts', '1');
+  expect(buttons[3]).toHaveAttribute('aria-keyshortcuts', '4');
+});

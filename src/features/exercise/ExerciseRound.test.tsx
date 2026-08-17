@@ -249,6 +249,29 @@ it('на экране темы выноски подписаны: там кар�
   }
 });
 
+/*
+ * Плашка должна называть верный ответ, а не цель вопроса: цель — регион,
+ * она уже названа в самом вопросе, а проверяют здесь столицу.
+ */
+it('в «регион — столица» после ошибки плашка называет столицу, а не регион', () => {
+  vi.useFakeTimers();
+  try {
+    renderRound(['match-pair']);
+    const target = askedRegion();
+    const correctCapital = capitalOf(target);
+
+    const wrongOption = screen
+      .getAllByTestId('choice-option')
+      .find((option) => option.querySelector('span')?.textContent !== correctCapital)!;
+    fireEvent.click(wrongOption);
+
+    expect(asked()).toContain(correctCapital);
+    expect(asked()).not.toBe(target.nameRu);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
 it('сообщает о завершении раунда, не требуя нажатия на последнем вопросе', () => {
   vi.useFakeTimers();
   try {
@@ -268,6 +291,35 @@ it('сообщает о завершении раунда, не требуя н�
     }
 
     expect(finish).toHaveBeenCalledOnce();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+/*
+ * Ошибка на последнем вопросе не отменяет завершение раунда: раунд едет
+ * дальше сам и после паузы-ошибки (2000 мс), а не только после верной
+ * паузы (500 мс).
+ */
+it('последний вопрос с ошибкой всё равно завершает раунд', () => {
+  vi.useFakeTimers();
+  try {
+    const finish = vi.fn();
+    const pool = regions.slice(0, 2);
+    renderRound(['find-on-map'], 'ru', finish, pool);
+
+    answerCorrectly();
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    answerWrongly();
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(finish).toHaveBeenCalledOnce();
+    expect(finish.mock.calls[0][0]).toHaveLength(pool.length);
   } finally {
     vi.useRealTimers();
   }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { physicalFeatures } from '../../content/physical-features';
 import { regions } from '../../content/regions';
 import type { PhysicalFeature } from '../../content/types';
@@ -20,10 +20,10 @@ import type { MapZoom } from '../../map/MapControls';
 import type { FeatureOutcome } from '../../map/PhysicalLayer';
 import { PHYSICAL_MODES } from './exercise-modes';
 import { PhysicalAnswerList } from './PhysicalAnswerList';
-import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
+import { useAutoAdvance } from './use-auto-advance';
 
 /*
  * Часы раунда живут в модуле, а не в теле компонента. `performance.now`
@@ -95,16 +95,7 @@ export function PhysicalRound({
   const [answeredId, setAnsweredId] = useState<string | null>(null);
   const [askedAt, setAskedAt] = useState(startClock);
   const [startedAt] = useState(startClock);
-  const advanceTimer = useRef<number | null>(null);
-
-  useEffect(
-    () => () => {
-      if (advanceTimer.current !== null) {
-        window.clearTimeout(advanceTimer.current);
-      }
-    },
-    [],
-  );
+  const { schedule } = useAutoAdvance();
 
   /*
    * Отвлекающие берутся из полного справочника, а не из пула раунда. Пул
@@ -172,13 +163,7 @@ export function PhysicalRound({
     setRound(answered);
 
     const isCorrect = answered.attempts[answered.attempts.length - 1].isCorrect;
-    advanceTimer.current = window.setTimeout(
-      () => {
-        advanceTimer.current = null;
-        goNext(answered);
-      },
-      isCorrect ? CORRECT_PAUSE_MS : WRONG_PAUSE_MS,
-    );
+    schedule(isCorrect, () => goNext(answered));
   }
 
   /*
@@ -213,15 +198,15 @@ export function PhysicalRound({
   const prompt = showsAnswer ? (
     <>
       <p className="eyebrow">Этот объект стоит повторить</p>
-      <p className="stage-target" data-testid="exercise-target">
+      <h1 className="stage-target" data-testid="exercise-target">
         Это {targetFeature.nameRu}{' '}
         <span lang="zh-Hans">{targetFeature.nameZh}</span>
-      </p>
+      </h1>
     </>
   ) : (
     <>
       <p className="eyebrow">{mode.eyebrow}</p>
-      <p
+      <h1
         className="stage-target"
         data-testid="exercise-target"
         lang={showsChoices ? undefined : langOf(question.language)}
@@ -229,7 +214,7 @@ export function PhysicalRound({
         {showsChoices
           ? 'Объект на карте'
           : labelOf(targetFeature, question.language)}
-      </p>
+      </h1>
     </>
   );
 
@@ -261,7 +246,6 @@ export function PhysicalRound({
       answerList={
         exerciseType === 'find-on-map' ? (
           <PhysicalAnswerList
-            presentation="inline"
             features={features}
             language={question.language}
             answeredId={answeredId}

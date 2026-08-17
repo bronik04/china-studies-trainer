@@ -1,21 +1,5 @@
-import { useState } from 'react';
-import { featuresWord } from '../../content/region-count';
 import type { PhysicalFeature } from '../../content/types';
-import { TWO_COLUMN_QUERY } from '../../design/breakpoints';
 import { labelOf, langOf, type QuestionLanguage } from '../../domain/question-language';
-
-/**
- * Начальное состояние блока — то же правило, что у списков регионов и
- * городов: в jsdom `matchMedia` нет, и его отсутствие читается как узкий
- * экран, чтобы проверки ответа не зависели от вёрстки.
- */
-function defaultOpen(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return true;
-  }
-
-  return !window.matchMedia(TWO_COLUMN_QUERY).matches;
-}
 
 export type PhysicalAnswerListProps = {
   readonly features: readonly PhysicalFeature[];
@@ -24,8 +8,6 @@ export type PhysicalAnswerListProps = {
   readonly answeredId: string | null;
   readonly disabled: boolean;
   readonly onSelect: (featureId: string) => void;
-  /** `disclosure` — свёрнутый блок; `inline` — голый список для панели. */
-  readonly presentation?: 'disclosure' | 'inline';
 };
 
 /**
@@ -34,7 +16,9 @@ export type PhysicalAnswerListProps = {
  *
  * Нужен не только на узком экране: река шириной в волос не цель ни при каком
  * разведении на 320 px, а ответить с клавиатуры и через читалку экрана нужно
- * всегда. Разметка и стили общие со списками регионов и городов.
+ * всегда. Разметка и стили общие со списками регионов и городов —
+ * `.map-alternative`. На экране раунда список стоит в панели `RoundStage`
+ * («Ответить из списка»), которая открывается и закрывается снаружи.
  *
  * Порядок — алфавитный по русскому имени, реки и формы вперемешку: разделять
  * их значило бы подсказывать вид ответа.
@@ -46,14 +30,12 @@ export function PhysicalAnswerList({
   answeredId,
   disabled,
   onSelect,
-  presentation = 'disclosure',
 }: PhysicalAnswerListProps) {
-  const [open, setOpen] = useState(defaultOpen);
   const ordered = [...features].sort((left, right) =>
     left.nameRu.localeCompare(right.nameRu, 'ru'),
   );
 
-  const list = (
+  return (
     <ul className="map-alternative" aria-label="Список объектов">
       {ordered.map((feature) => (
         <li key={feature.id}>
@@ -81,22 +63,5 @@ export function PhysicalAnswerList({
         </li>
       ))}
     </ul>
-  );
-
-  if (presentation === 'inline') {
-    return list;
-  }
-
-  return (
-    <details
-      className="region-answer-list"
-      open={open}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-    >
-      <summary>
-        Ответить из списка ({features.length} {featuresWord(features.length)})
-      </summary>
-      {list}
-    </details>
   );
 }

@@ -194,7 +194,7 @@ export function FillMapRound({
   const prompt = (
     <>
       <p className="eyebrow">Найдите на карте</p>
-      <p
+      <h1
         className="stage-target"
         data-testid="fill-target"
         lang={question === null ? undefined : langOf(question.language)}
@@ -202,14 +202,16 @@ export function FillMapRound({
         {targetRegion === null
           ? 'Карта заполнена'
           : labelOf(targetRegion, question!.language)}
-      </p>
+      </h1>
     </>
   );
 
   return (
     <RoundStage
       prompt={prompt}
-      promptState={isRevealing ? 'answer' : 'question'}
+      // Показ неугаданного региона идёт на карте (`mapHighlight`); плашка уже
+      // задаёт следующий вопрос, и метить её кромкой ответа было бы неверно.
+      promptState="question"
       startedAt={startedAt}
       progress={
         <>

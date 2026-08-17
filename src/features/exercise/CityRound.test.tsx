@@ -167,6 +167,34 @@ function regionNameOf(regionId: string): string {
   return regions.find((region) => region.id === regionId)!.nameRu;
 }
 
+/*
+ * После ошибки в «город — регион» карта должна показать, где на самом деле
+ * лежит область: без этого ученик знает, что ошибся, но не видит, куда
+ * нужно было нажать.
+ */
+it('в «город — регион» после ошибки называет регион и штрихует его на карте', () => {
+  vi.useFakeTimers();
+  try {
+    const { container } = renderRound('match-pair');
+    const target = askedCity();
+    const other = capitals.find((city) => city.regionId !== target.regionId)!;
+
+    fireEvent.click(
+      screen.getByRole('button', { name: new RegExp(regionNameOf(other.regionId)) }),
+    );
+
+    expect(asked()).toContain(target.nameRu);
+    expect(asked()).toContain(regionNameOf(target.regionId));
+    expect(
+      container.querySelector(
+        `[data-region-id="${target.regionId}"][data-answer-state="correct"]`,
+      ),
+    ).not.toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
 
 /*
  * В «найти город» подпись выдавала бы ответ наведением курсора — точку

@@ -144,17 +144,6 @@ p {
 
 /* --- Экран раунда ------------------------------------------------------- */
 
-@media (min-width: 1024px) {
-  /*
-   * Раскрытый список забирает высоту у карты, но не больше 40 % кадра.
-   * Открыли список — он нужен, и карта уступает; закрыли — карта вернулась.
-   */
-  .region-answer-list {
-    max-block-size: 40dvh;
-    overflow-y: auto;
-  }
-}
-
 /*
  * Лента хода занимает колонку вопроса, которая иначе пустует: на 1280×720 под
  * блоком вопроса оставалось около 490 px из 690.
@@ -185,16 +174,6 @@ p {
 
 .round-trail span[data-mark='wrong'] {
   color: var(--accent-on-ground);
-}
-
-/*
- * Узкий экран: высота дороже ленты, а «Вопрос N из M» и так стоит в липком
- * блоке вопроса.
- */
-@media (max-width: 1023px) {
-  .round-trail {
-    display: none;
-  }
 }
 
 /* --- Атлас -------------------------------------------------------------- */
@@ -1215,32 +1194,6 @@ button.text:hover:enabled {
   max-block-size: 50dvh;
   min-block-size: 0;
   overflow-y: auto;
-}
-
-/*
- * На экране раунда список уезжает в свёрнутый блок: 34 кнопки — это половина
- * всех остановок Tab на экране, и держать их раскрытыми там, где работает
- * карта, незачем.
- */
-.region-answer-list {
-  margin-block-start: var(--s-5);
-}
-
-.region-answer-list summary {
-  align-items: center;
-  color: var(--text-on-ground);
-  cursor: pointer;
-  display: flex;
-  min-block-size: var(--target-min);
-}
-
-.region-answer-list summary:focus-visible {
-  outline: var(--border-focus) solid var(--focus-on-ground);
-  outline-offset: var(--s-1);
-}
-
-.region-answer-list .map-alternative {
-  margin-block-start: var(--s-3);
 }
 
 /* --- Справочник регионов ------------------------------------------------ */
@@ -2434,7 +2387,13 @@ button.chip[aria-pressed='true'] {
   position: absolute;
   text-align: center;
   transform: translateX(-50%);
-  z-index: 2;
+  /* Плашка — только текст; нажатия сквозь неё уходят карте. */
+  pointer-events: none;
+  /*
+   * Выше панели «Ответить из списка» (z-index: 3): на узком экране панель
+   * занимает нижние 60 % карты, а вопрос должен остаться виден поверх неё.
+   */
+  z-index: 4;
 }
 
 .stage-prompt .eyebrow {
@@ -2503,6 +2462,17 @@ button.chip[aria-pressed='true'] {
   padding: var(--s-3) var(--s-4);
   position: absolute;
   z-index: 3;
+}
+
+/*
+ * Узкий экран: панель во всю ширину закрывала бы плашку вопроса. Нижние 60 %
+ * карты оставляют вопрос читаемым сверху.
+ */
+@media (max-width: 1023px) {
+  .stage-answer-panel {
+    block-size: 60%;
+    inset-block: auto 0;
+  }
 }
 
 .stage-choices-band {
