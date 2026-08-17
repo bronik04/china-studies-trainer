@@ -178,40 +178,32 @@ function answerCapital(correct: boolean): void {
   )!;
   const options = screen.getAllByTestId('choice-option');
 
+  /*
+   * Кнопка варианта теперь начинается с невидимой цифры-подсказки (`<kbd
+   * aria-hidden="true">`), так что textContent кнопки — это «1Чэнду», а не
+   * «Чэнду». Подпись живёт в дочернем `<span>`.
+   */
   fireEvent.click(
-    options.find((option) =>
-      correct
-        ? option.textContent === capitalOf(target)
-        : option.textContent !== capitalOf(target),
-    )!,
+    options.find((option) => {
+      const label = option.querySelector('span')?.textContent;
+      return correct ? label === capitalOf(target) : label !== capitalOf(target);
+    })!,
   );
 }
 
 /*
- * Верный ответ переводит вопрос сам, по таймеру; ошибка ждёт «Далее». Поэтому
- * раунд из одних верных ответов проходится на поддельных часах, а раунд из
- * ошибок — нажатиями, как и раньше.
+ * Кнопки «Далее» больше нет: и верный ответ, и ошибка переводят раунд к
+ * следующему вопросу сами, по таймеру (спек RoundStage, 2026-08-17) — верный
+ * через 500 мс, ошибка через 2000 мс, пока плашка показывает верный ответ.
+ * Поэтому весь раунд проходится на поддельных часах.
  */
 function finishRound(correct: boolean): void {
-  if (!correct) {
-    for (let index = 0; index < 34; index += 1) {
-      answerCapital(false);
-      fireEvent.click(
-        screen.getByRole('button', {
-          name: index === 33 ? 'Завершить раунд' : 'Далее',
-        }),
-      );
-    }
-
-    return;
-  }
-
   vi.useFakeTimers();
   try {
     for (let index = 0; index < 34; index += 1) {
-      answerCapital(true);
+      answerCapital(correct);
       act(() => {
-        vi.advanceTimersByTime(500);
+        vi.advanceTimersByTime(correct ? 500 : 2000);
       });
     }
   } finally {
