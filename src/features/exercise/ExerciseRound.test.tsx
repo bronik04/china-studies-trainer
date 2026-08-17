@@ -267,6 +267,9 @@ it('в «регион — столица» после ошибки плашка 
 
     expect(asked()).toContain(correctCapital);
     expect(asked()).not.toBe(target.nameRu);
+    // Подводка над плашкой тоже про ответ, а не про вопрос: столица — часть пары.
+    expect(screen.getByText('Эту пару стоит повторить')).toBeTruthy();
+    expect(screen.queryByText('Этот регион стоит повторить')).toBeNull();
   } finally {
     vi.useRealTimers();
   }

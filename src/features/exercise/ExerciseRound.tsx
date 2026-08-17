@@ -166,9 +166,19 @@ export function ExerciseRound({
       </>
     );
 
+  /*
+   * Подводка над плашкой тоже называет то, что проверяли: в «регион —
+   * столица» строкой ниже стоит имя столицы, а не региона — «этот регион
+   * стоит повторить» над именем города читалось бы как опечатка.
+   */
+  const answerEyebrow =
+    question.exerciseType === 'match-pair'
+      ? 'Эту пару стоит повторить'
+      : 'Этот регион стоит повторить';
+
   const prompt = showsAnswer ? (
     <>
-      <p className="eyebrow">Этот регион стоит повторить</p>
+      <p className="eyebrow">{answerEyebrow}</p>
       <h1 className="stage-target" data-testid="exercise-target">
         {answerLabel}
       </h1>
