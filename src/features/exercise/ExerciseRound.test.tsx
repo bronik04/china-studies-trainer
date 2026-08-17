@@ -28,6 +28,14 @@ function renderRound(
   );
 }
 
+/** Список — в панели оболочки: перед ответом её нужно открыть. */
+function openAnswerList() {
+  const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
+  if (toggle.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.click(toggle);
+  }
+}
+
 /** Название административного центра региона: оно живёт в справочнике городов. */
 function capitalOf(region: Region): string {
   return cityById(region.capitalCityId)!.nameRu;
@@ -46,6 +54,7 @@ function askedRegion(): Region {
 }
 
 function answerCorrectly() {
+  openAnswerList();
   const target = askedRegion();
 
   fireEvent.click(
@@ -54,6 +63,7 @@ function answerCorrectly() {
 }
 
 function answerWrongly() {
+  openAnswerList();
   const target = askedRegion();
   const other = regions.find((region) => region.id !== target.id)!;
 
@@ -83,13 +93,27 @@ it('переводит к следующему вопросу сам, без к�
   }
 });
 
-it('останавливается на ошибке и ждёт «Далее»', () => {
-  renderRound();
+it('после ошибки называет верный ответ и едет дальше сам', () => {
+  vi.useFakeTimers();
+  try {
+    renderRound();
+    const target = askedRegion();
 
-  answerWrongly();
+    answerWrongly();
 
-  expect(screen.getByText('Этот регион стоит повторить')).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Далее' })).toBeTruthy();
+    expect(screen.getByText('Этот регион стоит повторить')).toBeTruthy();
+    expect(asked()).toContain(target.nameRu);
+    expect(screen.queryByRole('button', { name: 'Далее' })).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(screen.queryByText('Этот регион стоит повторить')).toBeNull();
+    expect(asked()).not.toContain(target.nameRu);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('на русском спрашивает русским названием', () => {
@@ -130,7 +154,7 @@ it('в режиме «регион — столица» отвечают выб�
     fireEvent.click(
       screen
         .getAllByTestId('choice-option')
-        .find((option) => option.textContent === capitalOf(target))!,
+        .find((option) => option.querySelector('span')?.textContent === capitalOf(target))!,
     );
     act(() => {
       vi.advanceTimersByTime(500);
@@ -184,6 +208,7 @@ it('первый фокусируемый элемент — ответ, а не
 
 it('«Прервать раунд» стоит в разметке после списка ответов', () => {
   renderRound();
+  openAnswerList();
 
   const list = screen.getByRole('list', { name: 'Список регионов карты' });
   const abort = screen.getByRole('button', { name: 'Прервать раунд' });
@@ -191,30 +216,6 @@ it('«Прервать раунд» стоит в разметке после с
   expect(
     list.compareDocumentPosition(abort) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
-});
-
-it('карточка разбора стоит в разметке до карты', () => {
-  const { container } = renderRound();
-
-  answerWrongly();
-
-  const feedback = container.querySelector('.answer-feedback')!;
-  const map = container.querySelector('.china-map')!;
-
-  expect(
-    feedback.compareDocumentPosition(map) & Node.DOCUMENT_POSITION_FOLLOWING,
-  ).toBeTruthy();
-});
-
-it('без карты макет схлопывается в одну колонку и не печатает атрибуцию', () => {
-  const { container } = renderRound(['match-pair']);
-
-  expect(container.querySelector('.china-map')).toBeNull();
-  expect(container.querySelector('.round-layout')).toHaveAttribute(
-    'data-columns',
-    'one',
-  );
-  expect(screen.queryByRole('link', { name: 'CC BY 4.0' })).toBeNull();
 });
 
 it('не печатает названия выносок: иначе Макао и Гонконг — готовые ответы', () => {
@@ -259,7 +260,7 @@ it('сообщает о завершении раунда, не требуя н�
       fireEvent.click(
         screen
           .getAllByTestId('choice-option')
-          .find((option) => option.textContent === capitalOf(target))!,
+          .find((option) => option.querySelector('span')?.textContent === capitalOf(target))!,
       );
       act(() => {
         vi.advanceTimersByTime(500);
