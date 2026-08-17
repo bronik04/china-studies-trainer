@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { physicalFeatures } from '../../content/physical-features';
 import { regions } from '../../content/regions';
 import type { PhysicalFeature } from '../../content/types';
@@ -20,10 +20,10 @@ import type { MapZoom } from '../../map/MapControls';
 import type { FeatureOutcome } from '../../map/PhysicalLayer';
 import { PHYSICAL_MODES } from './exercise-modes';
 import { PhysicalAnswerList } from './PhysicalAnswerList';
+import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { RoundProgressTrail } from './RoundProgressTrail';
-
-/** Столько же, сколько в раундах по регионам и городам: ритм у игр общий. */
-const CORRECT_PAUSE_MS = 500;
+import { RoundStage } from './RoundStage';
+import { StageChoices, type StageChoice } from './StageChoices';
 
 /*
  * Часы раунда живут в модуле, а не в теле компонента. `performance.now`
@@ -94,6 +94,7 @@ export function PhysicalRound({
   const [zoom, setZoom] = useState<MapZoom>(1);
   const [answeredId, setAnsweredId] = useState<string | null>(null);
   const [askedAt, setAskedAt] = useState(startClock);
+  const [startedAt] = useState(startClock);
   const advanceTimer = useRef<number | null>(null);
 
   useEffect(
@@ -123,9 +124,7 @@ export function PhysicalRound({
   const question = currentQuestion(round);
   const targetFeature = features.find((feature) => feature.id === question.target.id)!;
   const mode = PHYSICAL_MODES[exerciseType];
-  const isLastQuestion = round.currentIndex === round.questions.length - 1;
   const lastAttempt = round.attempts[round.attempts.length - 1];
-  const showsFeedback = round.status === 'feedback' && lastAttempt?.isCorrect === false;
   const showsChoices = exerciseType === 'name-target';
 
   /*
@@ -172,16 +171,14 @@ export function PhysicalRound({
     });
     setRound(answered);
 
-    if (answered.attempts[answered.attempts.length - 1].isCorrect) {
-      advanceTimer.current = window.setTimeout(() => {
+    const isCorrect = answered.attempts[answered.attempts.length - 1].isCorrect;
+    advanceTimer.current = window.setTimeout(
+      () => {
         advanceTimer.current = null;
         goNext(answered);
-      }, CORRECT_PAUSE_MS);
-    }
-  }
-
-  function handleChoice(event: MouseEvent<HTMLButtonElement>) {
-    answer(event.currentTarget.dataset.choiceId ?? '');
+      },
+      isCorrect ? CORRECT_PAUSE_MS : WRONG_PAUSE_MS,
+    );
   }
 
   /*
@@ -195,120 +192,108 @@ export function PhysicalRound({
     }
   }
 
-  function handleNext() {
-    goNext(round);
-  }
+  const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
+
+  const stageChoices: readonly StageChoice[] = showsChoices
+    ? choicesByQuestion[round.currentIndex].map((choice) => ({
+        id: choice.id,
+        label: labelOf(choice, question.language),
+        lang: langOf(question.language),
+        result:
+          answeredId === null
+            ? undefined
+            : choice.id === targetFeature.id
+              ? 'correct'
+              : choice.id === answeredId
+                ? 'incorrect'
+                : undefined,
+      }))
+    : [];
+
+  const prompt = showsAnswer ? (
+    <>
+      <p className="eyebrow">Этот объект стоит повторить</p>
+      <p className="stage-target" data-testid="exercise-target">
+        Это {targetFeature.nameRu}{' '}
+        <span lang="zh-Hans">{targetFeature.nameZh}</span>
+      </p>
+    </>
+  ) : (
+    <>
+      <p className="eyebrow">{mode.eyebrow}</p>
+      <p
+        className="stage-target"
+        data-testid="exercise-target"
+        lang={showsChoices ? undefined : langOf(question.language)}
+      >
+        {showsChoices
+          ? 'Объект на карте'
+          : labelOf(targetFeature, question.language)}
+      </p>
+    </>
+  );
 
   return (
-    <main className="round-shell">
-      <div className="round-layout" data-columns="two">
-        <div className="round-prompt-column">
-          <header className="round-prompt">
-            <p className="eyebrow">{mode.eyebrow}</p>
-            <h1
-              data-testid="exercise-target"
-              lang={showsChoices ? undefined : langOf(question.language)}
-            >
-              {showsChoices
-                ? 'Объект на карте'
-                : labelOf(targetFeature, question.language)}
-            </h1>
-            <p className="exercise-progress">
-              Вопрос {round.currentIndex + 1} из {round.questions.length}
-            </p>
-          </header>
-          {showsChoices ? (
-            <ul className="choice-list" aria-label="Варианты ответа">
-              {choicesByQuestion[round.currentIndex].map((choice) => (
-                <li key={choice.id}>
-                  <button
-                    type="button"
-                    data-testid="choice-option"
-                    data-choice-id={choice.id}
-                    data-result={
-                      answeredId === null
-                        ? undefined
-                        : choice.id === targetFeature.id
-                          ? 'correct'
-                          : choice.id === answeredId
-                            ? 'incorrect'
-                            : undefined
-                    }
-                    disabled={round.status !== 'ready'}
-                    onClick={handleChoice}
-                  >
-                    {labelOf(choice, question.language)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          {showsFeedback ? (
-            <section
-              className="answer-feedback"
-              data-result="incorrect"
-              aria-labelledby="physical-feedback-heading"
-            >
-              <p className="answer-feedback-icon" role="img" aria-label="Стоит повторить">
-                ↻
-              </p>
-              <h3 id="physical-feedback-heading" tabIndex={-1}>
-                Этот объект стоит повторить
-              </h3>
-              <p>
-                Правильный ответ: {targetFeature.nameRu}{' '}
-                <span lang="zh-Hans">{targetFeature.nameZh}</span>.
-              </p>
-              <button type="button" className="primary" onClick={handleNext}>
-                {isLastQuestion ? 'Завершить раунд' : 'Далее'}
-              </button>
-            </section>
-          ) : null}
-          <RoundProgressTrail total={round.questions.length} attempts={round.attempts} />
-        </div>
-        <div className="round-map">
-          {/*
-            Подписи скрыты в обеих играх: в «назвать объект» подпись
-            подсвеченной реки и есть ответ, в «найти» она выдала бы объект
-            наведением курсора. Та же утечка, что у выносок Макао и Гонконга.
-            Области при этом не отвечают: ответ здесь — объект, а не регион.
-          */}
-          <ChinaMap
-            regions={regions}
-            selectedRegionId={null}
-            onSelect={() => {}}
-            onClear={() => {}}
-            interactive={false}
-            zoom={zoom}
-            onZoomChange={setZoom}
-            usage="answer"
-            variant="physical"
-            selectedFeatureId={showsChoices ? targetFeature.id : answeredId}
-            onSelectFeature={showsChoices ? undefined : handleFeatureSelect}
-            showsPhysicalLabels={false}
-            featureOutcomes={featureOutcomes}
+    <RoundStage
+      prompt={prompt}
+      promptState={showsAnswer ? 'answer' : 'question'}
+      startedAt={startedAt}
+      progress={
+        <>
+          <p className="exercise-progress">
+            Вопрос {round.currentIndex + 1} из {round.questions.length}
+          </p>
+          <RoundProgressTrail
+            total={round.questions.length}
+            attempts={round.attempts}
           />
-        </div>
-      </div>
+        </>
+      }
+      choices={
+        showsChoices ? (
+          <StageChoices
+            choices={stageChoices}
+            disabled={round.status !== 'ready'}
+            onChoose={answer}
+          />
+        ) : undefined
+      }
+      answerList={
+        exerciseType === 'find-on-map' ? (
+          <PhysicalAnswerList
+            presentation="inline"
+            features={features}
+            language={question.language}
+            answeredId={answeredId}
+            targetId={targetFeature.id}
+            disabled={round.status !== 'ready'}
+            onSelect={handleFeatureSelect}
+          />
+        ) : undefined
+      }
+      onExit={onExit}
+    >
       {/*
-        Равнозначный список: река шириной в волос не цель ни при каком
-        разведении на 320 px, и с клавиатуры карта отвечает не всем.
+        Подписи скрыты в обеих играх: в «назвать объект» подпись
+        подсвеченной реки и есть ответ, в «найти» она выдала бы объект
+        наведением курсора. Та же утечка, что у выносок Макао и Гонконга.
+        Области при этом не отвечают: ответ здесь — объект, а не регион.
       */}
-      {exerciseType === 'find-on-map' ? (
-        <PhysicalAnswerList
-          features={features}
-          language={question.language}
-          answeredId={answeredId}
-          targetId={targetFeature.id}
-          disabled={round.status !== 'ready'}
-          onSelect={handleFeatureSelect}
-        />
-      ) : null}
-      <footer className="round-footer">
-        <button type="button" className="secondary" onClick={onExit}>
-          Прервать раунд
-        </button>
-      </footer>
-    </main>
+      <ChinaMap
+        regions={regions}
+        selectedRegionId={null}
+        onSelect={() => {}}
+        onClear={() => {}}
+        interactive={false}
+        zoom={zoom}
+        onZoomChange={setZoom}
+        usage="answer"
+        variant="physical"
+        selectedFeatureId={showsChoices ? targetFeature.id : answeredId}
+        onSelectFeature={showsChoices ? undefined : handleFeatureSelect}
+        showsPhysicalLabels={false}
+        featureOutcomes={featureOutcomes}
+      />
+    </RoundStage>
   );
 }

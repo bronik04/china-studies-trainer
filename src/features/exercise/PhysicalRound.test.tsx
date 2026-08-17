@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import {
   physicalFeatures,
@@ -28,6 +28,14 @@ function renderRound(
   );
 
   return { container, onFinish, onExit };
+}
+
+/** Список — в панели оболочки: перед ответом её нужно открыть. */
+function openAnswerList() {
+  const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
+  if (toggle.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.click(toggle);
+  }
 }
 
 it('спрашивает двадцать четыре объекта подряд', () => {
@@ -68,35 +76,58 @@ it('в «назвать» даёт четыре имени того же вид�
  * спрашивается отдельно, а не общим поиском по имени.
  */
 function answerFromList(nameRu: string) {
+  openAnswerList();
   const list = screen.getByRole('list', { name: 'Список объектов' });
 
   fireEvent.click(within(list).getByRole('button', { name: nameRu }));
 }
 
 it('верный ответ из списка ведёт к следующему вопросу', () => {
-  renderRound('find-on-map');
+  vi.useFakeTimers();
+  try {
+    renderRound('find-on-map');
 
-  const asked = screen.getByTestId('exercise-target').textContent!;
+    const asked = screen.getByTestId('exercise-target').textContent!;
 
-  answerFromList(asked);
+    answerFromList(asked);
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
 
-  expect(screen.getByText(/Вопрос 1 из 24/)).toBeInTheDocument();
+    expect(screen.getByTestId('exercise-target').textContent).not.toBe(asked);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
-it('неверный ответ показывает разбор с правильным именем', () => {
-  renderRound('find-on-map');
+it('после ошибки называет верный объект и едет дальше сам', () => {
+  vi.useFakeTimers();
+  try {
+    renderRound('find-on-map');
 
-  const asked = screen.getByTestId('exercise-target').textContent!;
-  const wrong = physicalFeatures.find((feature) => feature.nameRu !== asked)!;
+    const asked = screen.getByTestId('exercise-target').textContent!;
+    const target = physicalFeatures.find((feature) => feature.nameRu === asked)!;
+    const wrong = physicalFeatures.find((feature) => feature.nameRu !== asked)!;
 
-  answerFromList(wrong.nameRu);
+    answerFromList(wrong.nameRu);
 
-  // Разбор — единственное место, где имя объекта звучит как ответ, а не как
-  // вопрос или как кнопка списка; его и спрашиваем.
-  const feedback = screen.getByRole('heading', { name: /стоит повторить/ })
-    .parentElement!;
+    expect(screen.getByText('Этот объект стоит повторить')).toBeTruthy();
+    const stated = screen.getByTestId('exercise-target').textContent!;
+    expect(stated).toContain(target.nameRu);
+    expect(stated).toContain(target.nameZh);
+    expect(screen.queryByRole('button', { name: 'Далее' })).toBeNull();
 
-  expect(within(feedback).getByText(new RegExp(asked))).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(screen.queryByText('Этот объект стоит повторить')).toBeNull();
+    expect(screen.getByTestId('exercise-target').textContent).not.toContain(
+      target.nameRu,
+    );
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('даёт прервать раунд', () => {
@@ -139,6 +170,7 @@ it('озеро отвлекают только озёрами: знак от з�
 it('на 320 px список отвечает за все двадцать четыре объекта', () => {
   renderRound('find-on-map', physicalFeaturesUpTo('all'));
 
+  openAnswerList();
   const list = screen.getByRole('list', { name: 'Список объектов' });
 
   expect(within(list).getAllByRole('button')).toHaveLength(24);
