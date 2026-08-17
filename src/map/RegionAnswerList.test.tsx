@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../content/regions';
-import { regionsWord } from '../content/region-count';
 import { RegionAnswerList } from './RegionAnswerList';
 
 function renderList(presentation: 'inline' | 'panel' = 'inline') {
@@ -13,13 +12,6 @@ function renderList(presentation: 'inline' | 'panel' = 'inline') {
     />,
   );
 }
-
-it('склоняет слово «регион» по числу', () => {
-  expect(regionsWord(1)).toBe('регион');
-  expect(regionsWord(34)).toBe('региона');
-  expect(regionsWord(11)).toBe('регионов');
-  expect(regionsWord(25)).toBe('регионов');
-});
 
 it('обычный вид отдаёт список без обёртки', () => {
   const { container } = renderList('inline');
