@@ -2582,6 +2582,18 @@ button.chip[aria-pressed='true'] {
   margin-block-start: 0;
 }
 
+/*
+ * Телефон: лента `aria-hidden` и декоративна — «Вопрос N из M» рядом несёт
+ * тот же факт словами. На 375×700 строка ленты занимала 145 px (21 % кадра)
+ * и отбирала их у карты; на телефоне высота дороже, а каждый отвоёванный
+ * пиксель к тому же расширяет и панель списка (60 % высоты карты).
+ */
+@media (max-width: 719px) {
+  .stage-strip .round-trail {
+    display: none;
+  }
+}
+
 .stage-strip-actions {
   align-items: center;
   display: flex;
