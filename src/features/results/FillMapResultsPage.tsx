@@ -1,4 +1,5 @@
 import type { Region } from '../../content/types';
+import { regionsWord } from '../../content/region-count';
 import { summariseFillRound, type FillRound } from '../../domain/fill-round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { formatDuration } from './format-duration';
@@ -7,6 +8,13 @@ export type FillMapResultsPageProps = {
   readonly round: FillRound;
   readonly regions: readonly Region[];
   readonly isProgressSaved: boolean;
+  /**
+   * Ровно тот набор, который запустит `onRepeatMistakes`: все ошибки за
+   * последние 14 дней. Приходит извне по тому же доводу, что и в
+   * RoundResultsPage: подпись кнопки не может разойтись с её действием.
+   */
+  readonly idsToRepeat: readonly string[];
+  readonly onRepeatMistakes: () => void;
   readonly onNewRound: () => void;
   readonly onExit: () => void;
 };
@@ -20,6 +28,8 @@ export function FillMapResultsPage({
   round,
   regions,
   isProgressSaved,
+  idsToRepeat,
+  onRepeatMistakes,
   onNewRound,
   onExit,
 }: FillMapResultsPageProps) {
@@ -27,6 +37,9 @@ export function FillMapResultsPage({
   const reviewRegions = summary.regionIdsToReview.flatMap(
     (regionId) => regions.find((region) => region.id === regionId) ?? [],
   );
+
+  const repeatCount = idsToRepeat.length;
+  const isRepeatWider = repeatCount > reviewRegions.length;
 
   return (
     <main className="app-shell">
@@ -75,10 +88,30 @@ export function FillMapResultsPage({
                 </li>
               ))}
             </ul>
+            {/*
+              Список обрезан до пяти тем этого раунда, а повтор берёт все ошибки
+              за 14 дней. Без этой строки экран говорил бы «пять», а делал «двадцать
+              семь».
+            */}
+            {isRepeatWider ? (
+              <p>
+                Здесь ошибки этого раунда. В повтор войдут все {repeatCount}{' '}
+                {regionsWord(repeatCount)} с ошибками за последние 14 дней.
+              </p>
+            ) : null}
           </>
         )}
         <div className="results-actions">
-          <button type="button" className="primary" onClick={onNewRound}>
+          {reviewRegions.length === 0 ? null : (
+            <button type="button" className="primary" onClick={onRepeatMistakes}>
+              Повторить ошибки: {repeatCount} {regionsWord(repeatCount)}
+            </button>
+          )}
+          <button
+            type="button"
+            className={reviewRegions.length === 0 ? 'primary' : 'secondary'}
+            onClick={onNewRound}
+          >
             Заполнить заново
           </button>
           <button type="button" className="secondary" onClick={onExit}>

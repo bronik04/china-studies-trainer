@@ -323,7 +323,12 @@ export default function App() {
   }
 
   function finishFillRound(round: FillRound) {
-    commitAttempts(round.attempts);
+    const updated = commitAttempts(round.attempts);
+    setRepeatRegionIds(
+      targetsToRepeat(updated.attempts, new Date(), 'region').map(
+        (target) => target.id,
+      ),
+    );
     setFillRound(round);
     setScreen('fill-results');
   }
@@ -379,6 +384,10 @@ export default function App() {
           round={fillRound}
           regions={regions}
           isProgressSaved={store.isAvailable}
+          idsToRepeat={repeatRegionIds}
+          onRepeatMistakes={() =>
+            startRound('find-on-map', language, repeatRegionIds)
+          }
           onNewRound={() => startFillRound(language)}
           onExit={() => setScreen('home')}
         />

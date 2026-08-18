@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './features/exercise/round-pace';
+import { MISS_FLASH_MS } from './features/exercise/FillMapRound';
 import { afterEach, beforeEach } from 'vitest';
 import App from './App';
 import { cityById } from './content/cities';
@@ -297,3 +298,54 @@ it('набор перед стартом задаёт длину физичес�
 
   expect(screen.getByText(/Вопрос 1 из 24/)).toBeInTheDocument();
 });
+
+/** В заполнении по-русски спрошенный регион назван в плашке `fill-target`. */
+function askedFillRegion(): Region {
+  const name = screen.getByTestId('fill-target').textContent;
+
+  return regions.find((region) => region.nameRu === name)!;
+}
+
+function clickFillRegion(region: Region): void {
+  const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
+  if (toggle.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.click(toggle);
+  }
+
+  // У закрытого региона к имени приписан исход, поэтому имя ищется по началу.
+  fireEvent.click(
+    screen.getByRole('button', {
+      name: new RegExp(`^${region.nameRu} \\(${region.nameZh}\\)`),
+    }),
+  );
+}
+
+it('итог заполнения ведёт в раунд по ошибочным регионам', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /Заполнить карту/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  vi.useFakeTimers();
+  try {
+    // Первый регион берётся со второй попытки: одна ошибка уходит в историю.
+    const first = askedFillRegion();
+    const wrong = regions.find((region) => region.id !== first.id)!;
+    clickFillRegion(wrong);
+    act(() => {
+      vi.advanceTimersByTime(MISS_FLASH_MS);
+    });
+    clickFillRegion(first);
+
+    for (let index = 1; index < 34; index += 1) {
+      clickFillRegion(askedFillRegion());
+    }
+  } finally {
+    vi.useRealTimers();
+  }
+
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Повторить ошибки: 1 регион' }),
+  );
+
+  expect(screen.getByText(/Вопрос 1 из 1/)).toBeInTheDocument();
+}, 20_000);
