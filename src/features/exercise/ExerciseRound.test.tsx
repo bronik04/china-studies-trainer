@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { cityById } from '../../content/cities';
 import { regions } from '../../content/regions';
 import type { Region } from '../../content/types';
@@ -84,7 +85,7 @@ it('переводит к следующему вопросу сам, без к�
     expect(screen.queryByText('Верно')).toBeNull();
 
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
 
     expect(asked()).not.toBe(before);
@@ -106,7 +107,7 @@ it('после ошибки называет верный ответ и едет
     expect(screen.queryByRole('button', { name: 'Далее' })).toBeNull();
 
     act(() => {
-      vi.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(WRONG_PAUSE_MS);
     });
 
     expect(screen.queryByText('Этот регион стоит повторить')).toBeNull();
@@ -136,7 +137,7 @@ it('в режиме «найти на карте» отвечают выборо
 
     answerCorrectly();
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
 
     expect(asked()).not.toBe(before);
@@ -151,19 +152,39 @@ it('в режиме «регион — столица» отвечают выб�
     renderRound(['match-pair']);
     const target = askedRegion();
 
-    fireEvent.click(
-      screen
-        .getAllByTestId('choice-option')
-        .find((option) => option.querySelector('span')?.textContent === capitalOf(target))!,
-    );
+    // По доступному имени: цифра-подсказка скрыта от читалки и в имя не входит.
+    fireEvent.click(screen.getByRole('button', { name: capitalOf(target) }));
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
 
     expect(asked()).not.toBe(target.nameRu);
   } finally {
     vi.useRealTimers();
   }
+});
+
+/*
+ * Карта в «регион — столица» — иллюстрация, а не поле ответа: она показывает
+ * спрошенный регион, но отвечают кнопками. Нажатие по области не должно
+ * считаться ответом (спек RoundStage, решение 2026-08-17).
+ */
+it('в «регион — столица» карта подсвечивает спрошенный регион и не отвечает', () => {
+  renderRound(['match-pair']);
+  const target = askedRegion();
+
+  const area = document.querySelector(`#${target.id}`)!;
+  expect(area.getAttribute('data-selected')).toBe('true');
+  expect(area.getAttribute('tabindex')).toBe('-1');
+
+  fireEvent.click(area);
+
+  // Ответ не засчитан: варианты живы, разбор не начался.
+  expect(screen.queryByText('Эту пару стоит повторить')).toBeNull();
+  const options = screen.getAllByTestId('choice-option');
+  expect(options.every((option) => !(option as HTMLButtonElement).disabled)).toBe(
+    true,
+  );
 });
 
 it('меняет вид задания от вопроса к вопросу, когда типов несколько', () => {
@@ -175,7 +196,7 @@ it('меняет вид задания от вопроса к вопросу, к
 
     answerCorrectly();
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
 
     expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
@@ -260,9 +281,10 @@ it('в «регион — столица» после ошибки плашка 
     const target = askedRegion();
     const correctCapital = capitalOf(target);
 
+    // Неверный вариант — любая кнопка, в чьём тексте нет верной столицы.
     const wrongOption = screen
       .getAllByTestId('choice-option')
-      .find((option) => option.querySelector('span')?.textContent !== correctCapital)!;
+      .find((option) => within(option).queryByText(correctCapital) === null)!;
     fireEvent.click(wrongOption);
 
     expect(asked()).toContain(correctCapital);
@@ -283,13 +305,9 @@ it('сообщает о завершении раунда, не требуя н�
 
     for (let index = 0; index < SHORT_POOL.length; index += 1) {
       const target = askedRegion();
-      fireEvent.click(
-        screen
-          .getAllByTestId('choice-option')
-          .find((option) => option.querySelector('span')?.textContent === capitalOf(target))!,
-      );
+      fireEvent.click(screen.getByRole('button', { name: capitalOf(target) }));
       act(() => {
-        vi.advanceTimersByTime(500);
+        vi.advanceTimersByTime(CORRECT_PAUSE_MS);
       });
     }
 
@@ -313,12 +331,12 @@ it('последний вопрос с ошибкой всё равно заве
 
     answerCorrectly();
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
 
     answerWrongly();
     act(() => {
-      vi.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(WRONG_PAUSE_MS);
     });
 
     expect(finish).toHaveBeenCalledOnce();

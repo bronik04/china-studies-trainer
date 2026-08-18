@@ -1,4 +1,4 @@
-import { useEffect, type MouseEvent } from 'react';
+import { useEffect, useRef, type MouseEvent } from 'react';
 
 export type StageChoice = {
   readonly id: string;
@@ -25,6 +25,20 @@ export type StageChoicesProps = {
  * цифры не у кого.
  */
 export function StageChoices({ choices, disabled, onChoose }: StageChoicesProps) {
+  /*
+   * Обработчик читает варианты через ссылку, а не из замыкания: родители
+   * собирают массив вариантов заново на каждый рендер, и зависимость по
+   * значению переустанавливала бы слушатель документа при каждой перерисовке.
+   * Ссылка обновляется на каждом рендере, слушатель ставится только на смену
+   * `disabled`.
+   */
+  const choicesRef = useRef(choices);
+  const onChooseRef = useRef(onChoose);
+  useEffect(() => {
+    choicesRef.current = choices;
+    onChooseRef.current = onChoose;
+  });
+
   useEffect(() => {
     if (disabled) {
       return;
@@ -37,16 +51,16 @@ export function StageChoices({ choices, disabled, onChoose }: StageChoicesProps)
       }
 
       const index = Number.parseInt(event.key, 10) - 1;
-      const choice = Number.isNaN(index) ? undefined : choices[index];
+      const choice = Number.isNaN(index) ? undefined : choicesRef.current[index];
       if (choice !== undefined) {
-        onChoose(choice.id);
+        onChooseRef.current(choice.id);
       }
     }
 
     document.addEventListener('keydown', handleKey);
 
     return () => document.removeEventListener('keydown', handleKey);
-  }, [choices, disabled, onChoose]);
+  }, [disabled]);
 
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     const choiceId = event.currentTarget.dataset.choiceId ?? '';

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { expect, it, vi } from 'vitest';
 import {
   physicalFeatures,
@@ -91,7 +92,7 @@ it('верный ответ из списка ведёт к следующему
 
     answerFromList(asked);
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
 
     expect(screen.getByTestId('exercise-target').textContent).not.toBe(asked);
@@ -118,7 +119,7 @@ it('после ошибки называет верный объект и еде
     expect(screen.queryByRole('button', { name: 'Далее' })).toBeNull();
 
     act(() => {
-      vi.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(WRONG_PAUSE_MS);
     });
 
     expect(screen.queryByText('Этот объект стоит повторить')).toBeNull();

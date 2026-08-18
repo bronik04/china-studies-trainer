@@ -119,3 +119,14 @@ it('открытая панель списка помечает корень dat
 
   expect(stage.getAttribute('data-list-open')).toBe('true');
 });
+
+it('кнопка списка связана с панелью через aria-controls', () => {
+  renderStage({ answerList: <p>список целей</p> });
+  const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
+
+  fireEvent.click(toggle);
+
+  const panel = screen.getByRole('group', { name: 'Ответ из списка' });
+  expect(toggle.getAttribute('aria-controls')).toBe(panel.id);
+  expect(panel.id).not.toBe('');
+});

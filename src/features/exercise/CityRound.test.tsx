@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { citiesUpTo } from '../../content/cities';
 import { regions } from '../../content/regions';
 import type { City } from '../../content/types';
@@ -52,7 +53,7 @@ it('спрашивает город по имени и принимает отв
 
     fireEvent.click(within(list).getByRole('button', { name: askedCity().nameRu }));
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
 
     expect(asked()).not.toBe(before);
@@ -71,7 +72,7 @@ it('в «найти город» отвечают и нажатием по то�
       container.querySelector(`.city[data-city-id="${askedCity().id}"] .city-hit`)!,
     );
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
 
     expect(asked()).not.toBe(before);
@@ -97,7 +98,7 @@ it('после ошибки называет верный ответ и едет
     expect(screen.queryByRole('button', { name: 'Далее' })).toBeNull();
 
     act(() => {
-      vi.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(WRONG_PAUSE_MS);
     });
 
     expect(screen.queryByText('Этот город стоит повторить')).toBeNull();
@@ -132,7 +133,7 @@ it('в «город — регион» прячет точки и отвечаю
       screen.getByRole('button', { name: new RegExp(regionNameOf(target.regionId)) }),
     );
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
 
     expect(asked()).not.toBe(before);
@@ -153,7 +154,7 @@ it('сообщает о завершении раунда', () => {
       const list = screen.getByRole('list', { name: 'Список городов' });
       fireEvent.click(within(list).getByRole('button', { name: target.nameRu }));
       act(() => {
-        vi.advanceTimersByTime(500);
+        vi.advanceTimersByTime(CORRECT_PAUSE_MS);
       });
     }
 

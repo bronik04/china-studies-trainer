@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   type KeyboardEvent,
@@ -57,6 +58,12 @@ export function RoundStage({
   const stageRef = useRef<HTMLElement>(null);
   const listButtonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  /*
+   * Связка кнопки с панелью для читалки: aria-expanded говорит «открыто»,
+   * aria-controls — «что именно». Ссылка на отсутствующий узел допустима,
+   * пока панель закрыта и не отрисована.
+   */
+  const panelId = useId();
   const [isListOpen, setIsListOpen] = useState(false);
   const fullscreen = useFullscreen(stageRef);
 
@@ -88,6 +95,7 @@ export function RoundStage({
         {answerList !== undefined && isListOpen ? (
           <div
             className="stage-answer-panel"
+            id={panelId}
             ref={panelRef}
             tabIndex={-1}
             role="group"
@@ -111,6 +119,7 @@ export function RoundStage({
               className="stage-strip-button"
               ref={listButtonRef}
               aria-expanded={isListOpen}
+              aria-controls={panelId}
               onClick={() => (isListOpen ? closeList() : setIsListOpen(true))}
             >
               Ответить из списка
