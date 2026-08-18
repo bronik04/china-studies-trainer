@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './features/exercise/round-pace';
 import { afterEach, beforeEach } from 'vitest';
 import App from './App';
 import { cityById } from './content/cities';
@@ -176,19 +177,20 @@ function answerCapital(correct: boolean): void {
   const target = regions.find(
     (region) => region.nameRu === asked || region.nameZh === asked,
   )!;
-  const options = screen.getAllByTestId('choice-option');
-
   /*
-   * Кнопка варианта теперь начинается с невидимой цифры-подсказки (`<kbd
-   * aria-hidden="true">`), так что textContent кнопки — это «1Чэнду», а не
-   * «Чэнду». Подпись живёт в дочернем `<span>`.
+   * Подпись ищется текстовым запросом внутри кнопки, а не строением разметки:
+   * цифра-подсказка (`kbd`) под запрос не подпадает, и тест не зависит от
+   * того, каким узлом кнопка рисует подпись. `getByRole` с именем здесь не
+   * годится по скорости: вычисление доступных имён всех кнопок на каждом из
+   * 34 вопросов не укладывалось в лимит теста под нагрузкой полного набора.
    */
-  fireEvent.click(
-    options.find((option) => {
-      const label = option.querySelector('span')?.textContent;
-      return correct ? label === capitalOf(target) : label !== capitalOf(target);
-    })!,
-  );
+  const match = screen
+    .getAllByTestId('choice-option')
+    .find(
+      (option) =>
+        (within(option).queryByText(capitalOf(target)) !== null) === correct,
+    )!;
+  fireEvent.click(match);
 }
 
 /*
@@ -203,7 +205,7 @@ function finishRound(correct: boolean): void {
     for (let index = 0; index < 34; index += 1) {
       answerCapital(correct);
       act(() => {
-        vi.advanceTimersByTime(correct ? 500 : 2000);
+        vi.advanceTimersByTime(correct ? CORRECT_PAUSE_MS : WRONG_PAUSE_MS);
       });
     }
   } finally {
