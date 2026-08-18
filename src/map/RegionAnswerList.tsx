@@ -1,28 +1,13 @@
 import { useId, useState } from 'react';
 import type { Region } from '../content/types';
-import { TWO_COLUMN_QUERY } from '../design/breakpoints';
 import type { RegionOutcome } from '../domain/fill-round';
 import { searchRegions } from '../features/atlas/region-search';
 import { OUTCOME_LABELS } from './outcome-labels';
-import { regionsWord } from '../content/region-count';
 import {
   isRegionClosed,
   isRegionSelectable,
   type AnswerState,
 } from './region-selection';
-
-/**
- * Начальное состояние блока. `window.matchMedia` в jsdom нет, и отсутствие
- * читается как «узкий экран»: на проверках список должен быть раскрыт, иначе
- * тесты ответа зависели бы от вёрстки.
- */
-function defaultOpen(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return true;
-  }
-
-  return !window.matchMedia(TWO_COLUMN_QUERY).matches;
-}
 
 const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
 const NO_OUTCOMES: Readonly<Record<string, RegionOutcome>> = {};
@@ -35,11 +20,8 @@ export type RegionAnswerListProps = {
   readonly outcomes?: Readonly<Record<string, RegionOutcome>>;
   readonly interactive?: boolean;
   readonly paused?: boolean;
-  /**
-   * `inline` — экран темы, `disclosure` — экран раунда, `panel` — атлас:
-   * список с поиском и собственной прокруткой.
-   */
-  readonly presentation?: 'inline' | 'disclosure' | 'panel';
+  /** `inline` — экран раунда; `panel` — атлас: список с поиском и собственной прокруткой. */
+  readonly presentation?: 'inline' | 'panel';
 };
 
 /**
@@ -48,9 +30,8 @@ export type RegionAnswerListProps = {
  * 343 px 28 областей из 34 меньше порога, и список там — единственный рабочий
  * способ ответа.
  *
- * Свёрнут блок или раскрыт, для соответствия значения не имеет — исключение
- * требует, чтобы управление было на странице. Поэтому на широком экране он
- * закрыт (это снимает 34 остановки Tab из 72), а на узком раскрыт.
+ * На экране раунда список стоит в панели `RoundStage` («Ответить из списка»),
+ * которая открывается и закрывается снаружи — здесь он всегда развёрнут.
  */
 export function RegionAnswerList({
   regions,
@@ -62,7 +43,6 @@ export function RegionAnswerList({
   paused = false,
   presentation = 'inline',
 }: RegionAnswerListProps) {
-  const [open, setOpen] = useState(defaultOpen);
   const [query, setQuery] = useState('');
   const searchId = useId();
   const rules = { interactive, paused, answerStates, outcomes };
@@ -125,20 +105,5 @@ export function RegionAnswerList({
     );
   }
 
-  if (presentation === 'inline') {
-    return list;
-  }
-
-  return (
-    <details
-      className="region-answer-list"
-      open={open}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-    >
-      <summary>
-        Ответить из списка ({regions.length} {regionsWord(regions.length)})
-      </summary>
-      {list}
-    </details>
-  );
+  return list;
 }

@@ -23,6 +23,14 @@ function askedRegion(): Region {
   return regions.find((region) => region.nameRu === name)!;
 }
 
+/** Список — в панели оболочки: перед ответом её нужно открыть. */
+function openAnswerList() {
+  const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
+  if (toggle.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.click(toggle);
+  }
+}
+
 /**
  * Ответ даётся кнопкой из равнозначного списка под картой: он не зависит от
  * геометрии SVG. Доступное имя собрано в ChinaMap.tsx как
@@ -36,11 +44,14 @@ function regionButton(region: Region): HTMLElement {
 }
 
 function answerWith(region: Region) {
+  openAnswerList();
   fireEvent.click(regionButton(region));
 }
 
 /** Любой ещё открытый регион, кроме спрошенного: закрытый ответа не примет. */
 function anyOtherRegion(region: Region): Region {
+  openAnswerList();
+
   return regions.find(
     (candidate) =>
       candidate.id !== region.id &&
@@ -195,6 +206,7 @@ it('первый фокусируемый элемент — область ка
 
 it('«Прервать раунд» стоит в разметке после списка ответов', () => {
   renderRound();
+  openAnswerList();
 
   const list = screen.getByRole('list', { name: 'Список регионов карты' });
   const abort = screen.getByRole('button', { name: 'Прервать раунд' });

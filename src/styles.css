@@ -145,223 +145,6 @@ p {
 /* --- Экран раунда ------------------------------------------------------- */
 
 /*
- * Экран раунда выходит из меры 1120 px, которой живёт `.app-shell`: та мера
- * задана для чтения, а здесь главный объект — карта, и ей нужна вся
- * доступная ширина. Верхняя граница 1600 px: дальше карта упирается в высоту
- * кадра и перестаёт расти, а колонка вопроса уезжает от неё настолько, что
- * взгляд между ними уже не переносится.
- */
-.round-shell {
-  inline-size: min(100% - 2 * var(--s-4), 1600px);
-  margin-inline: auto;
-  padding-block: var(--s-6);
-}
-
-.round-prompt {
-  border-bottom: var(--border-hair) solid var(--line-on-ground);
-  margin-bottom: var(--s-4);
-  padding-bottom: var(--s-4);
-}
-
-/*
- * Узкий экран: блок вопроса липнет к верху, пока ученик прокручивает список
- * из 34 кнопок. Фон обязателен, иначе список просвечивает сквозь него.
- */
-@media (max-width: 1023px) {
-  .round-prompt {
-    background: var(--surface-ground);
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
-
-  /* Липкий блок не должен закрывать карточку ответа при переводе фокуса. */
-  .answer-feedback {
-    scroll-margin-block-start: 9rem;
-  }
-}
-
-/*
- * Порог 1024, а не обычные для проекта 720: при 720 колонка карты получает
- * меньше 400 px, карта — меньше 300 px высоты, и две колонки перестают быть
- * выигрышем. Порог заодно обслуживает масштабирование текста до 200 % —
- * кадр 1280 px превращается в 640 CSS px, и макет сам становится одной
- * колонкой. То же значение живёт в src/design/breakpoints.ts.
- */
-@media (min-width: 1024px) {
-  /*
-   * Оболочка — три строки: колонки, блок списка, подвал. Карта живёт в первой
-   * и забирает всё, что осталось от кадра.
-   *
-   * Высота служебных полос не выписана константой намеренно. Прежняя правка
-   * вычитала их вручную и промахнулась на 15 px: подвал уезжал за кадр при
-   * 1366×768. Здесь остаток считает браузер, и промахнуться не в чем.
-   *
-   * Высота приходит извне, а не из содержимого: оболочка забирает остаток
-   * колонки `#root` (`flex: 1`). Пока высота выводится из содержимого, строка
-   * `1fr` не разрешается — карта берёт свою естественную высоту, и подвал
-   * уезжает вниз. Раскрытый список поэтому получает собственную прокрутку
-   * (см. `.region-answer-list` ниже), а не растит страницу.
-   */
-  /*
-   * Кадр раунда — одна сетка на все его части, а не сетка внутри сетки.
-   * Колонка вопроса кончается высоко: под ним оставалось до 400 px пустоты,
-   * пока равнозначный список лежал отдельной полосой под картой и отнимал у
-   * неё высоту. Теперь список встаёт в ту самую пустоту, а карта занимает обе
-   * строки — на 1440×900 её рисунок вырос с 804×600 до 1005×750.
-   */
-  .round-shell {
-    column-gap: var(--s-5);
-    display: grid;
-    flex: 1;
-    grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto auto;
-    min-block-size: 0;
-    padding-block: var(--s-4);
-    row-gap: var(--s-3);
-  }
-
-  /* Части раскладки становятся ячейками кадра, а не отдельной сетки. */
-  .round-layout[data-columns='two'] {
-    display: contents;
-  }
-
-  .round-prompt-column {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  /* Карта занимает правую колонку целиком: делить её теперь не с чем. */
-  .round-map {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-  }
-
-  .round-shell > .region-answer-list {
-    align-self: end;
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  /* Без карты вопрос занимает кадр целиком: делить его не с чем. */
-  .round-layout[data-columns='one'] {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  /*
-   * «Прервать раунд» стоит под колонкой вопроса, а не полосой во всю ширину:
-   * полоса отнимала у карты высоту, а разрушающее действие всё равно должно
-   * быть подальше от места, куда ученик всё время попадает мышью.
-   */
-  .round-footer {
-    border-top: 0;
-    grid-column: 1;
-    grid-row: 3;
-    margin-block-start: 0;
-    padding-block-start: 0;
-  }
-
-  /*
-   * Раскрытый список забирает высоту у карты, но не больше 40 % кадра.
-   * Открыли список — он нужен, и карта уступает; закрыли — карта вернулась.
-   */
-  .region-answer-list {
-    max-block-size: 40dvh;
-    overflow-y: auto;
-  }
-
-  .round-layout[data-columns='one'] {
-    inline-size: min(100%, 640px);
-    margin-inline: auto;
-  }
-
-  /*
-   * Колонка вопроса высоту строки не занимает: она короче карты, и растягивать
-   * её незачем. Липкость нужна, когда раскрыт список, — вопрос остаётся на
-   * месте, пока ученик прокручивает 34 кнопки.
-   */
-  .round-prompt-column {
-    align-self: start;
-    position: sticky;
-    top: var(--s-6);
-  }
-
-  .round-map {
-    min-block-size: 0;
-  }
-
-  .round-map .map-section {
-    block-size: 100%;
-  }
-
-  /*
-   * Высота строки известна, поэтому ширина коробки выводится из пропорции
-   * карты — иначе вокруг рисунка оставалось бы до 200 px пустого моря.
-   * `max-inline-size` на случай узкой колонки: там ограничивает уже ширина,
-   * и рисунок вписывается сам.
-   */
-  /*
-   * Пропорция живёт на рамке, а не на карте: рамка — система координат для
-   * зума, и будь она шире карты, кнопки уезжали бы с бумаги на доску.
-   */
-  .round-map .china-map-frame {
-    aspect-ratio: var(--map-aspect);
-    block-size: 100%;
-    inline-size: auto;
-    margin-inline: auto;
-    max-inline-size: 100%;
-  }
-
-  .round-map .china-map {
-    block-size: 100%;
-  }
-}
-
-.round-map .map-section {
-  margin-bottom: 0;
-}
-
-/*
- * Коробка карты равна отведённой ячейке, а сам рисунок вписывается в неё
- * `preserveAspectRatio`. Пропорция карты и пропорция ячейки не совпадают
- * точно, и разница остаётся полем цвета моря — на карте это не помеха.
- */
-.round-map .china-map svg {
-  block-size: 100%;
-}
-
-/*
- * «Прервать раунд» живёт здесь, а не рядом с ответами. Раньше она стояла под
- * последним вариантом, в той же колонке и той же форме: промах по ответу
- * попадал в разрушающее действие. В подвале она удалена от ответов и по
- * указателю, и по обходу с клавиатуры — то есть не становится второй
- * остановкой Tab вместо последней.
- */
-.round-footer {
-  align-items: center;
-  border-top: var(--border-hair) solid var(--line-on-ground);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3) var(--s-5);
-  justify-content: space-between;
-  margin-block-start: var(--s-3);
-  padding-block-start: var(--s-3);
-}
-
-/*
- * CC BY требует атрибуции, но не равного веса с ответом: прежде она занимала
- * три строки внизу справа и весила столько же, сколько сам ответ. Ссылки
- * внутри сохраняют свой цвет и проверенный контраст.
- */
-.round-footer .map-attribution {
-  color: var(--text-on-ground-muted);
-  font-size: var(--t-size-caption);
-  margin: 0;
-  max-inline-size: 60ch;
-}
-
-/*
  * Лента хода занимает колонку вопроса, которая иначе пустует: на 1280×720 под
  * блоком вопроса оставалось около 490 px из 690.
  *
@@ -391,16 +174,6 @@ p {
 
 .round-trail span[data-mark='wrong'] {
   color: var(--accent-on-ground);
-}
-
-/*
- * Узкий экран: высота дороже ленты, а «Вопрос N из M» и так стоит в липком
- * блоке вопроса.
- */
-@media (max-width: 1023px) {
-  .round-trail {
-    display: none;
-  }
 }
 
 /* --- Атлас -------------------------------------------------------------- */
@@ -523,11 +296,6 @@ h1 {
   margin-bottom: var(--s-3);
 }
 
-/* Слово-вопрос крупнее: высококонтрастная Prata начинает работать от 32 px. */
-.round-prompt h1 {
-  font-size: var(--t-size-question);
-}
-
 .results-hero h1 {
   font-size: var(--t-size-display);
 }
@@ -592,9 +360,7 @@ h1[tabindex]:focus:not(:focus-visible) {
 }
 
 .region-card :focus-visible,
-.answer-feedback :focus-visible,
-.mode-dialog :focus-visible,
-.choice-list button:focus-visible {
+.mode-dialog :focus-visible {
   outline-color: var(--focus-on-paper);
 }
 
@@ -1430,32 +1196,6 @@ button.text:hover:enabled {
   overflow-y: auto;
 }
 
-/*
- * На экране раунда список уезжает в свёрнутый блок: 34 кнопки — это половина
- * всех остановок Tab на экране, и держать их раскрытыми там, где работает
- * карта, незачем.
- */
-.region-answer-list {
-  margin-block-start: var(--s-5);
-}
-
-.region-answer-list summary {
-  align-items: center;
-  color: var(--text-on-ground);
-  cursor: pointer;
-  display: flex;
-  min-block-size: var(--target-min);
-}
-
-.region-answer-list summary:focus-visible {
-  outline: var(--border-focus) solid var(--focus-on-ground);
-  outline-offset: var(--s-1);
-}
-
-.region-answer-list .map-alternative {
-  margin-block-start: var(--s-3);
-}
-
 /* --- Справочник регионов ------------------------------------------------ */
 
 .region-list {
@@ -1493,90 +1233,6 @@ button.text:hover:enabled {
   }
 }
 
-/* --- Варианты ответа ---------------------------------------------------- */
-
-.choice-list {
-  display: grid;
-  gap: var(--s-3);
-  grid-template-columns: 1fr;
-  list-style: none;
-  margin: var(--s-4) 0;
-  padding: 0;
-}
-
-@media (min-width: 720px) {
-  .choice-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.choice-list button {
-  background: var(--surface-paper);
-  border: var(--border-solid) solid transparent;
-  border-radius: var(--radius-md);
-  color: var(--text-on-paper);
-  cursor: pointer;
-  font: inherit;
-  min-height: var(--target-min);
-  padding: var(--s-3) var(--s-4);
-  text-align: left;
-  transition: border-color var(--duration-quick) var(--ease-out);
-  width: 100%;
-}
-
-.choice-list button:hover:enabled {
-  border-color: var(--text-on-paper);
-}
-
-.choice-list button[data-result='correct'] {
-  background: var(--state-correct);
-  border-color: var(--state-correct);
-  color: var(--map-correct-ink);
-  font-weight: var(--t-weight-bold);
-}
-
-.choice-list button[data-result='incorrect'] {
-  border-color: var(--state-incorrect);
-  border-style: dashed;
-}
-
-/* --- Обратная связь ----------------------------------------------------- */
-
-.answer-feedback {
-  background: var(--surface-paper);
-  border-left: var(--s-1) solid var(--line-on-paper);
-  border-radius: var(--radius-md);
-  color: var(--text-on-paper);
-  margin: var(--s-4) 0;
-  padding: var(--s-4);
-}
-
-.answer-feedback[data-result='correct'] {
-  border-left-color: var(--state-correct);
-}
-
-.answer-feedback[data-result='incorrect'] {
-  border-left-color: var(--state-incorrect);
-}
-
-.answer-feedback-icon {
-  font-size: var(--t-size-lead);
-  line-height: 1;
-  margin: 0 0 var(--s-2);
-}
-
-.answer-feedback[data-result='correct'] .answer-feedback-icon {
-  color: var(--state-correct);
-}
-
-.answer-feedback[data-result='incorrect'] .answer-feedback-icon {
-  color: var(--state-incorrect);
-}
-
-.answer-feedback h3 {
-  margin: 0 0 var(--s-2);
-}
-
 /* --- Итоги -------------------------------------------------------------- */
 
 .review-list {
@@ -1588,14 +1244,6 @@ button.text:hover:enabled {
 .review-list li {
   border-bottom: var(--border-hair) solid var(--line-on-ground);
   padding: var(--s-2) 0;
-}
-
-.fill-meta {
-  align-items: baseline;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-5);
-  margin-bottom: var(--s-2);
 }
 
 .attempt-dots {
@@ -1624,8 +1272,15 @@ button.text:hover:enabled {
   padding: 0;
 }
 
-/* Текст только для программ чтения с экрана: значок попыток дублируется словами. */
-.visually-hidden {
+/*
+ * Текст только для программ чтения с экрана: значок попыток дублируется
+ * словами. Тот же приём снимает с экрана строку состояния карты
+ * `.map-selection` внутри `.stage-map` — в кадре оболочки карта занимает всю
+ * высоту, и абзац наезжал бы на служебную строку под ней; для читалки текст
+ * остаётся.
+ */
+.visually-hidden,
+.stage-map .map-selection {
   clip-path: inset(50%);
   height: 1px;
   overflow: hidden;
@@ -2698,4 +2353,265 @@ button.chip[aria-pressed='true'] {
  */
 .landing-section[tabindex]:focus:not(:focus-visible) {
   outline: none;
+}
+
+/* --- Экран раунда: оболочка RoundStage ---------------------------------- */
+
+/*
+ * Кадр раунда: карта забирает остаток колонки, плашка вопроса плавает поверх
+ * неё, полоса вариантов и служебная строка стоят под картой и её не
+ * перекрывают (спек RoundStage, 2026-08-17).
+ */
+.round-stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  position: relative;
+}
+
+/* Полный экран отдаёт кадр оболочке: фон обязан быть её, а не прозрачным. */
+.round-stage:fullscreen {
+  background: var(--surface-ground);
+}
+
+.stage-prompt {
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+  inset-block-start: var(--s-3);
+  inset-inline-start: 50%;
+  max-inline-size: min(90%, 40rem);
+  padding: var(--s-2) var(--s-5) var(--s-3);
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+  /* Плашка — только текст; нажатия сквозь неё уходят карте. */
+  pointer-events: none;
+  /*
+   * Выше панели «Ответить из списка» (z-index: 3): на узком экране панель
+   * занимает нижние 60 % карты, а вопрос должен остаться виден поверх неё.
+   */
+  z-index: 4;
+}
+
+/*
+ * Открытая панель списка — исключение из «плашка сквозная»: на узком кадре
+ * (740×380 и уже) плашка нависает над верхней кнопкой панели, и тап по её
+ * тёмному фону при `pointer-events: none` проваливался бы сквозь неё прямо
+ * в невидимую кнопку под ней — а фокус-кольцо кнопки при этом частично
+ * перекрыто плашкой (WCAG 2.2 2.4.11). Пока панель открыта, поле ответа —
+ * список, а не карта под плашкой, так что твёрдая плашка не мешает: клик
+ * в неё просто ничего не делает, вместо того чтобы улетать в кнопку.
+ */
+.round-stage[data-list-open='true'] .stage-prompt {
+  pointer-events: auto;
+}
+
+.stage-prompt .eyebrow {
+  margin-bottom: var(--s-1);
+}
+
+/* Показ верного ответа отмечен кромкой, а не только текстом. */
+.stage-prompt[data-state='answer'] {
+  border-inline-start: var(--border-solid) solid var(--accent-on-ground);
+}
+
+/* Название цели: то же слово-вопрос, что было в колонке. */
+.stage-target {
+  color: var(--text-on-ground-strong);
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-question);
+  line-height: 1.2;
+  margin: 0;
+}
+
+/*
+ * Короткий кадр (телефон лёжа и похожие): `--t-size-question` — до 40 px, а
+ * высоты кадра там едва хватает на саму карту. На 500 px высоты плашка с
+ * заголовком такого размера выходила 113 px при карте 203 px — почти
+ * половина кадра под текст. `--t-size-lead` вдвое компактнее и всё ещё
+ * крупнее обычного текста.
+ */
+@media (max-height: 500px) {
+  .stage-target {
+    font-size: var(--t-size-lead);
+  }
+}
+
+.stage-target [lang='zh-Hans'] {
+  color: var(--text-on-ground-muted);
+}
+
+.stage-map {
+  background: var(--map-sea);
+  flex: 1;
+  min-block-size: 0;
+  position: relative;
+}
+
+.stage-map .map-section {
+  block-size: 100%;
+  margin-bottom: 0;
+}
+
+/*
+ * Пропорция живёт на рамке, а не на карте: рамка — система координат зума
+ * (правило перенесено из прежнего .round-map).
+ */
+.stage-map .china-map-frame {
+  aspect-ratio: var(--map-aspect);
+  block-size: 100%;
+  inline-size: auto;
+  margin-inline: auto;
+  max-inline-size: 100%;
+}
+
+.stage-map .china-map {
+  block-size: 100%;
+}
+
+.stage-map .china-map svg {
+  block-size: 100%;
+}
+
+/* Панель «Ответить из списка»: поверх карты у правого края, со своей прокруткой. */
+.stage-answer-panel {
+  background: var(--surface-ground);
+  border-inline-start: var(--border-hair) solid var(--line-on-ground);
+  box-shadow: var(--shadow-float);
+  inline-size: min(24rem, 90%);
+  inset-block: 0;
+  inset-inline-end: 0;
+  overflow-y: auto;
+  padding: var(--s-3) var(--s-4);
+  position: absolute;
+  z-index: 3;
+}
+
+/*
+ * Узкий экран: панель во всю ширину закрывала бы плашку вопроса. Нижние 60 %
+ * карты оставляют вопрос читаемым сверху.
+ */
+@media (max-width: 1023px) {
+  .stage-answer-panel {
+    block-size: 60%;
+    inset-block: auto 0;
+  }
+}
+
+.stage-choices-band {
+  background: var(--surface-ground);
+  border-block-start: var(--border-hair) solid var(--line-on-ground);
+  padding: var(--s-3) var(--s-4);
+}
+
+.stage-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stage-choices button {
+  align-items: center;
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground-strong);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: var(--s-2);
+  min-height: var(--target-min);
+  padding: var(--s-2) var(--s-3);
+  transition: border-color var(--duration-quick) var(--ease-out);
+}
+
+.stage-choices button:hover:enabled {
+  border-color: var(--accent-on-ground);
+}
+
+.stage-choices kbd {
+  background: var(--surface-ground);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground-muted);
+  font-family: var(--t-family-text);
+  font-size: var(--t-size-caption);
+  padding: 0 var(--s-1);
+}
+
+/*
+ * Исход — как у ленты следа: верный набран нефритом для доски и жирным,
+ * ошибочный — киноварью и пунктиром. Не только цвет: жирность и штрих.
+ */
+.stage-choices button[data-result='correct'] {
+  border-color: var(--state-correct-on-ground);
+  color: var(--state-correct-on-ground);
+  font-weight: var(--t-weight-bold);
+}
+
+.stage-choices button[data-result='incorrect'] {
+  border-color: var(--accent-on-ground);
+  border-style: dashed;
+}
+
+.stage-strip {
+  align-items: center;
+  background: var(--surface-ground);
+  border-block-start: var(--border-hair) solid var(--line-on-ground);
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--t-size-caption);
+  gap: var(--s-2) var(--s-4);
+  padding: var(--s-2) var(--s-4);
+}
+
+.stage-strip .exercise-progress,
+.stage-strip .fill-status {
+  margin: 0;
+}
+
+.stage-strip .round-trail {
+  margin-block-start: 0;
+}
+
+/*
+ * Телефон: лента `aria-hidden` и декоративна — «Вопрос N из M» рядом несёт
+ * тот же факт словами. На 375×700 строка ленты занимала 145 px (21 % кадра)
+ * и отбирала их у карты; на телефоне высота дороже, а каждый отвоёванный
+ * пиксель к тому же расширяет и панель списка (60 % высоты карты).
+ */
+@media (max-width: 719px) {
+  .stage-strip .round-trail {
+    display: none;
+  }
+}
+
+.stage-strip-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--s-3);
+  margin-inline-start: auto;
+}
+
+.stage-strip-button {
+  background: none;
+  border: var(--border-hair) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground);
+  cursor: pointer;
+  font: inherit;
+  padding: var(--s-1) var(--s-3);
+  transition: border-color var(--duration-quick) var(--ease-out);
+}
+
+.stage-strip-button:hover {
+  border-color: var(--accent-on-ground);
 }
