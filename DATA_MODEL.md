@@ -46,13 +46,14 @@ type Collection = {
   nameRu: string;
   nameZh: string;
   pinyin: string;
-  kind: string;            // подпись на карточке: «Хребет», «Река»…
+  kind: string;            // подпись на карточке: «памятник», «река»…
   lead: string;
   regionIds: string[];
   notes: string[];
   photos: CollectionPhoto[];
   sourceIds: string[];     // пустой список — признак черновика
   relatedIds: string[];
+  // необязательный scopeLabel опущен; точная форма — src/content/collections.ts
 };
 
 type Target = {
