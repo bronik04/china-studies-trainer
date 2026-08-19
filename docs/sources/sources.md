@@ -79,7 +79,7 @@
 - URL: https://www.britannica.com/place/Hebei
 - Дата обращения: 2026-08-19
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
-- Подтверждает: физическую географию Хэбэй.
+- Подтверждает: физическую географию Хэбэя.
 
 ## bre-earthquake-forecast
 
@@ -214,7 +214,7 @@
 - URL: https://www.britannica.com/place/Jilin-province-China
 - Дата обращения: 2026-08-19
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
-- Подтверждает: горы Чанбайшань и реку Сунгари, Яньбянь-Корейский автономный округ, промышленность Цзилиня.
+- Подтверждает: горы Чанбайшань и реку Сунгари, Яньбянь-Корейский автономный округ, промышленность провинции Цзилинь (Гирин).
 
 ## britannica-shanghai
 
@@ -256,7 +256,7 @@
 
 - Название: Jiangsu - Resources, Power, Industry
 - Организация: Encyclopaedia Britannica
-- URL: https://www.britannica.com/place/Jiangsu/Resources-and-power
+- URL: https://www.britannica.com/place/Jiangsu/Cultural-life
 - Дата обращения: 2026-08-19
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
 - Подтверждает: промышленность Цзянсу, сады Сучжоу как объект Всемирного наследия ЮНЕСКО.
@@ -328,7 +328,7 @@
 
 - Название: Shandong - Coastal Province, Han Chinese, Confucianism
 - Организация: Encyclopaedia Britannica
-- URL: https://www.britannica.com/place/Shandong-province-China/Government-and-society
+- URL: https://www.britannica.com/place/Shandong-province-China/Cultural-life
 - Дата обращения: 2026-08-19
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
 - Подтверждает: Шаньдун как родину Конфуция и Мэн-цзы, храм и кладбище Конфуция в Цюйфу.
@@ -364,7 +364,7 @@
 
 - Название: Henan - Government, Society, Economy
 - Организация: Encyclopaedia Britannica
-- URL: https://www.britannica.com/place/Henan/Government-and-society
+- URL: https://www.britannica.com/place/Henan/Cultural-life
 - Дата обращения: 2026-08-19
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
 - Подтверждает: монастырь Шаолинь на горе Суншань.
@@ -409,7 +409,7 @@
 
 - Название: Fujian - Han, Min, Hakka
 - Организация: Encyclopaedia Britannica
-- URL: https://www.britannica.com/place/Fujian/People
+- URL: https://www.britannica.com/place/Fujian/Economy
 - Дата обращения: 2026-08-19
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
 - Подтверждает: чаеводство Фуцзяня.
@@ -445,7 +445,7 @@
 
 - Название: Hubei - Education, Universities, Institutes
 - Организация: Encyclopaedia Britannica
-- URL: https://www.britannica.com/place/Hubei/Education
+- URL: https://www.britannica.com/place/Hubei/History
 - Дата обращения: 2026-08-19
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
 - Подтверждает: начало Синьхайской революции в Хубэе.
@@ -472,7 +472,7 @@
 
 - Название: Hunan - Manufacturing, Textiles, Electronics
 - Организация: Encyclopaedia Britannica
-- URL: https://www.britannica.com/place/Hunan/Manufacturing
+- URL: https://www.britannica.com/place/Hunan/Cultural-life
 - Дата обращения: 2026-08-19
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
 - Подтверждает: заповедник Улинъюань.
