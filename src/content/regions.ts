@@ -549,10 +549,100 @@ const tibetFacts: readonly Fact[] = [
   },
 ];
 
+const shaanxiFacts: readonly Fact[] = [
+  {
+    title: 'Три природных района',
+    body: 'Шэньси делится на три части: горы Циньлин (秦岭, Qín Lǐng) — рубеж между севером и центром Китая, долина реки Вэйхэ (渭河, Wèi Hé) и покрытое лёссом плато на севере.',
+    sourceIds: ['britannica-shaanxi'],
+  },
+  {
+    title: 'Терракотовая армия',
+    body: 'В марте 1974 года крестьяне под Сианем нашли захоронение более 8 тысяч терракотовых воинов бинмаюн (兵马俑, bīngmǎyǒng) у гробницы императора Цинь Шихуанди (秦始皇, Qín Shǐhuáng); в 1987 году комплекс включили в список Всемирного наследия ЮНЕСКО.',
+    sourceIds: ['britannica-terracotta-army', 'unesco-qin-mausoleum-441'],
+  },
+  {
+    title: 'Даяньта',
+    body: 'В Сиане сохранилась пагода Даяньта (大雁塔, Dàyàntǎ): она построена в 652 году и перестроена в 701–704 годах — одна из немногих уцелевших построек танской эпохи.',
+    sourceIds: ['bre-buddhist-art-china'],
+  },
+];
+
+const gansuFacts: readonly Fact[] = [
+  {
+    title: 'Коридор Хэси',
+    body: 'Ганьсу вытянут узким коридором Хэси (河西走廊, Héxī Zǒuláng) между хребтом Цилянь (祁连山, Qílián Shān) и пустыней Гоби; веками здесь проходил путь между бассейном Хуанхэ и Западным краем — часть Великого шёлкового пути.',
+    sourceIds: ['britannica-gansu'],
+  },
+  {
+    title: 'Пещеры Могао',
+    body: 'В скалах у города Дуньхуан (敦煌, Dūnhuáng) с IV по XIV век создавался пещерный монастырь Могао (莫高窟, Mògāokū) — росписи и статуи почти 500 гротов; в 1987 году его включили в список Всемирного наследия ЮНЕСКО.',
+    sourceIds: ['bre-buddhist-art-china', 'unesco-mogao-caves-440'],
+  },
+  {
+    title: 'Промышленность',
+    body: 'С 1950-х годов Ланьчжоу — центр тяжёлой промышленности Северо-Западного Китая: нефтепереработка, машиностроение и химия; сегодня Ганьсу — один из лидеров страны по производству никеля и алюминия.',
+    sourceIds: ['britannica-gansu'],
+  },
+];
+
+const qinghaiFacts: readonly Fact[] = [
+  {
+    title: 'Озеро Кукунор',
+    body: 'Провинция получила имя от озера Цинхайху (青海湖, Qīnghǎi Hú), также известного как Кукунор, — крупнейшего в Центральной Азии бессточного горного озера; его котловина в хребте Цилянь лежит на высоте около 3200 м над уровнем моря.',
+    sourceIds: ['britannica-koko-nor'],
+  },
+  {
+    title: 'Землетрясение 1927 года',
+    body: '22 мая 1927 года в Цинхае произошло землетрясение магнитудой 7,9, унёсшее около 200 тысяч жизней — одно из самых смертоносных землетрясений XX века.',
+    sourceIds: ['bre-earthquake', 'britannica-qinghai'],
+  },
+  {
+    title: 'Монастырь Таэрсы',
+    body: 'В 25 км от Синина стоит монастырь Таэрсы (塔尔寺, Tǎ’ěrsì) — один из центров тибетского буддизма школы Гелуг; сюда приходят паломники из Тибета, Внутренней Монголии, Синьцзяна и Сычуани.',
+    sourceIds: ['britannica-qinghai'],
+  },
+];
+
+const ningxiaFacts: readonly Fact[] = [
+  {
+    title: 'Плато и равнина',
+    body: 'Нинся делится на лёссовое плато с хребтом Люпань (六盘山, Liùpán Shān) на юге и равнину Хуанхэ на севере, которую от песков пустыни Тэнгэр (腾格里沙漠, Ténggélǐ Shāmò) заслоняют горы Хэланьшань (贺兰山, Hèlán Shān).',
+    sourceIds: ['britannica-ningxia'],
+  },
+  {
+    title: '«Мирная Ся»',
+    body: 'Название Нинся (宁夏, Níngxià), «Мирная Ся», регион получил после завоевания монголами тангутского государства Западная Ся (西夏, Xī Xià) в начале XIII века; в 35 км к западу от Иньчуаня сохранились императорские гробницы Западной Ся.',
+    sourceIds: ['britannica-ningxia'],
+  },
+  {
+    title: 'Самый маленький автономный район',
+    body: 'Нинся-Хуэйский автономный район — самый маленький по площади из пяти автономных районов Китая: около 66 тыс. км², тогда как Синьцзян, Тибет и Внутренняя Монголия занимают свыше 1 млн км² каждый.',
+    sourceIds: ['bre-china-autonomous-regions', 'britannica-ningxia'],
+  },
+];
+
+const xinjiangFacts: readonly Fact[] = [
+  {
+    title: 'Пустыня и впадина',
+    body: 'Пустыня Такла-Макан (塔克拉玛干沙漠, Tǎkèlāmǎgān Shāmò) занимает Таримскую котловину между хребтами Тянь-Шань (天山, Tiān Shān) и Куньлунь (昆仑山, Kūnlún Shān); к северо-востоку от пустыни лежит Турфанская впадина (吐鲁番盆地, Tǔlǔfān Péndì) — 154 м ниже уровня моря.',
+    sourceIds: ['britannica-xinjiang'],
+  },
+  {
+    title: 'Шёлковый путь',
+    body: 'Через оазисы Синьцзяна проходил Великий шёлковый путь, соединявший ханьский Китай с Римской империей; город Кашгар (喀什, Kāshí) с древности славится ремёслами — коврами, тканями и обработкой кожи.',
+    sourceIds: ['britannica-xinjiang'],
+  },
+  {
+    title: 'Хлопок и виноград',
+    body: 'Синьцзян — один из главных плодоводческих районов Китая: славится сладкими хамийскими дынями (哈密瓜, hāmìguā) и бессемянным турфанским виноградом; в Турфанской впадине и Таримской котловине также выращивают длинноволокнистый хлопок — главную товарную культуру региона.',
+    sourceIds: ['britannica-xinjiang-economy'],
+  },
+];
+
 export const regions = [
   region('anhui', 'province', 'Аньхой', '安徽省', 'Ānhuī shěng', 'hefei', anhuiFacts),
   region('fujian', 'province', 'Фуцзянь', '福建省', 'Fújiàn shěng', 'fuzhou', fujianFacts),
-  region('gansu', 'province', 'Ганьсу', '甘肃省', 'Gānsù shěng', 'lanzhou', []),
+  region('gansu', 'province', 'Ганьсу', '甘肃省', 'Gānsù shěng', 'lanzhou', gansuFacts),
   region('guangdong', 'province', 'Гуандун', '广东省', 'Guǎngdōng shěng', 'guangzhou', guangdongFacts),
   region('guizhou', 'province', 'Гуйчжоу', '贵州省', 'Guìzhōu shěng', 'guiyang', guizhouFacts),
   region('hainan', 'province', 'Хайнань', '海南省', 'Hǎinán shěng', 'haikou', hainanFacts),
@@ -565,8 +655,8 @@ export const regions = [
   region('jiangxi', 'province', 'Цзянси', '江西省', 'Jiāngxī shěng', 'nanchang', jiangxiFacts),
   region('jilin', 'province', 'Гирин', '吉林省', 'Jílín shěng', 'changchun', jilinFacts),
   region('liaoning', 'province', 'Ляонин', '辽宁省', 'Liáoníng shěng', 'shenyang', liaoningFacts),
-  region('qinghai', 'province', 'Цинхай', '青海省', 'Qīnghǎi shěng', 'xining', []),
-  region('shaanxi', 'province', 'Шэньси', '陕西省', 'Shǎnxī shěng', 'xian', []),
+  region('qinghai', 'province', 'Цинхай', '青海省', 'Qīnghǎi shěng', 'xining', qinghaiFacts),
+  region('shaanxi', 'province', 'Шэньси', '陕西省', 'Shǎnxī shěng', 'xian', shaanxiFacts),
   region('shandong', 'province', 'Шаньдун', '山东省', 'Shāndōng shěng', 'jinan', shandongFacts),
   region('shanxi', 'province', 'Шаньси', '山西省', 'Shānxī shěng', 'taiyuan', shanxiFacts),
   region('sichuan', 'province', 'Сычуань', '四川省', 'Sìchuān shěng', 'chengdu', sichuanFacts),
@@ -575,8 +665,8 @@ export const regions = [
   region('taiwan', 'province', 'Тайвань', '台湾省', 'Táiwān shěng', 'taipei', taiwanFacts),
   region('guangxi', 'autonomous-region', 'Гуанси-Чжуанский автономный район', '广西壮族自治区', 'Guǎngxī Zhuàngzú zìzhìqū', 'nanning', guangxiFacts),
   region('inner-mongolia', 'autonomous-region', 'Автономный район Внутренняя Монголия', '内蒙古自治区', 'Nèi Měnggǔ zìzhìqū', 'hohhot', innerMongoliaFacts),
-  region('ningxia', 'autonomous-region', 'Нинся-Хуэйский автономный район', '宁夏回族自治区', 'Níngxià Huízú zìzhìqū', 'yinchuan', []),
-  region('xinjiang', 'autonomous-region', 'Синьцзян-Уйгурский автономный район', '新疆维吾尔自治区', 'Xīnjiāng Wéiwú’ěr zìzhìqū', 'urumqi', []),
+  region('ningxia', 'autonomous-region', 'Нинся-Хуэйский автономный район', '宁夏回族自治区', 'Níngxià Huízú zìzhìqū', 'yinchuan', ningxiaFacts),
+  region('xinjiang', 'autonomous-region', 'Синьцзян-Уйгурский автономный район', '新疆维吾尔自治区', 'Xīnjiāng Wéiwú’ěr zìzhìqū', 'urumqi', xinjiangFacts),
   region('tibet', 'autonomous-region', 'Тибетский автономный район', '西藏自治区', 'Xīzàng zìzhìqū', 'lhasa', tibetFacts),
   region('beijing', 'municipality', 'Пекин', '北京市', 'Běijīng shì', 'beijing', beijingFacts),
   region('chongqing', 'municipality', 'Чунцин', '重庆市', 'Chóngqìng shì', 'chongqing', chongqingFacts),
