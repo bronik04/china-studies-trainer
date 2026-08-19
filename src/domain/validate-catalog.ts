@@ -68,7 +68,22 @@ export function validateCatalog(
       }
     }
 
+    if (region.facts.length < 2 || region.facts.length > 3) {
+      errors.push(
+        `Регион ${region.id}: фактов должно быть 2–3, сейчас ${region.facts.length}`,
+      );
+    }
+
     for (const fact of region.facts) {
+      if (fact.title.trim().length === 0 || fact.body.trim().length === 0) {
+        errors.push(`Регион ${region.id}: пустые title или body у факта`);
+      }
+      if (/<[a-z/]/i.test(fact.body)) {
+        errors.push(`Регион ${region.id}: HTML в тексте факта «${fact.title}»`);
+      }
+      if (fact.sourceIds.length === 0) {
+        errors.push(`Регион ${region.id}: факт «${fact.title}» без источника`);
+      }
       for (const sourceId of fact.sourceIds) {
         if (!sourceIds.has(sourceId)) {
           errors.push(`Неизвестный источник: ${sourceId}`);
