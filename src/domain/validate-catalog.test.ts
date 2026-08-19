@@ -20,7 +20,18 @@ const region = {
   pinyin: 'Sìchuān shěng',
   capitalCityId: 'chengdu',
   mapAreaId: 'sichuan',
-  facts: [],
+  facts: [
+    {
+      title: 'Кухня',
+      body: 'Сычуань известна острой кухней.',
+      sourceIds: ['example-educational-source'],
+    },
+    {
+      title: 'Рельеф',
+      body: 'Запад занимают горы, восток — Сычуаньская котловина.',
+      sourceIds: ['example-educational-source'],
+    },
+  ],
   sourceIds: ['example-educational-source'],
 };
 
@@ -75,6 +86,54 @@ it('rejects an unknown fact source reference', () => {
       [source],
     ),
   ).toThrow(/Неизвестный источник: missing/);
+});
+
+it('rejects a region with a single fact', () => {
+  expect(() =>
+    validateCatalog([{ ...region, facts: [region.facts[0]] }], [source]),
+  ).toThrow(/Регион sichuan: фактов должно быть 2–3, сейчас 1/);
+});
+
+it('rejects a region with four facts', () => {
+  const fact = region.facts[0];
+  expect(() =>
+    validateCatalog([{ ...region, facts: [fact, fact, fact, fact] }], [source]),
+  ).toThrow(/фактов должно быть 2–3, сейчас 4/);
+});
+
+it('rejects a fact with an empty body', () => {
+  expect(() =>
+    validateCatalog(
+      [{ ...region, facts: [{ ...region.facts[0], body: ' ' }, region.facts[1]] }],
+      [source],
+    ),
+  ).toThrow(/пустые title или body/);
+});
+
+it('rejects a fact without sources', () => {
+  expect(() =>
+    validateCatalog(
+      [{ ...region, facts: [{ ...region.facts[0], sourceIds: [] }, region.facts[1]] }],
+      [source],
+    ),
+  ).toThrow(/факт «Кухня» без источника/);
+});
+
+it('rejects HTML in a fact body', () => {
+  expect(() =>
+    validateCatalog(
+      [
+        {
+          ...region,
+          facts: [
+            { ...region.facts[0], body: 'Сычуань — <b>провинция</b>.' },
+            region.facts[1],
+          ],
+        },
+      ],
+      [source],
+    ),
+  ).toThrow(/HTML в тексте факта «Кухня»/);
 });
 
 it('rejects an unexpected number of regions', () => {
