@@ -243,25 +243,133 @@ const anhuiFacts: readonly Fact[] = [
   },
 ];
 
+const shandongFacts: readonly Fact[] = [
+  {
+    title: 'Полуостров и Тайшань',
+    body: 'Шаньдун состоит из равнины бассейна Хуанхэ (黄河, Huáng Hé) на западе и Шаньдунского полуострова (山东半岛, Shāndōng bàndǎo) на востоке, выступающего в море между заливом Бохай и Жёлтым морем; в холмистой части провинции поднимается гора Тайшань (泰山, Tài Shān) высотой 1534 м — самая известная из пяти священных гор Китая.',
+    sourceIds: ['britannica-shandong'],
+  },
+  {
+    title: 'Родина Конфуция',
+    body: 'Шаньдун — родина Конфуция (孔子, Kǒngzǐ): в 1994 году его храм, кладбище и родовая усадьба семьи Кун в городе Цюйфу (曲阜, Qūfù) включены в список Всемирного наследия ЮНЕСКО.',
+    sourceIds: ['britannica-shandong-culture', 'unesco-qufu-704'],
+  },
+  {
+    title: 'Нефть Шэнли',
+    body: 'Нефтяное месторождение Шэнли (胜利油田, Shènglì Yóutián) в устье Хуанхэ на побережье залива Бохай — одно из крупнейших нефтедобывающих месторождений Китая.',
+    sourceIds: ['britannica-shandong-economy'],
+  },
+];
+
+const henanFacts: readonly Fact[] = [
+  {
+    title: 'Название «к югу от реки»',
+    body: 'Название Хэнань (河南, Hénán) означает «к югу от реки», хотя Хуанхэ (黄河, Huáng Hé) делит провинцию неравномерно: лишь около одной шестой её площади лежит к северу от реки, а пять шестых — к югу.',
+    sourceIds: ['britannica-henan'],
+  },
+  {
+    title: 'Монастырь Шаолинь',
+    body: 'На склонах горы Суншань (嵩山, Sōng Shān), одной из пяти священных гор Китая, стоит монастырь Шаолинь (少林寺, Shàolín Sì), который считается местом зарождения китайских боевых искусств.',
+    sourceIds: ['britannica-henan-culture'],
+  },
+  {
+    title: 'Житница пшеницы',
+    body: 'Хэнань занимает первое место среди провинций Китая по сбору пшеницы, а также входит в число крупнейших производителей табака и кунжута.',
+    sourceIds: ['britannica-henan-economy'],
+  },
+];
+
+const fujianFacts: readonly Fact[] = [
+  {
+    title: 'Горы Уишань',
+    body: 'Почти вся территория Фуцзяня гориста, если не считать узких прибрежных равнин; вдоль границы с Цзянси тянется хребет Уишань (武夷山, Wǔyí Shān) высотой около 1800 м — водораздел между бассейнами рек Миньцзян и Ганьцзян.',
+    sourceIds: ['britannica-fujian'],
+  },
+  {
+    title: 'Дома тулоу',
+    body: 'На юго-западе Фуцзяня сохранились глинобитные дома тулоу (土楼, tǔlóu) — несколько десятков круглых построек, которые в 2008 году включены в список Всемирного наследия ЮНЕСКО.',
+    sourceIds: ['britannica-fujian-culture', 'unesco-fujian-tulou-1113'],
+  },
+  {
+    title: 'Чай Фуцзяня',
+    body: 'Фуцзянь остаётся крупной чаеводческой провинцией, снабжающей значительную часть внутреннего рынка чая Китая; в Фучжоу также производят ароматизированный цветочный чай.',
+    sourceIds: ['britannica-fujian-economy'],
+  },
+];
+
+const jiangxiFacts: readonly Fact[] = [
+  {
+    title: 'Озеро Поянху',
+    body: 'Озеро Поянху (鄱阳湖, Póyáng Hú) на севере Цзянси — крупнейшее пресноводное озеро Китая; оно принимает воды реки Ганьцзян (赣江, Gàn Jiāng) и впадает в Янцзы (长江, Cháng Jiāng) у города Хукоу (湖口, Húkǒu).',
+    sourceIds: ['britannica-poyang-lake'],
+  },
+  {
+    title: 'Фарфор Цзиндэчжэня',
+    body: 'Город Цзиндэчжэнь (景德镇, Jǐngdézhèn) на северо-востоке Цзянси со времён империи Сун — центр китайского фарфора: уже десять веков здесь делают фарфоровые изделия для внутреннего рынка и на экспорт.',
+    sourceIds: ['britannica-jiangxi'],
+  },
+  {
+    title: 'Вольфрам Даю',
+    body: 'Район вокруг города Даю (大余, Dàyú) на юге Цзянси — центр добычи вольфрама в провинции; руда здесь содержит около 60% вольфрама, а также олово, висмут и молибден.',
+    sourceIds: ['britannica-jiangxi'],
+  },
+];
+
+const hubeiFacts: readonly Fact[] = [
+  {
+    title: 'Три ущелья',
+    body: 'У города Ичан (宜昌, Yíchāng) Янцзы (长江, Cháng Jiāng) выходит из Трёх ущелий (三峡, Sānxiá) на равнину; построенная здесь плотина Санься (三峡大坝, Sānxiá Dàbà) значительно снизила сезонные наводнения в низовьях реки.',
+    sourceIds: ['britannica-hubei'],
+  },
+  {
+    title: 'Начало революции 1911 года',
+    body: 'Синьхайская революция (辛亥革命, Xīnhài Gémìng), свергнувшая цинскую монархию, началась 10 октября 1911 года в Хубэе: восставшие солдаты заняли города Ханькоу (汉口, Hànkǒu), Ханьян (汉阳, Hànyáng) и Учан (武昌, Wǔchāng) — три части современного Уханя.',
+    sourceIds: ['britannica-hubei-culture', 'britannica-chinese-revolution-1911'],
+  },
+  {
+    title: 'Между севером и югом',
+    body: 'Хубэй лежит в переходной зоне между пшеничным севером и рисовым югом Китая и остаётся одной из ведущих рисоводческих провинций страны; хлопок — её главная товарная культура.',
+    sourceIds: ['britannica-hubei'],
+  },
+];
+
+const hunanFacts: readonly Fact[] = [
+  {
+    title: 'Озеро Дунтинху',
+    body: 'Название Хунань (湖南, Húnán) означает «к югу от озера» — имеется в виду Дунтинху (洞庭湖, Dòngtíng Hú) на севере провинции; это второе по площади пресноводное озеро Китая после Поянху в Цзянси.',
+    sourceIds: ['britannica-hunan'],
+  },
+  {
+    title: 'Заповедник Улинъюань',
+    body: 'Заповедник Улинъюань (武陵源, Wǔlíngyuán) возле города Чжанцзяцзе (张家界, Zhāngjiājiè) с более чем тремя тысячами песчаниковых столбов-останцов в 1992 году включён в список Всемирного наследия ЮНЕСКО.',
+    sourceIds: ['britannica-hunan-culture', 'unesco-wulingyuan-640'],
+  },
+  {
+    title: 'Первый рис Китая',
+    body: 'Хунань стабильно занимает первое место среди провинций Китая по сбору риса и вывозит его излишки в другие регионы страны.',
+    sourceIds: ['britannica-hunan'],
+  },
+];
+
 export const regions = [
   region('anhui', 'province', 'Аньхой', '安徽省', 'Ānhuī shěng', 'hefei', anhuiFacts),
-  region('fujian', 'province', 'Фуцзянь', '福建省', 'Fújiàn shěng', 'fuzhou', []),
+  region('fujian', 'province', 'Фуцзянь', '福建省', 'Fújiàn shěng', 'fuzhou', fujianFacts),
   region('gansu', 'province', 'Ганьсу', '甘肃省', 'Gānsù shěng', 'lanzhou', []),
   region('guangdong', 'province', 'Гуандун', '广东省', 'Guǎngdōng shěng', 'guangzhou', []),
   region('guizhou', 'province', 'Гуйчжоу', '贵州省', 'Guìzhōu shěng', 'guiyang', []),
   region('hainan', 'province', 'Хайнань', '海南省', 'Hǎinán shěng', 'haikou', []),
   region('hebei', 'province', 'Хэбэй', '河北省', 'Héběi shěng', 'shijiazhuang', hebeiFacts),
   region('heilongjiang', 'province', 'Хэйлунцзян', '黑龙江省', 'Hēilóngjiāng shěng', 'harbin', heilongjiangFacts),
-  region('henan', 'province', 'Хэнань', '河南省', 'Hénán shěng', 'zhengzhou', []),
-  region('hubei', 'province', 'Хубэй', '湖北省', 'Húběi shěng', 'wuhan', []),
-  region('hunan', 'province', 'Хунань', '湖南省', 'Húnán shěng', 'changsha', []),
+  region('henan', 'province', 'Хэнань', '河南省', 'Hénán shěng', 'zhengzhou', henanFacts),
+  region('hubei', 'province', 'Хубэй', '湖北省', 'Húběi shěng', 'wuhan', hubeiFacts),
+  region('hunan', 'province', 'Хунань', '湖南省', 'Húnán shěng', 'changsha', hunanFacts),
   region('jiangsu', 'province', 'Цзянсу', '江苏省', 'Jiāngsū shěng', 'nanjing', jiangsuFacts),
-  region('jiangxi', 'province', 'Цзянси', '江西省', 'Jiāngxī shěng', 'nanchang', []),
+  region('jiangxi', 'province', 'Цзянси', '江西省', 'Jiāngxī shěng', 'nanchang', jiangxiFacts),
   region('jilin', 'province', 'Гирин', '吉林省', 'Jílín shěng', 'changchun', jilinFacts),
   region('liaoning', 'province', 'Ляонин', '辽宁省', 'Liáoníng shěng', 'shenyang', liaoningFacts),
   region('qinghai', 'province', 'Цинхай', '青海省', 'Qīnghǎi shěng', 'xining', []),
   region('shaanxi', 'province', 'Шэньси', '陕西省', 'Shǎnxī shěng', 'xian', []),
-  region('shandong', 'province', 'Шаньдун', '山东省', 'Shāndōng shěng', 'jinan', []),
+  region('shandong', 'province', 'Шаньдун', '山东省', 'Shāndōng shěng', 'jinan', shandongFacts),
   region('shanxi', 'province', 'Шаньси', '山西省', 'Shānxī shěng', 'taiyuan', shanxiFacts),
   region('sichuan', 'province', 'Сычуань', '四川省', 'Sìchuān shěng', 'chengdu', []),
   region('yunnan', 'province', 'Юньнань', '云南省', 'Yúnnán shěng', 'kunming', []),

@@ -315,6 +315,177 @@
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
 - Подтверждает: год включения гор Хуаншань в список Всемирного наследия ЮНЕСКО.
 
+## britannica-shandong
+
+- Название: Shandong
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Shandong-province-China
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: физическую географию Шаньдуна, гору Тайшань.
+
+## britannica-shandong-culture
+
+- Название: Shandong - Coastal Province, Han Chinese, Confucianism
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Shandong-province-China/Government-and-society
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: Шаньдун как родину Конфуция и Мэн-цзы, храм и кладбище Конфуция в Цюйфу.
+
+## unesco-qufu-704
+
+- Название: Temple and Cemetery of Confucius and the Kong Family Mansion in Qufu
+- Организация: UNESCO World Heritage Centre
+- URL: https://whc.unesco.org/en/list/704
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: год включения комплекса в Цюйфу в список Всемирного наследия ЮНЕСКО.
+
+## britannica-shandong-economy
+
+- Название: Shandong - Industry, Agriculture, Trade
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Shandong-province-China/Economy
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: нефтяное месторождение Шэнли.
+
+## britannica-henan
+
+- Название: Henan
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Henan
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: физическую географию Хэнани, происхождение названия провинции.
+
+## britannica-henan-culture
+
+- Название: Henan - Government, Society, Economy
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Henan/Government-and-society
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: монастырь Шаолинь на горе Суншань.
+
+## britannica-henan-economy
+
+- Название: Henan - Agriculture, Industry, Trade
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Henan/Economy
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: пшеницу, табак и кунжут Хэнани.
+
+## britannica-fujian
+
+- Название: Fujian
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Fujian
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: физическую географию Фуцзяня, горы Уишань.
+
+## britannica-fujian-culture
+
+- Название: Fujian - Culture, Cuisine, Religion
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Fujian/Cultural-life
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: дома тулоу на юго-западе Фуцзяня.
+
+## unesco-fujian-tulou-1113
+
+- Название: Fujian Tulou
+- Организация: UNESCO World Heritage Centre
+- URL: https://whc.unesco.org/en/list/1113
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: год включения тулоу в список Всемирного наследия ЮНЕСКО.
+
+## britannica-fujian-economy
+
+- Название: Fujian - Han, Min, Hakka
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Fujian/People
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: чаеводство Фуцзяня.
+
+## britannica-jiangxi
+
+- Название: Jiangxi
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Jiangxi
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: фарфор Цзиндэчжэня, вольфрамовую добычу в районе Даю.
+
+## britannica-poyang-lake
+
+- Название: Lake Poyang
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Lake-Poyang
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: озеро Поянху как крупнейшее пресноводное озеро Китая.
+
+## britannica-hubei
+
+- Название: Hubei
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Hubei
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: физическую географию Хубэя, плотину Санься, рис и хлопок Хубэя.
+
+## britannica-hubei-culture
+
+- Название: Hubei - Education, Universities, Institutes
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Hubei/Education
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: начало Синьхайской революции в Хубэе.
+
+## britannica-chinese-revolution-1911
+
+- Название: Chinese Revolution
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/event/Chinese-Revolution-1911-1912
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: дату и место начала Синьхайской революции 1911 года.
+
+## britannica-hunan
+
+- Название: Hunan
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Hunan
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: озеро Дунтинху и происхождение названия Хунань, рисоводство Хунани.
+
+## britannica-hunan-culture
+
+- Название: Hunan - Manufacturing, Textiles, Electronics
+- Организация: Encyclopaedia Britannica
+- URL: https://www.britannica.com/place/Hunan/Manufacturing
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: заповедник Улинъюань.
+
+## unesco-wulingyuan-640
+
+- Название: Wulingyuan Scenic and Historic Interest Area
+- Организация: UNESCO World Heritage Centre
+- URL: https://whc.unesco.org/en/list/640
+- Дата обращения: 2026-08-19
+- Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
+- Подтверждает: год включения заповедника Улинъюань в список Всемирного наследия ЮНЕСКО.
+
 ## Редакторская норма
 
 - Русские формы, иероглифы и пиньинь сверяются по двум источникам перед выпуском.
