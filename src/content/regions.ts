@@ -135,21 +135,129 @@ const liaoningFacts: readonly Fact[] = [
   },
 ];
 
+const heilongjiangFacts: readonly Fact[] = [
+  {
+    title: 'Самая северная провинция',
+    body: 'Хэйлунцзян — самая северная провинция Китая, на севере и востоке граничащая с Россией по рекам Амур и Уссури (乌苏里江, Wūsūlǐ Jiāng); название провинции происходит от китайского имени Амура — Хэйлунцзян (黑龙江, Hēilóngjiāng).',
+    sourceIds: ['britannica-heilongjiang'],
+  },
+  {
+    title: 'Корейские переселенцы',
+    body: 'С середины XIX века юго-восток Хэйлунцзяна заселяли крестьяне-переселенцы из Кореи, превратившие заболоченные земли в рисовые чеки; сегодня здесь сохраняются корейские автономные волости.',
+    sourceIds: ['britannica-heilongjiang'],
+  },
+  {
+    title: 'Дацинская нефть',
+    body: 'Дацинское нефтяное месторождение (大庆油田, Dàqìng Yóutián) на западе Хэйлунцзяна — один из главных источников сырой нефти в Китае, до сих пор дающий основную часть провинциальной добычи.',
+    sourceIds: ['britannica-heilongjiang'],
+  },
+];
+
+const jilinFacts: readonly Fact[] = [
+  {
+    title: 'Чанбайшань',
+    body: 'На границе с КНДР в горах Чанбайшань (长白山, Chángbái Shān) находится вулканический массив с кратерным озером на вершине — здесь расположены самые высокие точки северо-восточного Китая; отсюда берёт начало река Сунгари (松花江, Sōnghuā Jiāng).',
+    sourceIds: ['britannica-jilin'],
+  },
+  {
+    title: 'Яньбянь',
+    body: 'На востоке Гирина, у границы с КНДР, расположен Яньбянь-Корейский автономный округ (延边朝鲜族自治州, yánbiān cháoxiǎnzú zìzhìzhōu) — один из главных рисоводческих районов севера Китая с крупной общиной этнических корейцев.',
+    sourceIds: ['britannica-jilin'],
+  },
+  {
+    title: 'Промышленность',
+    body: 'Основная часть тяжёлой промышленности Гирина, включая производство автомобилей, машин и химическую продукцию, сосредоточена в Чанчуне и городе Цзилинь (吉林市, Jílín Shì).',
+    sourceIds: ['britannica-jilin'],
+  },
+];
+
+const shanghaiFacts: readonly Fact[] = [
+  {
+    title: 'Дельта Янцзы',
+    body: 'Шанхай расположен в дельте реки Янцзы (长江, Cháng Jiāng), между её устьем на севере и заливом Ханчжоувань (杭州湾, Hángzhōu Wān) на юге; материковая часть города лежит на аллювиальной равнине высотой 3–5 м над уровнем моря и пересечена рекой Хуанпу (黄浦江, Huángpǔ Jiāng).',
+    sourceIds: ['britannica-shanghai'],
+  },
+  {
+    title: 'Открытый порт',
+    body: 'Шанхай стал одним из первых китайских портов, открытых для западной торговли в середине XIX века; в городе возникли английская, французская и позднее японская концессии, определившие облик исторического центра.',
+    sourceIds: ['britannica-shanghai-history'],
+  },
+  {
+    title: 'Фондовая биржа',
+    body: 'Шанхайская фондовая биржа (上海证券交易所, Shànghǎi Zhèngquàn Jiāoyì Suǒ) — крупнейшая по капитализации фондовая биржа материкового Китая.',
+    sourceIds: ['bre-shanghai-stock-exchange'],
+  },
+];
+
+const jiangsuFacts: readonly Fact[] = [
+  {
+    title: 'Самая плоская провинция',
+    body: 'Цзянсу — самая низкая и плоская из провинций Китая: почти всю её площадь занимает аллювиальная равнина дельты Янцзы (长江, Cháng Jiāng), а средняя высота над уровнем моря не превышает 45 м; с севера на юг провинцию пересекает Великий канал (大运河, Dà Yùnhé).',
+    sourceIds: ['britannica-jiangsu'],
+  },
+  {
+    title: 'Сады Сучжоу',
+    body: 'Классические сады Сучжоу (苏州古典园林, Sūzhōu gǔdiǎn yuánlín) в 1997 году включены в список Всемирного наследия ЮНЕСКО как образец паркового искусства эпох Мин и Цин.',
+    sourceIds: ['britannica-jiangsu-culture', 'unesco-suzhou-gardens-813'],
+  },
+  {
+    title: 'Промышленный лидер',
+    body: 'Цзянсу — один из ведущих промышленных регионов Китая, ежегодно входящий в число лидеров по объёму промышленного производства; ведущие отрасли — машиностроение, электроника, нефтехимия и текстильная промышленность.',
+    sourceIds: ['britannica-jiangsu-culture'],
+  },
+];
+
+const zhejiangFacts: readonly Fact[] = [
+  {
+    title: 'Приливная бора',
+    body: 'На реке Цяньтан (钱塘江, Qiántáng Jiāng), впадающей в залив Ханчжоувань (杭州湾, Hángzhōu Wān), наблюдается одна из самых мощных приливных бор в мире — стена воды, идущая вверх по течению; лучше всего это явление видно осенью, в конце сентября — начале октября.',
+    sourceIds: ['britannica-zhejiang'],
+  },
+  {
+    title: 'Селадон Лунцюаня',
+    body: 'В печах Лунцюаня (龙泉, Lóngquán) на юго-востоке Чжэцзяна с эпохи Сун изготавливают фарфор-селадон цинцы (青瓷, qīngcí) с характерной серо-зелёной глазурью; технология его изготовления включена в список нематериального культурного наследия ЮНЕСКО.',
+    sourceIds: ['bre-seladon'],
+  },
+  {
+    title: 'Чай и шёлк',
+    body: 'Чжэцзян лидирует в Китае по производству чая и уступает только провинции Сычуань по шелководству — разведению шелкопряда для получения сырцового шёлка.',
+    sourceIds: ['britannica-zhejiang'],
+  },
+];
+
+const anhuiFacts: readonly Fact[] = [
+  {
+    title: 'Хуайхэ и Янцзы',
+    body: 'Аньхой делится реками Хуайхэ (淮河, Huái Hé) и Янцзы (长江, Cháng Jiāng) на равнинный север, часть Великой Китайской равнины, и гористый юг с хребтом Дабешань (大别山, Dàbié Shān); бассейн Хуайхэ подвержен разрушительным паводкам.',
+    sourceIds: ['britannica-anhui'],
+  },
+  {
+    title: 'Хуаншань',
+    body: 'Горы Хуаншань (黄山, Huáng Shān) на юго-востоке Аньхоя в 1990 году включены в список Всемирного наследия ЮНЕСКО за гранитные пики, сосны и облачные моря.',
+    sourceIds: ['britannica-anhui-culture', 'unesco-huangshan-547'],
+  },
+  {
+    title: 'Чай Аньхоя',
+    body: 'Аньхой известен чаем: цимэньский чёрный чай (祁门红茶, Qímén hóngchá) и туньсийский зелёный чай (屯溪绿茶, Túnxī lǜchá) высоко ценятся в Китае и идут на экспорт.',
+    sourceIds: ['britannica-anhui-culture'],
+  },
+];
+
 export const regions = [
-  region('anhui', 'province', 'Аньхой', '安徽省', 'Ānhuī shěng', 'hefei', []),
+  region('anhui', 'province', 'Аньхой', '安徽省', 'Ānhuī shěng', 'hefei', anhuiFacts),
   region('fujian', 'province', 'Фуцзянь', '福建省', 'Fújiàn shěng', 'fuzhou', []),
   region('gansu', 'province', 'Ганьсу', '甘肃省', 'Gānsù shěng', 'lanzhou', []),
   region('guangdong', 'province', 'Гуандун', '广东省', 'Guǎngdōng shěng', 'guangzhou', []),
   region('guizhou', 'province', 'Гуйчжоу', '贵州省', 'Guìzhōu shěng', 'guiyang', []),
   region('hainan', 'province', 'Хайнань', '海南省', 'Hǎinán shěng', 'haikou', []),
   region('hebei', 'province', 'Хэбэй', '河北省', 'Héběi shěng', 'shijiazhuang', hebeiFacts),
-  region('heilongjiang', 'province', 'Хэйлунцзян', '黑龙江省', 'Hēilóngjiāng shěng', 'harbin', []),
+  region('heilongjiang', 'province', 'Хэйлунцзян', '黑龙江省', 'Hēilóngjiāng shěng', 'harbin', heilongjiangFacts),
   region('henan', 'province', 'Хэнань', '河南省', 'Hénán shěng', 'zhengzhou', []),
   region('hubei', 'province', 'Хубэй', '湖北省', 'Húběi shěng', 'wuhan', []),
   region('hunan', 'province', 'Хунань', '湖南省', 'Húnán shěng', 'changsha', []),
-  region('jiangsu', 'province', 'Цзянсу', '江苏省', 'Jiāngsū shěng', 'nanjing', []),
+  region('jiangsu', 'province', 'Цзянсу', '江苏省', 'Jiāngsū shěng', 'nanjing', jiangsuFacts),
   region('jiangxi', 'province', 'Цзянси', '江西省', 'Jiāngxī shěng', 'nanchang', []),
-  region('jilin', 'province', 'Гирин', '吉林省', 'Jílín shěng', 'changchun', []),
+  region('jilin', 'province', 'Гирин', '吉林省', 'Jílín shěng', 'changchun', jilinFacts),
   region('liaoning', 'province', 'Ляонин', '辽宁省', 'Liáoníng shěng', 'shenyang', liaoningFacts),
   region('qinghai', 'province', 'Цинхай', '青海省', 'Qīnghǎi shěng', 'xining', []),
   region('shaanxi', 'province', 'Шэньси', '陕西省', 'Shǎnxī shěng', 'xian', []),
@@ -157,7 +265,7 @@ export const regions = [
   region('shanxi', 'province', 'Шаньси', '山西省', 'Shānxī shěng', 'taiyuan', shanxiFacts),
   region('sichuan', 'province', 'Сычуань', '四川省', 'Sìchuān shěng', 'chengdu', []),
   region('yunnan', 'province', 'Юньнань', '云南省', 'Yúnnán shěng', 'kunming', []),
-  region('zhejiang', 'province', 'Чжэцзян', '浙江省', 'Zhèjiāng shěng', 'hangzhou', []),
+  region('zhejiang', 'province', 'Чжэцзян', '浙江省', 'Zhèjiāng shěng', 'hangzhou', zhejiangFacts),
   region('taiwan', 'province', 'Тайвань', '台湾省', 'Táiwān shěng', 'taipei', []),
   region('guangxi', 'autonomous-region', 'Гуанси-Чжуанский автономный район', '广西壮族自治区', 'Guǎngxī Zhuàngzú zìzhìqū', 'nanning', []),
   region('inner-mongolia', 'autonomous-region', 'Автономный район Внутренняя Монголия', '内蒙古自治区', 'Nèi Měnggǔ zìzhìqū', 'hohhot', innerMongoliaFacts),
@@ -166,7 +274,7 @@ export const regions = [
   region('tibet', 'autonomous-region', 'Тибетский автономный район', '西藏自治区', 'Xīzàng zìzhìqū', 'lhasa', []),
   region('beijing', 'municipality', 'Пекин', '北京市', 'Běijīng shì', 'beijing', beijingFacts),
   region('chongqing', 'municipality', 'Чунцин', '重庆市', 'Chóngqìng shì', 'chongqing', []),
-  region('shanghai', 'municipality', 'Шанхай', '上海市', 'Shànghǎi shì', 'shanghai', []),
+  region('shanghai', 'municipality', 'Шанхай', '上海市', 'Shànghǎi shì', 'shanghai', shanghaiFacts),
   region('tianjin', 'municipality', 'Тяньцзинь', '天津市', 'Tiānjīn shì', 'tianjin', tianjinFacts),
   region('hong-kong', 'sar', 'Гонконг', '香港特别行政区', 'Xiānggǎng tèbié xíngzhèngqū', 'hong-kong', []),
   region('macao', 'sar', 'Макао', '澳门特别行政区', 'Àomén tèbié xíngzhèngqū', 'macao', []),
