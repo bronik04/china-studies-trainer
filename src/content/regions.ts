@@ -161,12 +161,12 @@ const jilinFacts: readonly Fact[] = [
   },
   {
     title: 'Яньбянь',
-    body: 'На востоке Гирина, у границы с КНДР, расположен Яньбянь-Корейский автономный округ (延边朝鲜族自治州, Yánbiān Cháoxiǎnzú zìzhìzhōu) — известный рисоводческий район севера Китая с крупной общиной этнических корейцев.',
+    body: 'На востоке провинции Цзилинь, у границы с КНДР, расположен Яньбянь-Корейский автономный округ (延边朝鲜族自治州, Yánbiān Cháoxiǎnzú zìzhìzhōu) — известный рисоводческий район севера Китая с крупной общиной этнических корейцев.',
     sourceIds: ['britannica-jilin'],
   },
   {
     title: 'Промышленность',
-    body: 'Основная часть тяжёлой промышленности Гирина, включая производство автомобилей, машин и химическую продукцию, сосредоточена в Чанчуне и городе Цзилинь (吉林市, Jílín shì).',
+    body: 'Основная часть тяжёлой промышленности провинции Цзилинь, включая производство автомобилей, машин и химическую продукцию, сосредоточена в Чанчуне и городе Цзилинь (吉林市, Jílín shì).',
     sourceIds: ['britannica-jilin'],
   },
 ];
@@ -653,7 +653,7 @@ export const regions = [
   region('hunan', 'province', 'Хунань', '湖南省', 'Húnán shěng', 'changsha', hunanFacts),
   region('jiangsu', 'province', 'Цзянсу', '江苏省', 'Jiāngsū shěng', 'nanjing', jiangsuFacts),
   region('jiangxi', 'province', 'Цзянси', '江西省', 'Jiāngxī shěng', 'nanchang', jiangxiFacts),
-  region('jilin', 'province', 'Гирин', '吉林省', 'Jílín shěng', 'changchun', jilinFacts),
+  region('jilin', 'province', 'Цзилинь', '吉林省', 'Jílín shěng', 'changchun', jilinFacts),
   region('liaoning', 'province', 'Ляонин', '辽宁省', 'Liáoníng shěng', 'shenyang', liaoningFacts),
   region('qinghai', 'province', 'Цинхай', '青海省', 'Qīnghǎi shěng', 'xining', qinghaiFacts),
   region('shaanxi', 'province', 'Шэньси', '陕西省', 'Shǎnxī shěng', 'xian', shaanxiFacts),

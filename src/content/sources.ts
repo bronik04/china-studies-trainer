@@ -235,7 +235,7 @@ export const sources = [
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Jilin-province-China',
     accessedAt: '2026-08-19',
-    covers: ['горы Чанбайшань и река Сунгари', 'Яньбянь-Корейский автономный округ', 'промышленность провинции Цзилинь (Гирин)'],
+    covers: ['горы Чанбайшань и река Сунгари', 'Яньбянь-Корейский автономный округ', 'промышленность провинции Цзилинь'],
   },
   {
     id: 'britannica-shanghai',
