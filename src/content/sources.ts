@@ -123,7 +123,7 @@ export const sources = [
     organization: 'Большая российская энциклопедия',
     url: 'https://bigenc.ru/wiki/Прогноз_землетрясений',
     accessedAt: '2026-08-19',
-    covers: ['Таншаньское землетрясение 1976 года', 'землетрясение в Сычуани в 2008 году'],
+    covers: ['Таншаньское землетрясение 1976 года'],
   },
   {
     id: 'britannica-tangshan-earthquake',
@@ -612,6 +612,14 @@ export const sources = [
     url: 'https://whc.unesco.org/en/list/912',
     accessedAt: '2026-08-19',
     covers: ['год включения рельефов Дацзу в список Всемирного наследия ЮНЕСКО'],
+  },
+  {
+    id: 'bre-earthquake',
+    title: 'Землетрясение',
+    organization: 'Большая российская энциклопедия',
+    url: 'https://bigenc.ru/wiki/Землетрясение',
+    accessedAt: '2026-08-19',
+    covers: ['землетрясение в Сычуани в 2008 году'],
   },
   {
     id: 'britannica-sichuan',
