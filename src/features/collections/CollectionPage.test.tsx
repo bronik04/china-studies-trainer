@@ -77,7 +77,7 @@ it('«спросить эти регионы» запускает раунд р�
 });
 
 it('черновик признаётся черновиком, пока у него нет источника', () => {
-  renderPage('great-wall');
+  renderPage('shaanxi');
 
   expect(screen.getByTestId('draft-note')).toHaveTextContent(
     'содержание этой коллекции ещё не проверено по источникам',
