@@ -351,13 +351,121 @@ const hunanFacts: readonly Fact[] = [
   },
 ];
 
+const guangdongFacts: readonly Fact[] = [
+  {
+    title: 'Дельта Чжуцзяна',
+    body: 'Гуандун обладает одним из самых протяжённых морских берегов Китая: ниже Гуанчжоу река Чжуцзян (珠江, Zhū Jiāng) образует дельту площадью около 7500 км², которая выходит к Южно-Китайскому морю эстуарием между Макао на западе и Гонконгом на востоке.',
+    sourceIds: ['britannica-guangdong'],
+  },
+  {
+    title: 'Кантонский язык',
+    body: 'Кантонский язык (粤语, Yuèyǔ) — самый распространённый в Гуандуне: на нём говорит большинство жителей центральной и западной части провинции, а произношение Гуанчжоу считается его стандартной формой.',
+    sourceIds: ['britannica-guangdong'],
+  },
+  {
+    title: 'Самая населённая провинция',
+    body: 'Гуандун — самая населённая и экономически крупная провинция Китая: по переписи 2020 года в ней живёт 126,0 млн человек, а валовой региональный продукт в 2022 году составил 12,9 трлн юаней.',
+    sourceIds: ['bre-china-provinces', 'britannica-guangdong'],
+  },
+];
+
+const guangxiFacts: readonly Fact[] = [
+  {
+    title: 'Карст Гуйлиня',
+    body: 'Карстовые пейзажи в окрестностях города Гуйлинь (桂林, Guìlín) — с известняковыми пиками, пещерами и подземными реками — в 2007 году включены в список Всемирного наследия ЮНЕСКО как часть серийного объекта «Карст Южного Китая».',
+    sourceIds: ['britannica-guangxi', 'unesco-south-china-karst-1248'],
+  },
+  {
+    title: 'Автономия чжуанов',
+    body: 'В 1958 году провинцию преобразовали в Гуанси-Чжуанский автономный район, чтобы поддержать культурную автономию чжуанов (壮族, Zhuàngzú) — крупнейшего национального меньшинства региона.',
+    sourceIds: ['britannica-guangxi'],
+  },
+  {
+    title: 'Самый населённый автономный район',
+    body: 'Среди пяти автономных районов Китая Гуанси — самый населённый: по переписи 2020 года там живёт около 50 млн человек.',
+    sourceIds: ['bre-china-autonomous-regions', 'britannica-guangxi'],
+  },
+];
+
+const hainanFacts: readonly Fact[] = [
+  {
+    title: 'Гора Учжишань',
+    body: 'От полуострова Лэйчжоу на материке Хайнань отделяет узкий и мелкий пролив Цюнчжоу (琼州海峡, Qióngzhōu Hǎixiá); в гористом центре острова поднимается высшая точка провинции — гора Учжишань (五指山, Wǔzhǐ Shān), 1867 м.',
+    sourceIds: ['britannica-hainan'],
+  },
+  {
+    title: 'Самая молодая провинция',
+    body: 'Веками Хайнань был частью Гуандуна; в 1988 году, выделившись в отдельную провинцию, он стал самой молодой и — по площади — самой маленькой из 23 провинций Китая.',
+    sourceIds: ['britannica-hainan', 'bre-china-provinces'],
+  },
+  {
+    title: 'Народ ли',
+    body: 'Коренное население острова — народ ли (黎族, Lízú); он живёт в горах юго-центральной и юго-западной части Хайнаня и остаётся крупнейшим этническим меньшинством провинции.',
+    sourceIds: ['britannica-hainan'],
+  },
+];
+
+const hongKongFacts: readonly Fact[] = [
+  {
+    title: 'Гавань',
+    body: 'Название Гонконг (香港, Xiānggǎng) означает «благоухающая гавань»: город вырос вокруг превосходной естественной гавани у устья Чжуцзяна, которая сделала его одним из крупнейших центров мировой торговли.',
+    sourceIds: ['britannica-hong-kong'],
+  },
+  {
+    title: 'Праздники Востока и Запада',
+    body: 'Гонконг отмечает и восточные, и западные праздники — праздник драконьих лодок, праздник середины осени, китайский Новый год, Рождество, — а также проводит собственный ежегодный фестиваль искусств.',
+    sourceIds: ['britannica-hong-kong-culture'],
+  },
+  {
+    title: 'Фондовая биржа',
+    body: 'Гонконгская фондовая биржа образована в 1947 году слиянием двух бирж города и остаётся крупнейшей биржей Гонконга.',
+    sourceIds: ['bre-hongkong-stock-exchange'],
+  },
+];
+
+const macaoFacts: readonly Fact[] = [
+  {
+    title: 'Полуостров и острова',
+    body: 'Макао состоит из полуострова и островов Тайпа (氹仔, Dàngzǎi) и Колоан (路环, Lùhuán), соединённых намывной землёй; европейское имя города — Макао — происходит от «Ама-гао», «бухты Ама», в честь богини-покровительницы моряков.',
+    sourceIds: ['britannica-macau'],
+  },
+  {
+    title: 'Историческая застройка',
+    body: 'В историческом центре Макао — крепость Монте и руины фасада собора Св. Павла (сгорел в 1835 году) — соседствуют португальские и китайские постройки; в 2005 году застройку включили в список Всемирного наследия ЮНЕСКО.',
+    sourceIds: ['britannica-macau', 'unesco-macao-1110'],
+  },
+  {
+    title: 'Туризм и казино',
+    body: 'Туризм и игорный бизнес — главные статьи экономики Макао: паромы и суда на подводных крыльях привозят посетителей из Гонконга и Шэньчжэня в многочисленные казино города.',
+    sourceIds: ['britannica-macau'],
+  },
+];
+
+const taiwanFacts: readonly Fact[] = [
+  {
+    title: 'Горы Тайваня',
+    body: 'Горы занимают около двух третей территории Тайваня; в хребте Чжунъян (中央山脉, Zhōngyāng Shānmài) поднимается высшая точка острова — гора Юйшань (玉山, Yù Shān), 3997 м.',
+    sourceIds: ['britannica-taiwan'],
+  },
+  {
+    title: 'Тайбэй 101',
+    body: 'Небоскрёб Тайбэй 101 в столице острова высотой 508 м с 2003 по 2007 год был самым высоким зданием мира, пока его не превзошла дубайская Бурдж-Халифа.',
+    sourceIds: ['britannica-taipei'],
+  },
+  {
+    title: 'От текстиля к электронике',
+    body: 'С конца 1950-х годов промышленность Тайваня росла примерно на 12% в год — вдвое быстрее, чем в Великобритании или Японии в периоды их самого быстрого роста; лёгкая промышленность вроде текстильной уступила место электронике и производству интегральных схем.',
+    sourceIds: ['britannica-taiwan-manufacturing'],
+  },
+];
+
 export const regions = [
   region('anhui', 'province', 'Аньхой', '安徽省', 'Ānhuī shěng', 'hefei', anhuiFacts),
   region('fujian', 'province', 'Фуцзянь', '福建省', 'Fújiàn shěng', 'fuzhou', fujianFacts),
   region('gansu', 'province', 'Ганьсу', '甘肃省', 'Gānsù shěng', 'lanzhou', []),
-  region('guangdong', 'province', 'Гуандун', '广东省', 'Guǎngdōng shěng', 'guangzhou', []),
+  region('guangdong', 'province', 'Гуандун', '广东省', 'Guǎngdōng shěng', 'guangzhou', guangdongFacts),
   region('guizhou', 'province', 'Гуйчжоу', '贵州省', 'Guìzhōu shěng', 'guiyang', []),
-  region('hainan', 'province', 'Хайнань', '海南省', 'Hǎinán shěng', 'haikou', []),
+  region('hainan', 'province', 'Хайнань', '海南省', 'Hǎinán shěng', 'haikou', hainanFacts),
   region('hebei', 'province', 'Хэбэй', '河北省', 'Héběi shěng', 'shijiazhuang', hebeiFacts),
   region('heilongjiang', 'province', 'Хэйлунцзян', '黑龙江省', 'Hēilóngjiāng shěng', 'harbin', heilongjiangFacts),
   region('henan', 'province', 'Хэнань', '河南省', 'Hénán shěng', 'zhengzhou', henanFacts),
@@ -374,8 +482,8 @@ export const regions = [
   region('sichuan', 'province', 'Сычуань', '四川省', 'Sìchuān shěng', 'chengdu', []),
   region('yunnan', 'province', 'Юньнань', '云南省', 'Yúnnán shěng', 'kunming', []),
   region('zhejiang', 'province', 'Чжэцзян', '浙江省', 'Zhèjiāng shěng', 'hangzhou', zhejiangFacts),
-  region('taiwan', 'province', 'Тайвань', '台湾省', 'Táiwān shěng', 'taipei', []),
-  region('guangxi', 'autonomous-region', 'Гуанси-Чжуанский автономный район', '广西壮族自治区', 'Guǎngxī Zhuàngzú zìzhìqū', 'nanning', []),
+  region('taiwan', 'province', 'Тайвань', '台湾省', 'Táiwān shěng', 'taipei', taiwanFacts),
+  region('guangxi', 'autonomous-region', 'Гуанси-Чжуанский автономный район', '广西壮族自治区', 'Guǎngxī Zhuàngzú zìzhìqū', 'nanning', guangxiFacts),
   region('inner-mongolia', 'autonomous-region', 'Автономный район Внутренняя Монголия', '内蒙古自治区', 'Nèi Měnggǔ zìzhìqū', 'hohhot', innerMongoliaFacts),
   region('ningxia', 'autonomous-region', 'Нинся-Хуэйский автономный район', '宁夏回族自治区', 'Níngxià Huízú zìzhìqū', 'yinchuan', []),
   region('xinjiang', 'autonomous-region', 'Синьцзян-Уйгурский автономный район', '新疆维吾尔自治区', 'Xīnjiāng Wéiwú’ěr zìzhìqū', 'urumqi', []),
@@ -384,6 +492,6 @@ export const regions = [
   region('chongqing', 'municipality', 'Чунцин', '重庆市', 'Chóngqìng shì', 'chongqing', []),
   region('shanghai', 'municipality', 'Шанхай', '上海市', 'Shànghǎi shì', 'shanghai', shanghaiFacts),
   region('tianjin', 'municipality', 'Тяньцзинь', '天津市', 'Tiānjīn shì', 'tianjin', tianjinFacts),
-  region('hong-kong', 'sar', 'Гонконг', '香港特别行政区', 'Xiānggǎng tèbié xíngzhèngqū', 'hong-kong', []),
-  region('macao', 'sar', 'Макао', '澳门特别行政区', 'Àomén tèbié xíngzhèngqū', 'macao', []),
+  region('hong-kong', 'sar', 'Гонконг', '香港特别行政区', 'Xiānggǎng tèbié xíngzhèngqū', 'hong-kong', hongKongFacts),
+  region('macao', 'sar', 'Макао', '澳门特别行政区', 'Àomén tèbié xíngzhèngqū', 'macao', macaoFacts),
 ] as const satisfies readonly Region[];
