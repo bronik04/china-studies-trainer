@@ -459,12 +459,102 @@ const taiwanFacts: readonly Fact[] = [
   },
 ];
 
+const chongqingFacts: readonly Fact[] = [
+  {
+    title: 'Слияние рек',
+    body: 'Чунцин стоит у слияния Янцзы (长江, Cháng Jiāng) и её притока Цзялинцзян (嘉陵江, Jiālíng Jiāng), примерно в 2250 км от моря; город — ведущий речной порт и промышленный центр верхнего течения Янцзы.',
+    sourceIds: ['britannica-chongqing'],
+  },
+  {
+    title: 'Четвёртый город центрального подчинения',
+    body: 'В 1997 году Чунцин выделился из провинции Сычуань и стал четвёртым городом центрального подчинения Китая (直辖市, zhíxiáshì) — после Пекина, Тяньцзиня и Шанхая; по площади административной территории он крупнее любого другого ГЦП и превосходит по размеру Чехию.',
+    sourceIds: ['bre-municipality-status', 'britannica-chongqing'],
+  },
+  {
+    title: 'Рельефы Дацзу',
+    body: 'На склонах Дацзу (大足, Dàzú) близ Чунцина в 7–13 веках высекали буддийские каменные рельефы; в 1999 году комплекс включили в список Всемирного наследия ЮНЕСКО.',
+    sourceIds: ['bre-buddhist-art', 'unesco-dazu-912'],
+  },
+];
+
+const sichuanFacts: readonly Fact[] = [
+  {
+    title: '«Небесная страна» в Красном бассейне',
+    body: 'Сычуань — вторая по площади провинция Китая (487 тыс. км²); её хозяйственное и историческое ядро — Сычуаньская котловина, или Красный бассейн, которую из-за мягкого климата и плодородной почвы называют Тяньфу Чжи Го (天府之国, Tiānfǔ Zhī Guó) — «Небесной страной».',
+    sourceIds: ['britannica-sichuan'],
+  },
+  {
+    title: 'Убежище большой панды',
+    body: 'В горах центральной Сычуани расположены заповедники большой панды, где обитает более 30% мировой популяции вида — крупнейший на Земле массив её местообитаний; в 2006 году ЮНЕСКО включила эти заповедники в список Всемирного наследия.',
+    sourceIds: ['britannica-sichuan', 'unesco-sichuan-panda-1213'],
+  },
+  {
+    title: 'Землетрясение 2008 года',
+    body: '12 мая 2008 года в Сычуани произошло землетрясение магнитудой 7,9, унёсшее свыше 87 тыс. жизней — одно из самых разрушительных за последние десятилетия в активной сейсмической зоне провинции.',
+    sourceIds: ['bre-earthquake-forecast', 'britannica-sichuan'],
+  },
+];
+
+const guizhouFacts: readonly Fact[] = [
+  {
+    title: 'Карстовое плато',
+    body: 'Гуйчжоу лежит на Юньнань-Гуйчжоуском (Юньгуй) плато среди карстовых форм рельефа — обрывистых склонов, пещер и подземных рек; у города Аньшунь (安顺, Ānshùn) на юго-западе провинции находится знаменитый водопад Хуангошу (黄果树瀑布, Huángguǒshù Pùbù).',
+    sourceIds: ['britannica-guizhou'],
+  },
+  {
+    title: '«Музей мостов мира»',
+    body: 'Из-за крутых каньонов Гуйчжоу построило более 30 тыс. автодорожных мостов и получило прозвище «музей мостов мира»; открытый в 2025 году мост через каньон Хуацзян (花江峡谷大桥, Huājiāng Xiágǔ Dàqiáo) стал самым высоким мостом в мире.',
+    sourceIds: ['britannica-guizhou'],
+  },
+  {
+    title: 'Байцзю Маотай',
+    body: 'В Гуйчжоу производят байцзю Маотай (茅台, Máotái) — крепкий напиток из пшеницы и гаоляна; штаб-квартира компании Kweichow Moutai находится в городе Жэньхуай (仁怀, Rénhuái), а в 2017 году она стала крупнейшим в мире производителем спиртных напитков по рыночной капитализации.',
+    sourceIds: ['britannica-guizhou', 'bre-kweichow-moutai'],
+  },
+];
+
+const yunnanFacts: readonly Fact[] = [
+  {
+    title: 'Ботанический рекордсмен',
+    body: 'Юньнань превосходит другие провинции Китая по разнообразию растений и животных: здесь встречается больше половины из примерно 30 тыс. видов растений, известных в стране, включая более 6 тыс. видов лекарственных трав.',
+    sourceIds: ['britannica-yunnan'],
+  },
+  {
+    title: 'Народ йи и государство Наньчжао',
+    body: 'Крупнейшее национальное меньшинство Юньнани — йи (彝族, Yízú), 4,71 млн человек (перепись 2000 г.); предки йи были среди создателей средневековых государств Наньчжао (南诏, Nánzhào) и Дали (大理, Dàlǐ), правивших этими землями в 7–13 веках.',
+    sourceIds: ['bre-yi', 'britannica-yunnan'],
+  },
+  {
+    title: 'Оловянный край',
+    body: 'Юньнань обладает одними из крупнейших в мире месторождений олова, а оловодобыча остаётся ведущей отраслью горной промышленности провинции.',
+    sourceIds: ['britannica-yunnan'],
+  },
+];
+
+const tibetFacts: readonly Fact[] = [
+  {
+    title: '«Крыша мира»',
+    body: 'Тибетское нагорье — обширная область плато и гор в Центральной Азии, которую называют «крышей мира»; на границе с Непалом поднимается высочайшая вершина планеты Джомолунгма (珠穆朗玛峰, Zhūmùlǎngmǎ Fēng), 8850 м.',
+    sourceIds: ['britannica-tibet'],
+  },
+  {
+    title: 'Дворец Потала',
+    body: 'Дворец Потала (布达拉宫, Bùdálā Gōng) в Лхасе строился с 1645 года: Белый дворец завершили в 1648-м, Красный — в 1694-м; высота комплекса 117,19 м, 13 этажей. В 1994 году ЮНЕСКО включила его в список Всемирного наследия.',
+    sourceIds: ['bre-potala', 'unesco-potala-707'],
+  },
+  {
+    title: 'Ячмень и як',
+    body: 'Главная сельскохозяйственная культура Тибета — ячмень, включая сорт, выведенный специально для высокогорья; масло из молока яка — основной молочный продукт тибетцев.',
+    sourceIds: ['britannica-tibet-economy'],
+  },
+];
+
 export const regions = [
   region('anhui', 'province', 'Аньхой', '安徽省', 'Ānhuī shěng', 'hefei', anhuiFacts),
   region('fujian', 'province', 'Фуцзянь', '福建省', 'Fújiàn shěng', 'fuzhou', fujianFacts),
   region('gansu', 'province', 'Ганьсу', '甘肃省', 'Gānsù shěng', 'lanzhou', []),
   region('guangdong', 'province', 'Гуандун', '广东省', 'Guǎngdōng shěng', 'guangzhou', guangdongFacts),
-  region('guizhou', 'province', 'Гуйчжоу', '贵州省', 'Guìzhōu shěng', 'guiyang', []),
+  region('guizhou', 'province', 'Гуйчжоу', '贵州省', 'Guìzhōu shěng', 'guiyang', guizhouFacts),
   region('hainan', 'province', 'Хайнань', '海南省', 'Hǎinán shěng', 'haikou', hainanFacts),
   region('hebei', 'province', 'Хэбэй', '河北省', 'Héběi shěng', 'shijiazhuang', hebeiFacts),
   region('heilongjiang', 'province', 'Хэйлунцзян', '黑龙江省', 'Hēilóngjiāng shěng', 'harbin', heilongjiangFacts),
@@ -479,17 +569,17 @@ export const regions = [
   region('shaanxi', 'province', 'Шэньси', '陕西省', 'Shǎnxī shěng', 'xian', []),
   region('shandong', 'province', 'Шаньдун', '山东省', 'Shāndōng shěng', 'jinan', shandongFacts),
   region('shanxi', 'province', 'Шаньси', '山西省', 'Shānxī shěng', 'taiyuan', shanxiFacts),
-  region('sichuan', 'province', 'Сычуань', '四川省', 'Sìchuān shěng', 'chengdu', []),
-  region('yunnan', 'province', 'Юньнань', '云南省', 'Yúnnán shěng', 'kunming', []),
+  region('sichuan', 'province', 'Сычуань', '四川省', 'Sìchuān shěng', 'chengdu', sichuanFacts),
+  region('yunnan', 'province', 'Юньнань', '云南省', 'Yúnnán shěng', 'kunming', yunnanFacts),
   region('zhejiang', 'province', 'Чжэцзян', '浙江省', 'Zhèjiāng shěng', 'hangzhou', zhejiangFacts),
   region('taiwan', 'province', 'Тайвань', '台湾省', 'Táiwān shěng', 'taipei', taiwanFacts),
   region('guangxi', 'autonomous-region', 'Гуанси-Чжуанский автономный район', '广西壮族自治区', 'Guǎngxī Zhuàngzú zìzhìqū', 'nanning', guangxiFacts),
   region('inner-mongolia', 'autonomous-region', 'Автономный район Внутренняя Монголия', '内蒙古自治区', 'Nèi Měnggǔ zìzhìqū', 'hohhot', innerMongoliaFacts),
   region('ningxia', 'autonomous-region', 'Нинся-Хуэйский автономный район', '宁夏回族自治区', 'Níngxià Huízú zìzhìqū', 'yinchuan', []),
   region('xinjiang', 'autonomous-region', 'Синьцзян-Уйгурский автономный район', '新疆维吾尔自治区', 'Xīnjiāng Wéiwú’ěr zìzhìqū', 'urumqi', []),
-  region('tibet', 'autonomous-region', 'Тибетский автономный район', '西藏自治区', 'Xīzàng zìzhìqū', 'lhasa', []),
+  region('tibet', 'autonomous-region', 'Тибетский автономный район', '西藏自治区', 'Xīzàng zìzhìqū', 'lhasa', tibetFacts),
   region('beijing', 'municipality', 'Пекин', '北京市', 'Běijīng shì', 'beijing', beijingFacts),
-  region('chongqing', 'municipality', 'Чунцин', '重庆市', 'Chóngqìng shì', 'chongqing', []),
+  region('chongqing', 'municipality', 'Чунцин', '重庆市', 'Chóngqìng shì', 'chongqing', chongqingFacts),
   region('shanghai', 'municipality', 'Шанхай', '上海市', 'Shànghǎi shì', 'shanghai', shanghaiFacts),
   region('tianjin', 'municipality', 'Тяньцзинь', '天津市', 'Tiānjīn shì', 'tianjin', tianjinFacts),
   region('hong-kong', 'sar', 'Гонконг', '香港特别行政区', 'Xiānggǎng tèbié xíngzhèngqū', 'hong-kong', hongKongFacts),
