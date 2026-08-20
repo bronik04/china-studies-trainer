@@ -119,3 +119,35 @@ it('возврат к политической карте сбрасывает �
   // Река осталась бы выбранной, если бы переключение вида её не снимало.
   expect(screen.getByTestId('atlas-region-card')).toHaveTextContent('Хунань');
 });
+
+it('карточка региона показывает справку с темами и строкой источников', () => {
+  renderAtlas('sichuan');
+
+  const card = screen.getByTestId('atlas-region-card');
+
+  expect(card).toHaveTextContent('Справка');
+  expect(card).toHaveTextContent('Убежище большой панды');
+  expect(card).toHaveTextContent(/Источники: /);
+  expect(card).toHaveTextContent('Britannica');
+  expect(card).toHaveTextContent('ЮНЕСКО');
+  // В строке — короткие имена; полное имя организации не печатается.
+  expect(card).not.toHaveTextContent('Encyclopaedia Britannica');
+});
+
+/*
+ * У физических объектов facts пока пусты (контентные ветки наполняли регионы
+ * и коллекции) — блок обязан молча не рендериться, а не показывать пустую
+ * «Справку». Когда факты объектов наполнят, компонент заработает без правок,
+ * и этот тест нужно будет заменить позитивным.
+ */
+it('пустая справка физического объекта не рендерится', () => {
+  renderAtlas();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+  fireEvent.keyDown(screen.getByLabelText(/Хуанхэ/), { key: 'Enter' });
+
+  const card = screen.getByTestId('atlas-region-card');
+
+  expect(card).toHaveTextContent('Хуанхэ');
+  expect(card).not.toHaveTextContent('Справка');
+});

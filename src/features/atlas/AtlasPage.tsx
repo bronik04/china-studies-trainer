@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { cityById, citiesOfRegion } from '../../content/cities';
 import { physicalFeatures } from '../../content/physical-features';
+import { sourceById } from '../../content/sources';
 import type {
+  Fact,
   PhysicalFeature,
   PhysicalKind,
   Region,
@@ -66,6 +68,59 @@ const MAP_KINDS = [
 ] as const;
 
 type MapKind = (typeof MAP_KINDS)[number][0];
+
+/**
+ * Строка «Источники: ...». Дедупликация — по показанному имени, а не по
+ * организации: два подразделения ЮНЕСКО в реестре должны схлопнуться в одно
+ * слово.
+ */
+function factSourcesLine(facts: readonly Fact[]): string | null {
+  const labels: string[] = [];
+  const seen = new Set<string>();
+  for (const fact of facts) {
+    for (const sourceId of fact.sourceIds) {
+      const source = sourceById(sourceId);
+      if (source === undefined) {
+        continue;
+      }
+      const label = source.shortLabel ?? source.organization;
+      if (!seen.has(label)) {
+        seen.add(label);
+        labels.push(label);
+      }
+    }
+  }
+
+  return labels.length === 0 ? null : labels.join(' · ');
+}
+
+/**
+ * Справка карточки: темы и тела фактов, внизу — строка источников. Блок один
+ * для региона и физического объекта (утверждённый макет
+ * docs/screens/04-atlas-card-facts-v1.html, вариант А).
+ */
+function CardFacts({ facts }: { readonly facts: readonly Fact[] }) {
+  if (facts.length === 0) {
+    return null;
+  }
+
+  const sourcesLine = factSourcesLine(facts);
+
+  return (
+    <section className="atlas-facts" aria-label="Справка">
+      <p className="eyebrow">Справка</p>
+      {facts.map((fact) => (
+        <div className="atlas-fact" key={fact.title}>
+          <h3>{fact.title}</h3>
+          <p>{fact.body}</p>
+        </div>
+      ))}
+      {sourcesLine === null ? null : (
+        <p className="atlas-sources">Источники: {sourcesLine}</p>
+      )}
+    </section>
+  );
+}
 
 export type AtlasPageProps = {
   readonly regions: readonly Region[];
@@ -164,6 +219,7 @@ export function AtlasPage({
                     </li>
                   ))}
                 </ul>
+                <CardFacts facts={selectedFeature.facts} />
               </>
             ) : selected ? (
               <>
@@ -178,6 +234,7 @@ export function AtlasPage({
                     ({cityById(selected.capitalCityId)?.nameZh})
                   </span>
                 </p>
+                <CardFacts facts={selected.facts} />
                 {/*
                   Города региона перечислены словами, а не только точками на
                   карте: точка — не текст, читалке экрана её не прочесть, а
