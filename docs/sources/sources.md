@@ -18,6 +18,51 @@
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
 - Подтверждает: названия единиц провинциального уровня и места размещения их правительств.
 
+## natural-earth-populated-places-5.1.2
+
+- Название: Natural Earth 10m Populated Places, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/
+- Дата обращения: 2026-08-05
+- Лицензия: public domain; полное описание набора и изменений — `cities.md`.
+- Подтверждает: координаты городов, русские и китайские названия городов для сверки.
+
+## wikidata-coordinates-2026-08-05
+
+- Название: Викиданные, свойство P625 «координаты»
+- Организация: Wikimedia Foundation
+- URL: https://www.wikidata.org/wiki/Property:P625
+- Дата обращения: 2026-08-05
+- Лицензия: CC0 1.0; полное описание и перечень городов — `cities.md`.
+- Подтверждает: координаты городов, которых нет в Natural Earth.
+
+## natural-earth-rivers-5.1.2
+
+- Название: Natural Earth 10m Rivers and Lake Centerlines, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-rivers-lake-centerlines/
+- Дата обращения: 2026-08-05
+- Лицензия: public domain; полное описание набора и изменений — `physical.md`.
+- Подтверждает: линии шести крупнейших рек Китая.
+
+## natural-earth-geography-regions-5.1.2
+
+- Название: Natural Earth 10m Physical Labels: Geographic Regions, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-physical-labels/
+- Дата обращения: 2026-08-05
+- Лицензия: public domain; полное описание набора и изменений — `physical.md`.
+- Подтверждает: контуры форм рельефа Китая, русские и китайские названия форм для сверки.
+
+## natural-earth-lakes-5.1.2
+
+- Название: Natural Earth 10m Lakes and Reservoirs, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-lakes/
+- Дата обращения: 2026-08-06
+- Лицензия: public domain; полное описание набора и изменений — `physical.md`.
+- Подтверждает: контуры шести крупнейших озёр Китая.
+
 ## bre-beijing-economy
 
 - Название: Пекин. Хозяйство
@@ -119,7 +164,7 @@
 
 ## britannica-shanxi-economy
 
-- Название: Shanxi - Economy
+- Название: Shanxi — Economy
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Shanxi/Economy
 - Дата обращения: 2026-08-19
@@ -146,7 +191,7 @@
 
 ## britannica-inner-mongolia-economy
 
-- Название: Inner Mongolia - Economy
+- Название: Inner Mongolia — Economy
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Inner-Mongolia/Economy
 - Дата обращения: 2026-08-19
@@ -191,7 +236,7 @@
 
 ## britannica-liaoning-economy
 
-- Название: Liaoning - Economy
+- Название: Liaoning — Economy
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Liaoning/Economy
 - Дата обращения: 2026-08-19
@@ -227,7 +272,7 @@
 
 ## britannica-shanghai-history
 
-- Название: Shanghai - History
+- Название: Shanghai — History
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Shanghai/History
 - Дата обращения: 2026-08-19
@@ -254,7 +299,7 @@
 
 ## britannica-jiangsu-culture
 
-- Название: Jiangsu | History, Culture & Economy of China | Britannica
+- Название: Jiangsu — Cultural life
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Jiangsu/Cultural-life
 - Дата обращения: 2026-08-19
@@ -299,7 +344,7 @@
 
 ## britannica-anhui-culture
 
-- Название: Anhui - Culture, Cuisine, Landscape
+- Название: Anhui — Cultural life
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Anhui/Cultural-life
 - Дата обращения: 2026-08-19
@@ -326,7 +371,7 @@
 
 ## britannica-shandong-culture
 
-- Название: Shandong | History, Population, Map, Cuisine, & Facts | Britannica
+- Название: Shandong — Cultural life
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Shandong-province-China/Cultural-life
 - Дата обращения: 2026-08-19
@@ -344,7 +389,7 @@
 
 ## britannica-shandong-economy
 
-- Название: Shandong - Industry, Agriculture, Trade
+- Название: Shandong — Economy
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Shandong-province-China/Economy
 - Дата обращения: 2026-08-19
@@ -362,7 +407,7 @@
 
 ## britannica-henan-culture
 
-- Название: Henan | History, Province, Population, & Facts | Britannica
+- Название: Henan — Cultural life
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Henan/Cultural-life
 - Дата обращения: 2026-08-19
@@ -371,7 +416,7 @@
 
 ## britannica-henan-economy
 
-- Название: Henan - Agriculture, Industry, Trade
+- Название: Henan — Economy
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Henan/Economy
 - Дата обращения: 2026-08-19
@@ -389,7 +434,7 @@
 
 ## britannica-fujian-culture
 
-- Название: Fujian - Culture, Cuisine, Religion
+- Название: Fujian — Cultural life
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Fujian/Cultural-life
 - Дата обращения: 2026-08-19
@@ -407,7 +452,7 @@
 
 ## britannica-fujian-economy
 
-- Название: Fujian | History, Province, Cities, Population, & Facts | Britannica
+- Название: Fujian — Economy
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Fujian/Economy
 - Дата обращения: 2026-08-19
@@ -443,7 +488,7 @@
 
 ## britannica-hubei-culture
 
-- Название: Hubei | Geography, History, & Facts | Britannica
+- Название: Hubei — History
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Hubei/History
 - Дата обращения: 2026-08-19
@@ -470,7 +515,7 @@
 
 ## britannica-hunan-culture
 
-- Название: Hunan | History, Geography, Culture & Cuisine | Britannica
+- Название: Hunan — Cultural life
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Hunan/Cultural-life
 - Дата обращения: 2026-08-19
@@ -551,7 +596,7 @@
 
 ## britannica-hong-kong-culture
 
-- Название: Hong Kong - Culture, Cuisine, Heritage
+- Название: Hong Kong — Cultural life
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Hong-Kong/Cultural-life
 - Дата обращения: 2026-08-19
@@ -605,7 +650,7 @@
 
 ## britannica-taiwan-manufacturing
 
-- Название: Taiwan - Manufacturing, Electronics, Automation
+- Название: Taiwan — Manufacturing
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Taiwan/Manufacturing
 - Дата обращения: 2026-08-19
@@ -713,7 +758,7 @@
 
 ## britannica-tibet-economy
 
-- Название: Tibet - Trade, Agriculture, Livestock
+- Название: Tibet — Economy
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Tibet/Economy
 - Дата обращения: 2026-08-19
@@ -821,7 +866,7 @@
 
 ## britannica-xinjiang-economy
 
-- Название: Xinjiang - Agriculture, Industry, Trade
+- Название: Xinjiang — Economy
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Xinjiang/Economy
 - Дата обращения: 2026-08-19
@@ -848,7 +893,7 @@
 
 ## britannica-great-wall-ming
 
-- Название: Great Wall of China - The Ming dynasty to the present
+- Название: Great Wall of China — The Ming dynasty to the present
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/topic/Great-Wall-of-China/The-Ming-dynasty-to-the-present
 - Дата обращения: 2026-08-19
@@ -929,7 +974,7 @@
 
 ## britannica-guangdong-history
 
-- Название: Guangdong - Han Dynasty, Ming Dynasty, Trade Hub
+- Название: Guangdong — History
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Guangdong/History
 - Дата обращения: 2026-08-20
@@ -947,7 +992,7 @@
 
 ## britannica-tibet-people
 
-- Название: Tibet - Ethnicity, Religion, Culture
+- Название: Tibet — People
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Tibet/People
 - Дата обращения: 2026-08-20
@@ -1029,4 +1074,12 @@
 ## Редакторская норма
 
 - Русские формы, иероглифы и пиньинь сверяются по двум источникам перед выпуском.
+- Поле «Название» хранит стабильный издательский заголовок, а не хвост
+  `document.title` страницы: SEO-заголовки Britannica (вида «Guangdong - Han
+  Dynasty, Ming Dynasty, Trade Hub») меняются при ротации и невоспроизводимы.
+  Для секционной страницы Britannica название записывается как
+  «Статья — Раздел» по адресу страницы: «Guangdong — History»,
+  «Great Wall of China — The Ming dynasty to the present». Официальные
+  названия объектов (ЮНЕСКО, Natural Earth) записываются дословно, как их
+  даёт издание.
 - Термин «Административный центр» используется для всех типов единиц. Для городов центрального подчинения и САР это учебное поле единого контракта, а не утверждение о столичном статусе.

@@ -162,7 +162,7 @@ export const sources = [
   },
   {
     id: 'britannica-shanxi-economy',
-    title: 'Shanxi - Economy',
+    title: 'Shanxi — Economy',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Shanxi/Economy',
@@ -189,7 +189,7 @@ export const sources = [
   },
   {
     id: 'britannica-inner-mongolia-economy',
-    title: 'Inner Mongolia - Economy',
+    title: 'Inner Mongolia — Economy',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Inner-Mongolia/Economy',
@@ -234,7 +234,7 @@ export const sources = [
   },
   {
     id: 'britannica-liaoning-economy',
-    title: 'Liaoning - Economy',
+    title: 'Liaoning — Economy',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Liaoning/Economy',
@@ -270,7 +270,7 @@ export const sources = [
   },
   {
     id: 'britannica-shanghai-history',
-    title: 'Shanghai - History',
+    title: 'Shanghai — History',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Shanghai/History',
@@ -297,7 +297,7 @@ export const sources = [
   },
   {
     id: 'britannica-jiangsu-culture',
-    title: 'Jiangsu | History, Culture & Economy of China | Britannica',
+    title: 'Jiangsu — Cultural life',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Jiangsu/Cultural-life',
@@ -342,7 +342,7 @@ export const sources = [
   },
   {
     id: 'britannica-anhui-culture',
-    title: 'Anhui - Culture, Cuisine, Landscape',
+    title: 'Anhui — Cultural life',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Anhui/Cultural-life',
@@ -369,7 +369,7 @@ export const sources = [
   },
   {
     id: 'britannica-shandong-culture',
-    title: 'Shandong | History, Population, Map, Cuisine, & Facts | Britannica',
+    title: 'Shandong — Cultural life',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Shandong-province-China/Cultural-life',
@@ -387,7 +387,7 @@ export const sources = [
   },
   {
     id: 'britannica-shandong-economy',
-    title: 'Shandong - Industry, Agriculture, Trade',
+    title: 'Shandong — Economy',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Shandong-province-China/Economy',
@@ -405,7 +405,7 @@ export const sources = [
   },
   {
     id: 'britannica-henan-culture',
-    title: 'Henan | History, Province, Population, & Facts | Britannica',
+    title: 'Henan — Cultural life',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Henan/Cultural-life',
@@ -414,7 +414,7 @@ export const sources = [
   },
   {
     id: 'britannica-henan-economy',
-    title: 'Henan - Agriculture, Industry, Trade',
+    title: 'Henan — Economy',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Henan/Economy',
@@ -432,7 +432,7 @@ export const sources = [
   },
   {
     id: 'britannica-fujian-culture',
-    title: 'Fujian - Culture, Cuisine, Religion',
+    title: 'Fujian — Cultural life',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Fujian/Cultural-life',
@@ -450,7 +450,7 @@ export const sources = [
   },
   {
     id: 'britannica-fujian-economy',
-    title: 'Fujian | History, Province, Cities, Population, & Facts | Britannica',
+    title: 'Fujian — Economy',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Fujian/Economy',
@@ -486,7 +486,7 @@ export const sources = [
   },
   {
     id: 'britannica-hubei-culture',
-    title: 'Hubei | Geography, History, & Facts | Britannica',
+    title: 'Hubei — History',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Hubei/History',
@@ -513,7 +513,7 @@ export const sources = [
   },
   {
     id: 'britannica-hunan-culture',
-    title: 'Hunan | History, Geography, Culture & Cuisine | Britannica',
+    title: 'Hunan — Cultural life',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Hunan/Cultural-life',
@@ -602,7 +602,7 @@ export const sources = [
   },
   {
     id: 'britannica-hong-kong-culture',
-    title: 'Hong Kong - Culture, Cuisine, Heritage',
+    title: 'Hong Kong — Cultural life',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Hong-Kong/Cultural-life',
@@ -656,7 +656,7 @@ export const sources = [
   },
   {
     id: 'britannica-taiwan-manufacturing',
-    title: 'Taiwan - Manufacturing, Electronics, Automation',
+    title: 'Taiwan — Manufacturing',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Taiwan/Manufacturing',
@@ -774,7 +774,7 @@ export const sources = [
   },
   {
     id: 'britannica-tibet-economy',
-    title: 'Tibet - Trade, Agriculture, Livestock',
+    title: 'Tibet — Economy',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Tibet/Economy',
@@ -822,7 +822,7 @@ export const sources = [
       'находка терракотовой армии в 1974 году',
       'число терракотовых воинов',
       'восшествие Ин Чжэна на престол царства Цинь в 246 году до н. э.',
-      'вторую, третью и четвёртую ямы комплекса',
+      'вторая, третья и четвёртая ямы комплекса',
       'индивидуальные лица фигур и материалы найденного оружия',
     ],
   },
@@ -836,7 +836,7 @@ export const sources = [
     covers: [
       'год включения гробницы Цинь Шихуанди в список Всемирного наследия ЮНЕСКО',
       'начало строительства мавзолея в 246 году до н. э. и свидетельство Сыма Цяня о работах до смерти императора в 210 году до н. э.',
-      'высоту кургана и площадь охраняемой территории комплекса',
+      'высота кургана и площадь охраняемой территории комплекса',
     ],
   },
   {
@@ -895,7 +895,7 @@ export const sources = [
   },
   {
     id: 'britannica-xinjiang-economy',
-    title: 'Xinjiang - Agriculture, Industry, Trade',
+    title: 'Xinjiang — Economy',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Xinjiang/Economy',
@@ -922,7 +922,7 @@ export const sources = [
   },
   {
     id: 'britannica-great-wall-ming',
-    title: 'Great Wall of China - The Ming dynasty to the present',
+    title: 'Great Wall of China — The Ming dynasty to the present',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/topic/Great-Wall-of-China/The-Ming-dynasty-to-the-present',
@@ -1008,7 +1008,7 @@ export const sources = [
   },
   {
     id: 'britannica-guangdong-history',
-    title: 'Guangdong - Han Dynasty, Ming Dynasty, Trade Hub',
+    title: 'Guangdong — History',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Guangdong/History',
@@ -1032,7 +1032,7 @@ export const sources = [
   },
   {
     id: 'britannica-tibet-people',
-    title: 'Tibet - Ethnicity, Religion, Culture',
+    title: 'Tibet — People',
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Tibet/People',
@@ -1089,8 +1089,8 @@ export const sources = [
     accessedAt: '2026-08-20',
     covers: [
       'происхождение жанра из региональных школ Аньхоя и Хубэя и куньцюй',
-      'условный грим, акробатику и оркестр Пекинской оперы',
-      'мужчин в женских ролях и артиста Мэй Ланьфана',
+      'условный грим, акробатика и оркестр Пекинской оперы',
+      'мужчины в женских ролях и артист Мэй Ланьфан',
     ],
   },
   {
