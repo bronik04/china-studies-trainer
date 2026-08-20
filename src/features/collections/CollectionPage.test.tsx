@@ -14,6 +14,10 @@ function byId(id: string): Collection {
 }
 
 function renderPage(id: string) {
+  return renderCollection(byId(id));
+}
+
+function renderCollection(collection: Collection) {
   const handlers = {
     onOpenCollections: vi.fn(),
     onOpenCollection: vi.fn(),
@@ -22,7 +26,7 @@ function renderPage(id: string) {
 
   render(
     <CollectionPage
-      collection={byId(id)}
+      collection={collection}
       regions={regions}
       {...handlers}
     />,
@@ -30,6 +34,27 @@ function renderPage(id: string) {
 
   return handlers;
 }
+
+/**
+ * Черновиков в каталоге больше нет — у всех коллекций есть источники. Эти
+ * тесты проверяют экран черновика как таковой, а не какую-то конкретную
+ * запись каталога, поэтому фикстура собрана прямо здесь, а не позаимствована
+ * у настоящей коллекции.
+ */
+const draftCollection: Collection = {
+  id: 'draft-fixture',
+  groupId: 'culture',
+  nameRu: 'Черновая коллекция',
+  nameZh: '兵马俑',
+  pinyin: 'Bīngmǎyǒng',
+  kind: 'явление',
+  lead: '',
+  regionIds: ['beijing'],
+  notes: [],
+  photos: [],
+  sourceIds: [],
+  relatedIds: [],
+};
 
 it('называет коллекцию по-русски, иероглифами и пиньинем', () => {
   const { container } = render(
@@ -77,7 +102,7 @@ it('«спросить эти регионы» запускает раунд р�
 });
 
 it('черновик признаётся черновиком, пока у него нет источника', () => {
-  renderPage('beijing-opera');
+  renderCollection(draftCollection);
 
   expect(screen.getByTestId('draft-note')).toHaveTextContent(
     'содержание этой коллекции ещё не проверено по источникам',
@@ -85,7 +110,7 @@ it('черновик признаётся черновиком, пока у не
 });
 
 it('ненаписанная справка названа ненаписанной, а раздел не исчезает', () => {
-  renderPage('beijing-opera');
+  renderCollection(draftCollection);
 
   expect(
     screen.getByRole('heading', { level: 2, name: 'Что стоит знать' }),
@@ -94,7 +119,7 @@ it('ненаписанная справка названа ненаписанн�
 });
 
 it('отсутствие снимков объявлено, а не спрятано', () => {
-  renderPage('beijing-opera');
+  renderCollection(draftCollection);
 
   expect(
     screen.getByText(/Пока их нет, коллекция работает как список регионов/),
