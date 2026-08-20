@@ -202,11 +202,11 @@ p {
 
 /*
  * Справка карточки: утверждённый макет docs/screens/04-atlas-card-facts-v1,
- * вариант А. Тело факта набрано основным тоном бумаги: примитив потемнее из
- * макета нарушил бы правило «компоненты пользуются семантическим слоем».
+ * вариант А. Карточка атласа стоит на доске, поэтому справка набрана семейством
+ * on-ground; исходный макет ошибочно рисовал карточку на бумаге.
  */
 .atlas-facts {
-  border-top: var(--border-hair) solid var(--line-on-paper);
+  border-top: var(--border-hair) solid var(--line-on-ground);
   margin-block-start: var(--s-4);
   padding-block-start: var(--s-3);
 }
@@ -222,13 +222,13 @@ p {
 }
 
 .atlas-fact p {
-  color: var(--text-on-paper);
+  color: var(--text-on-ground);
   font-size: 0.9375rem;
 }
 
 .atlas-sources {
-  border-top: var(--border-hair) solid var(--line-on-paper);
-  color: var(--text-on-paper-muted);
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  color: var(--text-on-ground-muted);
   font-size: var(--t-size-caption);
   margin-block-start: var(--s-3);
   padding-block-start: var(--s-2);
