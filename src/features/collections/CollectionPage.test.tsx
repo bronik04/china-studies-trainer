@@ -77,7 +77,7 @@ it('«спросить эти регионы» запускает раунд р�
 });
 
 it('черновик признаётся черновиком, пока у него нет источника', () => {
-  renderPage('shaanxi');
+  renderPage('beijing-opera');
 
   expect(screen.getByTestId('draft-note')).toHaveTextContent(
     'содержание этой коллекции ещё не проверено по источникам',
@@ -85,7 +85,7 @@ it('черновик признаётся черновиком, пока у не
 });
 
 it('ненаписанная справка названа ненаписанной, а раздел не исчезает', () => {
-  renderPage('yunnan');
+  renderPage('beijing-opera');
 
   expect(
     screen.getByRole('heading', { level: 2, name: 'Что стоит знать' }),
@@ -94,7 +94,7 @@ it('ненаписанная справка названа ненаписанн�
 });
 
 it('отсутствие снимков объявлено, а не спрятано', () => {
-  renderPage('yunnan');
+  renderPage('beijing-opera');
 
   expect(
     screen.getByText(/Пока их нет, коллекция работает как список регионов/),

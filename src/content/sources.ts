@@ -483,7 +483,12 @@ export const sources = [
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Guangdong',
     accessedAt: '2026-08-19',
-    covers: ['дельта Чжуцзяна', 'кантонский язык', 'население и экономика Гуандуна'],
+    covers: [
+      'дельта Чжуцзяна',
+      'кантонский язык',
+      'население и экономика Гуандуна',
+      'языки хакка и южноминьский в Гуандуне',
+    ],
   },
   {
     id: 'bre-china-provinces',
@@ -507,7 +512,10 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     url: 'https://whc.unesco.org/en/list/1248',
     accessedAt: '2026-08-19',
-    covers: ['год включения карста Гуйлиня в список Всемирного наследия ЮНЕСКО'],
+    covers: [
+      'год включения карста Гуйлиня в список Всемирного наследия ЮНЕСКО',
+      'каменный лес Шилинь в Юньнани как часть объекта',
+    ],
   },
   {
     id: 'bre-china-autonomous-regions',
@@ -659,7 +667,13 @@ export const sources = [
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Yunnan',
     accessedAt: '2026-08-19',
-    covers: ['биоразнообразие Юньнани', 'народ йи в Юньнани', 'оловодобыча в Юньнани'],
+    covers: [
+      'биоразнообразие Юньнани',
+      'народ йи в Юньнани',
+      'оловодобыча в Юньнани',
+      'многонациональность Юньнани',
+      'климат Куньмина',
+    ],
   },
   {
     id: 'bre-yi',
@@ -675,7 +689,11 @@ export const sources = [
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Tibet',
     accessedAt: '2026-08-19',
-    covers: ['физическая география Тибетского нагорья', 'гора Джомолунгма (Эверест)'],
+    covers: [
+      'физическая география Тибетского нагорья',
+      'гора Джомолунгма (Эверест)',
+      'Тибетское нагорье как исток крупных рек Азии',
+    ],
   },
   {
     id: 'britannica-tibet-economy',
@@ -683,7 +701,7 @@ export const sources = [
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Tibet/Economy',
     accessedAt: '2026-08-19',
-    covers: ['земледелие и животноводство Тибета'],
+    covers: ['земледелие и животноводство Тибета', 'Большой каньон реки Ярлунг-Цангпо'],
   },
   {
     id: 'bre-potala',
@@ -699,7 +717,10 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     url: 'https://whc.unesco.org/en/list/707',
     accessedAt: '2026-08-19',
-    covers: ['год включения дворца Потала в список Всемирного наследия ЮНЕСКО'],
+    covers: [
+      'год включения дворца Потала в список Всемирного наследия ЮНЕСКО',
+      'храм Джоканг как расширение объекта в 2000 году',
+    ],
   },
   {
     id: 'britannica-shaanxi',
@@ -852,5 +873,58 @@ export const sources = [
     url: 'https://www.britannica.com/place/Takla-Makan-Desert',
     accessedAt: '2026-08-19',
     covers: ['физическая география и площадь пустыни Такла-Макан', 'дюны и климат Такла-Макана', 'Шёлковый путь и исследование пустыни'],
+  },
+  {
+    id: 'britannica-xian',
+    title: "Xi'an",
+    organization: 'Encyclopaedia Britannica',
+    url: 'https://www.britannica.com/place/Xian-China',
+    accessedAt: '2026-08-20',
+    covers: [
+      'история Сианя (Чанъани) как столицы Западной Хань, Суй и Тан',
+      'Сиань как восточный конец Великого шёлкового пути',
+      'Большая мечеть, городская стена и башни Сианя',
+    ],
+  },
+  {
+    id: 'unesco-lijiang-811',
+    title: 'Old Town of Lijiang',
+    organization: 'UNESCO World Heritage Centre',
+    url: 'https://whc.unesco.org/en/list/811',
+    accessedAt: '2026-08-20',
+    covers: [
+      'год включения старого города Лицзян в список Всемирного наследия ЮНЕСКО',
+      'роль Лицзяна на пересечении Шёлкового пути и Чайно-конной дороги',
+    ],
+  },
+  {
+    id: 'britannica-guangdong-history',
+    title: 'Guangdong - Han Dynasty, Ming Dynasty, Trade Hub',
+    organization: 'Encyclopaedia Britannica',
+    url: 'https://www.britannica.com/place/Guangdong/History',
+    accessedAt: '2026-08-20',
+    covers: [
+      'эмиграция из Гуандуна с конца XVII века',
+      'политические и интеллектуальные деятели Нового времени, связанные с Гуандуном',
+    ],
+  },
+  {
+    id: 'unesco-kaiping-diaolou-1112',
+    title: 'Kaiping Diaolou and Villages',
+    organization: 'UNESCO World Heritage Centre',
+    url: 'https://whc.unesco.org/en/list/1112',
+    accessedAt: '2026-08-20',
+    covers: [
+      'год включения дяолоу Кайпина в список Всемирного наследия ЮНЕСКО',
+      'архитектура сторожевых башен, построенных эмигрантами хуацяо',
+    ],
+  },
+  {
+    id: 'britannica-tibet-people',
+    title: 'Tibet - Ethnicity, Religion, Culture',
+    organization: 'Encyclopaedia Britannica',
+    url: 'https://www.britannica.com/place/Tibet/People',
+    accessedAt: '2026-08-20',
+    covers: ['тибетская письменность'],
   },
 ] as const satisfies readonly Source[];
