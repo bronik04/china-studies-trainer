@@ -151,3 +151,12 @@ it('«смотрите также» ведёт в соседнюю коллек�
 
   expect(onOpenCollection).toHaveBeenCalledWith('silk-road');
 });
+
+it('называет источники именами, а не идентификаторами', () => {
+  renderPage('great-wall');
+
+  const panel = screen.getByText('Источники').closest('section')!;
+
+  expect(panel).toHaveTextContent('ЮНЕСКО');
+  expect(panel).not.toHaveTextContent('unesco-great-wall-438');
+});
