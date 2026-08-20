@@ -858,7 +858,7 @@ export const sources = [
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Huang-He',
     accessedAt: '2026-08-19',
-    covers: ['физическая география Хуанхэ', 'длина, исток и устье реки', 'наводнения и жёлтый цвет воды', 'города на Хуанхэ'],
+    covers: ['физическая география Хуанхэ', 'длина, исток и устье реки', 'наводнения и жёлтый цвет воды'],
   },
   {
     id: 'bre-sediment-runoff',
