@@ -982,9 +982,17 @@ export const sources = [
     accessedAt: '2026-08-20',
     covers: [
       'происхождение жанра из региональных школ Аньхоя и Хубэя и куньцюй',
-      'сценические условности, грим ляньпу и оркестр Пекинской оперы',
+      'условный грим, акробатику и оркестр Пекинской оперы',
       'мужчин в женских ролях и артиста Мэй Ланьфана',
     ],
+  },
+  {
+    id: 'britannica-jinghu',
+    title: 'Jinghu',
+    organization: 'Encyclopaedia Britannica',
+    url: 'https://www.britannica.com/art/jinghu',
+    accessedAt: '2026-08-20',
+    covers: ['цзинху как главный мелодический инструмент оркестра Пекинской оперы'],
   },
   {
     id: 'britannica-silk-road',
