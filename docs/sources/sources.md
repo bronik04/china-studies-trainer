@@ -18,6 +18,51 @@
 - Лицензия: ссылка используется как источник данных; текст и изображения не копируются.
 - Подтверждает: названия единиц провинциального уровня и места размещения их правительств.
 
+## natural-earth-populated-places-5.1.2
+
+- Название: Natural Earth 10m Populated Places, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/
+- Дата обращения: 2026-08-05
+- Лицензия: public domain; полное описание набора и изменений — `cities.md`.
+- Подтверждает: координаты городов, русские и китайские названия городов для сверки.
+
+## wikidata-coordinates-2026-08-05
+
+- Название: Викиданные, свойство P625 «координаты»
+- Организация: Wikimedia Foundation
+- URL: https://www.wikidata.org/wiki/Property:P625
+- Дата обращения: 2026-08-05
+- Лицензия: CC0 1.0; полное описание и перечень городов — `cities.md`.
+- Подтверждает: координаты городов, которых нет в Natural Earth.
+
+## natural-earth-rivers-5.1.2
+
+- Название: Natural Earth 10m Rivers and Lake Centerlines, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-rivers-lake-centerlines/
+- Дата обращения: 2026-08-05
+- Лицензия: public domain; полное описание набора и изменений — `physical.md`.
+- Подтверждает: линии шести крупнейших рек Китая.
+
+## natural-earth-geography-regions-5.1.2
+
+- Название: Natural Earth 10m Physical Labels: Geographic Regions, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-physical-labels/
+- Дата обращения: 2026-08-05
+- Лицензия: public domain; полное описание набора и изменений — `physical.md`.
+- Подтверждает: контуры форм рельефа Китая, русские и китайские названия форм для сверки.
+
+## natural-earth-lakes-5.1.2
+
+- Название: Natural Earth 10m Lakes and Reservoirs, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-lakes/
+- Дата обращения: 2026-08-06
+- Лицензия: public domain; полное описание набора и изменений — `physical.md`.
+- Подтверждает: контуры шести крупнейших озёр Китая.
+
 ## bre-beijing-economy
 
 - Название: Пекин. Хозяйство
