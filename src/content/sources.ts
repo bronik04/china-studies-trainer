@@ -271,7 +271,7 @@ export const sources = [
   },
   {
     id: 'britannica-jiangsu-culture',
-    title: 'Jiangsu - Resources, Power, Industry',
+    title: 'Jiangsu | History, Culture & Economy of China | Britannica',
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Jiangsu/Cultural-life',
     accessedAt: '2026-08-19',
@@ -335,7 +335,7 @@ export const sources = [
   },
   {
     id: 'britannica-shandong-culture',
-    title: 'Shandong - Coastal Province, Han Chinese, Confucianism',
+    title: 'Shandong | History, Population, Map, Cuisine, & Facts | Britannica',
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Shandong-province-China/Cultural-life',
     accessedAt: '2026-08-19',
@@ -367,7 +367,7 @@ export const sources = [
   },
   {
     id: 'britannica-henan-culture',
-    title: 'Henan - Government, Society, Economy',
+    title: 'Henan | History, Province, Population, & Facts | Britannica',
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Henan/Cultural-life',
     accessedAt: '2026-08-19',
@@ -407,7 +407,7 @@ export const sources = [
   },
   {
     id: 'britannica-fujian-economy',
-    title: 'Fujian - Han, Min, Hakka',
+    title: 'Fujian | History, Province, Cities, Population, & Facts | Britannica',
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Fujian/Economy',
     accessedAt: '2026-08-19',
@@ -439,7 +439,7 @@ export const sources = [
   },
   {
     id: 'britannica-hubei-culture',
-    title: 'Hubei - Education, Universities, Institutes',
+    title: 'Hubei | Geography, History, & Facts | Britannica',
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Hubei/History',
     accessedAt: '2026-08-19',
@@ -463,7 +463,7 @@ export const sources = [
   },
   {
     id: 'britannica-hunan-culture',
-    title: 'Hunan - Manufacturing, Textiles, Electronics',
+    title: 'Hunan | History, Geography, Culture & Cuisine | Britannica',
     organization: 'Encyclopaedia Britannica',
     url: 'https://www.britannica.com/place/Hunan/Cultural-life',
     accessedAt: '2026-08-19',

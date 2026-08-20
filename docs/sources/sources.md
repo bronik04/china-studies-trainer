@@ -254,7 +254,7 @@
 
 ## britannica-jiangsu-culture
 
-- Название: Jiangsu - Resources, Power, Industry
+- Название: Jiangsu | History, Culture & Economy of China | Britannica
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Jiangsu/Cultural-life
 - Дата обращения: 2026-08-19
@@ -326,7 +326,7 @@
 
 ## britannica-shandong-culture
 
-- Название: Shandong - Coastal Province, Han Chinese, Confucianism
+- Название: Shandong | History, Population, Map, Cuisine, & Facts | Britannica
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Shandong-province-China/Cultural-life
 - Дата обращения: 2026-08-19
@@ -362,7 +362,7 @@
 
 ## britannica-henan-culture
 
-- Название: Henan - Government, Society, Economy
+- Название: Henan | History, Province, Population, & Facts | Britannica
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Henan/Cultural-life
 - Дата обращения: 2026-08-19
@@ -407,7 +407,7 @@
 
 ## britannica-fujian-economy
 
-- Название: Fujian - Han, Min, Hakka
+- Название: Fujian | History, Province, Cities, Population, & Facts | Britannica
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Fujian/Economy
 - Дата обращения: 2026-08-19
@@ -443,7 +443,7 @@
 
 ## britannica-hubei-culture
 
-- Название: Hubei - Education, Universities, Institutes
+- Название: Hubei | Geography, History, & Facts | Britannica
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Hubei/History
 - Дата обращения: 2026-08-19
@@ -470,7 +470,7 @@
 
 ## britannica-hunan-culture
 
-- Название: Hunan - Manufacturing, Textiles, Electronics
+- Название: Hunan | History, Geography, Culture & Cuisine | Britannica
 - Организация: Encyclopaedia Britannica
 - URL: https://www.britannica.com/place/Hunan/Cultural-life
 - Дата обращения: 2026-08-19
