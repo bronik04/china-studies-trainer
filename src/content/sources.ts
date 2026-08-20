@@ -1130,10 +1130,10 @@ export const sources = [
 ] as const satisfies readonly Source[];
 
 const sourceIndex = new Map<string, Source>(
-  (sources as readonly Source[]).map((source) => [source.id, source]),
+  sources.map((source) => [source.id, source]),
 );
 
 /** Запись реестра по id; undefined — источник неизвестен. */
 export function sourceById(id: string): Source | undefined {
-  return sourceIndex.get(id) as Source | undefined;
+  return sourceIndex.get(id);
 }

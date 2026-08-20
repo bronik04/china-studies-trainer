@@ -23,7 +23,13 @@ it('короткие имена крупных организаций факто
  */
 it('организация несёт один и тот же shortLabel во всех записях', () => {
   const byOrganization = new Map<string, string | undefined>();
-  for (const source of sources as readonly Source[]) {
+  /*
+   * Аннотация расширяет литеральный союз `as const`-реестра до Source:
+   * у записей без shortLabel самого свойства нет, и без расширения обращение
+   * к нему не компилируется.
+   */
+  const registry: readonly Source[] = sources;
+  for (const source of registry) {
     if (byOrganization.has(source.organization)) {
       expect(source.shortLabel).toBe(byOrganization.get(source.organization));
     } else {
