@@ -69,6 +69,21 @@ describe('validatePhysicalFeatures', () => {
     ).toThrow(/отрезк/i);
   });
 
+  it('ловит повторяющуюся тему факта', () => {
+    const fact = {
+      title: 'Исток',
+      body: 'Начинается в горах Куньлунь.',
+      sourceIds: ['natural-earth-rivers-5.1.2'],
+    };
+    expect(() =>
+      validatePhysicalFeatures(
+        [{ ...river, facts: [fact, { ...fact, body: 'Течёт на восток.' }] }],
+        regions,
+        sources,
+      ),
+    ).toThrow(/повторяющаяся тема факта «Исток»/i);
+  });
+
   it('ловит пустое китайское имя', () => {
     expect(() =>
       validatePhysicalFeatures([{ ...river, nameZh: '  ' }], regions, sources),

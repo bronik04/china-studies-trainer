@@ -75,10 +75,20 @@ export function validateCatalog(
       );
     }
 
+    /*
+     * Тема факта служит React-ключом в справке карточки атласа, поэтому
+     * внутри одного носителя темы обязаны быть уникальны.
+     */
+    const factTitles = new Set<string>();
+
     for (const fact of region.facts) {
       if (fact.title.trim().length === 0 || fact.body.trim().length === 0) {
         errors.push(`Регион ${region.id}: пустые title или body у факта`);
       }
+      if (factTitles.has(fact.title)) {
+        errors.push(`Регион ${region.id}: повторяющаяся тема факта «${fact.title}»`);
+      }
+      factTitles.add(fact.title);
       if (/<[a-z/]/i.test(fact.body)) {
         errors.push(`Регион ${region.id}: HTML в тексте факта «${fact.title}»`);
       }
@@ -271,6 +281,20 @@ export function validatePhysicalFeatures(
       if (!sourceIds.has(sourceId)) {
         errors.push(`Неизвестный источник: ${sourceId}`);
       }
+    }
+
+    /*
+     * Тема факта служит React-ключом в справке карточки атласа, поэтому
+     * внутри одного носителя темы обязаны быть уникальны.
+     */
+    const factTitles = new Set<string>();
+    for (const fact of feature.facts) {
+      if (factTitles.has(fact.title)) {
+        errors.push(
+          `У цели ${feature.id} повторяющаяся тема факта «${fact.title}»`,
+        );
+      }
+      factTitles.add(fact.title);
     }
 
     if (feature.kind === 'river') {

@@ -119,6 +119,20 @@ it('rejects a fact without sources', () => {
   ).toThrow(/факт «Кухня» без источника/);
 });
 
+it('rejects duplicate fact titles within a region', () => {
+  expect(() =>
+    validateCatalog(
+      [
+        {
+          ...region,
+          facts: [region.facts[0], { ...region.facts[1], title: 'Кухня' }],
+        },
+      ],
+      [source],
+    ),
+  ).toThrow(/Регион sichuan: повторяющаяся тема факта «Кухня»/);
+});
+
 it('rejects HTML in a fact body', () => {
   expect(() =>
     validateCatalog(
