@@ -1,4 +1,4 @@
-import { validateCatalog, validateCities } from './validate-catalog';
+import { validateCatalog, validateCities, validateCollections } from './validate-catalog';
 import { cities } from '../content/cities';
 import { regions } from '../content/regions';
 import { sources } from '../content/sources';
@@ -199,4 +199,50 @@ it('requires exactly one administrative centre per region', () => {
 
 it('validates the production city catalog', () => {
   expect(() => validateCities(cities, regions, sources)).not.toThrow();
+});
+
+const collection = {
+  id: 'great-wall',
+  groupId: 'geography' as const,
+  nameRu: 'Великая стена',
+  nameZh: '长城',
+  pinyin: 'Chángchéng',
+  kind: 'памятник',
+  lead: 'Система укреплений вдоль северной границы Китая.',
+  regionIds: ['sichuan'],
+  notes: ['Первая заметка.', 'Вторая заметка.', 'Третья заметка.'],
+  photos: [],
+  sourceIds: ['example-educational-source'],
+  relatedIds: [],
+};
+
+it('accepts a complete collection', () => {
+  expect(() => validateCollections([collection], [source])).not.toThrow();
+});
+
+it('rejects a collection with an empty lead', () => {
+  expect(() =>
+    validateCollections([{ ...collection, lead: ' ' }], [source]),
+  ).toThrow(/Коллекция great-wall: пустая вводка/);
+});
+
+it('rejects a collection with two notes', () => {
+  expect(() =>
+    validateCollections(
+      [{ ...collection, notes: collection.notes.slice(0, 2) }],
+      [source],
+    ),
+  ).toThrow(/заметок должно быть 3–4, сейчас 2/);
+});
+
+it('rejects a collection without sources', () => {
+  expect(() =>
+    validateCollections([{ ...collection, sourceIds: [] }], [source]),
+  ).toThrow(/Коллекция great-wall: без источников/);
+});
+
+it('rejects a collection with an unknown source', () => {
+  expect(() =>
+    validateCollections([{ ...collection, sourceIds: ['missing'] }], [source]),
+  ).toThrow(/неизвестный источник — missing/);
 });

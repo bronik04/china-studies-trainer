@@ -1,4 +1,5 @@
 import type { City, PhysicalFeature, Region, Source } from '../content/types';
+import type { Collection } from '../content/collections';
 
 type ValidationOptions = {
   expectedRegionCount?: number;
@@ -309,6 +310,43 @@ export function validatePhysicalFeatures(
       }
     } else if (![1, 2, 3].includes(feature.step)) {
       errors.push(`Ступень рельефа у ${feature.id} вне 1..3: ${feature.step}`);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new ContentValidationError(errors);
+  }
+}
+
+/**
+ * Проверка справочника коллекций. Отдельной функцией, как города и
+ * физическая география: коллекции ссылаются на источники, но не наоборот.
+ */
+export function validateCollections(
+  collections: readonly Collection[],
+  sources: readonly Source[],
+): void {
+  const errors: string[] = [];
+  const sourceIds = new Set(sources.map((source) => source.id));
+
+  for (const collection of collections) {
+    if (collection.lead.trim().length === 0) {
+      errors.push(`Коллекция ${collection.id}: пустая вводка`);
+    }
+    if (collection.notes.length < 3 || collection.notes.length > 4) {
+      errors.push(
+        `Коллекция ${collection.id}: заметок должно быть 3–4, сейчас ${collection.notes.length}`,
+      );
+    }
+    if (collection.sourceIds.length === 0) {
+      errors.push(`Коллекция ${collection.id}: без источников`);
+    }
+    for (const sourceId of collection.sourceIds) {
+      if (!sourceIds.has(sourceId)) {
+        errors.push(
+          `Коллекция ${collection.id}: неизвестный источник — ${sourceId}`,
+        );
+      }
     }
   }
 
