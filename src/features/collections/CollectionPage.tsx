@@ -7,6 +7,7 @@ import {
 } from '../../content/collections';
 import { regionsWord } from '../../content/region-count';
 import type { Region } from '../../content/types';
+import { sourceById } from '../../content/sources';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
 import { PhotoSlot } from '../../ui/PhotoSlot';
@@ -194,9 +195,17 @@ export function CollectionPage({
               </p>
             ) : (
               <ul className="rule-list">
-                {collection.sourceIds.map((sourceId) => (
-                  <li key={sourceId}>{sourceId}</li>
-                ))}
+                {collection.sourceIds.map((sourceId) => {
+                  const source = sourceById(sourceId);
+
+                  return (
+                    <li key={sourceId}>
+                      {source === undefined
+                        ? sourceId
+                        : `${source.title} — ${source.shortLabel ?? source.organization}`}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>
