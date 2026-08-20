@@ -15,6 +15,8 @@ export type Source = {
   readonly id: string;
   readonly title: string;
   readonly organization: string;
+  /** Короткое имя организации для строк интерфейса («Britannica», «БРЭ»). */
+  readonly shortLabel?: string;
   readonly url: string;
   readonly accessedAt: string;
   readonly covers: readonly string[];
