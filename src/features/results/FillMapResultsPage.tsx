@@ -8,12 +8,6 @@ export type FillMapResultsPageProps = {
   readonly round: FillRound;
   readonly regions: readonly Region[];
   readonly isProgressSaved: boolean;
-  /**
-   * Ровно тот набор, который запустит `onRepeatMistakes`: все ошибки за
-   * последние 14 дней. Приходит извне по тому же доводу, что и в
-   * RoundResultsPage: подпись кнопки не может разойтись с её действием.
-   */
-  readonly idsToRepeat: readonly string[];
   readonly onRepeatMistakes: () => void;
   readonly onNewRound: () => void;
   readonly onExit: () => void;
@@ -28,7 +22,6 @@ export function FillMapResultsPage({
   round,
   regions,
   isProgressSaved,
-  idsToRepeat,
   onRepeatMistakes,
   onNewRound,
   onExit,
@@ -38,8 +31,12 @@ export function FillMapResultsPage({
     (regionId) => regions.find((region) => region.id === regionId) ?? [],
   );
 
-  const repeatCount = idsToRepeat.length;
-  const isRepeatWider = repeatCount > reviewRegions.length;
+  /*
+   * Подпись кнопки считается из того же списка, что показан рядом. Прежде
+   * набор приходил извне и был шире: экран говорил «пять», а кнопка запускала
+   * все ошибки за две недели (решение владельца от 2026-08-25).
+   */
+  const repeatCount = reviewRegions.length;
 
   return (
     <main className="app-shell">
@@ -52,16 +49,23 @@ export function FillMapResultsPage({
           <li>Не угадано: {summary.failed}</li>
         </ul>
       </header>
-      <ChinaMap
-        regions={regions}
-        selectedRegionId={null}
-        onSelect={() => {}}
-        onClear={() => {}}
-        variant="fill"
-        outcomes={round.outcomes}
-        interactive={false}
-      />
-      <section aria-labelledby="fill-results-heading">
+      {/*
+        Карта слева, разбор справа: кнопка повтора стоит у списка, который она
+        повторит. На узком экране колонки складываются в одну.
+      */}
+      <div className="results-split">
+        <div className="results-map">
+          <ChinaMap
+            regions={regions}
+            selectedRegionId={null}
+            onSelect={() => {}}
+            onClear={() => {}}
+            variant="fill"
+            outcomes={round.outcomes}
+            interactive={false}
+          />
+        </div>
+        <section className="results-review" aria-labelledby="fill-results-heading">
         <h2 id="fill-results-heading">Что получилось</h2>
         {isProgressSaved ? null : (
           <p className="status-note" role="status">
@@ -78,7 +82,7 @@ export function FillMapResultsPage({
               различаются цветом и штриховкой, и без подписи этот разбор
               пропал бы для того, кто карту не видит.
             */}
-            <ul className="review-list">
+            <ul className="review-list" aria-label="Стоит повторить">
               {reviewRegions.map((region) => (
                 <li key={region.id}>
                   {region.nameRu} <span lang="zh-Hans">{region.nameZh}</span> —{' '}
@@ -88,17 +92,6 @@ export function FillMapResultsPage({
                 </li>
               ))}
             </ul>
-            {/*
-              Список обрезан до пяти тем этого раунда, а повтор берёт все ошибки
-              за 14 дней. Без этой строки экран говорил бы «пять», а делал «двадцать
-              семь».
-            */}
-            {isRepeatWider ? (
-              <p>
-                Здесь ошибки этого раунда. В повтор войдут все {repeatCount}{' '}
-                {regionsWord(repeatCount)} с ошибками за последние 14 дней.
-              </p>
-            ) : null}
           </>
         )}
         <div className="results-actions">
@@ -118,7 +111,8 @@ export function FillMapResultsPage({
             На главную
           </button>
         </div>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

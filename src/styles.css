@@ -472,6 +472,27 @@ button.text:hover:enabled {
 }
 
 .mode-actions,
+/*
+ * Карта и разбор рядом: кнопка повтора стоит у списка, который она повторит.
+ * Одна колонка до 1024 px — на телефоне карта и список идут друг под другом,
+ * порядком разметки.
+ */
+.results-split {
+  display: grid;
+  gap: var(--s-6);
+  margin-block-start: var(--s-5);
+}
+
+@media (min-width: 1024px) {
+  .results-split {
+    grid-template-columns: 1.15fr 1fr;
+  }
+
+  .results-map {
+    align-self: start;
+  }
+}
+
 .results-actions {
   display: flex;
   flex-wrap: wrap;
