@@ -23,24 +23,49 @@ export function MapControls({ zoom, onZoomChange }: MapControlsProps) {
   const canZoomOut = zoomIndex > 0;
   const canZoomIn = zoomIndex < zoomLevels.length - 1;
 
+  /*
+   * Слова ушли в `aria-label`, на карте остались знаки: три подписи в полный
+   * рост стояли поверх карты и весили больше неё. Знак скрыт от читалки —
+   * имя кнопки уже сказано словом, и «плюс Увеличить» прочиталось бы дважды.
+   *
+   * Знаки нарисованы, а не набраны: настоящий минус (U+2212) и круговая
+   * стрелка (U+21BA) не входят в подмножества шрифтов, а расширять их ради
+   * двух символов проект уже пробовал и откатил. Рисунку шрифт не нужен
+   * вовсе — и в исходниках не появляется знак, которого нет в шрифте.
+   */
   return (
     <div className="map-controls" aria-label="Масштаб карты">
       <button
         type="button"
+        aria-label="Увеличить"
         disabled={!canZoomIn}
         onClick={() => onZoomChange(zoomLevels[zoomIndex + 1])}
       >
-        Увеличить
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M8 3.5v9M3.5 8h9" />
+        </svg>
       </button>
       <button
         type="button"
+        aria-label="Уменьшить"
         disabled={!canZoomOut}
         onClick={() => onZoomChange(zoomLevels[zoomIndex - 1])}
       >
-        Уменьшить
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M3.5 8h9" />
+        </svg>
       </button>
-      <button type="button" disabled={zoom === 1} onClick={() => onZoomChange(1)}>
-        Сбросить вид
+      <button
+        type="button"
+        aria-label="Сбросить вид"
+        disabled={zoom === 1}
+        onClick={() => onZoomChange(1)}
+      >
+        {/* Дуга против часовой стрелки со стрелкой в разрыве: «вернуть как было». */}
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M4.1 5.2A4.6 4.6 0 1 1 3.4 8" />
+          <path d="M2.2 2.6l1.9 2.6 3-0.7" />
+        </svg>
       </button>
     </div>
   );

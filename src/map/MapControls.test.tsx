@@ -83,3 +83,27 @@ it('показывает зум карте, которой отвечают то
 
   expect(screen.getByRole('button', { name: 'Увеличить' })).toBeInTheDocument();
 });
+
+/*
+ * Слово ушло в имя, знак остался на экране. Проверка держит и то, и другое:
+ * без имени кнопка немая для читалки, без рисунка — пустая на экране.
+ */
+it('называет действие словом, а показывает знак', () => {
+  render(<MapControls zoom={1.5} onZoomChange={() => {}} />);
+
+  const zoomIn = screen.getByRole('button', { name: 'Увеличить' });
+
+  expect(zoomIn.querySelector('svg')).not.toBeNull();
+  expect(zoomIn).toHaveTextContent('');
+  expect(zoomIn.textContent).toBe('');
+});
+
+it('прячет знак от читалки: имя уже сказано словом', () => {
+  render(<MapControls zoom={1.5} onZoomChange={() => {}} />);
+
+  for (const name of ['Увеличить', 'Уменьшить', 'Сбросить вид']) {
+    const glyph = screen.getByRole('button', { name }).querySelector('svg');
+
+    expect(glyph?.getAttribute('aria-hidden')).toBe('true');
+  }
+});
