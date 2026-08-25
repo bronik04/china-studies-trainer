@@ -2,7 +2,6 @@ import { cityTarget, physicalTarget, regionTarget, type Attempt } from './round'
 import {
   bestAccuracy,
   masteredTargets,
-  MAX_REVIEW_TOPICS,
   targetsToRepeat,
   summariseRound,
 } from './progress-rules';
@@ -48,12 +47,25 @@ it('собирает темы для повторения из ошибок ра
   expect(summary.targetsToReview).toEqual([regionTarget('sichuan')]);
 });
 
-it('показывает не больше пяти тем для повторения', () => {
+it('в повтор идут все цели с ошибкой, а не первые пять', () => {
   const wrong = Array.from({ length: 8 }, (_, index) =>
     attempt({ target: regionTarget(`region-${index}`), isCorrect: false }),
   );
 
-  expect(summariseRound(wrong).targetsToReview).toHaveLength(MAX_REVIEW_TOPICS);
+  expect(summariseRound(wrong).targetsToReview).toHaveLength(8);
+});
+
+/*
+ * Повтор ошибок спрашивает цель дважды в одном раунде: без слияния она попала
+ * бы и в список на экране, и в подпись кнопки два раза.
+ */
+it('не повторяет цель дважды', () => {
+  const attempts = [
+    attempt({ target: regionTarget('anhui'), isCorrect: false }),
+    attempt({ target: regionTarget('anhui'), isCorrect: false }),
+  ];
+
+  expect(summariseRound(attempts).targetsToReview).toHaveLength(1);
 });
 
 it('без ответов даёт нулевую точность, а не деление на ноль', () => {
