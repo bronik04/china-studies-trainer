@@ -703,12 +703,12 @@ button.text:hover:enabled {
 
 /*
  * На физической карте область — уже не предмет разговора, а подложка: тип
- * региона тут ничего не значит, значит ступень рельефа. Нейтральный тон
- * достаётся тем 27.8 % суши, которых нет ни в одной названной форме, — поверх
- * него ложится слой ступеней, обрезанный по границе.
+ * региона тут ничего не значит, значит высота. Заливки у области не остаётся
+ * вовсе: полосы шкалы кроют сушу целиком, и нейтральный тон под ними
+ * показался бы только в щелях, которых быть не должно.
  */
 .china-map[data-map-variant='physical'] [data-region-id] {
-  fill: var(--map-relief-rest);
+  fill: none;
 }
 
 /*
@@ -964,20 +964,55 @@ button.text:hover:enabled {
 .china-map .physical-layer .region-outlines use {
   fill: none;
   pointer-events: none;
-  stroke: var(--map-border);
+  stroke: var(--map-border-on-relief);
   stroke-width: var(--map-border-width);
 }
 
-.china-map .physical-layer .relief-shape[data-step='1'] {
-  fill: var(--map-relief-step-1);
+/*
+ * Полосы высот. Правило заполнения `evenodd` обязательно: путь полосы несёт
+ * все её кольца сразу, и вложенное кольцо — это котловина внутри нагорья. При
+ * `nonzero` Таримская котловина залилась бы наравне с хребтами вокруг.
+ */
+.china-map .physical-layer .relief-band {
+  fill-rule: evenodd;
+  pointer-events: none;
 }
 
-.china-map .physical-layer .relief-shape[data-step='2'] {
-  fill: var(--map-relief-step-2);
+.china-map .physical-layer .relief-band[data-band='0'] {
+  fill: var(--map-relief-band-0);
 }
 
-.china-map .physical-layer .relief-shape[data-step='3'] {
-  fill: var(--map-relief-step-3);
+.china-map .physical-layer .relief-band[data-band='200'] {
+  fill: var(--map-relief-band-200);
+}
+
+.china-map .physical-layer .relief-band[data-band='500'] {
+  fill: var(--map-relief-band-500);
+}
+
+.china-map .physical-layer .relief-band[data-band='1000'] {
+  fill: var(--map-relief-band-1000);
+}
+
+.china-map .physical-layer .relief-band[data-band='2000'] {
+  fill: var(--map-relief-band-2000);
+}
+
+.china-map .physical-layer .relief-band[data-band='3000'] {
+  fill: var(--map-relief-band-3000);
+}
+
+.china-map .physical-layer .relief-band[data-band='4000'] {
+  fill: var(--map-relief-band-4000);
+}
+
+/*
+ * Форма рельефа больше не заливается: заливка занята шкалой. Спрашиваемая
+ * форма отвечает на наведение и фокус обводкой — она читается поверх любой
+ * полосы, а заливка спорила бы со шкалой и врала бы о высоте.
+ */
+.china-map .physical-layer .relief-shape {
+  fill: transparent;
 }
 
 .china-map .physical-layer .river-line {
