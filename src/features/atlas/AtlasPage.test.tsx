@@ -1,11 +1,10 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { regions } from '../../content/regions';
 import { AtlasPage } from './AtlasPage';
 
 function renderAtlas(selectedRegionId: string | null = null) {
   const onSelect = vi.fn();
-  const onExit = vi.fn();
   const onTrain = vi.fn();
 
   const { container } = render(
@@ -16,19 +15,18 @@ function renderAtlas(selectedRegionId: string | null = null) {
       onClear={() => {}}
       zoom={1}
       onZoomChange={() => {}}
-      onExit={onExit}
       onTrain={onTrain}
     />,
   );
 
-  return { container, onSelect, onExit, onTrain };
+  return { container, onSelect, onTrain };
 }
 
 it('без выбора приглашает выбрать регион, а не отчитывается о пустоте', () => {
   renderAtlas();
 
   expect(
-    screen.getByText(/Выберите регион на карте или найдите в списке/),
+    screen.getByText(/Выберите регион на карте/),
   ).toBeInTheDocument();
 });
 
@@ -51,17 +49,28 @@ it('называет тип единицы словом, а не только ц
   );
 });
 
-it('выбор строки списка отдаётся наверх', () => {
-  const { onSelect } = renderAtlas();
+/*
+ * Список регионов из атласа убран: выбирают на карте, а карточка слева
+ * рассказывает о выбранном. Тест сторожит именно отсутствие — вернувшийся
+ * список снова занял бы половину колонки, ничего не добавив к карте, у
+ * которой те же 34 области уже несут `role="button"` и свои имена.
+ */
+it('не дублирует карту списком регионов', () => {
+  renderAtlas();
 
-  /*
-   * Запрос сужен до списка намеренно: контуры карты тоже несут `role="button"`
-   * и то же имя, и без сужения тест не различал бы два способа выбора.
-   */
-  const list = within(screen.getByRole('list', { name: 'Список регионов карты' }));
-  fireEvent.click(list.getByRole('button', { name: /^Хунань/ }));
+  expect(
+    screen.queryByRole('list', { name: 'Список регионов карты' }),
+  ).toBeNull();
+  expect(screen.queryByLabelText('Найти регион')).toBeNull();
+});
 
-  expect(onSelect).toHaveBeenCalledWith('hunan');
+it('область карты доступна с клавиатуры и названа словом', () => {
+  const { container } = renderAtlas();
+  const area = container.querySelector('[data-region-id="hunan"]')!;
+
+  expect(area).toHaveAttribute('role', 'button');
+  expect(area).toHaveAttribute('tabindex', '0');
+  expect(area.getAttribute('aria-label')).toMatch(/Хунань/);
 });
 
 it('выбор области карты отдаётся наверх тем же обработчиком', () => {
@@ -72,14 +81,13 @@ it('выбор области карты отдаётся наверх тем ж
   expect(onSelect).toHaveBeenCalledWith('hunan');
 });
 
-it('даёт выход в кабинет и в тренировку', () => {
-  const { onExit, onTrain } = renderAtlas();
+it('зовёт в тренировку и не повторяет шапку кнопкой выхода', () => {
+  const { onTrain } = renderAtlas();
 
-  fireEvent.click(screen.getByRole('button', { name: /В кабинет/ }));
   fireEvent.click(screen.getByRole('button', { name: /Тренировать/ }));
 
-  expect(onExit).toHaveBeenCalled();
   expect(onTrain).toHaveBeenCalled();
+  expect(screen.queryByRole('button', { name: /кабинет|главную/i })).toBeNull();
 });
 
 it('переключает карту между политической и физической', () => {

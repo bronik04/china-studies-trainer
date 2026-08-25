@@ -115,7 +115,7 @@ export function FillMapResultsPage({
             Заполнить заново
           </button>
           <button type="button" className="secondary" onClick={onExit}>
-            В кабинет
+            На главную
           </button>
         </div>
       </section>

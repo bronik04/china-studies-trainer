@@ -548,7 +548,6 @@ export default function App() {
           onClear={() => setSelectedRegionId(null)}
           zoom={zoom}
           onZoomChange={setZoom}
-          onExit={() => setScreen('home')}
           onTrain={() => startRound('find-on-map', 'ru', null)}
         />
       ) : activeScreen === 'collections' ? (

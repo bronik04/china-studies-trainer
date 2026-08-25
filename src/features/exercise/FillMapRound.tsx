@@ -234,7 +234,6 @@ export function FillMapRound({
       }
       answerList={
         <RegionAnswerList
-          presentation="inline"
           regions={regions}
           selectedRegionId={null}
           onSelect={handleSelect}

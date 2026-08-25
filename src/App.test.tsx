@@ -68,7 +68,11 @@ it('ведёт с главной в атлас и обратно', () => {
   fireEvent.click(screen.getByRole('button', { name: /Открыть атлас/ }));
   expect(screen.getByTestId('atlas-region-card')).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: /В кабинет/ }));
+  /*
+   * Обратно — через название в шапке: собственной кнопки выхода у атласа нет,
+   * и этот путь единственный, каким ученик возвращается на главную.
+   */
+  fireEvent.click(screen.getByRole('button', { name: /Китай/ }));
   expect(
     screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
   ).toBeInTheDocument();
@@ -141,7 +145,11 @@ it('атлас держит выбор региона в состоянии пр
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /Открыть атлас/ }));
-  fireEvent.click(screen.getByRole('button', { name: 'Сычуань (四川省)' }));
+  /*
+   * Выбирают на самой карте: списка-дублёра в атласе нет, а область несёт
+   * `role="button"` и имя «регион, 汉字».
+   */
+  fireEvent.click(screen.getByRole('button', { name: 'Сычуань, 四川省' }));
 
   expect(screen.getByTestId('atlas-region-card')).toHaveTextContent('Сычуань');
 });
@@ -228,7 +236,7 @@ it('показывает итог после раунда и возвращае�
   expect(screen.getByText('100%')).toBeInTheDocument();
   expect(screen.getByText('34 из 34')).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: 'В кабинет' }));
+  fireEvent.click(screen.getByRole('button', { name: 'На главную' }));
 
   expect(
     screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
