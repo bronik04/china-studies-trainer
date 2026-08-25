@@ -13,7 +13,6 @@ import type {
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
 import type { MapZoom } from '../../map/MapControls';
-import { RegionAnswerList } from '../../map/RegionAnswerList';
 
 /**
  * Тип единицы назван словом. На справочной карте он же передан цветом, но
@@ -129,7 +128,6 @@ export type AtlasPageProps = {
   readonly onClear: () => void;
   readonly zoom: MapZoom;
   readonly onZoomChange: (zoom: MapZoom) => void;
-  readonly onExit: () => void;
   readonly onTrain: () => void;
 };
 
@@ -148,7 +146,6 @@ export function AtlasPage({
   onClear,
   zoom,
   onZoomChange,
-  onExit,
   onTrain,
 }: AtlasPageProps) {
   /*
@@ -172,9 +169,6 @@ export function AtlasPage({
     mapKind === 'physical' && selectedFeatureId !== null
       ? physicalFeatures.find((feature) => feature.id === selectedFeatureId)
       : undefined;
-  const ordered = [...regions].sort((left, right) =>
-    left.nameRu.localeCompare(right.nameRu, 'ru'),
-  );
 
   /*
    * Регион и объект — два ответа на один вопрос карточки, поэтому выбор
@@ -194,7 +188,18 @@ export function AtlasPage({
   return (
     <main className="atlas-shell">
       <div className="atlas-layout">
-        <div className="atlas-panel">
+        {/*
+          Колонка прокручивается сама (см. `.atlas-panel` в styles.css), а
+          фокусируемого внутри с уходом списка регионов не осталось: без
+          `tabindex` справка длинного региона была бы недостижима с клавиатуры.
+          Раз колонка стала остановкой Tab, у неё есть и роль, и имя.
+        */}
+        <div
+          className="atlas-panel"
+          role="region"
+          aria-label="Карточка атласа"
+          tabIndex={0}
+        >
           <div className="atlas-region-card" data-testid="atlas-region-card">
             {selectedFeature ? (
               <>
@@ -254,17 +259,11 @@ export function AtlasPage({
               <>
                 <h1>Атлас</h1>
                 <p className="status-note">
-                  Выберите регион на карте или найдите в списке.
+                  Выберите регион на карте.
                 </p>
               </>
             )}
           </div>
-          <RegionAnswerList
-            presentation="panel"
-            regions={ordered}
-            selectedRegionId={selectedRegionId}
-            onSelect={selectRegion}
-          />
         </div>
         {/*
           `usage="answer"` намеренно: собственный заголовок карты, подсказка,
@@ -274,21 +273,28 @@ export function AtlasPage({
         <div className="atlas-map">
           <fieldset className="atlas-map-kind">
             <legend>Вид карты</legend>
-            {MAP_KINDS.map(([value, label]) => (
-              <label key={value}>
-                <input
-                  type="radio"
-                  name="atlas-map-kind"
-                  value={value}
-                  checked={mapKind === value}
-                  onChange={() => {
-                    setMapKind(value);
-                    setSelectedFeatureId(null);
-                  }}
-                />
-                <span>{label}</span>
-              </label>
-            ))}
+            {/*
+              Обёртка нужна разметке: `legend` в гибком контейнере становится
+              его первой строкой, и два слова без неё не поставить в ряд под
+              подписью группы.
+            */}
+            <div className="atlas-map-kind-switch">
+              {MAP_KINDS.map(([value, label]) => (
+                <label key={value}>
+                  <input
+                    type="radio"
+                    name="atlas-map-kind"
+                    value={value}
+                    checked={mapKind === value}
+                    onChange={() => {
+                      setMapKind(value);
+                      setSelectedFeatureId(null);
+                    }}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
           </fieldset>
           <ChinaMap
             regions={regions}
@@ -326,10 +332,13 @@ export function AtlasPage({
           ) : null}
         </div>
       </div>
+      {/*
+        Выхода в подвале нет: на главную ведёт шапка — название слева и
+        «Режимы», — а второй такой же путь внизу экрана только называл бы её
+        другим словом. В подвале остаётся одно действие, ради которого сюда и
+        приходят с карты.
+      */}
       <footer className="atlas-footer">
-        <button type="button" className="secondary" onClick={onExit}>
-          В кабинет
-        </button>
         <button type="button" className="primary" onClick={onTrain}>
           Тренировать
         </button>

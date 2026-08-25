@@ -234,6 +234,15 @@ p {
   padding-block-start: var(--s-2);
 }
 
+/*
+ * На узком экране колонки идут друг за другом, и разводить их нечему: сетка с
+ * зазором включается только с 1024 px. Без этого отступа подпись «Вид карты»
+ * начиналась вплотную к последней строке карточки.
+ */
+.atlas-map {
+  margin-block-start: var(--s-5);
+}
+
 .atlas-footer {
   align-items: center;
   border-top: var(--border-hair) solid var(--line-on-ground);
@@ -273,6 +282,17 @@ p {
   }
 
   /*
+   * Колонка прокручивается сама, а не растит кадр. Строка грида фиксирована
+   * (`minmax(0, 1fr)`), а кадр атласа помечен `fillsFrame` и не прокручивается:
+   * без этого правила справка длинного региона — Синьцзян даёт около 300 px
+   * лишку при кадре 1440x900 — вытекала из строки под подвал, и кнопки подвала
+   * ложились поверх текста, а хвост карточки становился недостижим.
+   */
+  .atlas-panel {
+    overflow-y: auto;
+  }
+
+  /*
    * Три строки: переключатель вида, карта, легенда ступеней. Карта берёт
    * остаток и потому стоит средней строкой — при `block-size: 100%` у рамки
    * одной строки на всё не хватило бы, и легенда уехала бы под нижний край
@@ -281,6 +301,7 @@ p {
   .atlas-map {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
+    margin-block-start: 0;
     min-block-size: 0;
   }
 
@@ -1197,39 +1218,6 @@ button.text:hover:enabled {
  * Список в атласе прокручивается внутри себя: страница атласа занимает ровно
  * кадр, и 34 кнопки не должны её растить.
  */
-.region-panel-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  min-block-size: 0;
-}
-
-.region-panel-search {
-  color: var(--text-on-ground-muted);
-  font-size: var(--t-size-caption);
-}
-
-.region-panel-list input {
-  background: var(--surface-raised);
-  border: var(--border-hair) solid var(--line-on-ground-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text-on-ground);
-  font: inherit;
-  min-height: var(--target-min);
-  padding: var(--s-2) var(--s-3);
-}
-
-/*
- * Потолок нужен на узком экране, где колонок нет и список не ограничен
- * высотой ячейки: 34 кнопки подряд выдавливали карту на второй экран. На
- * широком его перекрывает `min-block-size: 0` в сетке — там высоту задаёт кадр.
- */
-.region-panel-list .map-alternative {
-  max-block-size: 50dvh;
-  min-block-size: 0;
-  overflow-y: auto;
-}
-
 /* --- Справочник регионов ------------------------------------------------ */
 
 .region-list {
@@ -2176,11 +2164,18 @@ button.chip[aria-pressed='true'] {
  * стоят рядом, а не переключателем «вкл/выкл»: у них равные права, и какой
  * сейчас показан, видно по отметке, а не по догадке.
  */
+/*
+ * Переключатель вида набран словами, без рамок: на экране один герой — карта,
+ * и рамка вокруг двух слов спорила бы с её листом. Выбранный вид отмечен так
+ * же, как текущий раздел в шапке сайта, — киноварной чертой снизу: приём на
+ * странице уже есть, и учить ему второй раз не нужно.
+ *
+ * Черта, а не только цвет: состояние читается и без различения оттенков.
+ * Радиокнопки на месте, спрятан лишь их кружок, — с клавиатуры группа
+ * работает стрелками, как любая другая.
+ */
 .atlas-map-kind {
   border: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
   margin: 0 0 var(--s-3);
   padding: 0;
 }
@@ -2191,17 +2186,43 @@ button.chip[aria-pressed='true'] {
   padding: 0 0 var(--s-2);
 }
 
+.atlas-map-kind-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-5);
+}
+
 .atlas-map-kind label {
   align-items: center;
-  border: var(--border-solid) solid var(--line-on-ground-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text-on-ground);
+  border-block-end: var(--border-solid) solid transparent;
+  color: var(--text-on-ground-muted);
   cursor: pointer;
   display: flex;
-  gap: var(--s-2);
   min-height: var(--target-min);
-  padding: var(--s-2) var(--s-4);
 }
+
+.atlas-map-kind input {
+  block-size: 0;
+  inline-size: 0;
+  opacity: 0;
+  position: absolute;
+}
+
+.atlas-map-kind label:has(input:checked) {
+  border-block-end-color: var(--accent-on-ground);
+  color: var(--text-on-ground-strong);
+}
+
+.atlas-map-kind label:hover:not(:has(input:checked)) {
+  color: var(--text-on-ground);
+}
+
+.atlas-map-kind label:has(input:focus-visible) {
+  outline: var(--border-focus) solid var(--focus-on-ground);
+  outline-offset: 2px;
+}
+
+
 
 /*
  * Легенда ступеней. Образец заливки идёт рядом со словом, а не вместо него:

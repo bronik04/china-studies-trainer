@@ -230,8 +230,7 @@ export function ExerciseRound({
       answerList={
         isMapAnswer ? (
           <RegionAnswerList
-            presentation="inline"
-            regions={regions}
+              regions={regions}
             selectedRegionId={answeredRegionId}
             onSelect={answer}
             answerStates={answerStates}

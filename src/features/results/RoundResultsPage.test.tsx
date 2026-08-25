@@ -129,7 +129,7 @@ it('начинает новый раунд и возвращает к теме',
   renderResults({ onNewRound: newRound, onExit: exit });
 
   fireEvent.click(screen.getByRole('button', { name: 'Новый раунд' }));
-  fireEvent.click(screen.getByRole('button', { name: 'В кабинет' }));
+  fireEvent.click(screen.getByRole('button', { name: 'На главную' }));
 
   expect(newRound).toHaveBeenCalledOnce();
   expect(exit).toHaveBeenCalledOnce();
