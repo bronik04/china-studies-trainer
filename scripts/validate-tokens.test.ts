@@ -12,6 +12,8 @@ import {
   GRAPHIC_CONTRAST,
   TEXT_CONTRAST,
   contrastRatioRounded,
+  parseHex,
+  relativeLuminance,
 } from '../src/design/contrast';
 import { parseTokens, resolve } from '../src/design/tokens';
 import { MAP_VIEWBOX_HEIGHT, MAP_VIEWBOX_WIDTH } from '../src/map/target-size';
@@ -295,6 +297,117 @@ describe('карта', () => {
         1,
       );
     }
+  });
+});
+
+describe('шкала высот', () => {
+  /**
+   * Семь полос физической карты. Проверяется всё, что ложится на них поверх:
+   * линия реки, приглушённая граница региона, метки исхода и подпись объекта.
+   * Отрезок светлоты снизу держит река — ей нужно 3:1 к самой тёмной полосе.
+   */
+  const BANDS = [
+    '--map-relief-band-0',
+    '--map-relief-band-200',
+    '--map-relief-band-500',
+    '--map-relief-band-1000',
+    '--map-relief-band-2000',
+    '--map-relief-band-3000',
+    '--map-relief-band-4000',
+  ] as const;
+
+  /** Тон в градусах: им различаются полосы, которые не различаются светлотой. */
+  function hueOf(hex: string): number {
+    const [red, green, blue] = parseHex(hex).map((channel) => channel / 255);
+    const max = Math.max(red, green, blue);
+    const min = Math.min(red, green, blue);
+    const span = max - min;
+
+    if (span === 0) return 0;
+
+    const sector =
+      max === red
+        ? ((green - blue) / span) % 6
+        : max === green
+          ? (blue - red) / span + 2
+          : (red - green) / span + 4;
+
+    return (sector * 60 + 360) % 360;
+  }
+
+  it('линия реки видна на каждой полосе', () => {
+    for (const band of BANDS) {
+      expectAtLeast('--map-river', band, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('приглушённая граница региона видна на каждой полосе', () => {
+    for (const band of BANDS) {
+      expectAtLeast('--map-border-on-relief', band, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('метки исхода видны на каждой полосе', () => {
+    for (const band of BANDS) {
+      expectAtLeast('--map-correct-mark', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-incorrect-mark-relief', band, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('подпись объекта читается на каждой полосе', () => {
+    for (const band of BANDS) {
+      expectAtLeast('--map-label', band, TEXT_CONTRAST);
+    }
+  });
+
+  /*
+   * Соседние полосы обязаны различаться — но не обязательно светлотой.
+   * Зелень равнин темнее соломенной полосы над ней: так устроены физические
+   * карты, и различает эту пару тон. Поэтому условие через «или»: либо
+   * заметная разница светлоты, либо заметная разница тона.
+   */
+  it('соседние полосы различимы светлотой или тоном', () => {
+    for (let index = 1; index < BANDS.length; index += 1) {
+      const lower = color(BANDS[index - 1]);
+      const upper = color(BANDS[index]);
+      const ratio = contrastRatioRounded(lower, upper);
+      const hueGap = Math.abs(hueOf(lower) - hueOf(upper));
+
+      expect(
+        ratio >= 1.15 || hueGap >= 12,
+        `${BANDS[index - 1]} против ${BANDS[index]}: контраст ${ratio.toFixed(
+          2,
+        )}:1, разница тона ${hueGap.toFixed(0)}°`,
+      ).toBe(true);
+    }
+  });
+
+  /*
+   * Выше 500 м светлота падает строго: «темнее значит выше» — то правило, по
+   * которому шкалу читают, и ниже него у полос не остаётся никакого порядка.
+   */
+  it('выше 500 м каждая полоса темнее предыдущей', () => {
+    const upper = BANDS.slice(2);
+
+    for (let index = 1; index < upper.length; index += 1) {
+      const previous = relativeLuminance(color(upper[index - 1]));
+      const current = relativeLuminance(color(upper[index]));
+
+      expect(
+        current,
+        `${upper[index]} (${current.toFixed(3)}) не темнее ${upper[index - 1]} (${previous.toFixed(3)})`,
+      ).toBeLessThan(previous);
+    }
+  });
+
+  /* Равнины и солома идут вверх по светлоте — это и есть условность шкалы. */
+  it('нижние полосы идут от зелени к соломе, а не наоборот', () => {
+    const plains = relativeLuminance(color('--map-relief-band-0'));
+    const middle = relativeLuminance(color('--map-relief-band-200'));
+    const straw = relativeLuminance(color('--map-relief-band-500'));
+
+    expect(plains).toBeLessThan(middle);
+    expect(middle).toBeLessThan(straw);
   });
 });
 
