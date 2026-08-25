@@ -8,7 +8,6 @@ import type {
   PhysicalKind,
   Region,
   RegionKind,
-  ReliefStep,
 } from '../../content/types';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
@@ -27,20 +26,13 @@ const KIND_LABELS: Readonly<Record<RegionKind, string>> = {
 };
 
 /**
- * Ступени рельефа словами. Легенда обязательна: ступень — главное, что говорит
- * физическая карта, и цвет не может быть единственным её каналом. Высоты даны
- * как подсказка, а не как определение: ступени Китая — принятое членение, их
- * границы идут по формам рельефа, а не по горизонтали.
+ * Шкала высот. Полосой, а не списком плашек: шкала непрерывна, и прежние
+ * подписи («выше 4000», «1000–2000», «ниже 500») оставляли в ней дыры —
+ * полосы 500–1000 и 2000–4000 не назывались вообще. Смысл не в одном цвете:
+ * границы полос названы числами.
  */
-const RELIEF_LEGEND: readonly {
-  readonly step: ReliefStep;
-  readonly title: string;
-  readonly hint: string;
-}[] = [
-  { step: 1, title: 'Нагорье', hint: 'выше 4000 м' },
-  { step: 2, title: 'Плато и котловины', hint: '1000–2000 м' },
-  { step: 3, title: 'Равнины', hint: 'ниже 500 м' },
-];
+const RELIEF_TICKS = [200, 500, 1000, 2000, 3000, 4000] as const;
+const RELIEF_BAND_TONES = [0, ...RELIEF_TICKS] as const;
 
 /** Род объекта назван словом — по той же причине, что и тип региона. */
 const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
@@ -320,15 +312,30 @@ export function AtlasPage({
             рельефа назвать негде — форма не выбирается и карточки у неё нет.
           */}
           {mapKind === 'physical' ? (
-            <ul className="relief-legend">
-              {RELIEF_LEGEND.map((entry) => (
-                <li key={entry.step}>
-                  <span className="relief-swatch" data-step={entry.step} />
-                  <span>{entry.title}</span>
-                  <span className="status-note">{entry.hint}</span>
-                </li>
-              ))}
-            </ul>
+            <figure className="relief-scale" aria-label="Высота, м над уровнем моря">
+              <figcaption>Высота, м над уровнем моря</figcaption>
+              <div className="relief-scale-bar" aria-hidden="true">
+                {RELIEF_BAND_TONES.map((band) => (
+                  <span key={band} data-band={band} />
+                ))}
+              </div>
+              {/*
+                Долей столько же, сколько полос: подпись стоит на правом краю
+                своей доли и сдвинута на половину — то есть ровно на границе
+                между полосами. Последняя доля пуста: у верхней полосы верхней
+                границы нет.
+              */}
+              <div className="relief-scale-ticks">
+                {RELIEF_TICKS.map((tick) => (
+                  <span key={tick}>{tick}</span>
+                ))}
+                <span aria-hidden="true" />
+              </div>
+              <div className="relief-scale-ends">
+                <span>равнины</span>
+                <span>нагорье</span>
+              </div>
+            </figure>
           ) : null}
         </div>
       </div>

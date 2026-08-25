@@ -956,10 +956,9 @@ button.text:hover:enabled {
 }
 
 /*
- * Заливка снимается с копии, а не наследуется: правило области ставит ей тон
- * `--map-relief-rest`, но CSS документа не достаёт внутрь клона `<use>`, и
- * `fill` клон берёт наследованием от самого `<use>`. Отсюда `fill: none`
- * здесь — единственный способ получить только черту.
+ * Заливка снимается с копии явно, а не наследуется: CSS документа не достаёт
+ * внутрь клона `<use>`, и `fill` клон берёт наследованием от самого `<use>`.
+ * Отсюда `fill: none` здесь — единственный способ получить только черту.
  */
 .china-map .physical-layer .region-outlines use {
   fill: none;
@@ -2263,40 +2262,78 @@ button.chip[aria-pressed='true'] {
  * Легенда ступеней. Образец заливки идёт рядом со словом, а не вместо него:
  * ступень названа словом, и цвет здесь — второй канал, а не единственный.
  */
-.relief-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-4);
-  list-style: none;
-  margin: var(--s-3) 0 0;
-  padding: 0;
-}
-
-.relief-legend li {
-  align-items: center;
+.relief-scale {
   color: var(--text-on-ground);
-  display: flex;
   font-size: var(--t-size-caption);
-  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
 }
 
-.relief-legend .relief-swatch {
+.relief-scale figcaption {
+  margin-block-end: var(--s-1);
+}
+
+/*
+ * Семь равных долей: полоса показывает порядок ступеней, а не их ширину в
+ * метрах. Ширина в метрах у полос разная — от двухсот до бесконечности, — и
+ * пропорциональная шкала отдала бы шесть седьмых длины одной верхней полосе.
+ */
+.relief-scale-bar {
   block-size: 12px;
-  border: var(--border-hair) solid var(--map-border);
-  display: inline-block;
-  inline-size: 16px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
 }
 
-.relief-legend .relief-swatch[data-step='1'] {
-  background: var(--map-relief-step-1);
+.relief-scale-bar span {
+  block-size: 100%;
+  display: block;
 }
 
-.relief-legend .relief-swatch[data-step='2'] {
-  background: var(--map-relief-step-2);
+.relief-scale-bar span[data-band='0'] {
+  background: var(--map-relief-band-0);
 }
 
-.relief-legend .relief-swatch[data-step='3'] {
-  background: var(--map-relief-step-3);
+.relief-scale-bar span[data-band='200'] {
+  background: var(--map-relief-band-200);
+}
+
+.relief-scale-bar span[data-band='500'] {
+  background: var(--map-relief-band-500);
+}
+
+.relief-scale-bar span[data-band='1000'] {
+  background: var(--map-relief-band-1000);
+}
+
+.relief-scale-bar span[data-band='2000'] {
+  background: var(--map-relief-band-2000);
+}
+
+.relief-scale-bar span[data-band='3000'] {
+  background: var(--map-relief-band-3000);
+}
+
+.relief-scale-bar span[data-band='4000'] {
+  background: var(--map-relief-band-4000);
+}
+
+/*
+ * Подпись стоит на границе между полосами, а не в середине своей: число —
+ * это порог, а не название ступени.
+ */
+.relief-scale-ticks {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.relief-scale-ticks span {
+  justify-self: end;
+  transform: translateX(50%);
+}
+
+.relief-scale-ends {
+  color: var(--text-on-ground-muted);
+  display: flex;
+  justify-content: space-between;
 }
 
 .member-list {
