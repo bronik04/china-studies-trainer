@@ -1,3 +1,8 @@
+/*
+ * Vitest импортируется явно: `tsconfig.node.json` не подключает его глобали —
+ * скрипты сборки живут с типами Node, а не браузера.
+ */
+import { expect, it } from 'vitest';
 import { contourRings, sinkBorder, smoothGrid, type Grid } from './relief-contours';
 
 /** Сетка 5×5 с квадратным «холмом» 3×3 в середине. */
