@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { cityById, citiesOfRegion } from '../../content/cities';
 import { physicalFeatures } from '../../content/physical-features';
+import { featuresWord, regionsWord } from '../../content/region-count';
 import { sourceById } from '../../content/sources';
 import type {
   Fact,
@@ -249,10 +250,37 @@ export function AtlasPage({
               </>
             ) : (
               <>
+                {/*
+                  До выбора колонка не пустует: пустая половина экрана рядом с
+                  картой читается как поломка, а не как приглашение. Здесь
+                  сказано, что покажет карточка и что лежит в каждом виде
+                  карты, — числа считаются из справочников, а не пишутся
+                  руками, иначе разойдутся с ними при первом же пополнении.
+                */}
                 <h1>Атлас</h1>
-                <p className="status-note">
-                  Выберите регион на карте.
+                <p className="atlas-lede">
+                  Справочник по карте. Выберите единицу — карточка назовёт её
+                  по-русски и иероглифами, даст пиньинь, тип, административный
+                  центр и короткую справку с источниками.
                 </p>
+                <dl className="atlas-contents">
+                  <div>
+                    <dt>Политическая</dt>
+                    <dd>
+                      {regions.length} {regionsWord(regions.length)}{' '}
+                      провинциального уровня, их центры и города
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Физическая</dt>
+                    <dd>
+                      {physicalFeatures.length}{' '}
+                      {featuresWord(physicalFeatures.length)}: реки, формы
+                      рельефа и озёра; заливка означает высоту
+                    </dd>
+                  </div>
+                </dl>
+                <p className="status-note">Выберите регион на карте.</p>
               </>
             )}
           </div>
