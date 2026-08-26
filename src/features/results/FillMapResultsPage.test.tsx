@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { regions } from '../../content/regions';
 import {
   answerFillRound,
@@ -58,13 +58,11 @@ function roundWithMistake(): FillRound {
 
 type RenderOverrides = {
   readonly round?: FillRound;
-  readonly idsToRepeat?: readonly string[];
   readonly onRepeatMistakes?: () => void;
 };
 
 function renderResults({
   round = finishedRound(),
-  idsToRepeat = [],
   onRepeatMistakes = () => {},
 }: RenderOverrides = {}) {
   return render(
@@ -72,7 +70,6 @@ function renderResults({
       round={round}
       regions={regions}
       isProgressSaved
-      idsToRepeat={idsToRepeat}
       onRepeatMistakes={onRepeatMistakes}
       onNewRound={() => {}}
       onExit={() => {}}
@@ -106,8 +103,8 @@ it('называет время раунда', () => {
 });
 
 describe('кнопка «Повторить ошибки»', () => {
-  it('на чистом раунде кнопки «Повторить ошибки» нет, даже если история непуста', () => {
-    renderResults({ idsToRepeat: ['sichuan'] });
+  it('на чистом раунде кнопки «Повторить ошибки» нет', () => {
+    renderResults();
 
     expect(screen.queryByRole('button', { name: /Повторить ошибки/ })).toBeNull();
     expect(screen.getByRole('button', { name: 'Заполнить заново' })).toHaveClass(
@@ -115,16 +112,13 @@ describe('кнопка «Повторить ошибки»', () => {
     );
   });
 
-  it('кнопка повтора называет число из истории и зовёт обработчик', () => {
+  it('подпись кнопки считается из того же списка, что и на экране', () => {
     const onRepeatMistakes = vi.fn();
-    renderResults({
-      round: roundWithMistake(),
-      idsToRepeat: ['a', 'b', 'c'],
-      onRepeatMistakes,
-    });
+    renderResults({ round: roundWithMistake(), onRepeatMistakes });
 
+    const review = screen.getByRole('list', { name: 'Стоит повторить' });
     const repeat = screen.getByRole('button', {
-      name: 'Повторить ошибки: 3 региона',
+      name: `Повторить ошибки: ${within(review).getAllByRole('listitem').length} регион`,
     });
     fireEvent.click(repeat);
 
@@ -135,18 +129,12 @@ describe('кнопка «Повторить ошибки»', () => {
     );
   });
 
-  it('говорит, что повтор шире списка этого раунда', () => {
-    renderResults({ round: roundWithMistake(), idsToRepeat: ['a', 'b', 'c'] });
-
-    expect(
-      screen.getByText(
-        /В повтор войдут все 3 региона с ошибками за последние 14 дней/,
-      ),
-    ).toBeInTheDocument();
-  });
-
-  it('не поясняет, когда повтор совпадает со списком раунда', () => {
-    renderResults({ round: roundWithMistake(), idsToRepeat: ['a'] });
+  /*
+   * Предложение про «все ошибки за 14 дней» объясняло расхождение, которого
+   * больше нет. Если оно вернётся — вернётся и расхождение.
+   */
+  it('не объясняет расхождение, которого нет', () => {
+    renderResults({ round: roundWithMistake() });
 
     expect(screen.queryByText(/за последние 14 дней/)).toBeNull();
   });

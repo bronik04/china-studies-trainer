@@ -12,6 +12,8 @@ import {
   GRAPHIC_CONTRAST,
   TEXT_CONTRAST,
   contrastRatioRounded,
+  parseHex,
+  relativeLuminance,
 } from '../src/design/contrast';
 import { parseTokens, resolve } from '../src/design/tokens';
 import { MAP_VIEWBOX_HEIGHT, MAP_VIEWBOX_WIDTH } from '../src/map/target-size';
@@ -205,64 +207,6 @@ describe('карта', () => {
     }
   });
 
-  /**
-   * Ступени рельефа. Линия реки идёт поверх всех четырёх заливок, и ей, как
-   * всякой графике, несущей смысл, WCAG 2.2 (1.4.11) требует 3:1. Это
-   * связывающее ограничение всей палитры: чем темнее ступень, тем темнее
-   * обязана быть линия, а темнее туши она быть не может.
-   */
-  const RELIEF_FILLS = [
-    '--map-relief-step-1',
-    '--map-relief-step-2',
-    '--map-relief-step-3',
-    '--map-relief-rest',
-  ] as const;
-
-  it('линия реки видна на каждой ступени рельефа', () => {
-    for (const fill of RELIEF_FILLS) {
-      expectAtLeast('--map-river', fill, GRAPHIC_CONTRAST);
-    }
-  });
-
-  /*
-   * Исход ответа на физической карте помечается штриховкой поверх ступени:
-   * перекрасить форму нельзя, цвет там означает ступень. Значит, штрих ложится
-   * на любую из четырёх заливок и обязан быть виден на каждой.
-   */
-  it('метки исхода видны на каждой ступени рельефа', () => {
-    for (const fill of RELIEF_FILLS) {
-      expectAtLeast('--map-correct-mark', fill, GRAPHIC_CONTRAST);
-      expectAtLeast('--map-incorrect-mark-relief', fill, GRAPHIC_CONTRAST);
-    }
-  });
-
-  it('граница региона видна на каждой ступени рельефа', () => {
-    for (const fill of RELIEF_FILLS) {
-      expectAtLeast('--map-border', fill, GRAPHIC_CONTRAST);
-    }
-  });
-
-  it('подпись объекта читается на каждой ступени рельефа', () => {
-    for (const fill of RELIEF_FILLS) {
-      expectAtLeast('--map-label', fill, TEXT_CONTRAST);
-    }
-  });
-
-  it('соседние ступени различимы по светлоте', () => {
-    /*
-     * Не требование WCAG: смысл несёт ещё и слово в легенде. Но ступени —
-     * главное, что говорит эта карта, и сливаться им нельзя. Измеренный предел
-     * при линии светлотой 0.045 — около 1.79 между соседними.
-     */
-    for (const [darker, lighter] of [
-      ['--map-relief-step-1', '--map-relief-step-2'],
-      ['--map-relief-step-2', '--map-relief-step-3'],
-    ] as const) {
-      const ratio = contrastRatioRounded(color(darker), color(lighter));
-      expect(ratio, `${darker} против ${lighter}: ${ratio}:1`).toBeGreaterThan(1.3);
-    }
-  });
-
   it('залитое состояние отличимо от любой соседней заливки', () => {
     for (const state of FILLED_STATES) {
       for (const fill of MAP_FILLS) {
@@ -295,6 +239,117 @@ describe('карта', () => {
         1,
       );
     }
+  });
+});
+
+describe('шкала высот', () => {
+  /**
+   * Семь полос физической карты. Проверяется всё, что ложится на них поверх:
+   * линия реки, приглушённая граница региона, метки исхода и подпись объекта.
+   * Отрезок светлоты снизу держит река — ей нужно 3:1 к самой тёмной полосе.
+   */
+  const BANDS = [
+    '--map-relief-band-0',
+    '--map-relief-band-200',
+    '--map-relief-band-500',
+    '--map-relief-band-1000',
+    '--map-relief-band-2000',
+    '--map-relief-band-3000',
+    '--map-relief-band-4000',
+  ] as const;
+
+  /** Тон в градусах: им различаются полосы, которые не различаются светлотой. */
+  function hueOf(hex: string): number {
+    const [red, green, blue] = parseHex(hex).map((channel) => channel / 255);
+    const max = Math.max(red, green, blue);
+    const min = Math.min(red, green, blue);
+    const span = max - min;
+
+    if (span === 0) return 0;
+
+    const sector =
+      max === red
+        ? ((green - blue) / span) % 6
+        : max === green
+          ? (blue - red) / span + 2
+          : (red - green) / span + 4;
+
+    return (sector * 60 + 360) % 360;
+  }
+
+  it('линия реки видна на каждой полосе', () => {
+    for (const band of BANDS) {
+      expectAtLeast('--map-river', band, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('приглушённая граница региона видна на каждой полосе', () => {
+    for (const band of BANDS) {
+      expectAtLeast('--map-border-on-relief', band, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('метки исхода видны на каждой полосе', () => {
+    for (const band of BANDS) {
+      expectAtLeast('--map-correct-mark', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-incorrect-mark-relief', band, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('подпись объекта читается на каждой полосе', () => {
+    for (const band of BANDS) {
+      expectAtLeast('--map-label', band, TEXT_CONTRAST);
+    }
+  });
+
+  /*
+   * Соседние полосы обязаны различаться — но не обязательно светлотой.
+   * Зелень равнин темнее соломенной полосы над ней: так устроены физические
+   * карты, и различает эту пару тон. Поэтому условие через «или»: либо
+   * заметная разница светлоты, либо заметная разница тона.
+   */
+  it('соседние полосы различимы светлотой или тоном', () => {
+    for (let index = 1; index < BANDS.length; index += 1) {
+      const lower = color(BANDS[index - 1]);
+      const upper = color(BANDS[index]);
+      const ratio = contrastRatioRounded(lower, upper);
+      const hueGap = Math.abs(hueOf(lower) - hueOf(upper));
+
+      expect(
+        ratio >= 1.15 || hueGap >= 12,
+        `${BANDS[index - 1]} против ${BANDS[index]}: контраст ${ratio.toFixed(
+          2,
+        )}:1, разница тона ${hueGap.toFixed(0)}°`,
+      ).toBe(true);
+    }
+  });
+
+  /*
+   * Выше 500 м светлота падает строго: «темнее значит выше» — то правило, по
+   * которому шкалу читают, и ниже него у полос не остаётся никакого порядка.
+   */
+  it('выше 500 м каждая полоса темнее предыдущей', () => {
+    const upper = BANDS.slice(2);
+
+    for (let index = 1; index < upper.length; index += 1) {
+      const previous = relativeLuminance(color(upper[index - 1]));
+      const current = relativeLuminance(color(upper[index]));
+
+      expect(
+        current,
+        `${upper[index]} (${current.toFixed(3)}) не темнее ${upper[index - 1]} (${previous.toFixed(3)})`,
+      ).toBeLessThan(previous);
+    }
+  });
+
+  /* Равнины и солома идут вверх по светлоте — это и есть условность шкалы. */
+  it('нижние полосы идут от зелени к соломе, а не наоборот', () => {
+    const plains = relativeLuminance(color('--map-relief-band-0'));
+    const middle = relativeLuminance(color('--map-relief-band-200'));
+    const straw = relativeLuminance(color('--map-relief-band-500'));
+
+    expect(plains).toBeLessThan(middle);
+    expect(middle).toBeLessThan(straw);
   });
 });
 

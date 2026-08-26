@@ -2,7 +2,6 @@ import { targetKey, type Attempt, type Target, type TargetKind } from './round';
 
 export const REVIEW_WINDOW_DAYS = 14;
 export const MASTERY_CORRECT_ROUNDS = 3;
-export const MAX_REVIEW_TOPICS = 5;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -41,10 +40,19 @@ export function summariseRound(attempts: readonly Attempt[]): RoundSummary {
     correct,
     accuracy: attempts.length === 0 ? 0 : correct / attempts.length,
     durationMs: attempts.reduce((sum, attempt) => sum + attempt.durationMs, 0),
-    targetsToReview: attempts
-      .filter((attempt) => !attempt.isCorrect)
-      .map((attempt) => attempt.target)
-      .slice(0, MAX_REVIEW_TOPICS),
+    /*
+     * Все цели с ошибкой, без обрезки и без повторов. Обрезка до пяти делала
+     * экран итогов лживым: список говорил «пять», а кнопка запускала все
+     * ошибки. Слияние по ключу нужно повтору ошибок — там цель спрашивается
+     * второй раз в том же раунде.
+     */
+    targetsToReview: [
+      ...new Map(
+        attempts
+          .filter((attempt) => !attempt.isCorrect)
+          .map((attempt) => [targetKey(attempt.target), attempt.target]),
+      ).values(),
+    ],
   };
 }
 

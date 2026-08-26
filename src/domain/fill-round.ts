@@ -1,5 +1,4 @@
 import type { Region } from '../content/types';
-import { MAX_REVIEW_TOPICS } from './progress-rules';
 import { shuffle } from './random';
 import type { QuestionLanguage } from './question-language';
 import { regionTarget, type Attempt } from './round';
@@ -193,7 +192,6 @@ export function summariseFillRound(round: FillRound): FillSummary {
         const outcome = round.outcomes[regionId];
 
         return outcome !== undefined && outcome !== 'first-try';
-      })
-      .slice(0, MAX_REVIEW_TOPICS),
+      }),
   };
 }

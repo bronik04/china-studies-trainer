@@ -472,6 +472,27 @@ button.text:hover:enabled {
 }
 
 .mode-actions,
+/*
+ * Карта и разбор рядом: кнопка повтора стоит у списка, который она повторит.
+ * Одна колонка до 1024 px — на телефоне карта и список идут друг под другом,
+ * порядком разметки.
+ */
+.results-split {
+  display: grid;
+  gap: var(--s-6);
+  margin-block-start: var(--s-5);
+}
+
+@media (min-width: 1024px) {
+  .results-split {
+    grid-template-columns: 1.15fr 1fr;
+  }
+
+  .results-map {
+    align-self: start;
+  }
+}
+
 .results-actions {
   display: flex;
   flex-wrap: wrap;
@@ -523,16 +544,18 @@ button.text:hover:enabled {
  * перед картой и весили больше неё.
  */
 /*
- * Левый нижний угол, а не правый: в правом стоят выноски Гонконга и Макао, и
- * кнопки накрывали их вместе с выносными линиями. Слева внизу — чистое море.
+ * Верхний левый угол: на обоих видах карты там пусто. Правый занят выносками
+ * Гонконга и Макао, а прежний левый нижний приходился на Тибет, Сычуань и
+ * Юньнань — на 375 px три кнопки складывались в два ряда и закрывали около
+ * четверти страны.
  */
 .map-controls {
-  bottom: var(--s-3);
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
+  flex-direction: column;
+  gap: var(--s-1);
   left: var(--s-3);
   position: absolute;
+  top: var(--s-3);
 }
 
 /*
@@ -540,15 +563,32 @@ button.text:hover:enabled {
  * Пара «тушь на бумаге» проверена тестом контраста.
  */
 .map-controls button {
+  align-items: center;
   background: var(--surface-paper-bright);
   border: var(--border-hair) solid var(--line-on-paper);
   border-radius: var(--radius-sm);
   color: var(--text-on-paper);
   cursor: pointer;
+  display: flex;
   font: inherit;
+  justify-content: center;
   min-height: var(--target-min);
   min-width: var(--target-min);
-  padding: var(--s-2) var(--s-3);
+  padding: 0;
+}
+
+/*
+ * Знак рисуется штрихом того же тона, что и текст кнопки: пара «тушь на
+ * бумаге» уже проверена тестом контраста, и второго цвета заводить не нужно.
+ */
+.map-controls button svg {
+  block-size: 20px;
+  fill: none;
+  inline-size: 20px;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
 }
 
 .map-controls button:hover:not(:disabled) {
@@ -703,12 +743,12 @@ button.text:hover:enabled {
 
 /*
  * На физической карте область — уже не предмет разговора, а подложка: тип
- * региона тут ничего не значит, значит ступень рельефа. Нейтральный тон
- * достаётся тем 27.8 % суши, которых нет ни в одной названной форме, — поверх
- * него ложится слой ступеней, обрезанный по границе.
+ * региона тут ничего не значит, значит высота. Заливки у области не остаётся
+ * вовсе: полосы шкалы кроют сушу целиком, и нейтральный тон под ними
+ * показался бы только в щелях, которых быть не должно.
  */
 .china-map[data-map-variant='physical'] [data-region-id] {
-  fill: var(--map-relief-rest);
+  fill: none;
 }
 
 /*
@@ -956,28 +996,62 @@ button.text:hover:enabled {
 }
 
 /*
- * Заливка снимается с копии, а не наследуется: правило области ставит ей тон
- * `--map-relief-rest`, но CSS документа не достаёт внутрь клона `<use>`, и
- * `fill` клон берёт наследованием от самого `<use>`. Отсюда `fill: none`
- * здесь — единственный способ получить только черту.
+ * Заливка снимается с копии явно, а не наследуется: CSS документа не достаёт
+ * внутрь клона `<use>`, и `fill` клон берёт наследованием от самого `<use>`.
+ * Отсюда `fill: none` здесь — единственный способ получить только черту.
  */
 .china-map .physical-layer .region-outlines use {
   fill: none;
   pointer-events: none;
-  stroke: var(--map-border);
+  stroke: var(--map-border-on-relief);
   stroke-width: var(--map-border-width);
 }
 
-.china-map .physical-layer .relief-shape[data-step='1'] {
-  fill: var(--map-relief-step-1);
+/*
+ * Полосы высот. Правило заполнения `evenodd` обязательно: путь полосы несёт
+ * все её кольца сразу, и вложенное кольцо — это котловина внутри нагорья. При
+ * `nonzero` Таримская котловина залилась бы наравне с хребтами вокруг.
+ */
+.china-map .physical-layer .relief-band {
+  fill-rule: evenodd;
+  pointer-events: none;
 }
 
-.china-map .physical-layer .relief-shape[data-step='2'] {
-  fill: var(--map-relief-step-2);
+.china-map .physical-layer .relief-band[data-band='0'] {
+  fill: var(--map-relief-band-0);
 }
 
-.china-map .physical-layer .relief-shape[data-step='3'] {
-  fill: var(--map-relief-step-3);
+.china-map .physical-layer .relief-band[data-band='200'] {
+  fill: var(--map-relief-band-200);
+}
+
+.china-map .physical-layer .relief-band[data-band='500'] {
+  fill: var(--map-relief-band-500);
+}
+
+.china-map .physical-layer .relief-band[data-band='1000'] {
+  fill: var(--map-relief-band-1000);
+}
+
+.china-map .physical-layer .relief-band[data-band='2000'] {
+  fill: var(--map-relief-band-2000);
+}
+
+.china-map .physical-layer .relief-band[data-band='3000'] {
+  fill: var(--map-relief-band-3000);
+}
+
+.china-map .physical-layer .relief-band[data-band='4000'] {
+  fill: var(--map-relief-band-4000);
+}
+
+/*
+ * Форма рельефа больше не заливается: заливка занята шкалой. Спрашиваемая
+ * форма отвечает на наведение и фокус обводкой — она читается поверх любой
+ * полосы, а заливка спорила бы со шкалой и врала бы о высоте.
+ */
+.china-map .physical-layer .relief-shape {
+  fill: transparent;
 }
 
 .china-map .physical-layer .river-line {
@@ -2228,40 +2302,78 @@ button.chip[aria-pressed='true'] {
  * Легенда ступеней. Образец заливки идёт рядом со словом, а не вместо него:
  * ступень названа словом, и цвет здесь — второй канал, а не единственный.
  */
-.relief-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-4);
-  list-style: none;
-  margin: var(--s-3) 0 0;
-  padding: 0;
-}
-
-.relief-legend li {
-  align-items: center;
+.relief-scale {
   color: var(--text-on-ground);
-  display: flex;
   font-size: var(--t-size-caption);
-  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
 }
 
-.relief-legend .relief-swatch {
+.relief-scale figcaption {
+  margin-block-end: var(--s-1);
+}
+
+/*
+ * Семь равных долей: полоса показывает порядок ступеней, а не их ширину в
+ * метрах. Ширина в метрах у полос разная — от двухсот до бесконечности, — и
+ * пропорциональная шкала отдала бы шесть седьмых длины одной верхней полосе.
+ */
+.relief-scale-bar {
   block-size: 12px;
-  border: var(--border-hair) solid var(--map-border);
-  display: inline-block;
-  inline-size: 16px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
 }
 
-.relief-legend .relief-swatch[data-step='1'] {
-  background: var(--map-relief-step-1);
+.relief-scale-bar span {
+  block-size: 100%;
+  display: block;
 }
 
-.relief-legend .relief-swatch[data-step='2'] {
-  background: var(--map-relief-step-2);
+.relief-scale-bar span[data-band='0'] {
+  background: var(--map-relief-band-0);
 }
 
-.relief-legend .relief-swatch[data-step='3'] {
-  background: var(--map-relief-step-3);
+.relief-scale-bar span[data-band='200'] {
+  background: var(--map-relief-band-200);
+}
+
+.relief-scale-bar span[data-band='500'] {
+  background: var(--map-relief-band-500);
+}
+
+.relief-scale-bar span[data-band='1000'] {
+  background: var(--map-relief-band-1000);
+}
+
+.relief-scale-bar span[data-band='2000'] {
+  background: var(--map-relief-band-2000);
+}
+
+.relief-scale-bar span[data-band='3000'] {
+  background: var(--map-relief-band-3000);
+}
+
+.relief-scale-bar span[data-band='4000'] {
+  background: var(--map-relief-band-4000);
+}
+
+/*
+ * Подпись стоит на границе между полосами, а не в середине своей: число —
+ * это порог, а не название ступени.
+ */
+.relief-scale-ticks {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.relief-scale-ticks span {
+  justify-self: end;
+  transform: translateX(50%);
+}
+
+.relief-scale-ends {
+  color: var(--text-on-ground-muted);
+  display: flex;
+  justify-content: space-between;
 }
 
 .member-list {

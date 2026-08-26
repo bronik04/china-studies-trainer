@@ -9,6 +9,7 @@ import {
   RELIEF_SHAPES,
   RIVER_LINES,
 } from '../src/map/physical-geometry';
+import { RELIEF_BANDS, RELIEF_INPUTS_FINGERPRINT } from '../src/map/relief-bands';
 import {
   COMFORTABLE_TARGET_PX,
   MIN_TARGET_PX,
@@ -31,6 +32,7 @@ import {
   validateViewBox,
 } from '../src/map/validate-map';
 import { physicalInputsFingerprint } from './physical-fingerprint';
+import { reliefInputsFingerprint } from './relief-fingerprint';
 
 const assetPath = new URL('../public/maps/china-provinces.svg', import.meta.url);
 const svg = readFileSync(assetPath, 'utf8');
@@ -132,6 +134,22 @@ if (expectedFingerprint !== INPUTS_FINGERPRINT) {
   throw new Error(
     `Геометрия физической карты собрана из других входов: в файле ${INPUTS_FINGERPRINT}, ` +
       `у нынешних входов ${expectedFingerprint}. Запустите npm run generate:physical`,
+  );
+}
+
+/*
+ * Полосы высот проверяются тем же приёмом и по той же причине: заменить
+ * выжимку и не перегенерировать значит оставить на карте прежний рельеф при
+ * зелёной сборке.
+ */
+const expectedReliefFingerprint = reliefInputsFingerprint(
+  RELIEF_BANDS.map((band) => band.threshold),
+  readFileSync(new URL('data/relief-source.json', import.meta.url), 'utf8'),
+);
+if (expectedReliefFingerprint !== RELIEF_INPUTS_FINGERPRINT) {
+  throw new Error(
+    `Полосы рельефа собраны из других входов: в файле ${RELIEF_INPUTS_FINGERPRINT}, ` +
+      `у нынешних входов ${expectedReliefFingerprint}. Запустите npm run generate:relief`,
   );
 }
 

@@ -3,6 +3,13 @@ import { physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
 import { lakeMarks } from './lake-marks';
 import { LAKE_SHAPES, RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
+import { RELIEF_BANDS } from './relief-bands';
+import {
+  MAP_VIEWBOX_HEIGHT,
+  MAP_VIEWBOX_MIN_X,
+  MAP_VIEWBOX_MIN_Y,
+  MAP_VIEWBOX_WIDTH,
+} from './target-size';
 import { RIVER_SHAPES } from './river-hit';
 
 /**
@@ -156,6 +163,30 @@ export function PhysicalLayer({
       </defs>
 
       <g className="relief" clipPath={`url(#${CLIP_ID})`}>
+        {/*
+          Полосы высот. Базовая заливка прямоугольником — нижняя полоса, поверх
+          неё области «выше порога» снизу вверх. Правило заполнения `evenodd`
+          задано стилями: вложенное кольцо — это котловина внутри нагорья, и
+          дырку она даёт сама, без отдельной геометрии.
+        */}
+        <rect
+          className="relief-band"
+          data-band="0"
+          aria-hidden="true"
+          x={MAP_VIEWBOX_MIN_X}
+          y={MAP_VIEWBOX_MIN_Y}
+          width={MAP_VIEWBOX_WIDTH}
+          height={MAP_VIEWBOX_HEIGHT}
+        />
+        {RELIEF_BANDS.map((band) => (
+          <path
+            key={band.threshold}
+            className="relief-band"
+            data-band={band.threshold}
+            aria-hidden="true"
+            d={band.d}
+          />
+        ))}
         {RELIEF_SHAPES.map((shape) => {
           /*
            * Спрашиваются шесть форм из тридцати восьми. Остальные тридцать две
@@ -170,7 +201,6 @@ export function PhysicalLayer({
               key={shape.key}
               className="relief-shape"
               d={shape.d}
-              data-step={shape.step}
               data-feature-id={shape.featureId}
               data-selected={isTarget && shape.featureId === selectedFeatureId}
               data-outcome={

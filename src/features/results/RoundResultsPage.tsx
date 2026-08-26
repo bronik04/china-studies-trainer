@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { regionsWord } from '../../content/region-count';
 import type { RoundSummary } from '../../domain/progress-rules';
 import { formatDuration } from './format-duration';
@@ -19,12 +20,13 @@ export type RoundResultsPageProps = {
   readonly bestAccuracy: number;
   readonly isProgressSaved: boolean;
   /**
-   * Ровно тот набор, который запустит `onRepeatMistakes`: все ошибки за
-   * последние 14 дней (EXERCISES.md). Он шире списка на экране — тот показывает
-   * не больше `MAX_REVIEW_TOPICS` тем этого раунда, — и приходит извне, чтобы
-   * подпись кнопки не могла разойтись с тем, что кнопка делает.
+   * Карта раунда. Приходит готовой, а не собирается здесь: какая карта
+   * подходит раунду — по регионам, по городам или по физическим объектам, —
+   * знает `App`, единственное место навигации. Не задана — итог показывается
+   * одной колонкой, и это законное состояние, а не недоделка: у раунда по
+   * городам исход по точке карта пока не показывает.
    */
-  readonly idsToRepeat: readonly string[];
+  readonly roundMap?: ReactNode;
   /** Как склонять число в подписи «Повторить ошибки». */
   readonly countWord?: (count: number) => string;
   readonly onRepeatMistakes: () => void;
@@ -41,7 +43,7 @@ export function RoundResultsPage({
   targets,
   bestAccuracy,
   isProgressSaved,
-  idsToRepeat,
+  roundMap,
   countWord = regionsWord,
   onRepeatMistakes,
   onNewRound,
@@ -50,8 +52,13 @@ export function RoundResultsPage({
   const reviewTargets = summary.targetsToReview.flatMap(
     (target) => targets.find((named) => named.id === target.id) ?? [],
   );
-  const repeatCount = idsToRepeat.length;
-  const isRepeatWider = repeatCount > reviewTargets.length;
+  /*
+   * Подпись кнопки считается из того же списка, что показан рядом. Прежде
+   * набор приходил извне и был шире: экран говорил «пять», а кнопка запускала
+   * все ошибки за две недели, и расхождение приходилось объяснять отдельным
+   * предложением (решение владельца от 2026-08-25).
+   */
+  const repeatCount = reviewTargets.length;
 
   return (
     <main className="app-shell">
@@ -73,43 +80,44 @@ export function RoundResultsPage({
             Прогресс не сохранится: хранилище недоступно.
           </p>
         )}
-        {reviewTargets.length === 0 ? (
-          <p>Ошибок нет.</p>
-        ) : (
-          <>
-            <h3>Стоит повторить</h3>
-            <ul className="review-list">
-              {reviewTargets.map((target) => (
-                <li key={target.id}>
-                  {target.nameRu} <span lang="zh-Hans">{target.nameZh}</span>
-                </li>
-              ))}
-            </ul>
-            {/*
-              Список обрезан до пяти тем этого раунда, а повтор берёт все ошибки
-              за 14 дней. Без этой строки экран говорил «пять», а делал «двадцать
-              семь».
-            */}
-            {isRepeatWider ? (
-              <p>
-                Здесь ошибки этого раунда. В повтор войдут все {repeatCount}{' '}
-                {countWord(repeatCount)} с ошибками за последние 14 дней.
-              </p>
-            ) : null}
-          </>
-        )}
-        <div className="results-actions">
-          {reviewTargets.length === 0 ? null : (
-            <button type="button" className="primary" onClick={onRepeatMistakes}>
-              Повторить ошибки: {repeatCount} {countWord(repeatCount)}
-            </button>
+        {/*
+          Карта слева, разбор справа: кнопка повтора стоит у списка, который
+          она повторит. На узком экране колонки складываются в одну — карта,
+          затем разбор, затем действия, тем же порядком, что и в разметке.
+        */}
+        <div className="results-split">
+          {roundMap === undefined ? null : (
+            <div className="results-map">{roundMap}</div>
           )}
-          <button type="button" className="secondary" onClick={onNewRound}>
-            Новый раунд
-          </button>
-          <button type="button" className="secondary" onClick={onExit}>
-            На главную
-          </button>
+          <div className="results-review">
+            {reviewTargets.length === 0 ? (
+              <p>Ошибок нет.</p>
+            ) : (
+              <>
+                <h3>Стоит повторить</h3>
+                <ul className="review-list">
+                  {reviewTargets.map((target) => (
+                    <li key={target.id}>
+                      {target.nameRu} <span lang="zh-Hans">{target.nameZh}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <div className="results-actions">
+              {reviewTargets.length === 0 ? null : (
+                <button type="button" className="primary" onClick={onRepeatMistakes}>
+                  Повторить ошибки: {repeatCount} {countWord(repeatCount)}
+                </button>
+              )}
+              <button type="button" className="secondary" onClick={onNewRound}>
+                Новый раунд
+              </button>
+              <button type="button" className="secondary" onClick={onExit}>
+                На главную
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </main>

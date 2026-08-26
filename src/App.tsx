@@ -13,12 +13,12 @@ import { addAttempts } from './domain/progress';
 import {
   bestAccuracy,
   masteredTargets,
-  targetsToRepeat,
   summariseRound,
 } from './domain/progress-rules';
-import type { FillRound } from './domain/fill-round';
+import { summariseFillRound, type FillRound } from './domain/fill-round';
 import { createProgressStore } from './domain/progress-storage';
 import type { QuestionLanguage } from './domain/question-language';
+import { outcomesByTarget } from './domain/round-outcomes';
 import type { Attempt, ExerciseType } from './domain/round';
 import { CityRound } from './features/exercise/CityRound';
 import { PhysicalRound } from './features/exercise/PhysicalRound';
@@ -30,6 +30,7 @@ import { AtlasPage } from './features/atlas/AtlasPage';
 import { CollectionPage } from './features/collections/CollectionPage';
 import { CollectionsPage } from './features/collections/CollectionsPage';
 import { HomePage } from './features/home/HomePage';
+import { ChinaMap } from './map/ChinaMap';
 import type { MapZoom } from './map/MapControls';
 import { SiteHeader, type SiteSection } from './ui/SiteHeader';
 
@@ -126,7 +127,6 @@ export default function App() {
   const [roundId, setRoundId] = useState(newRoundId);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 31));
   const [lastAttempts, setLastAttempts] = useState<readonly Attempt[]>([]);
-  const [repeatRegionIds, setRepeatRegionIds] = useState<readonly string[]>([]);
   const [fillRound, setFillRound] = useState<FillRound | null>(null);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
@@ -323,12 +323,7 @@ export default function App() {
   }
 
   function finishFillRound(round: FillRound) {
-    const updated = commitAttempts(round.attempts);
-    setRepeatRegionIds(
-      targetsToRepeat(updated.attempts, new Date(), 'region').map(
-        (target) => target.id,
-      ),
-    );
+    commitAttempts(round.attempts);
     setFillRound(round);
     setScreen('fill-results');
   }
@@ -339,26 +334,14 @@ export default function App() {
    * своего вида, и второй источник правды разошёлся бы с ними.
    */
   function finishTargetRound(attempts: readonly Attempt[]) {
-    const updated = commitAttempts(attempts);
-    const kind = attempts[0]?.target.kind ?? 'city';
+    commitAttempts(attempts);
     setLastAttempts(attempts);
-    setRepeatRegionIds(
-      targetsToRepeat(updated.attempts, new Date(), kind).map((target) => target.id),
-    );
     setScreen('results');
   }
 
   function finishRound(attempts: readonly Attempt[]) {
-    const updated = commitAttempts(attempts);
+    commitAttempts(attempts);
     setLastAttempts(attempts);
-    /*
-     * Набор для повтора считается здесь, а не при отрисовке итогов: `new Date()`
-     * в теле компонента — нечистый вызов. Заодно подпись кнопки и её действие
-     * получают один и тот же список, а не два вычисления одного правила.
-     */
-    setRepeatRegionIds(
-      targetsToRepeat(updated.attempts, new Date(), 'region').map((target) => target.id),
-    );
     setScreen('results');
   }
 
@@ -384,9 +367,12 @@ export default function App() {
           round={fillRound}
           regions={regions}
           isProgressSaved={store.isAvailable}
-          idsToRepeat={repeatRegionIds}
           onRepeatMistakes={() =>
-            startRound('find-on-map', language, repeatRegionIds)
+            startRound(
+              'find-on-map',
+              language,
+              summariseFillRound(fillRound).regionIdsToReview,
+            )
           }
           onNewRound={() => startFillRound(language)}
           onExit={() => setScreen('home')}
@@ -454,10 +440,36 @@ export default function App() {
     const roundKind = lastAttempts[0]?.target.kind ?? 'region';
     const isCityRound = roundKind === 'city';
     const isPhysicalRound = roundKind === 'physical';
-    const repeatCities = cityPool.filter((city) => repeatRegionIds.includes(city.id));
+    /*
+     * Набор повтора — ошибки этого раунда, те же, что показаны списком
+     * (решение владельца от 2026-08-25). Отдельного источника у кнопки нет:
+     * разойтись со списком ей теперь нечем.
+     */
+    const repeatIds = summary.targetsToReview.map((target) => target.id);
+    const repeatCities = cityPool.filter((city) => repeatIds.includes(city.id));
     const repeatFeatures = physicalPool.filter((feature) =>
-      repeatRegionIds.includes(feature.id),
+      repeatIds.includes(feature.id),
     );
+
+    /*
+     * Карта итога есть у раундов по регионам. У раунда по городам исход по
+     * точке карта пока не показывает, у физических целей это отдельная
+     * работа; такой итог показывается одной колонкой — пустая рамка была бы
+     * хуже отсутствующей.
+     */
+    const roundMap =
+      isCityRound || isPhysicalRound ? undefined : (
+        <ChinaMap
+          regions={regions}
+          selectedRegionId={null}
+          onSelect={() => {}}
+          onClear={() => {}}
+          interactive={false}
+          usage="answer"
+          variant="fill"
+          outcomes={outcomesByTarget(lastAttempts)}
+        />
+      );
 
     return (
       <AppFrame fillsFrame={false} current={null} onNavigate={navigate}>
@@ -469,7 +481,7 @@ export default function App() {
           }
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
-          idsToRepeat={repeatRegionIds}
+          roundMap={roundMap}
           onRepeatMistakes={() => {
             if (isCityRound) {
               setCityPool(repeatCities);
@@ -488,7 +500,7 @@ export default function App() {
               return;
             }
 
-            startRound(exerciseTypes[0], language, repeatRegionIds);
+            startRound(exerciseTypes[0], language, repeatIds);
           }}
           onNewRound={() => {
             if (isCityRound) {

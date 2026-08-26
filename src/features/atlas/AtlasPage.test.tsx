@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { regions } from '../../content/regions';
 import { AtlasPage } from './AtlasPage';
@@ -98,9 +98,29 @@ it('переключает карту между политической и ф�
   fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
 
   expect(container.querySelector('.physical-layer')).toBeInTheDocument();
-  expect(screen.getByText('Нагорье')).toBeInTheDocument();
-  expect(screen.getByText('Плато и котловины')).toBeInTheDocument();
-  expect(screen.getByText('Равнины')).toBeInTheDocument();
+});
+
+it('показывает шкалу высот под физической картой', () => {
+  renderAtlas();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+
+  const scale = screen.getByRole('figure', { name: 'Высота, м над уровнем моря' });
+
+  for (const tick of ['200', '500', '1000', '2000', '3000', '4000']) {
+    expect(within(scale).getByText(tick)).toBeInTheDocument();
+  }
+
+  expect(within(scale).getByText('равнины')).toBeInTheDocument();
+  expect(within(scale).getByText('нагорье')).toBeInTheDocument();
+});
+
+it('не показывает шкалу на политической карте', () => {
+  renderAtlas();
+
+  expect(
+    screen.queryByRole('figure', { name: 'Высота, м над уровнем моря' }),
+  ).toBeNull();
 });
 
 it('в физическом виде выбранная река открывает свою карточку', () => {

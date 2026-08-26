@@ -24,7 +24,6 @@ function renderResults(
       targets={regions}
       bestAccuracy={0.9}
       isProgressSaved
-      idsToRepeat={['sichuan', 'yunnan']}
       onRepeatMistakes={() => {}}
       onNewRound={() => {}}
       onExit={() => {}}
@@ -71,48 +70,56 @@ it('предлагает повторить ошибки', () => {
 it('не предлагает повторить ошибки, когда их нет', () => {
   renderResults({
     summary: { ...SUMMARY, correct: 34, accuracy: 1, targetsToReview: [] },
-    idsToRepeat: [],
   });
 
   expect(screen.queryByRole('button', { name: /^Повторить ошибки/ })).toBeNull();
   expect(screen.getByText('Ошибок нет.')).toBeInTheDocument();
 });
 
-it('кнопка называет, сколько регионов войдёт в повтор', () => {
-  // Раунд показывает не больше пяти тем, а повтор берёт все ошибки за 14 дней.
+it('подпись кнопки повтора считается из того же списка, что и на экране', () => {
   renderResults({
-    idsToRepeat: [
-      'sichuan',
-      'yunnan',
-      'hunan',
-      'hebei',
-      'gansu',
-      'jilin',
-      'anhui',
-    ],
+    summary: {
+      ...SUMMARY,
+      correct: 27,
+      accuracy: 27 / 34,
+      targetsToReview: [
+        { kind: 'region', id: 'sichuan' },
+        { kind: 'region', id: 'yunnan' },
+        { kind: 'region', id: 'hunan' },
+        { kind: 'region', id: 'hebei' },
+        { kind: 'region', id: 'gansu' },
+        { kind: 'region', id: 'jilin' },
+        { kind: 'region', id: 'anhui' },
+      ],
+    },
   });
 
+  expect(screen.getAllByRole('listitem')).toHaveLength(7);
   expect(
     screen.getByRole('button', { name: 'Повторить ошибки: 7 регионов' }),
   ).toBeInTheDocument();
 });
 
-it('объясняет, что список — ошибки этого раунда, а повтор шире', () => {
-  renderResults({
-    idsToRepeat: ['sichuan', 'yunnan', 'hunan', 'hebei'],
-  });
-
-  expect(
-    screen.getByText(
-      'Здесь ошибки этого раунда. В повтор войдут все 4 региона с ошибками за последние 14 дней.',
-    ),
-  ).toBeInTheDocument();
-});
-
-it('не объясняет ничего, когда повтор совпадает со списком', () => {
+/*
+ * Предложение про «все ошибки за 14 дней» объясняло расхождение, которого
+ * больше нет. Если оно вернётся — вернётся и расхождение.
+ */
+it('не объясняет расхождение, которого нет', () => {
   renderResults();
 
   expect(screen.queryByText(/за последние 14 дней/)).toBeNull();
+});
+
+it('показывает карту раунда, когда её дали', () => {
+  renderResults({ roundMap: <div data-testid="round-map" /> });
+
+  expect(screen.getByTestId('round-map')).toBeInTheDocument();
+});
+
+it('обходится без карты, когда её не дали', () => {
+  renderResults();
+
+  expect(screen.queryByTestId('round-map')).toBeNull();
 });
 
 it('предупреждает, когда прогресс не сохраняется', () => {

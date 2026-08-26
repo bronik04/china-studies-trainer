@@ -18,6 +18,50 @@ describe('PhysicalLayer', () => {
     expect(container.querySelectorAll('.river-line')).toHaveLength(6);
   });
 
+  it('рисует полосы высот снизу вверх', () => {
+    const { container } = renderLayer();
+
+    const bands = [...container.querySelectorAll('[data-band]')];
+
+    expect(bands.map((band) => band.getAttribute('data-band'))).toEqual([
+      '0',
+      '200',
+      '500',
+      '1000',
+      '2000',
+      '3000',
+      '4000',
+    ]);
+  });
+
+  /*
+   * Полосы декоративны: шкалу называет легенда словами, а семь узлов в обходе
+   * по Tab не дали бы ученику ничего.
+   */
+  it('не даёт полосам имени и фокуса', () => {
+    const { container } = renderLayer();
+
+    for (const band of container.querySelectorAll('[data-band]')) {
+      expect(band.getAttribute('aria-hidden')).toBe('true');
+      expect(band.getAttribute('tabindex')).toBeNull();
+    }
+  });
+
+  /*
+   * Форма перестала заливать фон: заливка занята шкалой. Цель у неё остаётся —
+   * имя, роль и фокус нужны игре «Найти на физической карте».
+   */
+  it('оставляет спрашиваемой форме имя и роль без заливки по ступени', () => {
+    const { container } = renderLayer({ onSelect: () => {} });
+
+    const shape = container.querySelector('.relief-shape[data-feature-id]');
+
+    expect(shape).not.toBeNull();
+    expect(shape?.getAttribute('role')).toBe('button');
+    expect(shape?.getAttribute('data-step')).toBeNull();
+    expect(shape?.getAttribute('aria-label')).toMatch(/,/);
+  });
+
   it('декоративные формы недоступны читалке экрана, а цели названы', () => {
     const { container } = renderLayer();
 
