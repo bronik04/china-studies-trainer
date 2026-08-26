@@ -239,6 +239,39 @@ p {
  * зазором включается только с 1024 px. Без этого отступа подпись «Вид карты»
  * начиналась вплотную к последней строке карточки.
  */
+/*
+ * Вводка колонки до выбора. Мера ширины та же, что у карточки региона:
+ * колонка не должна менять ритм, когда карточка её сменит.
+ */
+.atlas-lede {
+  color: var(--text-on-ground);
+  margin-block-start: var(--s-3);
+  max-inline-size: 42ch;
+}
+
+.atlas-contents {
+  display: grid;
+  gap: var(--s-3);
+  margin: var(--s-5) 0;
+  max-inline-size: 42ch;
+}
+
+.atlas-contents div {
+  border-block-start: var(--border-hair) solid var(--line-on-ground);
+  padding-block-start: var(--s-2);
+}
+
+.atlas-contents dt {
+  color: var(--text-on-ground-strong);
+  font-weight: var(--t-weight-medium);
+}
+
+.atlas-contents dd {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: 0;
+}
+
 .atlas-map {
   margin-block-start: var(--s-5);
 }
@@ -783,8 +816,17 @@ button.text:hover:enabled {
  *
  * Свой индикатор остаётся на `:focus-visible`, то есть там, где он и нужен:
  * при обходе с клавиатуры.
+ *
+ * Снимается на `:focus`, а не на `:focus-visible`: при нажатии мышью узел
+ * получает фокус, но не `:focus-visible`, — правило с `:focus-visible` до
+ * него не достаёт, и кольцо остаётся. У Таримской впадины оно обводило
+ * прямоугольник во всю ширину Синьцзяна.
  */
-.china-map [data-region-id]:focus {
+.china-map [data-region-id]:focus,
+.china-map .city-hit:focus,
+.china-map .physical-layer .relief-shape:focus,
+.china-map .physical-layer .river-line:focus,
+.china-map .physical-layer .lake-hit:focus {
   outline: none;
 }
 
@@ -925,10 +967,6 @@ button.text:hover:enabled {
   opacity: 1;
 }
 
-.china-map .city-hit:focus-visible {
-  outline: none;
-}
-
 /*
  * Спрошенная точка обязана быть видна с другого конца карты: в «Назвать
  * город» она и есть вопрос. Тушь по тёмной заливке для этого не годилась —
@@ -989,10 +1027,6 @@ button.text:hover:enabled {
 .china-map .physical-layer .relief-shape:focus-visible {
   stroke: var(--focus-on-paper);
   stroke-width: var(--map-border-width-strong);
-}
-
-.china-map .physical-layer .relief-shape:focus-visible {
-  outline: none;
 }
 
 /*
@@ -1119,7 +1153,6 @@ button.text:hover:enabled {
  * признака фокуса не оставалось бы вовсе, хотя следующий Tab идёт от неё.
  */
 .china-map .physical-layer .river-line:focus-visible {
-  outline: none;
   stroke: var(--focus-on-paper);
 }
 
@@ -1179,10 +1212,6 @@ button.text:hover:enabled {
   stroke: var(--map-incorrect-mark-relief);
   stroke-dasharray: 3 2;
   stroke-width: 2;
-}
-
-.china-map .physical-layer .lake-hit:focus-visible {
-  outline: none;
 }
 
 .china-map .physical-layer .lake-hit:focus-visible + .lake-mark,
