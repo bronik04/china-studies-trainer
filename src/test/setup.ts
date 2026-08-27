@@ -32,3 +32,12 @@ if (typeof dialog.showModal !== 'function') {
     this.dispatchEvent(new Event('close'));
   };
 }
+
+/*
+ * jsdom не реализует `scrollIntoView`, а переход на раздел главной подтягивает
+ * его в кадр. Заглушка ничего не делает: раскладки в jsdom нет, прокручивать
+ * нечего, а падать переходу незачем.
+ */
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = function scrollIntoView() {};
+}

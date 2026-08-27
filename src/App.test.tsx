@@ -154,16 +154,21 @@ it('атлас держит выбор региона в состоянии пр
   expect(screen.getByTestId('atlas-region-card')).toHaveTextContent('Сычуань');
 });
 
-it('главная кнопка запускает раунд и возвращает обратно', () => {
+/*
+ * Выход из режима ведёт туда, откуда режим начинался, — на секцию «Режимы», а
+ * не на верх главной: иначе после каждого раунда приходится прокручивать
+ * страницу заново.
+ */
+it('главная кнопка запускает раунд и возвращает на секцию «Режимы»', () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /^Начать/ }));
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Прервать раунд' }));
-  expect(
-    screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
-  ).toBeInTheDocument();
+
+  expect(screen.getByRole('heading', { name: 'Режимы' })).toBeInTheDocument();
+  expect(document.activeElement).toHaveAttribute('id', 'modes');
 });
 
 /**
@@ -229,18 +234,16 @@ function startCapitalRound(): void {
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 }
 
-it('показывает итог после раунда и возвращает на главную', () => {
+it('показывает итог после раунда и возвращает на секцию «Режимы»', () => {
   startCapitalRound();
   finishRound(true);
 
   expect(screen.getByText('100%')).toBeInTheDocument();
   expect(screen.getByText('34 из 34')).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: 'На главную' }));
+  fireEvent.click(screen.getByRole('button', { name: 'К режимам' }));
 
-  expect(
-    screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
-  ).toBeInTheDocument();
+  expect(document.activeElement).toHaveAttribute('id', 'modes');
 });
 
 it('повторяет все ошибки, а не только показанные пять, и говорит об этом', () => {
