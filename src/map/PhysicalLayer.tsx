@@ -228,6 +228,7 @@ export function PhysicalLayer({
               d={shape.d}
               data-feature-id={shape.featureId}
               data-selected={isTarget && shape.featureId === selectedFeatureId}
+              data-hovered={isTarget && shape.featureId === hovered}
               data-outcome={
                 isTarget ? featureOutcomes[shape.featureId!] : undefined
               }
@@ -340,8 +341,18 @@ export function PhysicalLayer({
           const label = NAME_OF.get(mark.featureId) ?? mark.featureId;
           const answers = onSelect !== undefined;
 
+          /*
+           * Состояние стоит на группе, а не на знаке: помечаются оба узла
+           * озера — контур воды и знак, — а держать один признак в двух
+           * местах значит однажды их развести.
+           */
           return (
-            <g key={mark.featureId} className="lake">
+            <g
+              key={mark.featureId}
+              className="lake"
+              data-selected={mark.featureId === selectedFeatureId}
+              data-hovered={mark.featureId === hovered}
+            >
               <path className="lake-shape" d={shape.d} aria-hidden="true" />
               <circle
                 className="lake-halo"
@@ -389,7 +400,6 @@ export function PhysicalLayer({
                 cx={mark.x}
                 cy={mark.y}
                 r={LAKE_MARK_RADIUS}
-                data-selected={mark.featureId === selectedFeatureId}
                 aria-hidden="true"
               />
             </g>
