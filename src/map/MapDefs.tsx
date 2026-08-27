@@ -17,6 +17,7 @@ const FAILED_PATTERN_ID = 'map-hatch-failed';
 const IN_PROGRESS_PATTERN_ID = 'map-hatch-in-progress';
 const PHYSICAL_CORRECT_PATTERN_ID = 'map-hatch-physical-correct';
 const PHYSICAL_INCORRECT_PATTERN_ID = 'map-hatch-physical-incorrect';
+const PHYSICAL_HIGHLIGHT_PATTERN_ID = 'map-hatch-physical-highlight';
 
 export function MapDefs() {
   return (
@@ -147,6 +148,31 @@ export function MapDefs() {
             y2="4"
             stroke="var(--map-incorrect-mark-relief)"
             strokeWidth="2"
+          />
+        </pattern>
+        {/*
+          Выделение формы рельефа: что под курсором, что в фокусе, что
+          спрошено. Фона у образца нет — под ним лежит полоса высоты, и она
+          обязана просвечивать между штрихами: выделение говорит «вот этот
+          объект», а не «вот эта высота».
+
+          Штрих вертикальный, тогда как у исходов 45° и −45°: форма под
+          курсором и форма с исходом бывают на экране рядом, и три вида
+          штриховки должны различаться наклоном, а не только тоном.
+        */}
+        <pattern
+          id={PHYSICAL_HIGHLIGHT_PATTERN_ID}
+          width="7"
+          height="7"
+          patternUnits="userSpaceOnUse"
+        >
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="7"
+            stroke="var(--map-highlight)"
+            strokeWidth="1.2"
           />
         </pattern>
       </defs>
