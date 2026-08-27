@@ -352,12 +352,42 @@ export function validateCollections(
 ): void {
   const errors: string[] = [];
   const sourceIds = new Set(sources.map((source) => source.id));
+  const seenIds = new Set<string>();
 
   for (const collection of collections) {
-    if (collection.lead.trim().length === 0) {
+    /*
+     * Идентификаторы коллекций теперь из двух источников: написанные руками и
+     * взятые у регионов. Совпадение молча спрятало бы одну страницу за
+     * другой — `collectionById` вернёт первую.
+     */
+    if (seenIds.has(collection.id)) {
+      errors.push(`Коллекция ${collection.id}: повторный идентификатор`);
+    }
+    seenIds.add(collection.id);
+
+    if (
+      collection.aboutRegionId !== undefined &&
+      !collection.regionIds.includes(collection.aboutRegionId)
+    ) {
+      errors.push(
+        `Коллекция ${collection.id}: регион ${collection.aboutRegionId} не в её списке`,
+      );
+    }
+
+    /*
+     * Коллекция о регионе не пишет вводку и заметки: её тело — справка из
+     * справочника регионов, и та проверена своим правилом. Требовать здесь
+     * ещё три заметки значило бы требовать написать то же самое дважды.
+     * Дописанные сверх справки — по общему правилу: три-четыре или ни одной.
+     */
+    const written = collection.aboutRegionId === undefined;
+    if (written && collection.lead.trim().length === 0) {
       errors.push(`Коллекция ${collection.id}: пустая вводка`);
     }
-    if (collection.notes.length < 3 || collection.notes.length > 4) {
+    if (
+      (written || collection.notes.length > 0) &&
+      (collection.notes.length < 3 || collection.notes.length > 4)
+    ) {
       errors.push(
         `Коллекция ${collection.id}: заметок должно быть 3–4, сейчас ${collection.notes.length}`,
       );

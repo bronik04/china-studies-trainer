@@ -1,4 +1,11 @@
-import { collections, collectionsOfRegion } from './collections';
+import {
+  collectionById,
+  collections,
+  collectionsInGroup,
+  collectionsOfRegion,
+  isDraft,
+} from './collections';
+import { regions } from './regions';
 
 it('находит коллекции региона', () => {
   const ids = collectionsOfRegion('shaanxi').map((collection) => collection.id);
@@ -31,4 +38,55 @@ it('согласован с regionIds коллекции', () => {
       expect(collectionsOfRegion(regionId)).toContain(collection);
     }
   }
+});
+
+/*
+ * Коллекция «по регионам» — сам регион, прочитанный как коллекция, и потому
+ * их ровно столько же. Прежде их было четыре из тридцати четырёх: тридцать
+ * регионов со справкой, источниками и городами оставались без страницы.
+ */
+it('даёт коллекцию каждому региону справочника', () => {
+  const byRegion = collectionsInGroup('by-region');
+
+  expect(byRegion).toHaveLength(regions.length);
+  expect(byRegion.map((collection) => collection.id)).toEqual(
+    regions.map((region) => region.id),
+  );
+});
+
+it('не пишет имя региона второй раз, а берёт из справочника', () => {
+  for (const region of regions) {
+    const collection = collectionById(region.id);
+
+    expect(collection?.nameRu).toBe(region.nameRu);
+    expect(collection?.nameZh).toBe(region.nameZh);
+    expect(collection?.pinyin).toBe(region.pinyin);
+    expect(collection?.aboutRegionId).toBe(region.id);
+  }
+});
+
+/*
+ * Черновик — тот, у кого нет источника. У коллекции региона он есть всегда:
+ * источники её справки и самого справочника. Иначе тридцать четыре страницы
+ * назвались бы непроверенными, хотя стоят на том же, что и атлас.
+ */
+it('коллекция региона не черновик: у неё источники её же справки', () => {
+  for (const region of regions) {
+    const collection = collectionById(region.id);
+    const factSourceIds = region.facts.flatMap((fact) => fact.sourceIds);
+
+    expect(collection === undefined ? true : isDraft(collection)).toBe(false);
+    for (const sourceId of factSourceIds) {
+      expect(collection?.sourceIds).toContain(sourceId);
+    }
+  }
+});
+
+/* Дописанное руками не теряется при выводе коллекции из региона. */
+it('сохраняет вводку и заметки там, где их написали', () => {
+  const yunnan = collectionById('yunnan');
+
+  expect(yunnan?.lead).toContain('Юньнань — горная');
+  expect(yunnan?.notes).toHaveLength(4);
+  expect(yunnan?.relatedIds).toContain('yuanyang-terraces');
 });

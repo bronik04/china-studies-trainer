@@ -52,3 +52,19 @@ export function featuresWord(count: number): string {
 
   return last >= 2 && last <= 4 ? 'объекта' : 'объектов';
 }
+
+/** 1 коллекция, 2–4 коллекции, 5+ коллекций. */
+export function collectionsWord(count: number): string {
+  const teens = count % 100;
+  const last = count % 10;
+
+  if (teens >= 11 && teens <= 14) {
+    return 'коллекций';
+  }
+
+  if (last === 1) {
+    return 'коллекция';
+  }
+
+  return last >= 2 && last <= 4 ? 'коллекции' : 'коллекций';
+}

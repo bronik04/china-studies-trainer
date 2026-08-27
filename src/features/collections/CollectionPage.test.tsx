@@ -200,3 +200,26 @@ it('оставляет место под фотографию у коллекц�
     document.querySelector('.photo-slot[data-photo-height="hero"]'),
   ).not.toBeNull();
 });
+
+/*
+ * У региона без дописок справка приходит из справочника и стоит на странице
+ * целиком. Пометки «описание ещё не написано» и «справка ещё не написана» под
+ * ней были бы прямой неправдой.
+ */
+it('не объявляет пустой страницу региона, у которой есть справка', () => {
+  renderPage('hainan');
+
+  expect(screen.getByText(/Административный центр: Хайкоу/)).toBeInTheDocument();
+  expect(screen.queryByText(/Описание ещё не написано/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Справка ещё не написана/)).not.toBeInTheDocument();
+  expect(screen.queryByTestId('draft-note')).not.toBeInTheDocument();
+});
+
+/* Дописки не пропадают: у Юньнани раздел «Что стоит знать» остаётся. */
+it('оставляет дописанную справку там, где её написали', () => {
+  renderPage('yunnan');
+
+  expect(
+    screen.getByRole('heading', { level: 2, name: 'Что стоит знать' }),
+  ).toBeInTheDocument();
+});

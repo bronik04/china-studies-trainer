@@ -3,11 +3,6 @@ import { collectionCardSubtitle, collectionScope } from './collection-scope';
 import { collectionById, collections, type Collection } from './collections';
 import { regions } from './regions';
 
-/*
- * `collections` объявлен через `as const`, поэтому его тип — union из двенадцати
- * литералов, и необязательные поля видны только у тех, у кого они есть.
- * Обходу по списку нужен общий тип: он проверяет как раз тех, у кого поля нет.
- */
 const all: readonly Collection[] = collections;
 
 function byId(id: string) {
@@ -34,9 +29,20 @@ it('охват без привязки к регионам берётся из �
   expect(collectionScope(byId('spring-festival'), regions)).toBe('Вся страна');
 });
 
-it('подпись карточки прямо говорит, что фотографий нет', () => {
+/*
+ * Прежде подпись повторяла заголовок карточки слово в слово: «Юньнань» под
+ * «Юньнань». На четырёх коллекциях это была мелочь, на тридцати четырёх —
+ * колонка одинаковых строк.
+ */
+it('подпись карточки региона не повторяет её заголовок', () => {
   expect(collectionCardSubtitle(byId('yunnan'), regions)).toBe(
-    'Юньнань · фотографий пока нет',
+    'Провинция · центр Куньмин',
+  );
+});
+
+it('подпись карточки прямо говорит, что фотографий нет', () => {
+  expect(collectionCardSubtitle(byId('taklamakan'), regions)).toBe(
+    'Синьцзян-Уйгурский автономный район · фотографий пока нет',
   );
 });
 

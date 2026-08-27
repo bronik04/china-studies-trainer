@@ -1,29 +1,17 @@
 import { useState } from 'react';
 import { collectionsOfRegion } from '../../content/collections';
+import { REGION_KIND_LABELS } from '../../content/regions';
 import { physicalFeatures } from '../../content/physical-features';
 import { featuresWord, regionsWord } from '../../content/region-count';
 import type {
   PhysicalFeature,
   PhysicalKind,
   Region,
-  RegionKind,
 } from '../../content/types';
 import { ChinaMap } from '../../map/ChinaMap';
 import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { MapAttribution } from '../../map/MapAttribution';
 import type { MapZoom } from '../../map/MapControls';
-
-/**
- * Тип единицы назван словом. На справочной карте он же передан цветом, но
- * цвет — не единственный канал: соседи одного типа сливаются в общее поле, и
- * опознать тип по заливке нельзя (DESIGN_SYSTEM.md).
- */
-const KIND_LABELS: Readonly<Record<RegionKind, string>> = {
-  province: 'Провинция',
-  'autonomous-region': 'Автономный район',
-  municipality: 'Город центрального подчинения',
-  sar: 'Специальный административный район',
-};
 
 /**
  * Шкала высот. Полосой, а не списком плашек: шкала непрерывна, и прежние
@@ -230,7 +218,7 @@ export function AtlasPage({
                   {selected.nameRu} <span lang="zh-Hans">{selected.nameZh}</span>
                 </h1>
                 <p lang="zh-Latn-pinyin">{selected.pinyin}</p>
-                <p className="status-note">{KIND_LABELS[selected.kind]}</p>
+                <p className="status-note">{REGION_KIND_LABELS[selected.kind]}</p>
                 <RegionReference region={selected} />
                 {/*
                   Коллекции региона — не новая сущность, а та же привязка

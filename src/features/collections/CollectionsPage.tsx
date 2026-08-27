@@ -4,6 +4,7 @@ import {
   collections,
   collectionsInGroup,
 } from '../../content/collections';
+import { collectionsWord } from '../../content/region-count';
 import type { Region } from '../../content/types';
 import { SiteFooter } from '../../ui/SiteFooter';
 import { CollectionCard } from '../home/CollectionCard';
@@ -36,7 +37,8 @@ export function CollectionsPage({
           </p>
         </div>
         <p className="page-head-count">
-          {collections.length} коллекций · {COLLECTION_GROUPS.length} группы
+          {collections.length} {collectionsWord(collections.length)} ·{' '}
+          {COLLECTION_GROUPS.length} группы
         </p>
       </div>
 

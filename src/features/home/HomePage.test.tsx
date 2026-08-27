@@ -142,14 +142,14 @@ it('выбранная группа помечена не только цвет�
   expect(chip).toHaveAttribute('aria-pressed', 'true');
 });
 
-it('витрина показывает четыре коллекции из двенадцати', () => {
+it('витрина показывает четыре коллекции из всего каталога', () => {
   renderHome();
 
   const cards = screen
     .getAllByRole('listitem')
     .filter((item) => item.classList.contains('collection-card'));
 
-  expect(collections).toHaveLength(12);
+  expect(collections.length).toBeGreaterThan(4);
   expect(cards).toHaveLength(4);
 });
 

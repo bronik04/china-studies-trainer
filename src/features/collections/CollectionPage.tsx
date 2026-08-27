@@ -49,12 +49,12 @@ export function CollectionPage({
     .filter((item): item is Collection => item !== undefined);
   const draft = isDraft(collection);
   /*
-   * Регион, о котором коллекция. Только у группы «по регионам»: она и значит
-   * «всё об одной единице», тогда как у коллекции о месте регион тоже один,
-   * но она не о нём.
+   * Регион, о котором коллекция. Признак стоит в каталоге, а не выводится из
+   * числа регионов: у коллекции о месте регион тоже один, но она не о нём.
    */
-  const aboutRegion =
-    collection.groupId === 'by-region' ? memberRegions[0] : undefined;
+  const aboutRegion = regions.find(
+    (region) => region.id === collection.aboutRegionId,
+  );
 
   return (
     <main className="site-main">
@@ -82,14 +82,20 @@ export function CollectionPage({
             {collection.pinyin}
           </p>
 
-          {collection.lead === '' ? (
+          {/*
+            Пустая вводка — незаполненность только там, где вводку пишут
+            руками. У коллекции о регионе её нет по устройству: сразу за
+            заголовком идёт справка из справочника, и объявлять недостачу
+            перед ней значило бы называть страницу пустой на глазах у полной.
+          */}
+          {collection.lead !== '' ? (
+            <p className="lead">{collection.lead}</p>
+          ) : aboutRegion === undefined ? (
             <p className="empty-note">
               Описание ещё не написано. Пока коллекция держит только привязку к
               регионам — по ней уже можно собрать раунд.
             </p>
-          ) : (
-            <p className="lead">{collection.lead}</p>
-          )}
+          ) : null}
 
           {/*
             У коллекции «по регионам» имя, иероглифы и пиньинь дословно
@@ -98,9 +104,8 @@ export function CollectionPage({
             справочник о регионе давно написан: центр, факты с источниками,
             города. Он и встаёт на это место.
 
-            Условие — группа, а не «ровно один регион»: у коллекции о месте
-            регион тоже один, но она не о нём. Группа «по регионам» и значит
-            «всё об одной единице».
+            Условие — признак в каталоге, а не «ровно один регион»: у
+            коллекции о месте регион тоже один, но она не о нём.
           */}
           {aboutRegion === undefined ? (
             <PhotoSlot subject={collection.nameRu} height="hero" />
@@ -108,21 +113,30 @@ export function CollectionPage({
             <RegionReference region={aboutRegion} />
           )}
 
-          <section className="collection-block">
-            <h2>Что стоит знать</h2>
-            {collection.notes.length === 0 ? (
-              <p className="empty-note">
-                Справка ещё не написана: её пишет учитель и подтверждает
-                источником.
-              </p>
-            ) : (
-              <ul className="rule-list">
-                {collection.notes.map((note) => (
-                  <li key={note}>{note}</li>
-                ))}
-              </ul>
-            )}
-          </section>
+          {/*
+            Раздел не исчезает, когда справку просто не написали: экран без
+            него выглядит сломанным, а с пометкой — незаполненным, и это
+            правда. Исчезает он только у коллекции о регионе без дописок: там
+            справка уже стоит выше, и «справка ещё не написана» под ней было
+            бы прямой неправдой.
+          */}
+          {aboutRegion !== undefined && collection.notes.length === 0 ? null : (
+            <section className="collection-block">
+              <h2>Что стоит знать</h2>
+              {collection.notes.length === 0 ? (
+                <p className="empty-note">
+                  Справка ещё не написана: её пишет учитель и подтверждает
+                  источником.
+                </p>
+              ) : (
+                <ul className="rule-list">
+                  {collection.notes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
 
           <section className="collection-block">
             <div className="landing-section-head">
@@ -135,8 +149,10 @@ export function CollectionPage({
             </div>
             {collection.photos.length === 0 ? (
               <p className="empty-note">
-                Фотографии подбирает учитель. Пока их нет, коллекция работает
-                как список регионов.
+                Фотографии подбирает учитель. Пока их нет,{' '}
+                {aboutRegion === undefined
+                  ? 'коллекция работает как список регионов.'
+                  : 'страница держится справкой региона и картой.'}
               </p>
             ) : (
               <ul className="photo-grid">
