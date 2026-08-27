@@ -459,6 +459,12 @@ export function isDraft(collection: Collection): boolean {
  */
 export function collectionsOfRegion(regionId: string): readonly Collection[] {
   return collections.filter((collection) =>
-    collection.regionIds.includes(regionId),
+    /*
+     * Расширение до `readonly string[]` обязательно: каталог объявлен
+     * `as const`, и у коллекции без регионов — «Праздник весны» — `regionIds`
+     * имеет тип `readonly []`, элемент которого `never`. Спрашивать у него о
+     * строке иначе нельзя, а спрашивать надо: пустой список — законный ответ.
+     */
+    (collection.regionIds as readonly string[]).includes(regionId),
   );
 }
