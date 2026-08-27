@@ -11,6 +11,7 @@ import { sourceById } from '../../content/sources';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
 import { PhotoSlot } from '../../ui/PhotoSlot';
+import { RegionReference } from '../../ui/RegionReference';
 import { SiteFooter } from '../../ui/SiteFooter';
 import { CollectionCard } from '../home/CollectionCard';
 
@@ -47,6 +48,13 @@ export function CollectionPage({
     .map((id) => collectionById(id))
     .filter((item): item is Collection => item !== undefined);
   const draft = isDraft(collection);
+  /*
+   * Регион, о котором коллекция. Только у группы «по регионам»: она и значит
+   * «всё об одной единице», тогда как у коллекции о месте регион тоже один,
+   * но она не о нём.
+   */
+  const aboutRegion =
+    collection.groupId === 'by-region' ? memberRegions[0] : undefined;
 
   return (
     <main className="site-main">
@@ -83,7 +91,22 @@ export function CollectionPage({
             <p className="lead">{collection.lead}</p>
           )}
 
-          <PhotoSlot subject={collection.nameRu} height="hero" />
+          {/*
+            У коллекции «по регионам» имя, иероглифы и пиньинь дословно
+            совпадают с регионом, и заголовок страницы их уже сказал. Место
+            под фотографию, которой нет, здесь занимала заглушка — а
+            справочник о регионе давно написан: центр, факты с источниками,
+            города. Он и встаёт на это место.
+
+            Условие — группа, а не «ровно один регион»: у коллекции о месте
+            регион тоже один, но она не о нём. Группа «по регионам» и значит
+            «всё об одной единице».
+          */}
+          {aboutRegion === undefined ? (
+            <PhotoSlot subject={collection.nameRu} height="hero" />
+          ) : (
+            <RegionReference region={aboutRegion} />
+          )}
 
           <section className="collection-block">
             <h2>Что стоит знать</h2>

@@ -1,17 +1,15 @@
 import { useState } from 'react';
-import { cityById, citiesOfRegion } from '../../content/cities';
 import { collectionsOfRegion } from '../../content/collections';
 import { physicalFeatures } from '../../content/physical-features';
 import { featuresWord, regionsWord } from '../../content/region-count';
-import { sourceById } from '../../content/sources';
 import type {
-  Fact,
   PhysicalFeature,
   PhysicalKind,
   Region,
   RegionKind,
 } from '../../content/types';
 import { ChinaMap } from '../../map/ChinaMap';
+import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { MapAttribution } from '../../map/MapAttribution';
 import type { MapZoom } from '../../map/MapControls';
 
@@ -69,59 +67,6 @@ const MAP_KINDS = [
 ] as const;
 
 type MapKind = (typeof MAP_KINDS)[number][0];
-
-/**
- * Строка «Источники: ...». Дедупликация — по показанному имени, а не по
- * организации: два подразделения ЮНЕСКО в реестре должны схлопнуться в одно
- * слово.
- */
-function factSourcesLine(facts: readonly Fact[]): string | null {
-  const labels: string[] = [];
-  const seen = new Set<string>();
-  for (const fact of facts) {
-    for (const sourceId of fact.sourceIds) {
-      const source = sourceById(sourceId);
-      if (source === undefined) {
-        continue;
-      }
-      const label = source.shortLabel ?? source.organization;
-      if (!seen.has(label)) {
-        seen.add(label);
-        labels.push(label);
-      }
-    }
-  }
-
-  return labels.length === 0 ? null : labels.join(' · ');
-}
-
-/**
- * Справка карточки: темы и тела фактов, внизу — строка источников. Блок один
- * для региона и физического объекта (утверждённый макет
- * docs/screens/04-atlas-card-facts-v1.html, вариант А).
- */
-function CardFacts({ facts }: { readonly facts: readonly Fact[] }) {
-  if (facts.length === 0) {
-    return null;
-  }
-
-  const sourcesLine = factSourcesLine(facts);
-
-  return (
-    <section className="atlas-facts" aria-label="Справка">
-      <p className="eyebrow">Справка</p>
-      {facts.map((fact) => (
-        <div className="atlas-fact" key={fact.title}>
-          <h3>{fact.title}</h3>
-          <p>{fact.body}</p>
-        </div>
-      ))}
-      {sourcesLine === null ? null : (
-        <p className="atlas-sources">Источники: {sourcesLine}</p>
-      )}
-    </section>
-  );
-}
 
 export type AtlasPageProps = {
   readonly regions: readonly Region[];
@@ -286,13 +231,7 @@ export function AtlasPage({
                 </h1>
                 <p lang="zh-Latn-pinyin">{selected.pinyin}</p>
                 <p className="status-note">{KIND_LABELS[selected.kind]}</p>
-                <p>
-                  Административный центр: {cityById(selected.capitalCityId)?.nameRu}{' '}
-                  <span lang="zh-Hans">
-                    ({cityById(selected.capitalCityId)?.nameZh})
-                  </span>
-                </p>
-                <CardFacts facts={selected.facts} />
+                <RegionReference region={selected} />
                 {/*
                   Коллекции региона — не новая сущность, а та же привязка
                   `regionIds`, прочитанная с другой стороны: со страницы
@@ -318,20 +257,6 @@ export function AtlasPage({
                     </ul>
                   </nav>
                 )}
-                {/*
-                  Города региона перечислены словами, а не только точками на
-                  карте: точка — не текст, читалке экрана её не прочесть, а
-                  делать полсотни знаков остановками Tab дороже, чем дать
-                  список там, где регион и так разглядывают.
-                */}
-                <ul className="region-city-list">
-                  {citiesOfRegion(selected.id).map((city) => (
-                    <li key={city.id}>
-                      {city.nameRu} <span lang="zh-Hans">{city.nameZh}</span>{' '}
-                      <span lang="zh-Latn-pinyin">{city.pinyin}</span>
-                    </li>
-                  ))}
-                </ul>
               </>
             ) : (
               <>
