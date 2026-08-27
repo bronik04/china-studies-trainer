@@ -1590,7 +1590,15 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   inline-size: 100%;
 }
 
+/*
+ * `inline-size: 100%` обязателен. Секция — гибкий контейнер-колонка, а
+ * `margin-inline: auto` у гибкого элемента отменяет растяжение и центрирует
+ * его по содержимому: вводка шириной 60ch уезжала к середине полосы — 342 px
+ * против 48 px у заголовка героя и сетки карточек рядом. Сетка карточек этого
+ * не замечала, потому что её содержимое шире колонки.
+ */
 .landing-section.raised > * {
+  inline-size: 100%;
   margin-inline: auto;
   max-inline-size: var(--page-column);
 }
