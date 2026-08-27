@@ -231,4 +231,49 @@ describe('PhysicalLayer', () => {
       'false',
     );
   });
+
+  /*
+   * Обрезка `clipPath` строит область по каждой вершине и на 148 КБ контуров
+   * стоит 6 секунд блокировки при первом показе слоя; маска растрирует те же
+   * контуры один раз и стоит миллисекунду. Геометрия та же — те же `<use>` на
+   * те же 34 области.
+   */
+  it('прячет сушу маской, а не обрезкой', () => {
+    const { container } = renderLayer();
+
+    expect(container.querySelector('#china-land-mask')).not.toBeNull();
+    expect(container.querySelector('clipPath')).toBeNull();
+    expect(container.querySelectorAll('[clip-path]')).toHaveLength(0);
+  });
+
+  /*
+   * Рамка маски задаётся явно: по умолчанию она считается от габарита
+   * закрашиваемой группы, и группа, чей габарит виден целиком, обрезалась бы
+   * собственной маской.
+   */
+  it('задаёт маске рамку в единицах карты', () => {
+    const { container } = renderLayer();
+    const mask = container.querySelector('#china-land-mask');
+
+    expect(mask?.getAttribute('maskUnits')).toBe('userSpaceOnUse');
+    expect(mask?.getAttribute('x')).toBe('-16');
+    expect(mask?.getAttribute('y')).toBe('-16');
+    expect(mask?.getAttribute('width')).toBe('806');
+    expect(mask?.getAttribute('height')).toBe('601');
+  });
+
+  it('закрывает маской ступени, границы, исходы и озёра', () => {
+    const { container } = renderLayer();
+
+    for (const selector of [
+      '.relief',
+      '.region-outlines',
+      '.relief-outcomes',
+      '.lakes',
+    ]) {
+      expect(container.querySelector(selector)?.getAttribute('mask')).toBe(
+        'url(#china-land-mask)',
+      );
+    }
+  });
 });

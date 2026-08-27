@@ -19,7 +19,7 @@ import { RIVER_SHAPES } from './river-hit';
  * и по той же причине: система координат и увеличение достаются ему от самой
  * карты, а не подгоняются вторым `svg` поверх.
  *
- * Обрезка по границе Китая делается `clipPath` из `<use>` на те же 34 контура
+ * За границу Китая рисунок не выпускает маска из `<use>` на те же 34 контура
  * региона. Копировать их геометрию сюда не нужно и вредно: копия разошлась бы
  * с картой при первой же её правке.
  */
@@ -80,7 +80,17 @@ const LABELLED: readonly { featureId: string; x: number; y: number }[] = [
   })),
 ];
 
-const CLIP_ID = 'china-land-clip';
+/*
+ * Суша прячется маской, а не обрезкой. `clipPath` строит область обрезки
+ * геометрией и платит за каждую вершину: на 148 КБ контуров регионов первый
+ * показ слоя стоил 6130 мс блокировки, и переключение вкладки атласа
+ * выглядело поломкой. Маска растрирует те же контуры один раз, как обычную
+ * заливку, — 1 мс, и ступень увеличения ей тоже ничего не стоит.
+ *
+ * Геометрия при этом не упрощается и не копируется: те же `<use>` на те же 34
+ * области, SVG остаётся единственным источником.
+ */
+const MASK_ID = 'china-land-mask';
 
 /** Литерал `{}` в параметрах создавал бы новый объект на каждой отрисовке. */
 const NO_OUTCOMES: Readonly<Record<string, FeatureOutcome>> = {};
@@ -155,14 +165,28 @@ export function PhysicalLayer({
       data-labels={showsLabels}
     >
       <defs>
-        <clipPath id={CLIP_ID}>
+        {/*
+          Рамка маски задана явно и в единицах карты. По умолчанию она
+          считается от габарита закрашиваемой группы с запасом в 10 %, а
+          габарит полос высот — вся рамка карты: группа обрезала бы сама себя.
+
+          Белым — то, что видно: маска светимости показывает там, где ярко.
+        */}
+        <mask
+          id={MASK_ID}
+          maskUnits="userSpaceOnUse"
+          x={MAP_VIEWBOX_MIN_X}
+          y={MAP_VIEWBOX_MIN_Y}
+          width={MAP_VIEWBOX_WIDTH}
+          height={MAP_VIEWBOX_HEIGHT}
+        >
           {regions.map((region) => (
-            <use key={region.mapAreaId} href={`#${region.mapAreaId}`} />
+            <use key={region.mapAreaId} href={`#${region.mapAreaId}`} fill="#fff" />
           ))}
-        </clipPath>
+        </mask>
       </defs>
 
-      <g className="relief" clipPath={`url(#${CLIP_ID})`}>
+      <g className="relief" mask={`url(#${MASK_ID})`}>
         {/*
           Полосы высот. Базовая заливка прямоугольником — нижняя полоса, поверх
           неё области «выше порога» снизу вверх. Правило заполнения `evenodd`
@@ -235,10 +259,10 @@ export function PhysicalLayer({
       {/*
         Границы регионов поверх ступеней. Без них физическая карта перестаёт
         связывать новый материал со старым: ученик видит рельеф, но не видит,
-        где он. Геометрия та же, что у clipPath, — `<use>` на те же контуры,
+        где он. Геометрия та же, что у маски, — `<use>` на те же контуры,
         второй копии путей на карте не появляется.
       */}
-      <g className="region-outlines" clipPath={`url(#${CLIP_ID})`} aria-hidden="true">
+      <g className="region-outlines" mask={`url(#${MASK_ID})`} aria-hidden="true">
         {regions.map((region) => (
           <use key={region.mapAreaId} href={`#${region.mapAreaId}`} />
         ))}
@@ -251,7 +275,7 @@ export function PhysicalLayer({
         исходом рисуется дважды. Копий не больше двух за вопрос: правильный
         объект и, если ученик промахнулся, выбранный.
       */}
-      <g className="relief-outcomes" clipPath={`url(#${CLIP_ID})`}>
+      <g className="relief-outcomes" mask={`url(#${MASK_ID})`}>
         {RELIEF_SHAPES.filter(
           (shape) =>
             shape.featureId !== undefined &&
@@ -267,7 +291,7 @@ export function PhysicalLayer({
         ))}
       </g>
 
-      <g className="rivers" clipPath={`url(#${CLIP_ID})`}>
+      <g className="rivers" mask={`url(#${MASK_ID})`}>
         {RIVER_LINES.map((line) => {
           const label = NAME_OF.get(line.featureId) ?? line.featureId;
 
@@ -308,7 +332,7 @@ export function PhysicalLayer({
         ученик в знак, а невидимый круг вокруг него и принимает нажатие; когда
         круг отошёл от знака, их связывает поводок — как у города.
       */}
-      <g className="lakes" clipPath={`url(#${CLIP_ID})`}>
+      <g className="lakes" mask={`url(#${MASK_ID})`}>
         {lakeMarks(zoom).map((mark) => {
           const shape = LAKE_SHAPES.find((item) => item.featureId === mark.featureId)!;
           const label = NAME_OF.get(mark.featureId) ?? mark.featureId;
@@ -377,9 +401,9 @@ export function PhysicalLayer({
       </g>
 
       {/*
-        Подписи объектов — последними и без обрезки по границе.
-        Без обрезки: «Великая Китайская равнина» длиннее самой равнины, и
-        clipPath съедал у неё хвост. Последними: буквы не должны уходить под
+        Подписи объектов — последними и без маски по границе.
+        Без маски: «Великая Китайская равнина» длиннее самой равнины, и
+        граница съедала у неё хвост. Последними: буквы не должны уходить под
         линию реки.
 
         Видна подпись у одного объекта за раз — при наведении, фокусе и
