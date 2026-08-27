@@ -27,7 +27,7 @@ import { PhotoSlot } from './PhotoSlot';
 
 export type CollectionImageProps = {
   readonly photo: CollectionPhoto;
-  readonly height: 'card' | 'hero' | 'thumb';
+  readonly height: 'card' | 'hero' | 'thumb' | 'stage';
   /**
    * Подписывать ли автора и лицензию прямо на кадре. Не подписывается только
    * карточка в сетке — она ведёт на страницу, где подпись стоит.

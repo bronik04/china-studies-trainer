@@ -9,13 +9,18 @@ import type { QuestionLanguage } from './question-language';
 export type ExerciseType = 'find-on-map' | 'name-target' | 'match-pair';
 
 /**
- * Вид цели. Регионы, города, объекты физической географии и династии — разные
- * наборы: «путает Ланьчжоу с Синином» не должно смешиваться ни с «не знает
+ * Вид цели. Регионы, города, объекты физической географии, династии и
+ * коллекции — разные наборы: «путает Ланьчжоу с Синином» не должно смешиваться ни с «не знает
  * Ганьсу», ни с «не знает Хуанхэ», поэтому вид входит в саму цель, а не
  * выводится из идентификатора. `beijing` существует и как регион, и как
  * город; `qin` — и как династия, и как хребет Циньлин по соседству.
  */
-export type TargetKind = 'region' | 'city' | 'physical' | 'history';
+export type TargetKind =
+  | 'region'
+  | 'city'
+  | 'physical'
+  | 'history'
+  | 'collection';
 
 export type Target = {
   readonly kind: TargetKind;
@@ -36,6 +41,10 @@ export function physicalTarget(id: string): Target {
 
 export function historyTarget(id: string): Target {
   return { kind: 'history', id };
+}
+
+export function collectionTarget(id: string): Target {
+  return { kind: 'collection', id };
 }
 
 /** Ключ для группировки: `Map` не умеет сравнивать объекты по значению. */

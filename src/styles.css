@@ -2784,6 +2784,56 @@ button.chip[aria-pressed='true'] {
  * `scroll-padding-block-start` у корня, — и второй сложился бы с ним.
  */
 
+/* --- Кадр режима «Культура» ------------------------------------------------ */
+
+/*
+ * Место карты занимает сам вопрос — фотография. Кадром, а не потоком, по той
+ * же причине, что и лента династий: `.stage-map` позиционирован, и `inset: 0`
+ * держит снимок ровно в его границах.
+ */
+.culture-stage {
+  align-items: center;
+  background: var(--surface-ground);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  inset: 0;
+  justify-content: center;
+  overflow: hidden;
+  padding: calc(var(--s-8) + var(--s-5)) var(--s-6) var(--s-5);
+  position: absolute;
+}
+
+/*
+ * Снимок вписывается целиком, а не подрезается: подрезка кадра здесь отняла бы
+ * у вопроса ту самую подробность, по которой место и узнают.
+ */
+.collection-photo[data-photo-height='stage'] {
+  block-size: 100%;
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-md);
+  inline-size: 100%;
+  max-inline-size: 64rem;
+}
+
+.collection-photo[data-photo-height='stage'] img {
+  object-fit: contain;
+}
+
+.culture-note {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: 0;
+  max-inline-size: 52rem;
+  text-align: center;
+}
+
+/* Подсказка в плашке ответа: где это увидят. */
+.stage-hint {
+  font-size: var(--t-size-body);
+  font-weight: var(--t-weight-regular);
+}
+
 /* --- Лента династий ------------------------------------------------------ */
 
 /*

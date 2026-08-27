@@ -84,3 +84,19 @@ export function dynastiesWord(count: number): string {
 
   return last >= 2 && last <= 4 ? 'династии' : 'династий';
 }
+
+/** 1 снимок, 2–4 снимка, 5+ снимков. */
+export function photosWord(count: number): string {
+  const teens = count % 100;
+  const last = count % 10;
+
+  if (teens >= 11 && teens <= 14) {
+    return 'снимков';
+  }
+
+  if (last === 1) {
+    return 'снимок';
+  }
+
+  return last >= 2 && last <= 4 ? 'снимка' : 'снимков';
+}

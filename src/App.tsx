@@ -14,11 +14,17 @@ import {
   type PhysicalSet,
 } from './content/physical-features';
 import { regions } from './content/regions';
+import type { Collection } from './content/collections';
+import {
+  cultureCollectionsUpTo,
+  type CultureSet,
+} from './content/culture-sets';
 import { dynasties } from './content/dynasties';
 import {
   citiesWord,
   dynastiesWord,
   featuresWord,
+  photosWord,
 } from './content/region-count';
 import type {
   City,
@@ -42,6 +48,7 @@ import { HomePage } from './features/home/HomePage';
 import {
   AtlasPage,
   CityRound,
+  CultureRound,
   HistoryRound,
   CollectionPage,
   CollectionsPage,
@@ -67,6 +74,7 @@ type Screen =
   | 'city-exercise'
   | 'physical-exercise'
   | 'history-exercise'
+  | 'culture-exercise'
   | 'results'
   | 'fill'
   | 'fill-results';
@@ -153,6 +161,10 @@ export default function App() {
    * нет.
    */
   const [historyPool, setHistoryPool] = useState<readonly Dynasty[]>(dynasties);
+  /* Пул снимков. Как и у прочих: «Повторить ошибки» задаёт его напрямую. */
+  const [culturePool, setCulturePool] = useState<readonly Collection[]>(() =>
+    cultureCollectionsUpTo('culture'),
+  );
   const [exerciseTypes, setExerciseTypes] = useState<readonly ExerciseType[]>([
     'find-on-map',
   ]);
@@ -366,6 +378,24 @@ export default function App() {
     setScreen('history-exercise');
   }
 
+  function startCultureRound(
+    nextLanguage: QuestionLanguage,
+    set: CultureSet = 'culture',
+  ) {
+    startCulturePool(nextLanguage, cultureCollectionsUpTo(set));
+  }
+
+  function startCulturePool(
+    nextLanguage: QuestionLanguage,
+    pool: readonly Collection[],
+  ) {
+    setCulturePool(pool);
+    setLanguage(nextLanguage);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('culture-exercise');
+  }
+
   function startFillRound(nextLanguage: QuestionLanguage) {
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
@@ -516,6 +546,21 @@ export default function App() {
     );
   }
 
+  if (screen === 'culture-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <CultureRound
+          collections={culturePool}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishTargetRound}
+          onExit={exitToModes}
+        />
+      </AppFrame>
+    );
+  }
+
   if (screen === 'results') {
     const summary = summariseRound(lastAttempts);
     /*
@@ -528,6 +573,7 @@ export default function App() {
     const isCityRound = roundKind === 'city';
     const isPhysicalRound = roundKind === 'physical';
     const isHistoryRound = roundKind === 'history';
+    const isCultureRound = roundKind === 'collection';
     /*
      * Набор повтора — ошибки этого раунда, те же, что показаны списком
      * (решение владельца от 2026-08-25). Отдельного источника у кнопки нет:
@@ -541,6 +587,9 @@ export default function App() {
     const repeatDynasties = historyPool.filter((dynasty) =>
       repeatIds.includes(dynasty.id),
     );
+    const repeatCollections = culturePool.filter((collection) =>
+      repeatIds.includes(collection.id),
+    );
 
     /*
      * Карта итога есть у раундов по регионам. У раунда по городам исход по
@@ -549,7 +598,9 @@ export default function App() {
      * хуже отсутствующей.
      */
     const roundMap =
-      isCityRound || isPhysicalRound || isHistoryRound ? undefined : (
+      isCityRound || isPhysicalRound || isHistoryRound || isCultureRound
+        ? undefined
+        : (
         <ChinaMap
           regions={regions}
           selectedRegionId={null}
@@ -573,7 +624,9 @@ export default function App() {
                 ? physicalPool
                 : isHistoryRound
                   ? historyPool
-                  : regions
+                  : isCultureRound
+                    ? culturePool
+                    : regions
           }
           countWord={
             isCityRound
@@ -582,7 +635,9 @@ export default function App() {
                 ? featuresWord
                 : isHistoryRound
                   ? dynastiesWord
-                  : undefined
+                  : isCultureRound
+                    ? photosWord
+                    : undefined
           }
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
@@ -610,6 +665,11 @@ export default function App() {
               return;
             }
 
+            if (isCultureRound) {
+              startCulturePool(language, repeatCollections);
+              return;
+            }
+
             startRound(exerciseTypes[0], language, repeatIds);
           }}
           onNewRound={() => {
@@ -631,6 +691,11 @@ export default function App() {
 
             if (isHistoryRound) {
               startHistoryRound();
+              return;
+            }
+
+            if (isCultureRound) {
+              startCulturePool(language, culturePool);
               return;
             }
 
@@ -697,6 +762,7 @@ export default function App() {
           onStartRound={startRound}
           onStartFillRound={startFillRound}
           onStartCityRound={startCityRound}
+          onStartCultureRound={startCultureRound}
           onStartHistoryRound={startHistoryRound}
           onStartPhysicalRound={startPhysicalRound}
           onOpenAtlas={() => setScreen('atlas')}

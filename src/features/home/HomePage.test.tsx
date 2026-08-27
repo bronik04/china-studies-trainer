@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { collections, collectionsInGroup } from '../../content/collections';
+import { MODE_CARDS } from '../exercise/exercise-modes';
 import { regions } from '../../content/regions';
 import type { Attempt } from '../../domain/round';
 import { HomePage } from './HomePage';
@@ -14,6 +15,7 @@ function renderHome(attempts: readonly Attempt[] = []) {
     onStartRound: vi.fn(),
     onStartFillRound: vi.fn(),
     onStartCityRound: vi.fn(),
+    onStartCultureRound: vi.fn(),
     onStartHistoryRound: vi.fn(),
     onStartPhysicalRound: vi.fn(),
     onOpenAtlas: vi.fn(),
@@ -69,18 +71,24 @@ it('карточка игры запускается без всякой ист�
   expect(onStartRound).toHaveBeenCalledWith('match-pair', 'ru', null);
 });
 
-it('карточка ненаписанного режима не запускается и говорит почему', () => {
-  const { onStartRound } = renderHome();
+/*
+ * Ненаписанных режимов не осталось: «Культура» была последней. Проверяется то,
+ * что теперь верно, — ни одна карточка не выключена и ни одна не помечена
+ * готовящейся. Приём для пометки остаётся в коде: следующий объявленный режим
+ * снова им воспользуется, и `ModeCard` держит вид `planned` ради этого.
+ */
+it('все объявленные режимы написаны и запускаются', () => {
+  renderHome();
 
-  const card = screen.getByRole('button', {
-    name: /Культура: узнать по фотографии/,
-  });
+  const cards = screen
+    .getAllByRole('button')
+    .filter((button) => button.closest('.mode-card') !== null);
 
-  expect(card).toBeDisabled();
-  expect(card).toHaveTextContent('Готовится');
-
-  fireEvent.click(card);
-  expect(onStartRound).not.toHaveBeenCalled();
+  expect(cards).toHaveLength(MODE_CARDS.length);
+  for (const card of cards) {
+    expect(card, card.textContent ?? '').toBeEnabled();
+  }
+  expect(screen.queryByText('Готовится')).not.toBeInTheDocument();
 });
 
 it('заполнение карты идёт своим раундом, а не упражнением', () => {
@@ -91,17 +99,6 @@ it('заполнение карты идёт своим раундом, а не 
 
   expect(onStartFillRound).toHaveBeenCalledWith('ru');
   expect(onStartRound).not.toHaveBeenCalled();
-});
-
-it('объявленный, но ещё не написанный режим выключен и назван готовящимся', () => {
-  renderHome();
-
-  const card = screen.getByRole('button', {
-    name: /Культура: узнать по фотографии/,
-  });
-
-  expect(card).toBeDisabled();
-  expect(card).toHaveTextContent('Готовится');
 });
 
 it('ведёт в атлас', () => {
@@ -166,6 +163,7 @@ it('раздел режимов принимает фокус: шапка вед
       onStartRound={vi.fn()}
       onStartFillRound={vi.fn()}
       onStartCityRound={vi.fn()}
+      onStartCultureRound={vi.fn()}
       onStartHistoryRound={vi.fn()}
       onStartPhysicalRound={vi.fn()}
       onOpenAtlas={vi.fn()}

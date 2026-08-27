@@ -5,7 +5,16 @@ import {
   physicalFeaturesUpTo,
   type PhysicalSet,
 } from '../../content/physical-features';
-import { citiesWord, featuresWord } from '../../content/region-count';
+import {
+  CULTURE_SETS,
+  cultureCollectionsUpTo,
+  type CultureSet,
+} from '../../content/culture-sets';
+import {
+  citiesWord,
+  featuresWord,
+  photosWord,
+} from '../../content/region-count';
 import {
   COLLECTION_GROUPS,
   collections,
@@ -30,6 +39,10 @@ export type HomePageProps = {
     regionIds: readonly string[] | null,
   ) => void;
   readonly onStartFillRound: (language: QuestionLanguage) => void;
+  readonly onStartCultureRound: (
+    language: QuestionLanguage,
+    set: CultureSet,
+  ) => void;
   readonly onStartHistoryRound: (language: QuestionLanguage) => void;
   readonly onStartPhysicalRound: (
     exerciseType: 'find-on-map' | 'name-target',
@@ -72,6 +85,9 @@ const CITY_SETS: readonly (readonly [CitySet, string])[] = [
   ['border', 'И приграничные с Россией'],
 ];
 
+/** Порядок наборов задаётся здесь: у объекта `CULTURE_SETS` его нет. */
+const CULTURE_SET_ORDER: readonly CultureSet[] = ['culture', 'nature', 'all'];
+
 const PHYSICAL_SETS: readonly (readonly [PhysicalSet, string])[] = [
   ['base', 'Реки и формы'],
   ['ranges', 'И хребты'],
@@ -87,6 +103,21 @@ function setChoiceFor(card: ModeCard) {
         const count = citiesUpTo(value).length;
 
         return [value, `${label} — ${count} ${citiesWord(count)}`] as const;
+      }),
+    };
+  }
+
+  if (card.kind === 'culture') {
+    return {
+      legend: 'Что показывать',
+      value: 'culture',
+      options: CULTURE_SET_ORDER.map((value) => {
+        const count = cultureCollectionsUpTo(value).length;
+
+        return [
+          value,
+          `${CULTURE_SETS[value]} — ${count} ${photosWord(count)}`,
+        ] as const;
       }),
     };
   }
@@ -112,6 +143,7 @@ export function HomePage({
   onStartRound,
   onStartFillRound,
   onStartCityRound,
+  onStartCultureRound,
   onStartHistoryRound,
   onStartPhysicalRound,
   onOpenAtlas,
@@ -141,6 +173,8 @@ export function HomePage({
       onStartPhysicalRound(card.exerciseType, language, set as PhysicalSet);
     } else if (card.kind === 'history') {
       onStartHistoryRound(language);
+    } else if (card.kind === 'culture') {
+      onStartCultureRound(language, set as CultureSet);
     }
   }
 

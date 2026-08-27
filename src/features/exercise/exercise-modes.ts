@@ -60,6 +60,8 @@ export type ModeCard = {
   | { readonly kind: 'physical'; readonly exerciseType: 'find-on-map' | 'name-target' }
   /** Игра по династиям: цели берутся из ленты, а карта в ней не участвует. */
   | { readonly kind: 'history' }
+  /** Игра по снимкам коллекций: вопрос — сама фотография. */
+  | { readonly kind: 'culture' }
   | { readonly kind: 'fill' }
   /** Режим объявлен, но ещё не написан: карточка не запускается. */
   | { readonly kind: 'planned' }
@@ -114,6 +116,16 @@ export const HISTORY_MODE: ExerciseMode = {
   exerciseType: 'match-pair',
   title: 'История: династии и даты',
   eyebrow: 'Когда правила эта династия',
+};
+
+/**
+ * «Культура» — одна игра: показан снимок, выбрать название. Формы `find-on-map`
+ * у неё нет и быть не может — снимок не место на карте.
+ */
+export const CULTURE_MODE: ExerciseMode = {
+  exerciseType: 'name-target',
+  title: 'Культура: узнать по фотографии',
+  eyebrow: 'Узнайте по фотографии',
 };
 
 export const MODE_CARDS: readonly ModeCard[] = [
@@ -217,11 +229,11 @@ export const MODE_CARDS: readonly ModeCard[] = [
   },
   {
     id: 'culture',
-    kind: 'planned',
+    kind: 'culture',
     mark: '文',
     title: 'Культура: узнать по фотографии',
     summary:
-      'Памятник, праздник или ремесло — назвать и найти регион, где это увидят.',
-    volume: 'Работает вместе с коллекциями',
+      'Показан снимок — выбрать, что на нём, из четырёх названий. Отвлекают названия того же рода: памятник памятниками, гора горами, иначе ответ читался бы по виду кадра.',
+    volume: 'Набор выбирается перед стартом · около 5 минут',
   },
 ];
