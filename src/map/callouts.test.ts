@@ -1,40 +1,57 @@
 import mapMarkup from '../../public/maps/china-provinces.svg?raw';
-import { boundingBox, parseMapPath } from './svg-path';
 import { MAP_VIEW_BOX } from './projection';
+import { REGION_PALETTE } from './region-palette';
 import {
   CALLOUT_TARGETS,
   LABEL_DESCENDER,
   LABEL_OFFSET,
   MARKER_RADIUS,
-  MIN_TARGET_UNITS,
 } from './callout-targets';
+import {
+  MIN_TARGET_PX,
+  REFERENCE_MAP_WIDTH,
+  unitsToPixels,
+} from './target-size';
 
-type Target = { readonly regionId: string; readonly minSide: number };
+type Target = { readonly regionId: string; readonly targetPx: number };
 
+/**
+ * Сколько места под палец у каждой из 34 областей на опорной ширине карты.
+ *
+ * Мера — диаметр наибольшей вписанной окружности, а не габарит контура
+ * (решение от 2026-08-03): у Ганьсу габарит 162 единицы, а сама область —
+ * узкий коридор, и габаритная мера пропускала пять таких. Прежде этот файл
+ * мерил именно габаритом, и порог у него стоял вдвое ниже настоящего —
+ * проверка проходила, ничего не проверяя.
+ *
+ * Цель у области может быть не одна: у Пекина, Тяньцзиня, Шанхая и Тайваня к
+ * контуру добавлен невидимый круг, у Макао и Гонконга — маркер выноски.
+ * Берётся наибольшая: рука целится в ту, которая крупнее.
+ */
 function interactiveTargets(): Target[] {
-  const targets: Target[] = [];
+  const units = new Map<string, number>();
 
-  for (const element of mapMarkup.match(/<(path|circle)\s[^>]*>/gs) ?? []) {
-    const regionId = /data-region-id="([^"]+)"/.exec(element)?.[1];
-    if (!regionId) {
-      continue;
-    }
-
-    const pathData = /\sd="([^"]+)"/.exec(element)?.[1];
-    if (pathData) {
-      const box = boundingBox(parseMapPath(pathData));
-      targets.push({
-        regionId,
-        minSide: Math.min(box.maxX - box.minX, box.maxY - box.minY),
-      });
-      continue;
-    }
-
-    const radius = Number(/\sr="([\d.]+)"/.exec(element)?.[1]);
-    targets.push({ regionId, minSide: radius * 2 });
+  for (const [regionId, entry] of Object.entries(REGION_PALETTE)) {
+    units.set(regionId, entry.inscribedDiameter);
   }
 
-  return targets;
+  for (const element of mapMarkup.match(/<circle\s[^>]*>/gs) ?? []) {
+    const regionId =
+      /data-region-id="([^"]+)"/.exec(element)?.[1] ??
+      /data-hit-region-id="([^"]+)"/.exec(element)?.[1];
+    const radius = Number(/\sr="([\d.]+)"/.exec(element)?.[1]);
+
+    if (regionId === undefined || !Number.isFinite(radius)) {
+      continue;
+    }
+
+    units.set(regionId, Math.max(units.get(regionId) ?? 0, radius * 2));
+  }
+
+  return [...units].map(([regionId, diameter]) => ({
+    regionId,
+    targetPx: unitsToPixels(diameter, REFERENCE_MAP_WIDTH),
+  }));
 }
 
 it('оставляет ровно 34 выбираемых области', () => {
@@ -45,9 +62,9 @@ it('оставляет ровно 34 выбираемых области', () =>
 });
 
 it('делает каждую область достаточно крупной для выбора указателем', () => {
-  const tooSmall = interactiveTargets().filter(
-    (target) => target.minSide < MIN_TARGET_UNITS,
-  );
+  const tooSmall = interactiveTargets()
+    .filter((target) => target.targetPx < MIN_TARGET_PX)
+    .map((target) => `${target.regionId}: ${target.targetPx.toFixed(1)} px`);
 
   expect(tooSmall).toEqual([]);
 });
