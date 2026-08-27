@@ -443,6 +443,189 @@ const FEATURE_COLLECTION_EXTRAS: Readonly<
  * видны сразу на обеих поверхностях — в карточке атласа и на странице
  * коллекции.
  */
+/**
+ * Снимок в список из одного или пустой список. Отдельной функцией, чтобы у
+ * обоих выводов было одно правило: снимка нет — списка нет, а не список с
+ * дырой.
+ */
+function photosOf(photo: CollectionPhoto | undefined): readonly CollectionPhoto[] {
+  return photo === undefined ? [] : [photo];
+}
+
+/**
+ * Снимок объекта физической географии. Подписи написаны по описаниям файлов на
+ * Викискладе, а не по догадке о том, что на кадре: подпись к снимку, которого
+ * не видел, учит вернее всего неверному.
+ *
+ * У каждого объекта один снимок: галерея ему не нужна, страница держится
+ * справкой, а кадр показывает, как объект выглядит на самом деле.
+ */
+const FEATURE_PHOTOS: Readonly<Record<string, CollectionPhoto>> = {
+  yangtze: {
+    id: 'feature-yangtze',
+    subject: 'первый изгиб Янцзы',
+    captionRu: 'Первый изгиб Янцзы у посёлка Шигу',
+    captionZh: '长江第一湾',
+    place: 'Юньнань',
+  },
+  'yellow-river': {
+    id: 'feature-yellow-river',
+    subject: 'Хуанхэ в городе',
+    captionRu: 'Хуанхэ в Ланьчжоу',
+    place: 'Ланьчжоу, Ганьсу',
+  },
+  heilongjiang: {
+    id: 'feature-heilongjiang',
+    subject: 'острова в протоке',
+    captionRu: 'Острова в протоке Амура',
+    place: 'Хабаровский край, Россия',
+  },
+  'pearl-river': {
+    id: 'feature-pearl-river',
+    subject: 'закат на реке',
+    captionRu: 'Закат на Сицзяне у Учжоу',
+    captionZh: '西江',
+    place: 'Учжоу, Гуанси',
+  },
+  lancang: {
+    id: 'feature-lancang',
+    subject: 'река в Юньнани',
+    captionRu: 'Ланьцанцзян в Юньнани',
+    captionZh: '澜沧江',
+    place: 'Юньнань',
+  },
+  tarim: {
+    id: 'feature-tarim',
+    subject: 'переправа через реку',
+    captionRu: 'Пустынное шоссе пересекает Тарим',
+    place: 'Синьцзян',
+  },
+  'tibetan-plateau': {
+    id: 'feature-tibetan-plateau',
+    subject: 'нагорье',
+    captionRu: 'Тибетское нагорье',
+    captionZh: '青藏高原',
+    place: 'Тибет',
+  },
+  'tarim-basin': {
+    id: 'feature-tarim-basin',
+    subject: 'пески внутри впадины',
+    captionRu: 'Пески Такла-Макана в Таримской впадине',
+    captionZh: '塔克拉玛干沙漠',
+    place: 'Синьцзян',
+  },
+  'loess-plateau': {
+    id: 'feature-loess-plateau',
+    subject: 'лёссовый ландшафт',
+    captionRu: 'Лёссовый ландшафт близ Хуньюаня',
+    place: 'Датун, Шаньси',
+  },
+  'sichuan-basin': {
+    id: 'feature-sichuan-basin',
+    subject: 'дно котловины',
+    captionRu: 'Цзытун с горы Волуншань',
+    place: 'Мяньян, Сычуань',
+  },
+  gobi: {
+    id: 'feature-gobi',
+    subject: 'песчаные дюны',
+    captionRu: 'Песчаные дюны Гоби',
+    captionZh: '戈壁',
+    place: 'Гоби',
+  },
+  'north-china-plain': {
+    id: 'feature-north-china-plain',
+    subject: 'равнина зимой',
+    captionRu: 'Великая Китайская равнина зимой',
+    captionZh: '华北平原',
+    place: 'север Китая',
+  },
+  himalayas: {
+    id: 'feature-himalayas',
+    subject: 'северная стена Джомолунгмы',
+    captionRu: 'Северная стена Джомолунгмы со стороны базового лагеря',
+    captionZh: '珠穆朗玛峰',
+    place: 'Тибет',
+  },
+  kunlun: {
+    id: 'feature-kunlun',
+    subject: 'хребет с дороги',
+    captionRu: 'Западный Куньлунь с Тибетско-Синьцзянского шоссе',
+    captionZh: '昆仑山脉',
+    place: 'Синьцзян',
+  },
+  'tian-shan': {
+    id: 'feature-tian-shan',
+    subject: 'луга и снежные вершины',
+    captionRu: 'Альпийские луга и снежные вершины у Хан-Тенгри',
+    captionZh: '天山',
+    place: 'Тянь-Шань',
+  },
+  qinling: {
+    id: 'feature-qinling',
+    subject: 'вершина хребта',
+    captionRu: 'Западная вершина Хуашаня',
+    captionZh: '华山',
+    place: 'Шэньси',
+  },
+  'greater-khingan': {
+    id: 'feature-greater-khingan',
+    subject: 'река в горах',
+    captionRu: 'Река Ялухэ в Большом Хингане',
+    captionZh: '大兴安岭',
+    place: 'Большой Хинган',
+  },
+  nanling: {
+    id: 'feature-nanling',
+    subject: 'красные скалы',
+    captionRu: 'Ландшафт данься у горы Даньсяшань',
+    captionZh: '丹霞山',
+    place: 'Шаогуань, Гуандун',
+  },
+  'qinghai-lake': {
+    id: 'feature-qinghai-lake',
+    subject: 'озеро в горах',
+    captionRu: 'Озеро Цинхай',
+    captionZh: '青海湖',
+    place: 'Цинхай',
+  },
+  poyang: {
+    id: 'feature-poyang',
+    subject: 'птицы на озере',
+    captionRu: 'Гуси, лебеди, колпицы и журавли на Поянху',
+    captionZh: '鄱阳湖',
+    place: 'Цзянси',
+  },
+  dongting: {
+    id: 'feature-dongting',
+    subject: 'мост через озеро',
+    captionRu: 'Мост через Дунтинху в Юэяне',
+    captionZh: '洞庭湖大桥',
+    place: 'Юэян, Хунань',
+  },
+  taihu: {
+    id: 'feature-taihu',
+    subject: 'берег озера',
+    captionRu: 'Берег Тайху в парке Троецарствия',
+    captionZh: '太湖',
+    place: 'Уси, Цзянсу',
+  },
+  hongze: {
+    id: 'feature-hongze',
+    subject: 'водно-болотные угодья',
+    captionRu: 'Водно-болотный парк Сыхун на Хунцзэху',
+    captionZh: '洪泽湖',
+    place: 'Сыхун, Цзянсу',
+  },
+  chaohu: {
+    id: 'feature-chaohu',
+    subject: 'озеро с высоты',
+    captionRu: 'Чаоху с вершины горы Гуйшань',
+    captionZh: '巢湖',
+    place: 'Чаоху, Аньхой',
+  },
+};
+
 function featureCollection(feature: PhysicalFeature): Collection {
   const extras = FEATURE_COLLECTION_EXTRAS[feature.id] ?? {};
   const factSourceIds = feature.facts.flatMap((fact) => fact.sourceIds);
@@ -458,7 +641,7 @@ function featureCollection(feature: PhysicalFeature): Collection {
     lead: extras.lead ?? '',
     regionIds: extras.regionIds ?? feature.regionIds,
     notes: extras.notes ?? [],
-    photos: extras.photos ?? [],
+    photos: extras.photos ?? photosOf(FEATURE_PHOTOS[feature.id]),
     sourceIds: [
       ...new Set([
         ...(extras.sourceIds ?? []),
@@ -566,6 +749,51 @@ function kindWord(label: string): string {
  * же правке — ровно то, от чего справочник уже уберегли, сославшись на центр
  * города вместо пары имён.
  */
+/**
+ * Снимок региона. Подписи написаны по описаниям файлов на Викискладе: подпись
+ * к снимку, которого не видел, учит вернее всего неверному.
+ *
+ * Выбраны заглавные снимки статей Википедии — те, что редакторы статьи сочли
+ * самыми узнаваемыми, — кроме шести, где заглавным стояли флаг, карта или
+ * спорное место. Их подобрали отдельно; довод — в `DECISIONS.md`.
+ */
+const REGION_PHOTOS: Readonly<Record<string, CollectionPhoto>> = {
+  anhui: { id: 'region-anhui', subject: 'культурный парк у Цзюхуашаня', captionRu: 'Культурный парк Даюань у горы Цзюхуашань', captionZh: '九华山大愿文化园', place: 'Чичжоу, Аньхой' },
+  fujian: { id: 'region-fujian', subject: 'река в горах Уишань', captionRu: 'Река в горах Уишань', captionZh: '武夷山', place: 'Наньпин, Фуцзянь' },
+  gansu: { id: 'region-gansu', subject: 'цветные скалы данься', captionRu: 'Останцы в геопарке Чжанъе Данься', captionZh: '张掖丹霞', place: 'Чжанъе, Ганьсу' },
+  guangdong: { id: 'region-guangdong', subject: 'водопад', captionRu: 'Водопад Хуанманьчжай', place: 'Цзеси, Гуандун' },
+  guizhou: { id: 'region-guizhou', subject: 'храм на вершине', captionRu: 'Зал Дхармы монастыря Чэнъэнь на горе Фаньцзиншань', captionZh: '梵净山', place: 'Цзянкоу, Гуйчжоу' },
+  hainan: { id: 'region-hainan', subject: 'морской берег', captionRu: 'Побережье в парке Дасяодунтянь у Санья', captionZh: '大小洞天', place: 'Санья, Хайнань' },
+  hebei: { id: 'region-hebei', subject: 'участок Великой стены', captionRu: 'Великая стена у Цзиньшаньлина', captionZh: '金山岭长城', place: 'Чэндэ, Хэбэй' },
+  heilongjiang: { id: 'region-heilongjiang', subject: 'собор в Харбине', captionRu: 'Софийский собор в Харбине', captionZh: '哈尔滨圣索菲亚教堂', place: 'Харбин, Хэйлунцзян' },
+  henan: { id: 'region-henan', subject: 'монастырь в горах', captionRu: 'Буддийская академия Суншань и скалы вокруг', captionZh: '嵩山', place: 'Дэнфэн, Хэнань' },
+  hubei: { id: 'region-hubei', subject: 'ущелье на Янцзы', captionRu: 'Ущелье Силин ниже плотины «Три ущелья»', captionZh: '西陵峡', place: 'Ичан, Хубэй' },
+  hunan: { id: 'region-hunan', subject: 'кварцитовые столбы', captionRu: 'Пик «Пять пальцев» в Хуаншичжае, Улинъюань', captionZh: '武陵源', place: 'Чжанцзяцзе, Хунань' },
+  jiangsu: { id: 'region-jiangsu', subject: 'озеро в городе', captionRu: 'Озеро Сюаньу в Нанкине', captionZh: '玄武湖', place: 'Нанкин, Цзянсу' },
+  jiangxi: { id: 'region-jiangxi', subject: 'горные вершины', captionRu: 'Горы Саньциншань', captionZh: '三清山', place: 'Шанжао, Цзянси' },
+  jilin: { id: 'region-jilin', subject: 'озеро в кратере', captionRu: 'Озеро Тяньчи в кратере Чанбайшаня', captionZh: '长白山天池', place: 'Байшань, Гирин' },
+  liaoning: { id: 'region-liaoning', subject: 'нефритовый Будда', captionRu: 'Дворец нефритового Будды в Аньшане', captionZh: '玉佛苑', place: 'Аньшань, Ляонин' },
+  qinghai: { id: 'region-qinghai', subject: 'высокогорная железная дорога', captionRu: 'Цинхай-Тибетская железная дорога', captionZh: '青藏铁路', place: 'Цинхай' },
+  shaanxi: { id: 'region-shaanxi', subject: 'статуи у гробницы', captionRu: 'Каменные стражи на пути духов гробницы Цяньлин', captionZh: '乾陵', place: 'Сяньян, Шэньси' },
+  shandong: { id: 'region-shandong', subject: 'священная гора', captionRu: 'Гора Тайшань', captionZh: '泰山', place: 'Тайань, Шаньдун' },
+  shanxi: { id: 'region-shanxi', subject: 'застава на стене', captionRu: 'Великая стена у заставы Яньмэньгуань', captionZh: '雁门关', place: 'Синьчжоу, Шаньси' },
+  sichuan: { id: 'region-sichuan', subject: 'осенние лиственницы', captionRu: 'Лиственницы Потанина в осеннем уборе, озеро Хулухай', captionZh: '葫芦海', place: 'Ганьцзы, Сычуань' },
+  yunnan: { id: 'region-yunnan', subject: 'три пагоды', captionRu: 'Три пагоды монастыря Чуншэн в отражении пруда', captionZh: '崇圣寺三塔', place: 'Дали, Юньнань' },
+  zhejiang: { id: 'region-zhejiang', subject: 'озеро и пагода', captionRu: 'Западное озеро и пагода Лэйфэн в Ханчжоу', captionZh: '西湖', place: 'Ханчжоу, Чжэцзян' },
+  taiwan: { id: 'region-taiwan', subject: 'горное озеро', captionRu: 'Озеро Жиюэтань', captionZh: '日月潭', place: 'Наньтоу, Тайвань' },
+  guangxi: { id: 'region-guangxi', subject: 'карстовые холмы у реки', captionRu: 'Карст на реке Лицзян у Яншо', captionZh: '漓江', place: 'Гуйлинь, Гуанси' },
+  'inner-mongolia': { id: 'region-inner-mongolia', subject: 'мавзолей в степи', captionRu: 'Мавзолей Чингисхана в Ордосе', captionZh: '成吉思汗陵', place: 'Ордос, Внутренняя Монголия' },
+  ningxia: { id: 'region-ningxia', subject: 'гробница в пустыне', captionRu: 'Гробницы государства Западное Ся', captionZh: '西夏王陵', place: 'Иньчуань, Нинся' },
+  xinjiang: { id: 'region-xinjiang', subject: 'ледник и каньон', captionRu: 'Каньон Шата и ледник Музарт', captionZh: '夏塔大峡谷', place: 'Или, Синьцзян' },
+  tibet: { id: 'region-tibet', subject: 'дворец на холме', captionRu: 'Дворец Потала в Лхасе', captionZh: '布达拉宫', place: 'Лхаса, Тибет' },
+  beijing: { id: 'region-beijing', subject: 'городской горизонт', captionRu: 'Горизонт района Чаоян', captionZh: '朝阳区', place: 'Пекин' },
+  chongqing: { id: 'region-chongqing', subject: 'город на холмах', captionRu: 'Чунцин', captionZh: '重庆', place: 'Чунцин' },
+  shanghai: { id: 'region-shanghai', subject: 'небоскрёбы Пудуна', captionRu: 'Панорама Пудуна', captionZh: '浦东', place: 'Шанхай' },
+  tianjin: { id: 'region-tianjin', subject: 'колесо обозрения на мосту', captionRu: 'Колесо обозрения «Глаз Тяньцзиня» и город', captionZh: '天津之眼', place: 'Тяньцзинь' },
+  'hong-kong': { id: 'region-hong-kong', subject: 'ночной горизонт', captionRu: 'Ночная панорама с пика Виктория', captionZh: '維多利亞港', place: 'Гонконг' },
+  macao: { id: 'region-macao', subject: 'фасад собора', captionRu: 'Руины собора Святого Павла', captionZh: '大三巴牌坊', place: 'Макао' },
+};
+
 function regionCollection(region: Region): Collection {
   const extras = REGION_COLLECTION_EXTRAS[region.id] ?? {};
   const factSourceIds = region.facts.flatMap((fact) => fact.sourceIds);
@@ -581,7 +809,7 @@ function regionCollection(region: Region): Collection {
     lead: extras.lead ?? '',
     regionIds: [region.id],
     notes: extras.notes ?? [],
-    photos: [],
+    photos: photosOf(REGION_PHOTOS[region.id]),
     /*
      * Источники страницы — источники всего, что на ней написано. Справка
      * региона стоит на ней целиком, поэтому её источники здесь же, а не

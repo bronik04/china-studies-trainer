@@ -128,19 +128,27 @@ export function CollectionPage({
             Условие — признак в каталоге, а не «ровно один регион»: у
             коллекции о месте регион тоже один, но она не о нём.
           */}
-          {aboutRegion !== undefined ? (
-            <RegionReference region={aboutRegion} />
-          ) : aboutFeature !== undefined && aboutFeature.facts.length > 0 ? (
-            <CardFacts facts={aboutFeature.facts} />
-          ) : hero !== undefined ? (
+          {/*
+            Снимок идёт первым, справка за ним: сначала место, потом рассказ о
+            нём. Раньше у коллекции о регионе снимка не было вовсе, и справка
+            стояла сразу за заголовком; теперь снимок есть у всех, и прятать
+            его под три факта значило бы отдать ему худшее место на странице.
+          */}
+          {hero === undefined ? null : (
             <CollectionImage
               photo={hero}
               height="hero"
               sizes="(min-width: 60rem) 40rem, 100vw"
             />
-          ) : (
-            <PhotoSlot subject={collection.nameRu} height="hero" />
           )}
+
+          {aboutRegion !== undefined ? (
+            <RegionReference region={aboutRegion} />
+          ) : aboutFeature !== undefined && aboutFeature.facts.length > 0 ? (
+            <CardFacts facts={aboutFeature.facts} />
+          ) : hero === undefined ? (
+            <PhotoSlot subject={collection.nameRu} height="hero" />
+          ) : null}
 
           {/*
             Раздел не исчезает, когда справку просто не написали: экран без

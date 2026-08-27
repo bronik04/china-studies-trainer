@@ -15,6 +15,11 @@ export type FontSpec = {
  *
  * Проверено разбором cmap: у Prata нет `Ā ā ē ě ī ō ū ǎ ǔ` и `→ ↻ ≈ ○ ● ✓`,
  * у Golos Text нет `ǎ ǔ` и `↻ ○ ● ✓`.
+ *
+ * Группа `latin` — прочая диакритика, имена фотографов: `č ł ř Ž`. Она
+ * спрашивается только с Golos Text: у него эти знаки есть, у Prata и у Noto
+ * Serif SC нет, а имя автора стоит в подписи под кадром, которую набирает
+ * текстовый шрифт.
  */
 export const FONTS: readonly FontSpec[] = [
   { file: 'prata-400.woff2', family: 'Prata', weight: 400, requires: ['rest'] },
@@ -22,19 +27,19 @@ export const FONTS: readonly FontSpec[] = [
     file: 'golos-text-400.woff2',
     family: 'Golos Text',
     weight: 400,
-    requires: ['rest'],
+    requires: ['rest', 'latin'],
   },
   {
     file: 'golos-text-500.woff2',
     family: 'Golos Text',
     weight: 500,
-    requires: ['rest'],
+    requires: ['rest', 'latin'],
   },
   {
     file: 'golos-text-700.woff2',
     family: 'Golos Text',
     weight: 700,
-    requires: ['rest'],
+    requires: ['rest', 'latin'],
   },
   {
     file: 'noto-serif-sc-400.woff2',

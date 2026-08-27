@@ -69,17 +69,20 @@ it('даёт перейти к каждой группе', () => {
 });
 
 /*
- * Место под снимок стоит там, где съёмка задумана. У коллекции о регионе или
- * объекте `photos` пуст: ей никто не обещал фотографий, и заглушка на
- * пятидесяти восьми карточках обещала бы то, чего никто не обещал.
+ * Карточка либо показывает снимок, либо не показывает ничего. Место под
+ * снимок с надписью «снимок ещё не подобран» осталось только там, где съёмка
+ * описана, а файла нет; сейчас таких нет ни одной, и проверка сторожит
+ * именно это — карточка не обещает того, чего нет.
  */
-it('не обещает снимков там, где их не задумывали', () => {
+it('не обещает снимков, которых нет', () => {
   renderPage();
 
-  const withoutPhotos = collections.filter(
-    (collection) => collection.photos.length === 0,
-  ).length;
+  const cards = document.querySelectorAll('.collection-card');
+  const images = document.querySelectorAll('.collection-card img');
 
-  expect(withoutPhotos).toBeGreaterThan(50);
+  expect(cards.length).toBe(collections.length);
+  expect(images.length).toBe(
+    collections.filter((collection) => collection.photos.length > 0).length,
+  );
   expect(document.querySelectorAll('.collection-card .photo-slot')).toHaveLength(0);
 });

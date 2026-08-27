@@ -86,39 +86,46 @@ function stripHtml(value: string | undefined): string {
     .trim();
 }
 
+/** Викисклад принимает не больше пятидесяти заголовков за раз. */
+const TITLES_PER_REQUEST = 40;
+
 async function imageInfo(
   titles: readonly string[],
 ): Promise<Map<string, CommonsPage>> {
-  const url = `${API}?${new URLSearchParams({
-    format: 'json',
-    action: 'query',
-    titles: titles.join('|'),
-    prop: 'imageinfo',
-    iiprop: 'url|size|extmetadata',
-    iiextmetadatafilter: 'LicenseShortName|LicenseUrl|Artist|Restrictions',
-  })}`;
-  const response = await fetch(url, { headers: { 'User-Agent': AGENT } });
-
-  if (!response.ok) {
-    throw new Error(`Викисклад ответил ${response.status}`);
-  }
-
-  const data = (await response.json()) as CommonsResponse;
   const byTitle = new Map<string, CommonsPage>();
 
-  for (const page of Object.values(data.query.pages)) {
-    byTitle.set(page.title, page);
-  }
+  for (let from = 0; from < titles.length; from += TITLES_PER_REQUEST) {
+    const batch = titles.slice(from, from + TITLES_PER_REQUEST);
+    const url = `${API}?${new URLSearchParams({
+      format: 'json',
+      action: 'query',
+      titles: batch.join('|'),
+      prop: 'imageinfo',
+      iiprop: 'url|size|extmetadata',
+      iiextmetadatafilter: 'LicenseShortName|LicenseUrl|Artist|Restrictions',
+    })}`;
+    const response = await fetch(url, { headers: { 'User-Agent': AGENT } });
 
-  /*
-   * API приводит заголовки к своему виду — подчёркивания в пробелы. Обратное
-   * соответствие берётся из его же ответа, иначе манифест пришлось бы писать
-   * ровно в том написании, которое выберет Викисклад.
-   */
-  for (const item of data.query.normalized ?? []) {
-    const page = byTitle.get(item.to);
-    if (page !== undefined) {
-      byTitle.set(item.from, page);
+    if (!response.ok) {
+      throw new Error(`Викисклад ответил ${response.status}`);
+    }
+
+    const data = (await response.json()) as CommonsResponse;
+
+    for (const page of Object.values(data.query.pages)) {
+      byTitle.set(page.title, page);
+    }
+
+    /*
+     * API приводит заголовки к своему виду — подчёркивания в пробелы. Обратное
+     * соответствие берётся из его же ответа, иначе манифест пришлось бы писать
+     * ровно в том написании, которое выберет Викисклад.
+     */
+    for (const item of data.query.normalized ?? []) {
+      const page = byTitle.get(item.to);
+      if (page !== undefined) {
+        byTitle.set(item.from, page);
+      }
     }
   }
 
