@@ -947,7 +947,7 @@ button.text:hover:enabled {
 
 /* Столица крупнее прочих городов: это разный вес, а не разный цвет. */
 .china-map .city[data-city-set='capital'] .city-mark {
-  r: 3.4;
+  r: 4.4;
   stroke-width: 1.4;
 }
 
@@ -985,7 +985,7 @@ button.text:hover:enabled {
 .china-map .city-label {
   fill: var(--map-label);
   font-family: var(--t-family-text);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: var(--t-weight-bold);
   opacity: 0;
   paint-order: stroke;
@@ -1012,7 +1012,7 @@ button.text:hover:enabled {
 .china-map .city:focus-within .city-mark,
 .china-map .city[data-selected='true'] .city-mark {
   fill: var(--accent);
-  r: 5;
+  r: 6;
   stroke: var(--surface-paper-bright);
   stroke-width: 2.5;
 }
