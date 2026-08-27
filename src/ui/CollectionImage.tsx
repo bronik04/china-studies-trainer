@@ -1,5 +1,6 @@
 import type { CollectionPhoto } from '../content/collections';
 import { PHOTO_CREDITS } from '../content/photo-credits';
+import { photoSource } from './photo-source';
 import { PhotoSlot } from './PhotoSlot';
 
 /**
@@ -52,13 +53,6 @@ export function CollectionImage({
     return <PhotoSlot subject={photo.subject} height={height} />;
   }
 
-  /*
-   * Ссылки только на то, что лежит на диске: узкий оригинал не растягивается
-   * до 1200, и такого файла у него просто нет. Ширины приходят из того же
-   * генератора, что и сами файлы.
-   */
-  const widest = Math.max(...credit.widths);
-
   const image = (
     <img
       /*
@@ -74,7 +68,7 @@ export function CollectionImage({
       loading="lazy"
       decoding="async"
       sizes={sizes}
-      src={`/photos/${photo.id}-${widest}.webp`}
+      src={photoSource(photo.id) ?? ''}
       srcSet={credit.widths
         .map((width) => `/photos/${photo.id}-${width}.webp ${width}w`)
         .join(', ')}

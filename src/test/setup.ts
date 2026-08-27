@@ -41,3 +41,26 @@ if (typeof dialog.showModal !== 'function') {
 if (typeof Element.prototype.scrollIntoView !== 'function') {
   Element.prototype.scrollIntoView = function scrollIntoView() {};
 }
+
+/*
+ * jsdom не загружает изображения и не шлёт `load`, а раунд «Культура» ждёт
+ * этих событий, прогревая снимки до первого вопроса. Заглушка отвечает сразу
+ * после присвоения `src`: сети в тестах нет, ждать нечего, а не начаться
+ * раунду незачем.
+ */
+const imageSource = Object.getOwnPropertyDescriptor(
+  HTMLImageElement.prototype,
+  'src',
+);
+
+Object.defineProperty(HTMLImageElement.prototype, 'src', {
+  configurable: true,
+  enumerable: true,
+  get(this: HTMLImageElement) {
+    return imageSource?.get?.call(this) ?? '';
+  },
+  set(this: HTMLImageElement, value: string) {
+    imageSource?.set?.call(this, value);
+    queueMicrotask(() => this.dispatchEvent(new Event('load')));
+  },
+});

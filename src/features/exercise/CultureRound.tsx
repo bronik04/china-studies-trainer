@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Collection } from '../../content/collections';
+import { photosWord } from '../../content/region-count';
 import { sameKindAs } from '../../content/culture-sets';
 import { buildCultureChoices } from '../../domain/culture-choices';
 import {
@@ -24,6 +25,7 @@ import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
 import { useAutoAdvance } from './use-auto-advance';
+import { usePhotoPreload } from './use-photo-preload';
 
 /*
  * Часы раунда живут в модуле, а не в теле компонента: `performance.now`
@@ -77,6 +79,20 @@ export function CultureRound({
   const [startedAt] = useState(startClock);
   const [askedAt, setAskedAt] = useState(startClock);
   const { schedule } = useAutoAdvance();
+
+  /*
+   * Снимки загружаются до первого вопроса: во время раунда сети быть не
+   * должно, а снимок здесь и есть вопрос. Список считается один раз — иначе
+   * эффект перезапускался бы на каждый рендер.
+   */
+  const photoIds = useMemo(
+    () =>
+      collections
+        .map((collection) => collection.photos[0]?.id)
+        .filter((id): id is string => id !== undefined),
+    [collections],
+  );
+  const photosReady = usePhotoPreload(photoIds);
 
   const question = currentQuestion(round);
   const byId = useMemo(
@@ -155,7 +171,14 @@ export function CultureRound({
     result: resultOf(choice.id),
   }));
 
-  const prompt = showsAnswer ? (
+  const prompt = !photosReady ? (
+    <>
+      <p className="eyebrow">{CULTURE_MODE.eyebrow}</p>
+      <h1 className="stage-target" data-testid="exercise-target">
+        Готовим снимки
+      </h1>
+    </>
+  ) : showsAnswer ? (
     <>
       <p className="eyebrow">Это стоит повторить</p>
       <h1 className="stage-target" data-testid="exercise-target">
@@ -198,13 +221,24 @@ export function CultureRound({
       choices={
         <StageChoices
           choices={choices}
-          disabled={round.status !== 'ready'}
+          disabled={!photosReady || round.status !== 'ready'}
           onChoose={answer}
         />
       }
       onExit={onExit}
     >
       <div className="culture-stage">
+        {/*
+          Ожидание идёт внутри той же оболочки, а не отдельным экраном: у
+          оболочки есть «Прервать раунд», и без неё ученик, передумавший ждать,
+          остался бы запертым.
+        */}
+        {photosReady ? null : (
+          <p className="culture-note" role="status">
+            {photoIds.length} {photosWord(photoIds.length)} загружаются. Раунд
+            начнётся, когда они будут готовы, — дальше сеть не понадобится.
+          </p>
+        )}
         {/*
           Снимок без подписи об авторе: подпись называет место и тем отвечает
           на вопрос. Автор назван на странице коллекции, куда ведёт итог.
@@ -213,14 +247,16 @@ export function CultureRound({
           его: без него браузер оставлял бы прежний кадр видимым, пока грузится
           следующий, и ученик отвечал бы на предыдущий вопрос.
         */}
-        <CollectionImage
-          key={question.id}
-          photo={target.photos[0]}
-          height="stage"
-          sizes="100vw"
-          credited={false}
-        />
-        {round.status === 'feedback' ? (
+        {photosReady ? (
+          <CollectionImage
+            key={question.id}
+            photo={target.photos[0]}
+            height="stage"
+            sizes="100vw"
+            credited={false}
+          />
+        ) : null}
+        {photosReady && round.status === 'feedback' ? (
           <p className="culture-note">{target.lead}</p>
         ) : null}
       </div>
