@@ -29,7 +29,7 @@ import {
   type RegionProgressState,
 } from './region-progress';
 import { isRegionSelectable, type AnswerState } from './region-selection';
-import { RIVER_HIT_RADIUS_UNITS, riverAt } from './river-hit';
+import { physicalTargetAt } from './physical-hit';
 import { RegionAnswerList } from './RegionAnswerList';
 
 export type { AnswerState } from './region-selection';
@@ -431,13 +431,17 @@ export function ChinaMap({
   const selectionRules = { interactive, paused, answerStates, outcomes };
 
   /**
-   * Какой объект физической географии под указателем.
+   * Какой объект физической географии под точкой экрана.
    *
-   * У реки нет узла-цели: линия шириной в полторы единицы на экране уже 1 px,
-   * и попасть в неё рукой нельзя, а лента в 24 px вокруг каждой невыполнима —
-   * Янцзы и Ланьцанцзян сближаются до 4 единиц (решение от 2026-08-05). Точку
-   * разрешает расстояние, и порог считается от текущего увеличения: на
-   * увеличении те же 24 px занимают меньше единиц карты.
+   * Считает одно правило — `physicalTargetAt`, «побеждает меньший объект»:
+   * озеро, река, форма, регион. Узлы слоя указателя не принимают, поэтому
+   * другого источника нет и разойтись с этим ответом нечему.
+   *
+   * У реки узла-цели нет и быть не может: линия шириной в полторы единицы на
+   * экране уже 1 px, и попасть в неё рукой нельзя, а лента в 24 px вокруг
+   * каждой невыполнима — Янцзы и Ланьцанцзян сближаются до 4 единиц (решение
+   * от 2026-08-05). Точку разрешает расстояние, и пороги считаются от
+   * текущего увеличения: на увеличении те же 24 px занимают меньше единиц.
    */
   function featureAtClient(clientX: number, clientY: number): string | null {
     const svg = mapRef.current?.querySelector<SVGSVGElement>('svg');
@@ -447,7 +451,7 @@ export function ChinaMap({
 
     const [x, y] = pointAtClient(view, svg.getBoundingClientRect(), clientX, clientY);
 
-    return riverAt(x, y, RIVER_HIT_RADIUS_UNITS / view.zoom);
+    return physicalTargetAt(x, y, view.zoom);
   }
 
   const resolvesFeatures = variant === 'physical' && onSelectFeature !== undefined;
@@ -465,14 +469,13 @@ export function ChinaMap({
     }
 
     /*
-     * Река идёт перед областью: она нарисована поверх, и рука, целившая в
-     * линию, метила в неё, а не в подложку. Точки без реки поблизости
-     * достаются области, как и на любом другом виде.
+     * Объект физической географии идёт перед областью: он нарисован поверх и
+     * меньше её, и рука, целившая в него, метила не в подложку. Точки без
+     * объекта поблизости достаются области, как и на любом другом виде.
      *
-     * Узлы самого слоя сюда не приходят и разрешать их здесь нечем: слой
-     * вставлен порталом, события React всплывают по дереву React, а не DOM, и
-     * до этого обработчика нажатие по реке или форме не доходит — на него
-     * отвечает сам узел (`PhysicalLayer`).
+     * Разрешает всё это карта, а не узлы слоя: узлы указателя не принимают
+     * (`physical-hit.ts`), и второго источника, с которым можно разойтись,
+     * не остаётся.
      */
     if (resolvesFeatures && point !== undefined) {
       const featureId = featureAtClient(point.clientX, point.clientY);

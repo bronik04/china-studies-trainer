@@ -157,15 +157,16 @@ describe('PhysicalLayer', () => {
     expect(shown()).toEqual(['gobi']);
   });
 
-  it('узел под указателем важнее реки, посчитанной картой', () => {
-    // Указатель ушёл с реки на форму: карта о том не узнает — события React не
-    // всплывают из портала, — и без верного порядка имя реки залипало бы.
+  it('узел в фокусе важнее объекта, посчитанного картой', () => {
+    // При обходе с клавиатуры указатель стоит там, где его оставили, и имя,
+    // посчитанное картой по его координатам, закрывало бы имя объекта в
+    // фокусе. Указателя у узлов слоя нет вовсе — его считает карта.
     const { container } = renderLayer({
       onSelect: vi.fn(),
       hoveredFeatureId: 'yellow-river',
     });
 
-    fireEvent.pointerEnter(
+    fireEvent.focus(
       container.querySelector('.relief-shape[data-feature-id="loess-plateau"]')!,
     );
 
@@ -260,6 +261,39 @@ describe('PhysicalLayer', () => {
     expect(mask?.getAttribute('y')).toBe('-16');
     expect(mask?.getAttribute('width')).toBe('806');
     expect(mask?.getAttribute('height')).toBe('601');
+  });
+
+  /*
+   * Указатель слою больше не нужен: цель по нему считает карта одним
+   * правилом (`physical-hit.ts`). Прежде узел формы перехватывал нажатие
+   * раньше, чем считалось расстояние до реки, и точка в полутора единицах от
+   * Янцзы доставалась Тибетскому нагорью.
+   *
+   * Узлы остаются ради клавиатуры: по ним ходит Tab, и Enter выбирает объект.
+   */
+  it('оставляет узлы клавиатуре, но не указателю', () => {
+    const onSelect = vi.fn();
+    const { container } = renderLayer({ onSelect });
+    const river = container.querySelector<SVGPathElement>(
+      '.river-line[data-feature-id="yangtze"]',
+    )!;
+
+    fireEvent.click(river);
+    expect(onSelect).not.toHaveBeenCalled();
+
+    expect(river.getAttribute('tabindex')).toBe('0');
+    fireEvent.keyDown(river, { key: 'Enter' });
+    expect(onSelect).toHaveBeenCalledWith('yangtze');
+  });
+
+  it('не отдаёт нажатие ни форме, ни цели озера', () => {
+    const onSelect = vi.fn();
+    const { container } = renderLayer({ onSelect });
+
+    fireEvent.click(container.querySelector('.relief-shape[data-feature-id]')!);
+    fireEvent.click(container.querySelector('.lake-hit')!);
+
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   /*

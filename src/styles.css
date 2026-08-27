@@ -1023,11 +1023,12 @@ button.text:hover:enabled {
   stroke: none;
 }
 
-/* Шесть спрашиваемых форм — цели, и нажатие им нужно. */
-.china-map .physical-layer[data-interactive='true'] .relief-shape[data-feature-id] {
-  cursor: pointer;
-  pointer-events: auto;
-}
+/*
+ * Указателя у узлов слоя нет вовсе: цель под ним считает карта одним правилом
+ * (`physical-hit.ts`), и узел, перехвативший событие, это правило обходил —
+ * точка в полутора единицах от Янцзы доставалась нагорью под ней. Курсор при
+ * этом на месте: его ставит `.china-map[data-feature-hover]`.
+ */
 
 /*
  * Выбранная форма обведена, а не перекрашена: цветовой канал занят тремя
@@ -1100,6 +1101,7 @@ button.text:hover:enabled {
 
 .china-map .physical-layer .river-line {
   fill: none;
+  pointer-events: none;
   stroke: var(--map-river);
   stroke-width: var(--map-river-width);
   stroke-linecap: round;
@@ -1188,12 +1190,13 @@ button.text:hover:enabled {
   stroke-width: 1;
 }
 
+/*
+ * Круг цели остаётся: он задаёт размер, по которому карта считает попадание,
+ * и остановку Tab. Указателя у него нет по той же причине, что у формы.
+ */
 .china-map .physical-layer .lake-hit {
   fill: transparent;
-}
-
-.china-map .physical-layer[data-interactive='true'] .lake-hit {
-  cursor: pointer;
+  pointer-events: none;
 }
 
 .china-map .physical-layer .lake-leader {

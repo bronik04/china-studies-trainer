@@ -101,27 +101,25 @@ export type FeatureOutcome = 'correct' | 'incorrect';
 export type PhysicalLayerProps = {
   readonly selectedFeatureId?: string | null;
   /**
-   * Река под указателем. Приходит снаружи, потому что наводятся не на саму
-   * линию, а на полосу вокруг неё: попасть рукой в полторы единицы ширины
-   * нельзя, и какая река под курсором, решает расстояние, а не браузер.
+   * Объект под указателем. Приходит снаружи, и это единственный источник для
+   * указателя: узлы слоя его не принимают, а цель считает карта по правилу
+   * «побеждает меньший» (`physical-hit.ts`). Иначе и быть не может — попасть
+   * рукой в линию шириной в полторы единицы нельзя, и какая река под
+   * курсором, решает расстояние, а не браузер.
    *
-   * У формы всё наоборот: она сама знает, что на неё навели, — и знает только
-   * она. Слой вставлен порталом, события React всплывают по дереву React, и до
-   * карты наведение на узел слоя не доходит. Поэтому источников два, и это не
-   * дублирование: у реки цель считают, у формы она есть.
+   * Свой источник у слоя остался один — фокус клавиатуры.
    */
   readonly hoveredFeatureId?: string | null;
   /**
-   * Задан — объекты отвечают на нажатие и получают фокус. Не задан — слой
+   * Задан — объекты получают фокус и отвечают на клавиатуру. Не задан — слой
    * только показывает: в атласе шесть новых остановок `Tab` оправданы, а на
    * чужой поверхности — нет. Имя объекта при этом остаётся: реки — то главное,
    * что говорит эта карта, и читалке экрана они названы в обоих случаях.
    *
-   * Указателю узлы слоя отвечают сами, и это не вторая дорога к тому же
-   * действию: слой вставлен порталом, а события React всплывают по дереву
-   * React, а не DOM, — до обработчика карты нажатие по узлу слоя не доходит
-   * вовсе. Карта разрешает расстоянием ровно те нажатия, что пришлись мимо
-   * узлов: линия шириной в полторы единицы почти всегда мимо.
+   * Указатель сюда не приходит: узлы слоя его не принимают, и нажатие
+   * разрешает карта. Прежде узлы отвечали сами, и это ломало правило: узел
+   * формы перехватывал нажатие раньше, чем считалось расстояние до реки, и
+   * точка в полутора единицах от Янцзы доставалась Тибетскому нагорью.
    */
   readonly onSelect?: (featureId: string) => void;
   /** Ложь — подписи скрыты: в игре подпись объекта и есть ответ. */
@@ -149,11 +147,14 @@ export function PhysicalLayer({
   zoom = 1,
 }: PhysicalLayerProps) {
   /*
-   * Узел под указателем или в фокусе — по его собственным событиям. Он идёт
-   * первым, а вычисленная карте река второй: пока указатель стоит на узле
-   * слоя, `hoveredFeatureId` не обновляется вовсе — события React не всплывают
-   * из портала до `.china-map`, — и без этого порядка залипшее имя реки
-   * закрывало бы имя формы, на которую навели.
+   * Узел в фокусе — по его собственным событиям. Указатель сюда не приходит
+   * вовсе: узлы слоя его не принимают, и какой объект под курсором, решает
+   * карта одним правилом (`physicalTargetAt`). Фокус остаётся за узлом:
+   * клавиатура ходит по узлам, а не по координатам.
+   *
+   * Фокус идёт первым, а посчитанный картой объект вторым: при обходе с
+   * клавиатуры указатель стоит там, где его оставили, и посчитанное им имя
+   * закрывало бы имя объекта в фокусе.
    */
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const hovered = hoveredNodeId ?? hoveredFeatureId;
@@ -234,11 +235,6 @@ export function PhysicalLayer({
               aria-label={isTarget ? NAME_OF.get(shape.featureId!) : undefined}
               aria-hidden={isTarget ? undefined : 'true'}
               tabIndex={answers ? 0 : -1}
-              onClick={answers ? () => onSelect(shape.featureId!) : undefined}
-              onPointerEnter={
-                answers ? () => setHoveredNodeId(shape.featureId!) : undefined
-              }
-              onPointerLeave={answers ? () => setHoveredNodeId(null) : undefined}
               onFocus={answers ? () => setHoveredNodeId(shape.featureId!) : undefined}
               onBlur={answers ? () => setHoveredNodeId(null) : undefined}
               onKeyDown={
@@ -314,7 +310,6 @@ export function PhysicalLayer({
                 role={onSelect ? 'button' : undefined}
                 aria-label={label}
                 tabIndex={onSelect ? 0 : -1}
-                onClick={onSelect ? () => onSelect(line.featureId) : undefined}
                 onFocus={onSelect ? () => setHoveredNodeId(line.featureId) : undefined}
                 onBlur={onSelect ? () => setHoveredNodeId(null) : undefined}
                 onKeyDown={
@@ -376,11 +371,6 @@ export function PhysicalLayer({
                 role={answers ? 'button' : undefined}
                 aria-label={label}
                 tabIndex={answers ? 0 : -1}
-                onClick={answers ? () => onSelect(mark.featureId) : undefined}
-                onPointerEnter={
-                  answers ? () => setHoveredNodeId(mark.featureId) : undefined
-                }
-                onPointerLeave={answers ? () => setHoveredNodeId(null) : undefined}
                 onFocus={answers ? () => setHoveredNodeId(mark.featureId) : undefined}
                 onBlur={answers ? () => setHoveredNodeId(null) : undefined}
                 onKeyDown={
