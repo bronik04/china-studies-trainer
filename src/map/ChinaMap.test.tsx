@@ -765,3 +765,4 @@ it('река перехватывает нажатие у формы, через
 
   expect(onSelectFeature).toHaveBeenCalledWith('yellow-river');
 });
+

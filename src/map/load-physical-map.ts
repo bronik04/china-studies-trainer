@@ -23,11 +23,23 @@ export function loadedPhysicalMap(): PhysicalMap | null {
 }
 
 export function loadPhysicalMap(): Promise<PhysicalMap> {
-  loading ??= import('./physical-map').then((module) => {
-    loaded = module;
+  /*
+   * Неудача не запоминается: сеть возвращается, и следующая попытка обязана
+   * идти в сеть заново. Запомненный отказ означал бы, что вкладка «Физическая»
+   * не откроется до перезагрузки страницы даже при вернувшейся связи.
+   */
+  loading ??= import('./physical-map').then(
+    (module) => {
+      loaded = module;
 
-    return module;
-  });
+      return module;
+    },
+    (error: unknown) => {
+      loading = null;
+
+      throw error;
+    },
+  );
 
   return loading;
 }

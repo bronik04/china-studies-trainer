@@ -2784,6 +2784,28 @@ button.chip[aria-pressed='true'] {
  * `scroll-padding-block-start` у корня, — и второй сложился бы с ним.
  */
 
+/*
+ * Сообщение об отказе физической карты. Поверх карты и по центру: смотрят на
+ * карту, и объяснение должно стоять там же, а не в углу страницы.
+ */
+.map-failure {
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+  color: var(--text-on-ground);
+  font-size: var(--t-size-caption);
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  margin: 0;
+  max-inline-size: min(90%, 26rem);
+  padding: var(--s-3) var(--s-4);
+  position: absolute;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+}
+
 /* --- Кадр режима «Культура» ------------------------------------------------ */
 
 /*
@@ -2800,7 +2822,8 @@ button.chip[aria-pressed='true'] {
   inset: 0;
   justify-content: center;
   overflow: hidden;
-  padding: calc(var(--s-8) + var(--s-5)) var(--s-6) var(--s-5);
+  padding: clamp(var(--s-7), 11vh, calc(var(--s-8) + var(--s-5))) var(--s-6)
+    var(--s-5);
   position: absolute;
 }
 
@@ -2852,7 +2875,12 @@ button.chip[aria-pressed='true'] {
   background: var(--surface-paper);
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
+  /*
+   * Промежутки и поля тянутся за высотой кадра: в низком окне лента иначе
+   * обрезалась бы краем, а обрезанная лента врёт о времени сильнее, чем
+   * мелкая.
+   */
+  gap: clamp(var(--s-3), 3vh, var(--s-5));
   /*
    * Кадром, а не потоком: `flex: 1` давал ленте вырасти выше кадра карты, и
    * бумага накрывала полосу вариантов под ним. Родитель `.stage-map`
@@ -2871,6 +2899,8 @@ button.chip[aria-pressed='true'] {
 }
 
 .dynasty-timeline {
+  /* Лента не сжимается до нуля: её теснит текст под ней, а не наоборот. */
+  flex: 0 0 auto;
   inline-size: 100%;
   max-inline-size: 64rem;
   position: relative;
@@ -2879,7 +2909,7 @@ button.chip[aria-pressed='true'] {
 /* --- шкала --- */
 
 .timeline-scale {
-  block-size: 1.75rem;
+  block-size: clamp(1.25rem, 3vh, 1.75rem);
   position: relative;
 }
 
@@ -2908,7 +2938,7 @@ button.chip[aria-pressed='true'] {
 /* --- полосы --- */
 
 .timeline-band {
-  block-size: 4rem;
+  block-size: clamp(2rem, 7vh, 4rem);
   border-block: var(--border-hair) solid var(--line-on-paper);
   position: relative;
 }
@@ -2944,7 +2974,7 @@ button.chip[aria-pressed='true'] {
 /* --- имена --- */
 
 .timeline-names {
-  block-size: 3.25rem;
+  block-size: clamp(2.25rem, 6vh, 3.25rem);
   position: relative;
 }
 
@@ -2954,6 +2984,7 @@ button.chip[aria-pressed='true'] {
  * нельзя — там она попала бы между «Хань» и «Тан» и склеилась бы с ними.
  */
 .timeline-gap {
+  block-size: clamp(2rem, 7vh, 4rem);
   color: var(--text-on-paper-muted);
   font-size: var(--t-size-caption);
   font-style: italic;
@@ -2973,9 +3004,19 @@ button.chip[aria-pressed='true'] {
   white-space: nowrap;
 }
 
+/*
+ * Подпись спрошенной династии кладётся поверх соседних, на своей бумаге: у
+ * Цинь и Троецарствия полоса уже подписи, и она неизбежно налезает на соседа.
+ * Прятать соседей пришлось бы измерением ширины текста, а бумага под подписью
+ * решает то же самое разметкой.
+ */
 .timeline-name[data-highlighted='true'] {
+  background: var(--surface-paper);
+  border-radius: var(--radius-sm);
   color: var(--text-on-paper);
   font-weight: var(--t-weight-bold);
+  padding-inline: var(--s-2);
+  z-index: 1;
 }
 
 .timeline-name-years {
@@ -2983,9 +3024,15 @@ button.chip[aria-pressed='true'] {
   font-weight: var(--t-weight-regular);
 }
 
+/*
+ * Текст под лентой сжимается и обрезается первым: если чему-то и не хватать
+ * места, то объяснению, а не самой ленте.
+ */
 .history-hint,
 .history-note {
   color: var(--text-on-paper-muted);
+  min-block-size: 0;
+  overflow: hidden;
   font-size: var(--t-size-caption);
   margin: 0;
   max-inline-size: 44rem;

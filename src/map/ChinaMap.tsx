@@ -257,17 +257,32 @@ export function ChinaMap({
     setCitySvg(mapRef.current?.querySelector<SVGSVGElement>('svg') ?? null);
   }, []);
 
+  /*
+   * Отказ виден. Кусок приезжает по сети, и в классе с упавшим Wi-Fi он может
+   * не приехать вовсе; молча оставленная политическая карта на вкладке
+   * «Физическая» выглядит поломкой без объяснения, а на вопрос «найдите реку»
+   * отвечать было бы нечем.
+   */
+  const [physicalFailed, setPhysicalFailed] = useState(false);
+
   useEffect(() => {
     if (variant !== 'physical' || physicalMap !== null) {
       return;
     }
 
     let alive = true;
-    void loadPhysicalMap().then((module) => {
-      if (alive) {
-        setPhysicalMap(module);
-      }
-    });
+    void loadPhysicalMap().then(
+      (module) => {
+        if (alive) {
+          setPhysicalMap(module);
+        }
+      },
+      () => {
+        if (alive) {
+          setPhysicalFailed(true);
+        }
+      },
+    );
 
     return () => {
       alive = false;
@@ -666,6 +681,22 @@ export function ChinaMap({
               citySvg,
             )
           : null}
+        {/*
+          Сообщение об отказе — на самой карте, а не в углу страницы: смотрят
+          на карту, и там же должно стоять объяснение, почему на ней ничего
+          нет.
+        */}
+        {/*
+          Признак неудачи не сбрасывается при новой попытке: сброс — это
+          setState прямо в эффекте. Сообщение гаснет само, когда кусок всё же
+          приезжает, потому что условие спрашивает и о нём.
+        */}
+        {variant === 'physical' && physicalFailed && physicalMap === null ? (
+          <p className="map-failure" role="status">
+            Физическая карта не загрузилась: нет связи. Она появится, когда
+            связь вернётся, — обновите страницу.
+          </p>
+        ) : null}
         {/* Зум идёт после карты в разметке: сначала предмет, потом управление им. */}
         {/*
           Управление показывается тому, кто его попросил, — и только ему.
