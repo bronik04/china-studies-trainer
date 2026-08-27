@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { otherCollectionsOfRegion } from '../../content/collections';
 import { REGION_KIND_LABELS } from '../../content/regions';
-import { physicalFeatures } from '../../content/physical-features';
+import {
+  physicalFeatures,
+  physicalKindLabel,
+} from '../../content/physical-features';
 import { featuresWord, regionsWord } from '../../content/region-count';
-import type {
-  PhysicalFeature,
-  PhysicalKind,
-  Region,
-} from '../../content/types';
+import type { Region } from '../../content/types';
 import { ChinaMap } from '../../map/ChinaMap';
 import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { MapAttribution } from '../../map/MapAttribution';
@@ -29,25 +28,6 @@ const RELIEF_BAND_TONES = [0, ...RELIEF_TICKS] as const;
  */
 const SCALE_TOP_DOWN = [...RELIEF_BAND_TONES].reverse();
 const SCALE_TICKS_TOP_DOWN = [...RELIEF_TICKS].reverse();
-
-/** Род объекта назван словом — по той же причине, что и тип региона. */
-const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
-  river: 'Река',
-  landform: 'Форма рельефа',
-  lake: 'Озеро',
-};
-
-/**
- * Слово рода в карточке. Одного `kind` мало: хребет — тоже `landform` и
- * получил бы «Форма рельефа», хотя ученик ищет глазами именно хребет.
- */
-function kindLabelOf(feature: PhysicalFeature): string {
-  if (feature.kind === 'landform' && feature.landform === 'range') {
-    return 'Горный хребет';
-  }
-
-  return PHYSICAL_KIND_LABELS[feature.kind];
-}
 
 const MAP_KINDS = [
   ['political', 'Политическая'],
@@ -195,7 +175,7 @@ export function AtlasPage({
                 </h1>
                 <p lang="zh-Latn-pinyin">{selectedFeature.pinyin}</p>
                 <p className="status-note">
-                  {kindLabelOf(selectedFeature)}
+                  {physicalKindLabel(selectedFeature)}
                 </p>
                 {/*
                   Регионы перечислены словами: по какой земле проходит река —

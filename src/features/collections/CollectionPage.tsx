@@ -5,13 +5,14 @@ import {
   isDraft,
   type Collection,
 } from '../../content/collections';
+import { physicalFeatureById } from '../../content/physical-features';
 import { regionsWord } from '../../content/region-count';
 import type { Region } from '../../content/types';
 import { sourceById } from '../../content/sources';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
 import { PhotoSlot } from '../../ui/PhotoSlot';
-import { RegionReference } from '../../ui/RegionReference';
+import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { SiteFooter } from '../../ui/SiteFooter';
 import { CollectionCard } from '../home/CollectionCard';
 
@@ -55,6 +56,19 @@ export function CollectionPage({
   const aboutRegion = regions.find(
     (region) => region.id === collection.aboutRegionId,
   );
+  const aboutFeature =
+    collection.aboutFeatureId === undefined
+      ? undefined
+      : physicalFeatureById(collection.aboutFeatureId);
+  /*
+   * Справка из справочника стоит на странице и говорит за неё. У региона она
+   * есть всегда — центр и города написаны, даже когда фактов нет; у объекта
+   * она и есть факты, поэтому до того, как их напишут, страница честно
+   * называет себя незаполненной, а не делает вид, что полна.
+   */
+  const referenceShown =
+    aboutRegion !== undefined ||
+    (aboutFeature !== undefined && aboutFeature.facts.length > 0);
 
   return (
     <main className="site-main">
@@ -90,7 +104,7 @@ export function CollectionPage({
           */}
           {collection.lead !== '' ? (
             <p className="lead">{collection.lead}</p>
-          ) : aboutRegion === undefined ? (
+          ) : !referenceShown ? (
             <p className="empty-note">
               Описание ещё не написано. Пока коллекция держит только привязку к
               регионам — по ней уже можно собрать раунд.
@@ -98,19 +112,20 @@ export function CollectionPage({
           ) : null}
 
           {/*
-            У коллекции «по регионам» имя, иероглифы и пиньинь дословно
-            совпадают с регионом, и заголовок страницы их уже сказал. Место
-            под фотографию, которой нет, здесь занимала заглушка — а
-            справочник о регионе давно написан: центр, факты с источниками,
-            города. Он и встаёт на это место.
+            Место под фотографию, которой нет, занимала заглушка — а справочник
+            давно написан. У региона это центр, факты с источниками и города; у
+            объекта — те же факты, что показывает карточка атласа. Список
+            регионов объекта сюда не идёт: он стоит справа, у карты.
 
             Условие — признак в каталоге, а не «ровно один регион»: у
             коллекции о месте регион тоже один, но она не о нём.
           */}
-          {aboutRegion === undefined ? (
-            <PhotoSlot subject={collection.nameRu} height="hero" />
-          ) : (
+          {aboutRegion !== undefined ? (
             <RegionReference region={aboutRegion} />
+          ) : aboutFeature !== undefined && aboutFeature.facts.length > 0 ? (
+            <CardFacts facts={aboutFeature.facts} />
+          ) : (
+            <PhotoSlot subject={collection.nameRu} height="hero" />
           )}
 
           {/*
@@ -120,7 +135,7 @@ export function CollectionPage({
             справка уже стоит выше, и «справка ещё не написана» под ней было
             бы прямой неправдой.
           */}
-          {aboutRegion !== undefined && collection.notes.length === 0 ? null : (
+          {referenceShown && collection.notes.length === 0 ? null : (
             <section className="collection-block">
               <h2>Что стоит знать</h2>
               {collection.notes.length === 0 ? (
@@ -150,9 +165,9 @@ export function CollectionPage({
             {collection.photos.length === 0 ? (
               <p className="empty-note">
                 Фотографии подбирает учитель. Пока их нет,{' '}
-                {aboutRegion === undefined
-                  ? 'коллекция работает как список регионов.'
-                  : 'страница держится справкой региона и картой.'}
+                {referenceShown
+                  ? 'страница держится справкой и картой.'
+                  : 'коллекция работает как список регионов.'}
               </p>
             ) : (
               <ul className="photo-grid">

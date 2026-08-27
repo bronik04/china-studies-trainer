@@ -373,14 +373,25 @@ export function validateCollections(
         `Коллекция ${collection.id}: регион ${collection.aboutRegionId} не в её списке`,
       );
     }
+    /* У страницы один предмет: либо регион, либо объект, либо ни того ни другого. */
+    if (
+      collection.aboutRegionId !== undefined &&
+      collection.aboutFeatureId !== undefined
+    ) {
+      errors.push(
+        `Коллекция ${collection.id}: и регион, и объект как предмет страницы`,
+      );
+    }
 
     /*
-     * Коллекция о регионе не пишет вводку и заметки: её тело — справка из
-     * справочника регионов, и та проверена своим правилом. Требовать здесь
+     * Коллекция о регионе или об объекте не пишет вводку и заметки: её тело —
+     * справка из справочника, и та проверена своим правилом. Требовать здесь
      * ещё три заметки значило бы требовать написать то же самое дважды.
      * Дописанные сверх справки — по общему правилу: три-четыре или ни одной.
      */
-    const written = collection.aboutRegionId === undefined;
+    const written =
+      collection.aboutRegionId === undefined &&
+      collection.aboutFeatureId === undefined;
     if (written && collection.lead.trim().length === 0) {
       errors.push(`Коллекция ${collection.id}: пустая вводка`);
     }

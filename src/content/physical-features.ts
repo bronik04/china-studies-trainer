@@ -1,4 +1,4 @@
-import type { PhysicalFeature, ReliefStep } from './types';
+import type { PhysicalFeature, PhysicalKind, ReliefStep } from './types';
 
 /**
  * Двенадцать целей физической географии: шесть рек и шесть форм рельефа.
@@ -17,6 +17,39 @@ import type { PhysicalFeature, ReliefStep } from './types';
  * заявленный регион был действительно задет, а генерализованная линия у самой
  * межи может лечь по любую её сторону.
  */
+
+/**
+ * Род объекта назван словом — по той же причине, что и род региона: на
+ * физической карте род передан цветом полосы высоты и формой знака, а цвет не
+ * может быть единственным каналом (DESIGN_SYSTEM.md).
+ *
+ * Живёт в справочнике, а не в атласе: тот же род называет и надзаголовок
+ * коллекции об объекте.
+ */
+export const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
+  river: 'Река',
+  landform: 'Форма рельефа',
+  lake: 'Озеро',
+};
+
+/**
+ * Слово рода в карточке. Одного `kind` мало: хребет — тоже `landform` и
+ * получил бы «Форма рельефа», хотя ученик ищет глазами именно хребет.
+ */
+export function physicalKindLabel(feature: PhysicalFeature): string {
+  if (feature.kind === 'landform' && feature.landform === 'range') {
+    return 'Горный хребет';
+  }
+
+  return PHYSICAL_KIND_LABELS[feature.kind];
+}
+
+/** Объект по идентификатору. Справочник маленький, поиск линейный. */
+export function physicalFeatureById(
+  id: string,
+): PhysicalFeature | undefined {
+  return physicalFeatures.find((feature) => feature.id === id);
+}
 
 const RIVERS = ['natural-earth-rivers-5.1.2'] as const;
 const LANDFORMS = ['natural-earth-geography-regions-5.1.2'] as const;

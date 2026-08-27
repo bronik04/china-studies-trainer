@@ -1,5 +1,9 @@
+import {
+  physicalFeatures,
+  physicalKindLabel,
+} from './physical-features';
 import { REGION_KIND_LABELS, regions } from './regions';
-import type { Region } from './types';
+import type { PhysicalFeature, Region } from './types';
 
 /**
  * Коллекции — места и явления, к которым привязаны вопросы культурного режима.
@@ -13,6 +17,12 @@ import type { Region } from './types';
  * `PhotoSlot` рисует на его месте именованную заглушку: разметка и подписи
  * готовы, файлы подставляются позже. Число снимков нигде не пишется руками —
  * иначе карточка обещала бы шесть фотографий, которых нет ни одной.
+ *
+ * Идентификаторы. Написанная руками коллекция зовётся своим именем; выведенная
+ * несёт приставку того справочника, из которого взята: `region-yunnan`,
+ * `feature-yangtze`. Приставка не украшение — два справочника уже столкнулись
+ * именами: `heilongjiang` есть и у провинции, и у реки Амур. Без пространств
+ * имён одна страница молча закрыла бы другую.
  */
 
 export type CollectionGroupId = 'geography' | 'by-region' | 'culture';
@@ -66,6 +76,11 @@ export type Collection = {
    * послабление в проверке контента: вводки и заметок у неё может не быть.
    */
   readonly aboutRegionId?: string;
+  /**
+   * Объект физической географии, о котором коллекция, — то же устройство, что
+   * у `aboutRegionId`, и вместе с ним не ставится: у страницы один предмет.
+   */
+  readonly aboutFeatureId?: string;
   readonly nameRu: string;
   readonly nameZh: string;
   readonly pinyin: string;
@@ -163,7 +178,7 @@ const geographyCollections = [
       'britannica-great-wall-ming',
       'stats-china-great-wall-length-2012',
     ],
-    relatedIds: ['silk-road', 'shaanxi', 'terracotta-army'],
+    relatedIds: ['silk-road', 'region-shaanxi', 'terracotta-army'],
   },
   {
     id: 'yuanyang-terraces',
@@ -187,45 +202,7 @@ const geographyCollections = [
     ],
     photos: [],
     sourceIds: ['unesco-honghe-hani-1111'],
-    relatedIds: ['yunnan'],
-  },
-  {
-    id: 'yellow-river',
-    groupId: 'geography',
-    nameRu: 'Хуанхэ',
-    nameZh: '黄河',
-    pinyin: 'Huánghé',
-    kind: 'река',
-    lead:
-      'Хуанхэ — вторая по длине река Китая: она берёт начало в горах Баян-Хара-Ула (巴颜喀拉山, ' +
-      'Bāyán Kālā Shān) на Тибетском нагорье в провинции Цинхай и впадает в залив Бохай Жёлтого ' +
-      'моря, пересекая по пути девять регионов — от Цинхая на западе до Шаньдуна на востоке. ' +
-      'Бассейн реки считается колыбелью китайской цивилизации, а жёлтый цвет воде придают ' +
-      'лёссовые наносы, которые Хуанхэ несёт с Лёссового плато.',
-    regionIds: [
-      'qinghai',
-      'sichuan',
-      'gansu',
-      'ningxia',
-      'inner-mongolia',
-      'shaanxi',
-      'shanxi',
-      'henan',
-      'shandong',
-    ],
-    notes: [
-      'Хуанхэ берёт начало в горах Баян-Хара-Ула на Тибетском нагорье и впадает в залив Бохай Жёлтого моря; длина реки — 5464 км, это вторая по протяжённости река Китая после Янцзы.',
-      'На пути к морю Хуанхэ пересекает девять регионов — от Цинхая на западе до Шаньдуна на востоке, включая автономные районы Нинся и Внутренняя Монголия.',
-      'Хуанхэ ежегодно выносит в море в среднем около 1300 млн т взвешенных наносов — больше любой другой реки в мире; жёлтый цвет воде придают частицы лёсса, вынесенные с Лёссового плато (黄土高原, Huángtǔ Gāoyuán), отсюда и название реки.',
-      'Из-за частых катастрофических разливов на Северо-Китайской равнине реку издавна называют «Горем Китая».',
-    ],
-    photos: [],
-    sourceIds: [
-      'britannica-yellow-river',
-      'bre-sediment-runoff',
-      'stats-china-yellow-river-provinces',
-    ],
-    relatedIds: ['great-wall'],
+    relatedIds: ['region-yunnan'],
   },
   {
     id: 'taklamakan',
@@ -323,7 +300,7 @@ const cultureCollections = [
     ],
     photos: [],
     sourceIds: ['unesco-qin-mausoleum-441', 'britannica-terracotta-army'],
-    relatedIds: ['shaanxi', 'great-wall'],
+    relatedIds: ['region-shaanxi', 'great-wall'],
   },
   {
     id: 'silk-road',
@@ -351,6 +328,97 @@ const cultureCollections = [
     sourceIds: ['britannica-silk-road', 'unesco-silk-roads-changan-tianshan-1442'],
     relatedIds: ['great-wall', 'taklamakan'],
   },] as const satisfies readonly Collection[];
+
+/**
+ * Дописанное вручную к коллекции об объекте физической географии — то же, что
+ * у региона: вводка, заметки, источники этих заметок и соседние коллекции.
+ *
+ * Плюс `regionIds`. Список у объекта в справочнике служит другой цели: его
+ * сверяет `validate:map`, и там перечислены только регионы, которых
+ * генерализованная линия действительно касается. Хуанхэ географически течёт
+ * по девяти регионам, а линия задевает восемь — Сычуань она обходит. На карте
+ * права геометрия, в тексте — география, и переписывать ради текста
+ * проверяемый список нельзя.
+ */
+type FeatureCollectionExtras = {
+  readonly lead?: string;
+  readonly notes?: readonly string[];
+  readonly regionIds?: readonly string[];
+  readonly photos?: readonly CollectionPhoto[];
+  readonly sourceIds?: readonly string[];
+  readonly relatedIds?: readonly string[];
+};
+
+const FEATURE_COLLECTION_EXTRAS: Readonly<
+  Record<string, FeatureCollectionExtras>
+> = {
+  'yellow-river': {
+    lead:
+      'Хуанхэ — вторая по длине река Китая: она берёт начало в горах Баян-Хара-Ула (巴颜喀拉山, ' +
+      'Bāyán Kālā Shān) на Тибетском нагорье в провинции Цинхай и впадает в залив Бохай Жёлтого ' +
+      'моря, пересекая по пути девять регионов — от Цинхая на западе до Шаньдуна на востоке. ' +
+      'Бассейн реки считается колыбелью китайской цивилизации, а жёлтый цвет воде придают ' +
+      'лёссовые наносы, которые Хуанхэ несёт с Лёссового плато.',
+    regionIds: [
+      'qinghai',
+      'sichuan',
+      'gansu',
+      'ningxia',
+      'inner-mongolia',
+      'shaanxi',
+      'shanxi',
+      'henan',
+      'shandong',
+    ],
+    notes: [
+      'Хуанхэ берёт начало в горах Баян-Хара-Ула на Тибетском нагорье и впадает в залив Бохай Жёлтого моря; длина реки — 5464 км, это вторая по протяжённости река Китая после Янцзы.',
+      'На пути к морю Хуанхэ пересекает девять регионов — от Цинхая на западе до Шаньдуна на востоке, включая автономные районы Нинся и Внутренняя Монголия.',
+      'Хуанхэ ежегодно выносит в море в среднем около 1300 млн т взвешенных наносов — больше любой другой реки в мире; жёлтый цвет воде придают частицы лёсса, вынесенные с Лёссового плато (黄土高原, Huángtǔ Gāoyuán), отсюда и название реки.',
+      'Из-за частых катастрофических разливов на Северо-Китайской равнине реку издавна называют «Горем Китая».',
+    ],
+    sourceIds: [
+      'britannica-yellow-river',
+      'bre-sediment-runoff',
+      'stats-china-yellow-river-provinces',
+    ],
+    relatedIds: ['great-wall'],
+  },};
+
+/**
+ * Объект физической географии, прочитанный как коллекция. Устроено так же,
+ * как у региона, и по той же причине: имя, иероглифы, пиньинь, род и справка
+ * лежат в справочнике объектов, и второго их экземпляра быть не должно.
+ *
+ * Отсюда же и то, ради чего это сделано: факты об объекте пишутся один раз и
+ * видны сразу на обеих поверхностях — в карточке атласа и на странице
+ * коллекции.
+ */
+function featureCollection(feature: PhysicalFeature): Collection {
+  const extras = FEATURE_COLLECTION_EXTRAS[feature.id] ?? {};
+  const factSourceIds = feature.facts.flatMap((fact) => fact.sourceIds);
+
+  return {
+    id: `feature-${feature.id}`,
+    groupId: 'geography',
+    aboutFeatureId: feature.id,
+    nameRu: feature.nameRu,
+    nameZh: feature.nameZh,
+    pinyin: feature.pinyin,
+    kind: kindWord(physicalKindLabel(feature)),
+    lead: extras.lead ?? '',
+    regionIds: extras.regionIds ?? feature.regionIds,
+    notes: extras.notes ?? [],
+    photos: extras.photos ?? [],
+    sourceIds: [
+      ...new Set([
+        ...(extras.sourceIds ?? []),
+        ...factSourceIds,
+        ...feature.sourceIds,
+      ]),
+    ],
+    relatedIds: extras.relatedIds ?? [],
+  };
+}
 
 /**
  * Дописанное вручную к коллекции региона: вводка, заметки «что стоит знать»,
@@ -434,13 +502,11 @@ const REGION_COLLECTION_EXTRAS: Readonly<
   },};
 
 /**
- * Род единицы словом в надзаголовке: «По регионам · провинция». Подпись в
- * карточке атласа стоит отдельной строкой и потому начинается с заглавной —
- * второго списка родов ради одной буквы не заводим.
+ * Род словом в надзаголовке: «По регионам · провинция», «География · река».
+ * Подпись в карточке атласа стоит отдельной строкой и потому начинается с
+ * заглавной — вторых списков родов ради одной буквы не заводим.
  */
-function kindWord(region: Region): string {
-  const label = REGION_KIND_LABELS[region.kind];
-
+function kindWord(label: string): string {
   return label.slice(0, 1).toLowerCase() + label.slice(1);
 }
 
@@ -455,13 +521,13 @@ function regionCollection(region: Region): Collection {
   const factSourceIds = region.facts.flatMap((fact) => fact.sourceIds);
 
   return {
-    id: region.id,
+    id: `region-${region.id}`,
     groupId: 'by-region',
     aboutRegionId: region.id,
     nameRu: region.nameRu,
     nameZh: region.nameZh,
     pinyin: region.pinyin,
-    kind: kindWord(region),
+    kind: kindWord(REGION_KIND_LABELS[region.kind]),
     lead: extras.lead ?? '',
     regionIds: [region.id],
     notes: extras.notes ?? [],
@@ -483,12 +549,15 @@ function regionCollection(region: Region): Collection {
 }
 
 /**
- * Порядок каталога: объекты на карте, потом все 34 региона в порядке
- * справочника, потом явления. Его же ученик видит на странице коллекций, и
- * два разных порядка у одного набора он бы заметил.
+ * Порядок каталога: сначала три написанных вручную объекта на карте — стена,
+ * террасы и пустыня, которых нет среди учебных целей, — потом 24 цели
+ * физической географии в порядке своего справочника, потом все 34 региона в
+ * порядке своего. Явления — последними. Тот же порядок ученик видит на
+ * странице коллекций, и два разных порядка у одного набора он бы заметил.
  */
 export const collections: readonly Collection[] = [
   ...geographyCollections,
+  ...physicalFeatures.map(featureCollection),
   ...regions.map(regionCollection),
   ...cultureCollections,
 ];

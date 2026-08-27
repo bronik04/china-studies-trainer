@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
-import { collections } from '../../content/collections';
+import { collections, collectionsInGroup } from '../../content/collections';
 import { regions } from '../../content/regions';
 import type { Attempt } from '../../domain/round';
 import { HomePage } from './HomePage';
@@ -133,10 +133,12 @@ it('витрина коллекций фильтруется по группе',
   expect(onOpenCollection).toHaveBeenCalledWith('spring-festival');
 });
 
+/* Счёт в подписи чипа берётся из каталога, а не пишется в тесте руками. */
 it('выбранная группа помечена не только цветом', () => {
   renderHome();
 
-  const chip = screen.getByRole('button', { name: 'География 4' });
+  const inGroup = collectionsInGroup('geography').length;
+  const chip = screen.getByRole('button', { name: `География ${inGroup}` });
   fireEvent.click(chip);
 
   expect(chip).toHaveAttribute('aria-pressed', 'true');

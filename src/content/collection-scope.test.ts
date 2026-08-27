@@ -35,7 +35,7 @@ it('охват без привязки к регионам берётся из �
  * колонка одинаковых строк.
  */
 it('подпись карточки региона не повторяет её заголовок', () => {
-  expect(collectionCardSubtitle(byId('yunnan'), regions)).toBe(
+  expect(collectionCardSubtitle(byId('region-yunnan'), regions)).toBe(
     'Провинция · центр Куньмин',
   );
 });
