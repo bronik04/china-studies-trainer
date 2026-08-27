@@ -284,17 +284,36 @@ export function validatePhysicalFeatures(
     }
 
     /*
+     * Столько же, сколько у региона: меньше двух — карточка снова молчит,
+     * больше трёх — справка перестаёт помещаться рядом с картой.
+     */
+    if (feature.facts.length < 2 || feature.facts.length > 3) {
+      errors.push(
+        `У цели ${feature.id} фактов должно быть 2–3, сейчас ${feature.facts.length}`,
+      );
+    }
+
+    /*
      * Тема факта служит React-ключом в справке карточки атласа, поэтому
      * внутри одного носителя темы обязаны быть уникальны.
      */
     const factTitles = new Set<string>();
     for (const fact of feature.facts) {
+      if (fact.title.trim().length === 0 || fact.body.trim().length === 0) {
+        errors.push(`У цели ${feature.id}: пустые title или body у факта`);
+      }
       if (factTitles.has(fact.title)) {
         errors.push(
           `У цели ${feature.id} повторяющаяся тема факта «${fact.title}»`,
         );
       }
       factTitles.add(fact.title);
+      if (/<[a-z/]/i.test(fact.body)) {
+        errors.push(`У цели ${feature.id}: HTML в тексте факта «${fact.title}»`);
+      }
+      if (fact.sourceIds.length === 0) {
+        errors.push(`У цели ${feature.id}: факт «${fact.title}» без источника`);
+      }
     }
 
     if (feature.kind === 'river') {
