@@ -42,11 +42,26 @@ export function CollectionsPage({
         </p>
       </div>
 
+      {/*
+        Переход к группе. Раздел вырос с двенадцати карточек до шестидесяти
+        пяти — это почти шесть тысяч пикселей прокрутки, — и «по регионам»
+        оказалось посреди неё. Якоря, а не фильтр: фильтр прячет остальное, а
+        здесь всё показано намеренно (см. вводку раздела ниже), и человеку
+        нужно не отсеять, а попасть.
+      */}
+      <nav className="group-jump" aria-label="Группы коллекций">
+        {COLLECTION_GROUPS.map((group) => (
+          <a key={group.id} className="chip" href={`#group-${group.id}`}>
+            {group.title} {collectionsInGroup(group.id).length}
+          </a>
+        ))}
+      </nav>
+
       {COLLECTION_GROUPS.map((group) => {
         const inGroup = collectionsInGroup(group.id);
 
         return (
-          <section key={group.id} className="landing-section">
+          <section key={group.id} className="landing-section" id={`group-${group.id}`}>
             <div className="landing-section-head">
               <h2>{group.title}</h2>
               <p className="group-hint">

@@ -169,11 +169,6 @@ export function spanLabel(dynasty: Dynasty): string {
   return `${from}–${to}`;
 }
 
-/** Сколько лет правила династия. Нулевого года нет, но на длине это не сказывается. */
-export function spanYears(dynasty: Dynasty): number {
-  return dynasty.to - dynasty.from;
-}
-
 export function dynastyById(id: string): Dynasty | undefined {
   return dynasties.find((dynasty) => dynasty.id === id);
 }

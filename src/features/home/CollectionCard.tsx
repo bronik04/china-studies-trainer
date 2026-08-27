@@ -3,7 +3,6 @@ import {
   type Collection,
 } from '../../content/collections';
 import { CollectionImage } from '../../ui/CollectionImage';
-import { PhotoSlot } from '../../ui/PhotoSlot';
 
 /**
  * Карточка коллекции. Одна на три поверхности: витрину главной, раздел
@@ -36,17 +35,22 @@ export function CollectionCard({
       */}
       <button type="button" onClick={() => onOpen(collection.id)}>
         {/*
-          Первый снимок коллекции — он же лицо карточки. Если снимка нет,
-          остаётся именованное место под него: карточка обязана сказать, чего
-          не хватает, а не притвориться заполненной.
+          Первый снимок коллекции — он же лицо карточки.
+
+          Места под снимок здесь нет, когда съёмка и не задумана. У коллекции о
+          регионе или объекте `photos` пуст: ей никто не обещал фотографии, и
+          заглушка «снимок ещё не подобран» на пятидесяти восьми карточках из
+          шестидесяти пяти обещала бы то, чего никто не обещал, — а заодно
+          растягивала бы раздел на пять тысяч пикселей штриховки. Где место под
+          съёмку описано, а файла нет, заглушка остаётся: там недостача
+          настоящая.
         */}
-        {collection.photos[0] === undefined ? (
-          <PhotoSlot subject={collection.nameRu} height="card" />
-        ) : (
+        {collection.photos[0] === undefined ? null : (
           <CollectionImage
             photo={collection.photos[0]}
             height="card"
             sizes="(min-width: 60rem) 20rem, 90vw"
+            credited={false}
           />
         )}
         <span className="collection-card-body">

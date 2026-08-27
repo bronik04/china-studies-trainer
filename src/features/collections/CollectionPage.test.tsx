@@ -290,11 +290,22 @@ it('не показывает главный снимок дважды', () => {
   expect(document.querySelectorAll('img[src*="badaling"]')).toHaveLength(1);
 });
 
-/* Снимок описан словами: читалке экрана `alt` обязателен. */
-it('у каждого снимка есть текстовая альтернатива', () => {
+/*
+ * Снимок на странице описан словами — читалке экрана `alt` обязателен. Снимок
+ * внутри карточки-ссылки украшает её: что там, говорит заголовок карточки, и
+ * второе имя только удлинило бы имя кнопки. Такому `alt` положено быть пустым,
+ * но присутствовать: отсутствующий читалка прочтёт именем файла.
+ */
+it('снимок на странице описан словами, снимок в карточке — пустым alt', () => {
   renderPage('great-wall');
 
   for (const image of document.querySelectorAll('img')) {
-    expect(image.getAttribute('alt')?.trim().length ?? 0).toBeGreaterThan(0);
+    const inCard = image.closest('.collection-card') !== null;
+
+    expect(image.getAttribute('alt'), image.getAttribute('src') ?? '').not.toBeNull();
+    expect(
+      (image.getAttribute('alt') ?? '').trim().length > 0,
+      image.getAttribute('src') ?? '',
+    ).toBe(!inCard);
   }
 });

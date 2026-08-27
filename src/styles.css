@@ -384,6 +384,12 @@ p {
   }
 }
 
+/*
+ * Надзаголовок. Иногда это настоящий заголовок раздела — «Справка» в карточке
+ * атласа и на странице коллекции, — поэтому размер и вес задаются здесь, а не
+ * достаются от `h2`: иначе один и тот же надзаголовок выглядел бы по-разному
+ * в зависимости от того, каким узлом его набрали.
+ */
 .eyebrow {
   color: var(--accent-on-ground);
   font-size: var(--t-size-caption);
@@ -1966,6 +1972,8 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   cursor: pointer;
   display: flex;
   gap: var(--s-3);
+  display: inline-flex;
+  align-items: center;
   min-height: var(--target-min);
   padding: var(--s-2) var(--s-4);
 }
@@ -2031,7 +2039,12 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   margin-bottom: var(--s-5);
 }
 
-button.chip {
+/*
+ * Чип. Кнопкой он фильтрует витрину на главной, ссылкой — ведёт к группе в
+ * разделе коллекций. Вид один: это одна и та же вещь на экране, и разный вид
+ * у одинакового поведения читался бы как разное поведение.
+ */
+.chip {
   background: transparent;
   border: var(--border-hair) solid var(--line-on-ground-strong);
   border-radius: var(--radius-sm);
@@ -2041,7 +2054,7 @@ button.chip {
   padding: var(--s-2) var(--s-4);
 }
 
-button.chip:hover {
+.chip:hover {
   border-color: var(--accent-on-ground);
 }
 
@@ -2749,6 +2762,27 @@ button.chip[aria-pressed='true'] {
   min-block-size: 0;
   position: relative;
 }
+
+/*
+ * Переход к группе коллекций. Ссылками, а не кнопками: они ведут на место
+ * страницы, и работать это должно так же, как любая ссылка, — с историей и с
+ * открытием в новой вкладке.
+ */
+.group-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-block: var(--s-5) var(--s-6);
+}
+
+.group-jump .chip {
+  text-decoration: none;
+}
+
+/*
+ * Запаса под шапку здесь нет намеренно: он один на весь сайт —
+ * `scroll-padding-block-start` у корня, — и второй сложился бы с ним.
+ */
 
 /* --- Лента династий ------------------------------------------------------ */
 

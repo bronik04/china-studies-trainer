@@ -40,9 +40,25 @@ type PhysicalFeature = {
   // привязку к геометрии Natural Earth, см. src/content/types.ts
 };
 
+type Dynasty = {
+  id: string;              // tang
+  nameRu: string;
+  nameZh: string;
+  pinyin: string;
+  from: number;            // годы числами; до нашей эры — отрицательные
+  to: number;
+  approximateFrom?: boolean; // у Ся условны оба конца, у Шан — только начало
+  approximateTo?: boolean;
+  note: string;            // чем запомнилась; показывается после ответа
+  sourceIds: string[];
+  // подпись срока не хранится: её собирает spanLabel по числам
+};
+
 type Collection = {
-  id: string;              // great-wall
+  id: string;              // great-wall | region-yunnan | feature-yangtze
   groupId: 'geography' | 'by-region' | 'culture';
+  aboutRegionId?: string;  // коллекция о регионе: тело страницы — его справка
+  aboutFeatureId?: string; // то же для объекта физической географии
   nameRu: string;
   nameZh: string;
   pinyin: string;
@@ -50,15 +66,16 @@ type Collection = {
   lead: string;
   regionIds: string[];
   notes: string[];
-  photos: CollectionPhoto[];
+  photos: CollectionPhoto[]; // id снимка — имя файла в public/photos и ключ
+                             // записи об авторе в src/content/photo-credits.ts
   sourceIds: string[];     // пустой список — признак черновика
   relatedIds: string[];
   // необязательный scopeLabel опущен; точная форма — src/content/collections.ts
 };
 
 type Target = {
-  kind: 'region' | 'city' | 'physical';
-  id: string;              // sichuan | chengdu
+  kind: 'region' | 'city' | 'physical' | 'history';
+  id: string;              // sichuan | chengdu | yangtze | tang
 };
 
 type Attempt = {

@@ -3,7 +3,6 @@ import {
   dynasties,
   dynastyById,
   spanLabel,
-  spanYears,
   TIMELINE_FROM,
   TIMELINE_TO,
 } from './dynasties';
@@ -55,11 +54,6 @@ it('называет срок словами, а не числами', () => {
 it('отмечает условные даты словом «ок.»', () => {
   expect(spanLabel(dynastyById('xia')!)).toBe('ок. 2070–ок. 1600 до н. э.');
   expect(spanLabel(dynastyById('shang')!)).toBe('ок. 1600–1046 до н. э.');
-});
-
-it('считает длину правления', () => {
-  expect(spanYears(dynastyById('qin')!)).toBe(14);
-  expect(spanYears(dynastyById('zhou')!)).toBe(790);
 });
 
 it('границы ленты берутся из самих династий', () => {

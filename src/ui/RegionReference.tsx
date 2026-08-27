@@ -53,8 +53,15 @@ export function CardFacts({ facts }: { readonly facts: readonly Fact[] }) {
   const sourcesLine = factSourcesLine(facts);
 
   return (
-    <section className="atlas-facts" aria-label="Справка">
-      <p className="eyebrow">Справка</p>
+    <section className="atlas-facts">
+      {/*
+        Заголовком, а не надзаголовком-абзацем. Темы фактов ниже — `h3`, и
+        пока «Справка» была абзацем, страница шла с `h1` сразу на `h3`: у
+        читалки экрана пропадала ступень, а вместе с ней и то, что три темы
+        принадлежат одному блоку. Имя блока теперь даёт сам заголовок, поэтому
+        `aria-label` убран — он повторял бы его.
+      */}
+      <h2 className="eyebrow">Справка</h2>
       {facts.map((fact) => (
         <div className="atlas-fact" key={fact.title}>
           <h3>{fact.title}</h3>

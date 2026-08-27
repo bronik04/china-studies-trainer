@@ -1,5 +1,9 @@
 import { cityById } from './cities';
 import type { Collection } from './collections';
+import {
+  physicalFeatureById,
+  physicalKindLabel,
+} from './physical-features';
 import { regionsWord } from './region-count';
 import { REGION_KIND_LABELS } from './regions';
 import type { Region } from './types';
@@ -71,6 +75,20 @@ export function collectionCardSubtitle(
     const kind = REGION_KIND_LABELS[about.kind];
 
     return capital === undefined ? kind : `${kind} · центр ${capital.nameRu}`;
+  }
+
+  /*
+   * У коллекции об объекте — род и охват. Прежняя подпись обещала здесь
+   * фотографии («Семь регионов · фотографий пока нет»), которых никто не
+   * задумывал: снимков у объектов нет и в планах, а страница держится
+   * справкой.
+   */
+  const feature =
+    collection.aboutFeatureId === undefined
+      ? undefined
+      : physicalFeatureById(collection.aboutFeatureId);
+  if (feature !== undefined) {
+    return `${physicalKindLabel(feature)} · ${collectionScope(collection, regions).toLowerCase()}`;
   }
 
   const scope = collectionScope(collection, regions);
