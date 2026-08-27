@@ -4,6 +4,13 @@
  * Генератор: scripts/generate-region-palette.ts
  */
 
+/**
+ * Отпечаток контуров, из которых палитра собрана. Сверяется в
+ * `validate:map`: правка контура без `npm run generate:palette` оставила бы
+ * подписи и цели нажатия на старых местах при зелёной сборке.
+ */
+export const PALETTE_INPUTS_FINGERPRINT = '907b5a57d5c9a2da';
+
 export type RegionPaletteEntry = {
   /** Точка подписи — центр наибольшей вписанной окружности, единицы viewBox. */
   readonly label: readonly [number, number];

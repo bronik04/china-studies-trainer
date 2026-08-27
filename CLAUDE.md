@@ -24,7 +24,7 @@ npm run build                    # три валидатора → tsc -b → vi
 
 | Команда | Что делает |
 | --- | --- |
-| `npm run generate:palette` | перезаписывает `src/map/region-palette.ts` целиком по геометрии SVG |
+| `npm run generate:palette` | перезаписывает `src/map/region-palette.ts` целиком по геометрии SVG; сторожится отпечатком контуров |
 | `npm run generate:callouts` | правит `public/maps/china-provinces.svg` на месте — выноски для Макао и Гонконга |
 | `npm run generate:hit-targets` | правит тот же SVG — невидимые цели нажатия для регионов мельче порога WCAG |
 | `npm run generate:fonts` | пересобирает подмножества шрифтов в `src/assets/fonts` и `scripts/font-coverage.json` |

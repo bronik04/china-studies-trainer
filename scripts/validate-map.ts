@@ -31,7 +31,9 @@ import {
   validateTargetSizes,
   validateViewBox,
 } from '../src/map/validate-map';
+import { PALETTE_INPUTS_FINGERPRINT } from '../src/map/region-palette';
 import { physicalInputsFingerprint } from './physical-fingerprint';
+import { paletteInputsFingerprint } from './palette-fingerprint';
 import { reliefInputsFingerprint } from './relief-fingerprint';
 
 const assetPath = new URL('../public/maps/china-provinces.svg', import.meta.url);
@@ -134,6 +136,21 @@ if (expectedFingerprint !== INPUTS_FINGERPRINT) {
   throw new Error(
     `Геометрия физической карты собрана из других входов: в файле ${INPUTS_FINGERPRINT}, ` +
       `у нынешних входов ${expectedFingerprint}. Запустите npm run generate:physical`,
+  );
+}
+
+/*
+ * Палитра — тем же приёмом. `validateRegionPalette` выше спрашивает, есть ли
+ * запись у каждого региона, и на этот вопрос сдвинутый контур ответит «да»:
+ * запись останется прежней. Отпечаток спрашивает другое — из этих ли контуров
+ * она собрана. Он же сторожит цели нажатия: их расставляет `generate:hit-targets`
+ * по точкам и диаметрам палитры.
+ */
+const expectedPaletteFingerprint = paletteInputsFingerprint(svg);
+if (expectedPaletteFingerprint !== PALETTE_INPUTS_FINGERPRINT) {
+  throw new Error(
+    `Палитра собрана из других контуров: в файле ${PALETTE_INPUTS_FINGERPRINT}, ` +
+      `у нынешних ${expectedPaletteFingerprint}. Запустите npm run generate:palette`,
   );
 }
 
