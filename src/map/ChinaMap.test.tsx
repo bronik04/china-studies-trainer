@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../content/regions';
 import { ChinaMap } from './ChinaMap';
+import { loadPhysicalMap } from './load-physical-map';
 import { lakeMarks } from './lake-marks';
 import { RIVER_SHAPES } from './river-hit';
 import {
@@ -9,6 +10,16 @@ import {
   MAP_VIEWBOX_MIN_Y,
   MAP_VIEWBOX_WIDTH,
 } from './target-size';
+
+/*
+ * Физический слой приезжает отдельным куском сборки, и карта берёт его
+ * `import()`-ом. Загружается он здесь, один раз на файл: дальше карта
+ * получает его прямо при монтировании, и проверки остаются синхронными — как
+ * и в браузере, где кусок дотянут заранее.
+ */
+beforeAll(async () => {
+  await loadPhysicalMap();
+});
 
 it('selects Sichuan when its map area receives Enter', () => {
   const select = vi.fn();
@@ -57,6 +68,7 @@ it('announces the selected region in text', () => {
   );
 
   expect(screen.getByRole('status')).toHaveTextContent('Выбрано: Сычуань (四川省)');
+
 });
 
 it('clears the selection with Escape', () => {

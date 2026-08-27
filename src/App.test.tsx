@@ -1,4 +1,11 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './features/exercise/round-pace';
 import { MISS_FLASH_MS } from './features/exercise/FillMapRound';
 import { afterEach, beforeEach } from 'vitest';
@@ -44,6 +51,18 @@ beforeEach(() => {
   installMemoryStorage({});
 });
 
+/**
+ * Экраны, кроме главной, приезжают отдельными кусками сборки, поэтому
+ * появляются не в том же такте, что нажатие. Ожидание здесь не украшение: без
+ * него тест проверял бы заглушку Suspense, а не экран. Ученик этого ожидания
+ * не видит — куски дотянуты заранее, в простое после первого экрана.
+ */
+async function settle(): Promise<void> {
+  await waitFor(() => {
+    expect(screen.queryByText('Экран загружается.')).toBeNull();
+  });
+}
+
 it('открывается главной, а не сразу раундом', () => {
   render(<App />);
 
@@ -62,10 +81,11 @@ it('на главной ровно одна главная кнопка', () => 
   expect(primary).toHaveLength(1);
 });
 
-it('ведёт с главной в атлас и обратно', () => {
+it('ведёт с главной в атлас и обратно', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /Открыть атлас/ }));
+  await settle();
   expect(screen.getByTestId('atlas-region-card')).toBeInTheDocument();
 
   /*
@@ -78,15 +98,17 @@ it('ведёт с главной в атлас и обратно', () => {
   ).toBeInTheDocument();
 });
 
-it('шапка ведёт в атлас и в коллекции', () => {
+it('шапка ведёт в атлас и в коллекции', async () => {
   render(<App />);
 
   const nav = screen.getByRole('navigation', { name: 'Разделы сайта' });
 
   fireEvent.click(screen.getByRole('button', { name: 'Атлас' }));
+  await settle();
   expect(screen.getByTestId('atlas-region-card')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Коллекции' }));
+  await settle();
   expect(
     screen.getByRole('heading', {
       name: 'Места и явления, к которым привязаны вопросы',
@@ -99,7 +121,7 @@ it('шапка ведёт в атлас и в коллекции', () => {
  * Шапка закреплена и стоит везде, включая экраны ответа: решение владельца
  * продукта отменяет прежнее «на экранах ответа шапки нет».
  */
-it('шапка стоит и на экране ответа', () => {
+it('шапка стоит и на экране ответа', async () => {
   render(<App />);
 
   expect(
@@ -107,6 +129,7 @@ it('шапка стоит и на экране ответа', () => {
   ).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /^Начать/ }));
+  await settle();
 
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
   expect(
@@ -114,10 +137,11 @@ it('шапка стоит и на экране ответа', () => {
   ).toBeInTheDocument();
 });
 
-it('ведёт с главной на страницу коллекции и обратно в раздел', () => {
+it('ведёт с главной на страницу коллекции и обратно в раздел', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /Великая стена/ }));
+  await settle();
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
     'Великая стена',
   );
@@ -125,6 +149,7 @@ it('ведёт с главной на страницу коллекции и о�
   fireEvent.click(
     screen.getByRole('button', { name: 'Коллекции', current: false }),
   );
+  await settle();
   expect(
     screen.getByRole('heading', {
       name: 'Места и явления, к которым привязаны вопросы',
@@ -132,19 +157,22 @@ it('ведёт с главной на страницу коллекции и о�
   ).toBeInTheDocument();
 });
 
-it('коллекция запускает раунд ровно по своим регионам', () => {
+it('коллекция запускает раунд ровно по своим регионам', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /Великая стена/ }));
+  await settle();
   fireEvent.click(screen.getByRole('button', { name: 'Спросить эти регионы' }));
+  await settle();
 
   expect(screen.getByText(/Вопрос 1 из 9/)).toBeInTheDocument();
 });
 
-it('атлас держит выбор региона в состоянии приложения', () => {
+it('атлас держит выбор региона в состоянии приложения', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /Открыть атлас/ }));
+  await settle();
   /*
    * Выбирают на самой карте: списка-дублёра в атласе нет, а область несёт
    * `role="button"` и имя «регион, 汉字».
@@ -159,10 +187,11 @@ it('атлас держит выбор региона в состоянии пр
  * не на верх главной: иначе после каждого раунда приходится прокручивать
  * страницу заново.
  */
-it('главная кнопка запускает раунд и возвращает на секцию «Режимы»', () => {
+it('главная кнопка запускает раунд и возвращает на секцию «Режимы»', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /^Начать/ }));
+  await settle();
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Прервать раунд' }));
@@ -227,16 +256,18 @@ function finishRound(correct: boolean): void {
   }
 }
 
-function startCapitalRound(): void {
+async function startCapitalRound(): Promise<void> {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /Регион — столица/ }));
   // Карточка спрашивает язык окном, и раунд начинается из него.
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+  await settle();
 }
 
-it('показывает итог после раунда и возвращает на секцию «Режимы»', () => {
-  startCapitalRound();
+it('показывает итог после раунда и возвращает на секцию «Режимы»', async () => {
+  await startCapitalRound();
   finishRound(true);
+  await settle();
 
   expect(screen.getByText('100%')).toBeInTheDocument();
   expect(screen.getByText('34 из 34')).toBeInTheDocument();
@@ -246,9 +277,10 @@ it('показывает итог после раунда и возвращае�
   expect(document.activeElement).toHaveAttribute('id', 'modes');
 });
 
-it('повторяет все ошибки, а не только показанные пять, и говорит об этом', () => {
-  startCapitalRound();
+it('повторяет все ошибки, а не только показанные пять, и говорит об этом', async () => {
+  await startCapitalRound();
   finishRound(false);
+  await settle();
 
   expect(screen.getByText('0%')).toBeInTheDocument();
 
@@ -257,12 +289,13 @@ it('повторяет все ошибки, а не только показан�
   fireEvent.click(
     screen.getByRole('button', { name: 'Повторить ошибки: 34 региона' }),
   );
+  await settle();
 
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 }, 20_000);
 
-it('проходит раунд «регион — столица»', () => {
-  startCapitalRound();
+it('проходит раунд «регион — столица»', async () => {
+  await startCapitalRound();
 
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
   expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
@@ -289,23 +322,25 @@ it('все написанные игры открыты сразу, без вс�
   ).toBeDisabled();
 });
 
-it('запускает раунд по физической географии с главной', () => {
+it('запускает раунд по физической географии с главной', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /Найти на физической карте/ }));
   // Точное имя, а не «начинается с»: в герое стоит «Начать: найти на карте».
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+  await settle();
 
   // Без выбора берётся первый набор — реки и формы, двенадцать целей.
   expect(screen.getByText(/Вопрос 1 из 12/)).toBeInTheDocument();
 });
 
-it('набор перед стартом задаёт длину физического раунда', () => {
+it('набор перед стартом задаёт длину физического раунда', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /Найти на физической карте/ }));
   fireEvent.click(screen.getByRole('radio', { name: /И озёра/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+  await settle();
 
   expect(screen.getByText(/Вопрос 1 из 24/)).toBeInTheDocument();
 });
@@ -331,10 +366,11 @@ function clickFillRegion(region: Region): void {
   );
 }
 
-it('итог заполнения ведёт в раунд по ошибочным регионам', () => {
+it('итог заполнения ведёт в раунд по ошибочным регионам', async () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /Заполнить карту/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+  await settle();
 
   vi.useFakeTimers();
   try {
@@ -353,10 +389,12 @@ it('итог заполнения ведёт в раунд по ошибочны
   } finally {
     vi.useRealTimers();
   }
+  await settle();
 
   fireEvent.click(
     screen.getByRole('button', { name: 'Повторить ошибки: 1 регион' }),
   );
+  await settle();
 
   expect(screen.getByText(/Вопрос 1 из 1/)).toBeInTheDocument();
 }, 20_000);

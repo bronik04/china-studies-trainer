@@ -2,7 +2,18 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { physicalFeatures } from '../../content/physical-features';
 import { regions } from '../../content/regions';
+import { loadPhysicalMap } from '../../map/load-physical-map';
 import { AtlasPage } from './AtlasPage';
+
+/*
+ * Физический слой приезжает отдельным куском сборки, и карта берёт его
+ * `import()`-ом. Загружается он здесь, один раз на файл: дальше карта
+ * получает его прямо при монтировании, и проверки остаются синхронными — как
+ * и в браузере, где кусок дотянут заранее.
+ */
+beforeAll(async () => {
+  await loadPhysicalMap();
+});
 
 function renderAtlas(selectedRegionId: string | null = null) {
   const onSelect = vi.fn();
@@ -57,6 +68,7 @@ it('показывает карточку выбранного региона с
 
   expect(card).toHaveTextContent('Хунань');
   expect(card).toHaveTextContent('湖南');
+
   expect(card).toHaveTextContent('Чанша');
   expect(card).toHaveTextContent('长沙');
 });

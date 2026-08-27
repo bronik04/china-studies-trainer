@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { citiesUpTo } from './content/cities';
 import { collectionById } from './content/collections';
 import {
@@ -20,16 +27,19 @@ import { createProgressStore } from './domain/progress-storage';
 import type { QuestionLanguage } from './domain/question-language';
 import { outcomesByTarget } from './domain/round-outcomes';
 import type { Attempt, ExerciseType } from './domain/round';
-import { CityRound } from './features/exercise/CityRound';
-import { PhysicalRound } from './features/exercise/PhysicalRound';
-import { ExerciseRound } from './features/exercise/ExerciseRound';
-import { FillMapRound } from './features/exercise/FillMapRound';
-import { FillMapResultsPage } from './features/results/FillMapResultsPage';
-import { RoundResultsPage } from './features/results/RoundResultsPage';
-import { AtlasPage } from './features/atlas/AtlasPage';
-import { CollectionPage } from './features/collections/CollectionPage';
-import { CollectionsPage } from './features/collections/CollectionsPage';
 import { HomePage } from './features/home/HomePage';
+import {
+  AtlasPage,
+  CityRound,
+  CollectionPage,
+  CollectionsPage,
+  ExerciseRound,
+  FillMapResultsPage,
+  FillMapRound,
+  PhysicalRound,
+  prefetchScreens,
+  RoundResultsPage,
+} from './screens';
 import { ChinaMap } from './map/ChinaMap';
 import type { MapZoom } from './map/MapControls';
 import { SiteHeader, type SiteSection } from './ui/SiteHeader';
@@ -77,7 +87,20 @@ function AppFrame({
   return (
     <div className="app-frame" data-fills-frame={fillsFrame}>
       <SiteHeader current={current} onNavigate={onNavigate} />
-      {children}
+      {/*
+        Ожидание куска экрана. Оболочка и шапка уже нарисованы, поэтому
+        подменяется только содержимое — страница не прыгает. Видно это редко:
+        куски дотягиваются в простое сразу после первого экрана.
+      */}
+      <Suspense
+        fallback={
+          <p className="empty-note" role="status">
+            Экран загружается.
+          </p>
+        }
+      >
+        {children}
+      </Suspense>
     </div>
   );
 }
@@ -153,6 +176,14 @@ export default function App() {
    * раздел главной, прокрутка наверх обязана случиться раньше, а не отменить
    * его.
    */
+  /*
+   * Остальные экраны дотягиваются в простое сразу после первого. Без этого
+   * деление на куски отняло бы обещание работать без сети после
+   * первоначальной загрузки (`AGENTS.md`): атлас в классе с упавшим Wi-Fi не
+   * открылся бы вовсе.
+   */
+  useEffect(prefetchScreens, []);
+
   useEffect(() => {
     if (pendingAnchor.current === null) {
       window.scrollTo(0, 0);
