@@ -264,6 +264,49 @@ describe('PhysicalLayer', () => {
   });
 
   /*
+   * Крупные формы не помечались вовсе: `data-hovered` был только у линии реки
+   * и у подписи. Из-за этого под курсором Таримская впадина ничем не
+   * отличалась от соседней, и понять, что именно выберешь, было нельзя.
+   */
+  it('помечает форму под курсором', () => {
+    const { container } = renderLayer({
+      onSelect: () => {},
+      hoveredFeatureId: 'tarim-basin',
+    });
+
+    expect(
+      container.querySelector('.relief-shape[data-feature-id="tarim-basin"]'),
+    ).toHaveAttribute('data-hovered', 'true');
+    expect(
+      container.querySelector('.relief-shape[data-feature-id="gobi"]'),
+    ).toHaveAttribute('data-hovered', 'false');
+  });
+
+  /* Декоративная форма целью не бывает и помечаться не должна. */
+  it('не помечает форму без имени', () => {
+    const { container } = renderLayer({ hoveredFeatureId: 'tarim-basin' });
+
+    for (const shape of container.querySelectorAll(
+      '.relief-shape:not([data-feature-id])',
+    )) {
+      expect(shape.getAttribute('data-hovered')).not.toBe('true');
+    }
+  });
+
+  it('помечает озеро под курсором', () => {
+    const { container } = renderLayer({
+      onSelect: () => {},
+      hoveredFeatureId: 'qinghai-lake',
+    });
+
+    const lake = container
+      .querySelector('.lake-hit[data-feature-id="qinghai-lake"]')
+      ?.closest('.lake');
+
+    expect(lake).toHaveAttribute('data-hovered', 'true');
+  });
+
+  /*
    * Указатель слою больше не нужен: цель по нему считает карта одним
    * правилом (`physical-hit.ts`). Прежде узел формы перехватывал нажатие
    * раньше, чем считалось расстояние до реки, и точка в полутора единицах от

@@ -1054,13 +1054,34 @@ button.text:hover:enabled {
  */
 
 /*
- * Выбранная форма обведена, а не перекрашена: цветовой канал занят тремя
- * ступенями, и перекрасить её значило бы соврать про ступень.
+ * Выделенная форма обведена и заштрихована, а не перекрашена: цветовой канал
+ * занят семью полосами высот, и перекрасить её значило бы соврать про высоту.
+ * Между штрихами полоса просвечивает — выделение говорит «вот этот объект», а
+ * не «вот эта высота».
+ *
+ * Штриховка ложится на саму форму, а не на копию контура: форма нарисована
+ * поверх полос и залита прозрачным, копия нужна только исходу.
+ *
+ * Три признака — одно оформление. Наведение и выбор не встречаются на экране
+ * вместе: наведение считается там, где выбирают (атлас и «Найти на карте»), а
+ * спрошенный объект помечается там, где не выбирают («Назвать объект»).
  */
 .china-map .physical-layer .relief-shape[data-selected='true'],
+.china-map .physical-layer .relief-shape[data-hovered='true'],
 .china-map .physical-layer .relief-shape:focus-visible {
-  stroke: var(--focus-on-paper);
-  stroke-width: var(--map-border-width-strong);
+  fill: url('#map-hatch-physical-highlight');
+  stroke: var(--map-highlight);
+  stroke-width: var(--map-highlight-width);
+}
+
+/*
+ * У формы с исходом заливка выделения снимается. Штриховка выделения лежит на
+ * самой форме, а штриховка исхода — на копии контура поверх неё, и обе
+ * нарисовались бы вместе. После ответа важнее сказать «верно» или «неверно»,
+ * чем «вот этот». Правило стоит после выделения: специфичность у них равная.
+ */
+.china-map .physical-layer .relief-shape[data-outcome] {
+  fill: transparent;
 }
 
 /*
@@ -1140,13 +1161,20 @@ button.text:hover:enabled {
 }
 
 /*
- * Толщина — второй канал у выбранной реки: одного цвета мало, а линия и есть
- * весь объект, подсветить её заливкой нечем. Наведение помечено признаком, а
- * не `:hover`: в полутора единицах ширины браузеру нечего ловить.
+ * У выделенной реки два канала — толщина и тушь: линия и есть весь объект,
+ * подсветить её заливкой нечем, а одной толщины мало, когда рядом идёт вторая
+ * река той же ширины.
+ *
+ * Тушь, а не второй синий: тот пришлось бы заводить в палитре, и он читался
+ * бы как «другая вода», а не как «вот этот объект».
+ *
+ * Наведение помечено признаком, а не `:hover`: в полутора единицах ширины
+ * браузеру нечего ловить.
  */
 .china-map .physical-layer .river-line[data-selected='true'],
 .china-map .physical-layer .river-line[data-hovered='true'],
 .china-map .physical-layer .river-line:focus-visible {
+  stroke: var(--map-highlight);
   stroke-width: var(--map-river-width-strong);
 }
 
@@ -1250,9 +1278,23 @@ button.text:hover:enabled {
   stroke-width: 2;
 }
 
+/*
+ * Выделение озера — на обоих его узлах: контур воды обводится тушью, знак
+ * получает кольцо. Одного знака мало: у Цинхая контур виден и сам, и
+ * помеченным должен быть он, а не одна точка рядом.
+ *
+ * Кольцо исхода живёт на своём узле (`lake-halo`) и этому не мешает.
+ */
+.china-map .physical-layer .lake[data-selected='true'] .lake-shape,
+.china-map .physical-layer .lake[data-hovered='true'] .lake-shape {
+  stroke: var(--map-highlight);
+  stroke-width: 1;
+}
+
 .china-map .physical-layer .lake-hit:focus-visible + .lake-mark,
-.china-map .physical-layer .lake-mark[data-selected='true'] {
-  stroke: var(--focus-on-paper);
+.china-map .physical-layer .lake[data-selected='true'] .lake-mark,
+.china-map .physical-layer .lake[data-hovered='true'] .lake-mark {
+  stroke: var(--map-highlight);
   stroke-width: 2;
 }
 

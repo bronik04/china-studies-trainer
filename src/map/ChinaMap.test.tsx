@@ -718,6 +718,21 @@ it('за границей страны форма не выбирается', ()
   expect(onSelectFeature).not.toHaveBeenCalled();
 });
 
+/*
+ * Прежде наведение доходило только до линии реки и до подписи: крупная форма
+ * под курсором ничем не отличалась от соседней. Точка — середина Тибетского
+ * нагорья, вдали и от рек, и от знаков озёр.
+ */
+it('наведение помечает форму рельефа, а не только подпись', () => {
+  const { container, map, at } = renderPhysical(() => {});
+
+  fireEvent.pointerMove(map, at([219, 360]));
+
+  expect(
+    container.querySelector('.relief-shape[data-feature-id="tibetan-plateau"]'),
+  ).toHaveAttribute('data-hovered', 'true');
+});
+
 it('знак озера побеждает форму, на которой стоит', () => {
   const onSelectFeature = vi.fn();
   const { map, at } = renderPhysical(onSelectFeature);

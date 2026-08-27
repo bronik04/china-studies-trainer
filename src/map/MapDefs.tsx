@@ -17,6 +17,7 @@ const FAILED_PATTERN_ID = 'map-hatch-failed';
 const IN_PROGRESS_PATTERN_ID = 'map-hatch-in-progress';
 const PHYSICAL_CORRECT_PATTERN_ID = 'map-hatch-physical-correct';
 const PHYSICAL_INCORRECT_PATTERN_ID = 'map-hatch-physical-incorrect';
+const PHYSICAL_HIGHLIGHT_PATTERN_ID = 'map-hatch-physical-highlight';
 
 export function MapDefs() {
   return (
@@ -147,6 +148,38 @@ export function MapDefs() {
             y2="4"
             stroke="var(--map-incorrect-mark-relief)"
             strokeWidth="2"
+          />
+        </pattern>
+        {/*
+          Выделение формы рельефа: что под курсором, что в фокусе, что
+          спрошено. Фона у образца нет — под ним лежит полоса высоты, и она
+          обязана просвечивать между штрихами: выделение говорит «вот этот
+          объект», а не «вот эта высота».
+
+          Штрих вертикальный, тогда как у исходов 45° и минус 45°: форма под
+          курсором и форма с исходом бывают на экране рядом, и три вида
+          штриховки должны различаться наклоном, а не только тоном.
+
+          Шаг и толщина заданы от экрана, а не на глаз: при ширине карты
+          542 px единица viewBox — 0.672 px, и штрих в 1.2 единицы давал
+          0.81 px. Линия тоньше пикселя не рисуется штрихом — сглаживание
+          размазывает её в ровную серую заливку, и штриховка перестаёт
+          читаться штриховкой. Полтора на девять дают ровно 1 px через 6 px
+          при той же доле туши.
+        */}
+        <pattern
+          id={PHYSICAL_HIGHLIGHT_PATTERN_ID}
+          width="9"
+          height="9"
+          patternUnits="userSpaceOnUse"
+        >
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="9"
+            stroke="var(--map-highlight)"
+            strokeWidth="1.5"
           />
         </pattern>
       </defs>
