@@ -985,7 +985,7 @@ button.text:hover:enabled {
 .china-map .city-label {
   fill: var(--map-label);
   font-family: var(--t-family-text);
-  font-size: 12px;
+  font-size: var(--map-label-size);
   font-weight: var(--t-weight-bold);
   opacity: 0;
   paint-order: stroke;
@@ -1316,7 +1316,7 @@ button.text:hover:enabled {
 .china-map .physical-label {
   fill: var(--map-label);
   font-family: var(--t-family-text);
-  font-size: 10px;
+  font-size: var(--map-label-size);
   font-weight: var(--t-weight-bold);
   opacity: 0;
   paint-order: stroke;

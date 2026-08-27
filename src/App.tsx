@@ -117,21 +117,12 @@ const ACTIVE_SECTION: Partial<Record<Screen, SiteSection>> = {
   collection: 'collections',
 };
 
-/** Хранилище может быть запрещено политикой браузера — обращение к нему бросает. */
-function readStorage(): Storage | null {
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 function newRoundId(): string {
   return `round-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
 }
 
 export default function App() {
-  const store = useMemo(() => createProgressStore(readStorage()), []);
+  const store = useMemo(() => createProgressStore(), []);
   const [progress, setProgress] = useState(() => store.read());
   const [screen, setScreen] = useState<Screen>('home');
   const [roundPool, setRoundPool] = useState<readonly Region[]>(regions);

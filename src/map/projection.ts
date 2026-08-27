@@ -18,7 +18,8 @@ const SCALE_Y = -725.487859;
 const OFFSET_Y = 803.4503;
 
 /** Ордината Меркатора для широты в градусах. */
-export function mercatorY(latitude: number): number {
+/* Не наружу: снаружи нужны координаты карты, а не промежуточная величина. */
+function mercatorY(latitude: number): number {
   return Math.log(Math.tan(Math.PI / 4 + (latitude * Math.PI) / 360));
 }
 
