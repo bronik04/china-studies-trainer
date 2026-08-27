@@ -157,15 +157,16 @@ describe('PhysicalLayer', () => {
     expect(shown()).toEqual(['gobi']);
   });
 
-  it('узел под указателем важнее реки, посчитанной картой', () => {
-    // Указатель ушёл с реки на форму: карта о том не узнает — события React не
-    // всплывают из портала, — и без верного порядка имя реки залипало бы.
+  it('узел в фокусе важнее объекта, посчитанного картой', () => {
+    // При обходе с клавиатуры указатель стоит там, где его оставили, и имя,
+    // посчитанное картой по его координатам, закрывало бы имя объекта в
+    // фокусе. Указателя у узлов слоя нет вовсе — его считает карта.
     const { container } = renderLayer({
       onSelect: vi.fn(),
       hoveredFeatureId: 'yellow-river',
     });
 
-    fireEvent.pointerEnter(
+    fireEvent.focus(
       container.querySelector('.relief-shape[data-feature-id="loess-plateau"]')!,
     );
 
@@ -230,5 +231,99 @@ describe('PhysicalLayer', () => {
       'data-labels',
       'false',
     );
+  });
+
+  /*
+   * Обрезка `clipPath` строит область по каждой вершине и на 148 КБ контуров
+   * стоит 6 секунд блокировки при первом показе слоя; маска растрирует те же
+   * контуры один раз и стоит миллисекунду. Геометрия та же — те же `<use>` на
+   * те же 34 области.
+   */
+  it('прячет сушу маской, а не обрезкой', () => {
+    const { container } = renderLayer();
+
+    expect(container.querySelector('#china-land-mask')).not.toBeNull();
+    expect(container.querySelector('clipPath')).toBeNull();
+    expect(container.querySelectorAll('[clip-path]')).toHaveLength(0);
+  });
+
+  /*
+   * Рамка маски задаётся явно: по умолчанию она считается от габарита
+   * закрашиваемой группы, и группа, чей габарит виден целиком, обрезалась бы
+   * собственной маской.
+   */
+  it('задаёт маске рамку в единицах карты', () => {
+    const { container } = renderLayer();
+    const mask = container.querySelector('#china-land-mask');
+
+    expect(mask?.getAttribute('maskUnits')).toBe('userSpaceOnUse');
+    expect(mask?.getAttribute('x')).toBe('-16');
+    expect(mask?.getAttribute('y')).toBe('-16');
+    expect(mask?.getAttribute('width')).toBe('806');
+    expect(mask?.getAttribute('height')).toBe('601');
+  });
+
+  /*
+   * Указатель слою больше не нужен: цель по нему считает карта одним
+   * правилом (`physical-hit.ts`). Прежде узел формы перехватывал нажатие
+   * раньше, чем считалось расстояние до реки, и точка в полутора единицах от
+   * Янцзы доставалась Тибетскому нагорью.
+   *
+   * Узлы остаются ради клавиатуры: по ним ходит Tab, и Enter выбирает объект.
+   */
+  it('оставляет узлы клавиатуре, но не указателю', () => {
+    const onSelect = vi.fn();
+    const { container } = renderLayer({ onSelect });
+    const river = container.querySelector<SVGPathElement>(
+      '.river-line[data-feature-id="yangtze"]',
+    )!;
+
+    fireEvent.click(river);
+    expect(onSelect).not.toHaveBeenCalled();
+
+    expect(river.getAttribute('tabindex')).toBe('0');
+    fireEvent.keyDown(river, { key: 'Enter' });
+    expect(onSelect).toHaveBeenCalledWith('yangtze');
+  });
+
+  it('не отдаёт нажатие ни форме, ни цели озера', () => {
+    const onSelect = vi.fn();
+    const { container } = renderLayer({ onSelect });
+
+    fireEvent.click(container.querySelector('.relief-shape[data-feature-id]')!);
+    fireEvent.click(container.querySelector('.lake-hit')!);
+
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Амур идёт ровно по государственной границе. Под маской от линии
+   * оставалась половина толщины, и та под штрихом границы, — река пропадала
+   * с карты вовсе. Реки уже обрезаны по рамке карты генератором
+   * `generate:physical`; за границу страны они выходят намеренно, как на
+   * любой физической карте: река не кончается на границе.
+   */
+  it('не прячет реки маской', () => {
+    const { container } = renderLayer();
+    const rivers = container.querySelector('.rivers');
+
+    expect(rivers).not.toBeNull();
+    expect(rivers?.getAttribute('mask')).toBeNull();
+    expect(rivers?.getAttribute('clip-path')).toBeNull();
+  });
+
+  it('закрывает маской ступени, границы, исходы и озёра', () => {
+    const { container } = renderLayer();
+
+    for (const selector of [
+      '.relief',
+      '.region-outlines',
+      '.relief-outcomes',
+      '.lakes',
+    ]) {
+      expect(container.querySelector(selector)?.getAttribute('mask')).toBe(
+        'url(#china-land-mask)',
+      );
+    }
   });
 });

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cityById, citiesOfRegion } from '../../content/cities';
+import { collectionsOfRegion } from '../../content/collections';
 import { physicalFeatures } from '../../content/physical-features';
 import { featuresWord, regionsWord } from '../../content/region-count';
 import { sourceById } from '../../content/sources';
@@ -34,6 +35,14 @@ const KIND_LABELS: Readonly<Record<RegionKind, string>> = {
  */
 const RELIEF_TICKS = [200, 500, 1000, 2000, 3000, 4000] as const;
 const RELIEF_BAND_TONES = [0, ...RELIEF_TICKS] as const;
+
+/**
+ * Те же полосы и те же пороги сверху вниз: шкала стоит столбиком, и высокое в
+ * ней выше низкого. Порядок задан здесь, а не разворотом в разметке: развернуть
+ * пришлось бы оба списка, и однажды развернули бы только один.
+ */
+const SCALE_TOP_DOWN = [...RELIEF_BAND_TONES].reverse();
+const SCALE_TICKS_TOP_DOWN = [...RELIEF_TICKS].reverse();
 
 /** Род объекта назван словом — по той же причине, что и тип региона. */
 const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
@@ -122,6 +131,7 @@ export type AtlasPageProps = {
   readonly zoom: MapZoom;
   readonly onZoomChange: (zoom: MapZoom) => void;
   readonly onTrain: () => void;
+  readonly onOpenCollection: (collectionId: string) => void;
 };
 
 /**
@@ -140,6 +150,7 @@ export function AtlasPage({
   zoom,
   onZoomChange,
   onTrain,
+  onOpenCollection,
 }: AtlasPageProps) {
   /*
    * Вид карты живёт здесь, а не в `App`: он не меняет ни прогресса, ни раунда
@@ -177,6 +188,55 @@ export function AtlasPage({
     setSelectedFeatureId(featureId);
     onClear();
   }
+
+  /*
+   * Легенда — только у физического вида: на политической тип региона назван
+   * словом в карточке слева, а ступень рельефа назвать негде — форма не
+   * выбирается и карточки у неё нет.
+   *
+   * Стоит она на листе карты, а не полосой под ним: карта внутри своей
+   * колонки центрирована по пропорции, и шкала под ней получалась вдвое шире
+   * самой карты — 844 px против 426 px.
+   */
+  const reliefScale =
+    mapKind === 'physical' ? (
+      <figure className="relief-scale" aria-label="Высота, м над уровнем моря">
+        <figcaption>Высота, м</figcaption>
+        {/*
+          Шкала стоит столбиком, а не полосой. Полосой семь долей на ширине
+          врезки давали по 30 px, а «4000» занимает 32: подписи 2000, 3000 и
+          4000 сходились вплотную. Столбику ширина подписи не мешает вовсе, и
+          направление он показывает сам — вверх выше, как на любой карте.
+        */}
+        {/*
+          Слова у концов стоят над столбиком и под ним, а не отдельной
+          колонкой сбоку: колонка давала врезке 144 px ширины, и та накрывала
+          Гималаи — цель игры. Столбиком врезка укладывается в 92 px и встаёт
+          в нижний правый угол, где под ней 0 % суши (замер по контурам).
+        */}
+        <p className="relief-scale-end">нагорье</p>
+        <div className="relief-scale-body">
+          <div className="relief-scale-bar" aria-hidden="true">
+            {SCALE_TOP_DOWN.map((band) => (
+              <span key={band} data-band={band} />
+            ))}
+          </div>
+          {/*
+            Долей столько же, сколько полос: подпись стоит на нижнем краю
+            своей доли и сдвинута вниз на половину строки — то есть ровно на
+            границе между полосами. Первая доля пуста: у верхней полосы
+            верхней границы нет.
+          */}
+          <div className="relief-scale-ticks">
+            <span aria-hidden="true" />
+            {SCALE_TICKS_TOP_DOWN.map((tick) => (
+              <span key={tick}>{tick}</span>
+            ))}
+          </div>
+        </div>
+        <p className="relief-scale-end">равнины</p>
+      </figure>
+    ) : undefined;
 
   return (
     <main className="atlas-shell">
@@ -233,6 +293,31 @@ export function AtlasPage({
                   </span>
                 </p>
                 <CardFacts facts={selected.facts} />
+                {/*
+                  Коллекции региона — не новая сущность, а та же привязка
+                  `regionIds`, прочитанная с другой стороны: со страницы
+                  коллекции виден её регион, из атласа — коллекции региона.
+                  Пустой список — законное состояние, блок тогда не рисуется.
+                */}
+                {collectionsOfRegion(selected.id).length === 0 ? null : (
+                  <nav className="atlas-collections" aria-label="Коллекции региона">
+                    <p className="eyebrow">Коллекции</p>
+                    <ul>
+                      {collectionsOfRegion(selected.id).map((collection) => (
+                        <li key={collection.id}>
+                          <button
+                            type="button"
+                            className="text"
+                            onClick={() => onOpenCollection(collection.id)}
+                          >
+                            {collection.nameRu}{' '}
+                            <span lang="zh-Hans">{collection.nameZh}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                )}
                 {/*
                   Города региона перечислены словами, а не только точками на
                   карте: точка — не текст, читалке экрана её не прочесть, а
@@ -333,38 +418,8 @@ export function AtlasPage({
             showsCities={mapKind === 'political'}
             selectedFeatureId={selectedFeatureId}
             onSelectFeature={selectFeature}
+            mapInset={reliefScale}
           />
-          {/*
-            Легенда стоит под картой и только у физического вида: на
-            политической тип региона назван словом в карточке слева, а ступень
-            рельефа назвать негде — форма не выбирается и карточки у неё нет.
-          */}
-          {mapKind === 'physical' ? (
-            <figure className="relief-scale" aria-label="Высота, м над уровнем моря">
-              <figcaption>Высота, м над уровнем моря</figcaption>
-              <div className="relief-scale-bar" aria-hidden="true">
-                {RELIEF_BAND_TONES.map((band) => (
-                  <span key={band} data-band={band} />
-                ))}
-              </div>
-              {/*
-                Долей столько же, сколько полос: подпись стоит на правом краю
-                своей доли и сдвинута на половину — то есть ровно на границе
-                между полосами. Последняя доля пуста: у верхней полосы верхней
-                границы нет.
-              */}
-              <div className="relief-scale-ticks">
-                {RELIEF_TICKS.map((tick) => (
-                  <span key={tick}>{tick}</span>
-                ))}
-                <span aria-hidden="true" />
-              </div>
-              <div className="relief-scale-ends">
-                <span>равнины</span>
-                <span>нагорье</span>
-              </div>
-            </figure>
-          ) : null}
         </div>
       </div>
       {/*

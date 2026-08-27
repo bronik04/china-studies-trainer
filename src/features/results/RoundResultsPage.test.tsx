@@ -130,13 +130,13 @@ it('предупреждает, когда прогресс не сохраня�
   );
 });
 
-it('начинает новый раунд и возвращает к теме', () => {
+it('начинает новый раунд и возвращает к режимам', () => {
   const newRound = vi.fn();
   const exit = vi.fn();
   renderResults({ onNewRound: newRound, onExit: exit });
 
   fireEvent.click(screen.getByRole('button', { name: 'Новый раунд' }));
-  fireEvent.click(screen.getByRole('button', { name: 'На главную' }));
+  fireEvent.click(screen.getByRole('button', { name: 'К режимам' }));
 
   expect(newRound).toHaveBeenCalledOnce();
   expect(exit).toHaveBeenCalledOnce();

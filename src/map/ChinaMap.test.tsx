@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../content/regions';
 import { ChinaMap } from './ChinaMap';
+import { lakeMarks } from './lake-marks';
 import { RIVER_SHAPES } from './river-hit';
 import {
   MAP_VIEWBOX_HEIGHT,
@@ -679,12 +680,52 @@ it('река под курсором помечается, хотя курсор
 
 it('в физическом виде нажатие по форме отвечает формой', () => {
   const onSelectFeature = vi.fn();
-  const { container } = renderPhysical(onSelectFeature);
+  const { map, at } = renderPhysical(onSelectFeature);
 
-  const tibet = container.querySelector('[data-feature-id="tibetan-plateau"]')!;
-  fireEvent.click(tibet, { clientX: 0, clientY: 0 });
+  // Середина Тибетского нагорья: вдали и от рек, и от знаков озёр.
+  fireEvent.click(map, at([219, 360]));
 
   expect(onSelectFeature).toHaveBeenCalledWith('tibetan-plateau');
+});
+
+/*
+ * Прежде здесь побеждала форма, и это был дефект: узел нагорья перехватывал
+ * нажатие раньше, чем считалось расстояние до реки. Полтора десятка раз это
+ * ловилось как «в реку на нагорье невозможно попасть».
+ */
+it('река побеждает форму и в верховьях, где узел формы перехватывал нажатие', () => {
+  const onSelectFeature = vi.fn();
+  const { map, at } = renderPhysical(onSelectFeature);
+  const [x, y] = RIVER_SHAPES.find((river) => river.featureId === 'yangtze')!
+    .parts[0][0];
+
+  fireEvent.click(map, at([x + 1.5, y + 1.5]));
+
+  expect(onSelectFeature).toHaveBeenCalledWith('yangtze');
+});
+
+/*
+ * Маска прячет ступени за границей, но нажатия не отсекает — этим она и
+ * отличается от прежней обрезки. Точка в Индии южнее Гималаев лежит внутри
+ * контура Тибетского нагорья, и без проверки суши нагорье выбиралось бы там.
+ */
+it('за границей страны форма не выбирается', () => {
+  const onSelectFeature = vi.fn();
+  const { map, at } = renderPhysical(onSelectFeature);
+
+  fireEvent.click(map, at([120, 430]));
+
+  expect(onSelectFeature).not.toHaveBeenCalled();
+});
+
+it('знак озера побеждает форму, на которой стоит', () => {
+  const onSelectFeature = vi.fn();
+  const { map, at } = renderPhysical(onSelectFeature);
+  const qinghai = lakeMarks(1).find((mark) => mark.featureId === 'qinghai-lake')!;
+
+  fireEvent.click(map, at([qinghai.hitX, qinghai.hitY]));
+
+  expect(onSelectFeature).toHaveBeenCalledWith('qinghai-lake');
 });
 
 it('река перехватывает нажатие у формы, через которую идёт', () => {

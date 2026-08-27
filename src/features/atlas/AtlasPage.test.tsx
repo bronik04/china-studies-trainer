@@ -16,6 +16,7 @@ function renderAtlas(selectedRegionId: string | null = null) {
       zoom={1}
       onZoomChange={() => {}}
       onTrain={onTrain}
+      onOpenCollection={() => {}}
     />,
   );
 
@@ -196,4 +197,62 @@ it('пустая справка физического объекта не ре�
 
   expect(card).toHaveTextContent('Хуанхэ');
   expect(card).not.toHaveTextContent('Справка');
+});
+
+/*
+ * Шкала стояла в колонке, а карта внутри колонки центрирована по пропорции:
+ * при карте в 426 px шкала занимала 844 px. На листе вопроса ширины не
+ * возникает вовсе, и карта забирает обратно высоту, которую занимала шкала.
+ */
+it('ставит шкалу высот на лист карты, а не в колонку', () => {
+  const { container } = renderAtlas();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+
+  const scale = container.querySelector('.relief-scale');
+
+  expect(scale).not.toBeNull();
+  expect(scale?.closest('.china-map-frame')).not.toBeNull();
+});
+
+it('на политическом виде шкалы нет', () => {
+  const { container } = renderAtlas();
+
+  expect(container.querySelector('.relief-scale')).toBeNull();
+});
+
+/*
+ * Привязка `regionIds` уже есть у коллекций — карточка читает её с другой
+ * стороны: со страницы коллекции виден её регион, из атласа — коллекции
+ * региона. Новой сущности не появляется.
+ */
+it('ведёт из карточки региона в его коллекции', () => {
+  const onOpenCollection = vi.fn();
+
+  render(
+    <AtlasPage
+      regions={regions}
+      selectedRegionId="shaanxi"
+      onSelect={() => {}}
+      onClear={() => {}}
+      zoom={1}
+      onZoomChange={() => {}}
+      onTrain={() => {}}
+      onOpenCollection={onOpenCollection}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: /Шёлковый путь/ }));
+
+  expect(onOpenCollection).toHaveBeenCalledWith('silk-road');
+});
+
+/* Коллекции привязаны к регионам: у физического объекта блока нет. */
+it('не показывает коллекции у физического объекта', () => {
+  const { container } = renderAtlas();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+  fireEvent.keyDown(screen.getByLabelText(/Хуанхэ/), { key: 'Enter' });
+
+  expect(container.querySelector('.atlas-collections')).toBeNull();
 });

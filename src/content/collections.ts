@@ -448,3 +448,23 @@ export function collectionsInGroup(
 export function isDraft(collection: Collection): boolean {
   return collection.sourceIds.length === 0;
 }
+
+/**
+ * Коллекции, в которые входит регион, в порядке каталога.
+ *
+ * Привязка уже есть — `regionIds` у каждой коллекции, — и второго списка
+ * заводить не нужно: он разошёлся бы с первым при первом же пополнении.
+ * Отсюда же и направление чтения: со страницы коллекции виден её регион, из
+ * атласа — коллекции региона.
+ */
+export function collectionsOfRegion(regionId: string): readonly Collection[] {
+  return collections.filter((collection) =>
+    /*
+     * Расширение до `readonly string[]` обязательно: каталог объявлен
+     * `as const`, и у коллекции без регионов — «Праздник весны» — `regionIds`
+     * имеет тип `readonly []`, элемент которого `never`. Спрашивать у него о
+     * строке иначе нельзя, а спрашивать надо: пустой список — законный ответ.
+     */
+    (collection.regionIds as readonly string[]).includes(regionId),
+  );
+}

@@ -113,8 +113,13 @@ export function RoundResultsPage({
               <button type="button" className="secondary" onClick={onNewRound}>
                 Новый раунд
               </button>
+              {/*
+                «К режимам», а не «На главную»: кнопка ведёт на секцию, из
+                которой раунд и запускали, и подпись обязана называть то
+                место, куда ведёт.
+              */}
               <button type="button" className="secondary" onClick={onExit}>
-                На главную
+                К режимам
               </button>
             </div>
           </div>

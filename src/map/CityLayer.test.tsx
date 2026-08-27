@@ -71,3 +71,19 @@ it('отмечает выбранный город признаком, а не �
     container.querySelector('.city[data-city-id="chengdu"]')?.getAttribute('data-selected'),
   ).toBe('true');
 });
+
+/*
+ * Знак виден на той карте, где его разглядывают. В атласе карта шириной
+ * 542 px при 806 единицах viewBox — 0.67 px на единицу, и знак радиусом 2.5
+ * давал точку в 3.4 px.
+ *
+ * Цель нажатия от этого не меняется: она считается от `TARGET_DIAMETER_UNITS`
+ * и к размеру знака не привязана.
+ */
+it('рисует знак города заметным на уменьшенной карте', () => {
+  const { container } = renderMap();
+
+  const mark = container.querySelector('.city-mark');
+
+  expect(Number(mark?.getAttribute('r'))).toBeGreaterThanOrEqual(3.2);
+});

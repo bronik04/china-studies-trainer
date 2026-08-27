@@ -209,6 +209,21 @@ export default function App() {
     setAnchorRequests((count) => count + 1);
   }
 
+  /**
+   * Выход из режима. Ведёт на секцию «Режимы», а не на верх главной: оттуда
+   * режим и запускали, и возвращать оттуда — значит не заставлять прокручивать
+   * страницу заново после каждого раунда.
+   *
+   * Приём тот же, что у перехода из шапки: якорь в `pendingAnchor`, счётчик
+   * будит эффект. Своей копии эффекта здесь нет и быть не должно — навигация в
+   * приложении одна.
+   */
+  function exitToModes() {
+    setScreen('home');
+    pendingAnchor.current = 'modes';
+    setAnchorRequests((count) => count + 1);
+  }
+
   function openCollection(id: string) {
     setCollectionId(id);
     setScreen('collection');
@@ -354,7 +369,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishFillRound}
-          onExit={() => setScreen('home')}
+          onExit={exitToModes}
         />
       </AppFrame>
     );
@@ -375,7 +390,7 @@ export default function App() {
             )
           }
           onNewRound={() => startFillRound(language)}
-          onExit={() => setScreen('home')}
+          onExit={exitToModes}
         />
       </AppFrame>
     );
@@ -391,7 +406,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishRound}
-          onExit={() => setScreen('home')}
+          onExit={exitToModes}
         />
       </AppFrame>
     );
@@ -407,7 +422,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishTargetRound}
-          onExit={() => setScreen('home')}
+          onExit={exitToModes}
         />
       </AppFrame>
     );
@@ -423,7 +438,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishTargetRound}
-          onExit={() => setScreen('home')}
+          onExit={exitToModes}
         />
       </AppFrame>
     );
@@ -521,7 +536,7 @@ export default function App() {
 
             startRound(exerciseTypes[0], language, null);
           }}
-          onExit={() => setScreen('home')}
+          onExit={exitToModes}
         />
       </AppFrame>
     );
@@ -561,6 +576,7 @@ export default function App() {
           zoom={zoom}
           onZoomChange={setZoom}
           onTrain={() => startRound('find-on-map', 'ru', null)}
+          onOpenCollection={openCollection}
         />
       ) : activeScreen === 'collections' ? (
         <CollectionsPage regions={regions} onOpenCollection={openCollection} />

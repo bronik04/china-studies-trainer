@@ -107,8 +107,12 @@ export function FillMapResultsPage({
           >
             Заполнить заново
           </button>
+          {/*
+            «К режимам», а не «На главную»: кнопка ведёт на секцию, из которой
+            раунд и запускали.
+          */}
           <button type="button" className="secondary" onClick={onExit}>
-            На главную
+            К режимам
           </button>
         </div>
         </section>
