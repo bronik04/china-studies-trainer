@@ -262,6 +262,22 @@ describe('PhysicalLayer', () => {
     expect(mask?.getAttribute('height')).toBe('601');
   });
 
+  /*
+   * Амур идёт ровно по государственной границе. Под маской от линии
+   * оставалась половина толщины, и та под штрихом границы, — река пропадала
+   * с карты вовсе. Реки уже обрезаны по рамке карты генератором
+   * `generate:physical`; за границу страны они выходят намеренно, как на
+   * любой физической карте: река не кончается на границе.
+   */
+  it('не прячет реки маской', () => {
+    const { container } = renderLayer();
+    const rivers = container.querySelector('.rivers');
+
+    expect(rivers).not.toBeNull();
+    expect(rivers?.getAttribute('mask')).toBeNull();
+    expect(rivers?.getAttribute('clip-path')).toBeNull();
+  });
+
   it('закрывает маской ступени, границы, исходы и озёра', () => {
     const { container } = renderLayer();
 

@@ -291,7 +291,14 @@ export function PhysicalLayer({
         ))}
       </g>
 
-      <g className="rivers" mask={`url(#${MASK_ID})`}>
+      {/*
+        Реки не прячутся маской. Амур идёт ровно по границе, и под маской от
+        линии оставалась половина толщины под штрихом границы — реки на карте
+        не было. По рамке карты реки уже обрезаны генератором
+        `generate:physical`; за границу страны они выходят намеренно — река не
+        кончается на государственной границе, и так физические карты и рисуют.
+      */}
+      <g className="rivers">
         {RIVER_LINES.map((line) => {
           const label = NAME_OF.get(line.featureId) ?? line.featureId;
 
