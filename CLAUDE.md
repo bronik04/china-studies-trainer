@@ -29,6 +29,7 @@ npm run build                    # три валидатора → tsc -b → vi
 | `npm run generate:hit-targets` | правит тот же SVG — невидимые цели нажатия для регионов мельче порога WCAG |
 | `npm run generate:fonts` | пересобирает подмножества шрифтов в `src/assets/fonts` и `scripts/font-coverage.json` |
 | `npm run extract:physical` | перезаписывает `scripts/data/physical-source.json` — выжимку из Natural Earth; нужна сеть, в сборку не входит |
+| `npm run fetch:photos` | скачивает снимки коллекций с Викисклада в `public/photos`, переписывает `src/content/photo-credits.ts` и `docs/sources/photos.md`; нужна сеть, в сборку не входит |
 | `npm run generate:physical` | перезаписывает `src/map/physical-geometry.ts` целиком по выжимке Natural Earth |
 
 Оба SVG-генератора идемпотентны, их блоки ограничены комментариями-метками. Перед правкой любого файла в `src/map/` или самого SVG прочитайте шапку файла: сгенерированные помечены явно.

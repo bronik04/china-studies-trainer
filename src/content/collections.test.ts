@@ -6,6 +6,7 @@ import {
   isDraft,
   otherCollectionsOfRegion,
 } from './collections';
+import { PHOTO_CREDITS } from './photo-credits';
 import { physicalFeatures } from './physical-features';
 import { regions } from './regions';
 
@@ -159,4 +160,29 @@ it('позволяет странице объекта назвать свой �
 
   expect(collection?.regionIds).toContain('sichuan');
   expect(feature?.regionIds).not.toContain('sichuan');
+});
+
+/*
+ * Снимок есть ровно тогда, когда он лежит в `PHOTO_CREDITS`, а тот файл пишет
+ * генератор по тому, что действительно скачал. Проверяется обратное
+ * направление: запись об авторе без снимка в каталоге — мёртвый вес, и её
+ * забыли бы убрать вместе со слотом.
+ */
+it('у каждой записи об авторе есть снимок в каталоге', () => {
+  const used = new Set(
+    collections.flatMap((collection) => collection.photos.map(({ id }) => id)),
+  );
+
+  for (const id of Object.keys(PHOTO_CREDITS)) {
+    expect(used, `запись ${id} ни к чему не привязана`).toContain(id);
+  }
+});
+
+/* Показ по CC BY и CC BY-SA разрешён при условии, что автор назван. */
+it('у каждого снимка есть автор и лицензия', () => {
+  for (const [id, credit] of Object.entries(PHOTO_CREDITS)) {
+    expect(credit.author.trim().length, id).toBeGreaterThan(0);
+    expect(credit.license, id).toMatch(/^(CC0|CC BY|Public domain)/i);
+    expect(credit.widths.length, id).toBeGreaterThan(0);
+  }
 });

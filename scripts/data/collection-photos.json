@@ -1,0 +1,17 @@
+{
+  "note": "Слот коллекции → файл на Викискладе. Лицензия, автор и ссылка не пишутся здесь руками: их берёт из API сам генератор (npm run fetch:photos), поэтому запись в реестре не может разойтись с действительностью.",
+  "photos": {
+    "badaling": "File:Badaling China Great-Wall-of-China-01.jpg",
+    "mutianyu": "File:Mutianyu Great Wall (6222519140).jpg",
+    "shanhaiguan": "File:Great Wall of Shanhaiguan 20090809.jpg",
+    "jiayuguan": "File:JiayuguanFort.jpg",
+    "yanmenguan": "File:Yanmen Pass (20250712164217).jpg",
+    "earthen": "File:The Western Part of The Great Wall, Ningxia - panoramio.jpg",
+    "yuanyang-sunrise": "File:Yuanyang Hani Rice Terraces at Sunrise.jpg",
+    "taklamakan-dunes": "File:Désert du Taklamakan.jpg",
+    "temple-fair": "File:白佛山春节大庙会.jpg",
+    "changban-opera": "File:Battle of Changban Peking Opera 3.jpg",
+    "terracotta-pit-1": "File:Terracotta Soldier Panorama (5258589290).jpg",
+    "crescent-lake": "File:Crescent Lake from the Singing Sand Dunes (20230918101214).jpg"
+  }
+}

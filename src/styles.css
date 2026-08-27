@@ -2131,6 +2131,60 @@ button.chip[aria-pressed='true'] {
   min-height: 8rem;
 }
 
+/*
+ * Снимок коллекции. Высоты те же, что у места под него: заполненная карточка
+ * не должна менять раскладку рядом с незаполненной.
+ *
+ * `object-fit: cover` вместо подгонки пропорций: снимки приходят с Викисклада
+ * какими есть — от панорамы 3:1 до почти квадрата, — и подрезка кадра честнее
+ * растяжения.
+ */
+.collection-photo {
+  border-bottom: var(--border-hair) solid var(--line-on-paper);
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.collection-photo img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.collection-photo[data-photo-height='card'] {
+  height: 10.5rem;
+}
+
+.collection-photo[data-photo-height='hero'] {
+  border: var(--border-hair) solid var(--line-on-paper);
+  border-radius: var(--radius-md);
+  height: 16rem;
+}
+
+.collection-photo[data-photo-height='thumb'] {
+  border: var(--border-hair) solid var(--line-on-paper);
+  border-radius: var(--radius-md);
+  height: 8rem;
+}
+
+/*
+ * Подпись об авторе и лицензии — условие показа по CC BY и CC BY-SA, поэтому
+ * она лежит на самом кадре и уехать от него не может. Тёмная подложка, а не
+ * прозрачность: снимок бывает любым, и текст обязан читаться на светлом небе
+ * так же, как на тёмной стене.
+ */
+.collection-photo figcaption {
+  background: rgb(0 0 0 / 60%);
+  bottom: 0;
+  color: #fff;
+  font-size: var(--t-size-caption);
+  inset-inline: 0;
+  padding: var(--s-1) var(--s-2);
+  position: absolute;
+}
+
 .photo-slot-label {
   color: var(--text-on-paper);
   font-size: 0.9375rem;

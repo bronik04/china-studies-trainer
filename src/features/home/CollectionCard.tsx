@@ -2,6 +2,7 @@ import {
   COLLECTION_GROUPS,
   type Collection,
 } from '../../content/collections';
+import { CollectionImage } from '../../ui/CollectionImage';
 import { PhotoSlot } from '../../ui/PhotoSlot';
 
 /**
@@ -34,7 +35,20 @@ export function CollectionCard({
         человек видит, и не приходится целиться в мелкое слово.
       */}
       <button type="button" onClick={() => onOpen(collection.id)}>
-        <PhotoSlot subject={collection.nameRu} height="card" />
+        {/*
+          Первый снимок коллекции — он же лицо карточки. Если снимка нет,
+          остаётся именованное место под него: карточка обязана сказать, чего
+          не хватает, а не притвориться заполненной.
+        */}
+        {collection.photos[0] === undefined ? (
+          <PhotoSlot subject={collection.nameRu} height="card" />
+        ) : (
+          <CollectionImage
+            photo={collection.photos[0]}
+            height="card"
+            sizes="(min-width: 60rem) 20rem, 90vw"
+          />
+        )}
         <span className="collection-card-body">
           {showsGroup && group ? (
             <span className="collection-card-group">{group.title}</span>

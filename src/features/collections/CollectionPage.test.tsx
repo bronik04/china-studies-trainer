@@ -192,13 +192,17 @@ it('не повторяет имя региона вторым заголовк�
 
 /*
  * Коллекция не о регионе, а о месте: её нельзя подменять справкой того
- * региона, в котором место стоит. Там место под фотографию остаётся.
+ * региона, в котором место стоит. На её месте — крупный кадр, а пока снимка
+ * нет — место под него.
  */
-it('оставляет место под фотографию у коллекции о месте', () => {
+it('не подменяет коллекцию о месте справкой региона', () => {
   renderPage('yuanyang-terraces');
 
+  expect(screen.queryByText(/Административный центр/)).not.toBeInTheDocument();
   expect(
-    document.querySelector('.photo-slot[data-photo-height="hero"]'),
+    document.querySelector(
+      '.collection-photo[data-photo-height="hero"], .photo-slot[data-photo-height="hero"]',
+    ),
   ).not.toBeNull();
 });
 
@@ -256,4 +260,41 @@ it('перечисляет регионы объекта так, как их н�
 
   expect(list?.querySelectorAll('li')).toHaveLength(9);
   expect(list).toHaveTextContent('Сычуань');
+});
+
+/*
+ * Снимок и подпись об авторе идут вместе: CC BY и CC BY-SA разрешают показ при
+ * условии, что автор назван. Подпись берётся из того же генератора, что и
+ * файл, поэтому проверяется её наличие, а не текст.
+ */
+it('показывает снимок с подписью об авторе и лицензии', () => {
+  renderPage('great-wall');
+
+  const hero = document.querySelector('.collection-photo[data-photo-height="hero"]');
+
+  expect(hero).not.toBeNull();
+  expect(hero?.querySelector('img')?.getAttribute('src')).toMatch(
+    /^\/photos\/badaling-\d+\.webp$/,
+  );
+  expect(hero?.querySelector('figcaption')?.textContent).toContain('CC BY');
+});
+
+/* Первый снимок ушёл в крупный кадр и не повторяется в сетке ниже. */
+it('не показывает главный снимок дважды', () => {
+  renderPage('great-wall');
+
+  const wall = collectionById('great-wall');
+  const thumbs = document.querySelectorAll('.photo-grid li');
+
+  expect(thumbs).toHaveLength((wall?.photos.length ?? 0) - 1);
+  expect(document.querySelectorAll('img[src*="badaling"]')).toHaveLength(1);
+});
+
+/* Снимок описан словами: читалке экрана `alt` обязателен. */
+it('у каждого снимка есть текстовая альтернатива', () => {
+  renderPage('great-wall');
+
+  for (const image of document.querySelectorAll('img')) {
+    expect(image.getAttribute('alt')?.trim().length ?? 0).toBeGreaterThan(0);
+  }
 });

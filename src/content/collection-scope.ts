@@ -48,7 +48,7 @@ export function collectionScope(
 }
 
 /**
- * Подпись под названием на карточке: охват плюс то, чего пока нет. Про
+ * Подпись под названием на карточке: охват плюс то, что там есть. Про
  * отсутствие снимков сказано прямо — иначе карточка с одним лишь названием
  * выглядит сломанной, а не незаполненной.
  */
@@ -77,5 +77,5 @@ export function collectionCardSubtitle(
 
   return collection.photos.length === 0
     ? `${scope} · фотографий пока нет`
-    : `${scope} · мест под съёмку: ${collection.photos.length}`;
+    : `${scope} · снимков: ${collection.photos.length}`;
 }

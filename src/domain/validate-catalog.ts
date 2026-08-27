@@ -422,6 +422,28 @@ export function validateCollections(
         `Коллекция ${collection.id}: заметок должно быть 3–4, сейчас ${collection.notes.length}`,
       );
     }
+    /*
+     * Идентификатор снимка — это и имя файла в `public/photos`, и ключ записи
+     * об авторе. Повтор внутри коллекции значил бы, что один снимок показан
+     * дважды, а `id` служит ключом React в сетке.
+     */
+    const photoIds = new Set<string>();
+    for (const photo of collection.photos) {
+      if (photoIds.has(photo.id)) {
+        errors.push(`Коллекция ${collection.id}: повторный снимок ${photo.id}`);
+      }
+      photoIds.add(photo.id);
+      if (
+        photo.subject.trim().length === 0 ||
+        photo.captionRu.trim().length === 0 ||
+        photo.place.trim().length === 0
+      ) {
+        errors.push(
+          `Коллекция ${collection.id}: у снимка ${photo.id} пустое описание`,
+        );
+      }
+    }
+
     if (collection.sourceIds.length === 0) {
       errors.push(`Коллекция ${collection.id}: без источников`);
     }

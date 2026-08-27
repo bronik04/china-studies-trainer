@@ -11,6 +11,7 @@ import type { Region } from '../../content/types';
 import { sourceById } from '../../content/sources';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
+import { CollectionImage } from '../../ui/CollectionImage';
 import { PhotoSlot } from '../../ui/PhotoSlot';
 import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { SiteFooter } from '../../ui/SiteFooter';
@@ -66,6 +67,13 @@ export function CollectionPage({
    * она и есть факты, поэтому до того, как их напишут, страница честно
    * называет себя незаполненной, а не делает вид, что полна.
    */
+  /*
+   * Первый снимок идёт крупным кадром вместо места под фотографию, остальные —
+   * в сетку ниже. Отдельного поля «главный снимок» не заводится: их было бы
+   * два места правды, и однажды главный исчез бы из галереи или задвоился в
+   * ней.
+   */
+  const [hero, ...gallery] = collection.photos;
   const referenceShown =
     aboutRegion !== undefined ||
     (aboutFeature !== undefined && aboutFeature.facts.length > 0);
@@ -124,6 +132,12 @@ export function CollectionPage({
             <RegionReference region={aboutRegion} />
           ) : aboutFeature !== undefined && aboutFeature.facts.length > 0 ? (
             <CardFacts facts={aboutFeature.facts} />
+          ) : hero !== undefined ? (
+            <CollectionImage
+              photo={hero}
+              height="hero"
+              sizes="(min-width: 60rem) 40rem, 100vw"
+            />
           ) : (
             <PhotoSlot subject={collection.nameRu} height="hero" />
           )}
@@ -159,21 +173,27 @@ export function CollectionPage({
               <p className="group-hint">
                 {collection.photos.length === 0
                   ? 'снимков пока нет'
-                  : `мест под съёмку: ${collection.photos.length} · подпись у каждого`}
+                  : `снимков: ${collection.photos.length} · подпись у каждого`}
               </p>
             </div>
-            {collection.photos.length === 0 ? (
+            {gallery.length === 0 ? (
               <p className="empty-note">
-                Фотографии подбирает учитель. Пока их нет,{' '}
+                {hero === undefined
+                  ? 'Фотографии подбирает учитель. Пока их нет, '
+                  : 'Других снимков пока нет, '}
                 {referenceShown
                   ? 'страница держится справкой и картой.'
                   : 'коллекция работает как список регионов.'}
               </p>
             ) : (
               <ul className="photo-grid">
-                {collection.photos.map((photo) => (
+                {gallery.map((photo) => (
                   <li key={photo.id}>
-                    <PhotoSlot subject={photo.subject} height="thumb" />
+                    <CollectionImage
+                      photo={photo}
+                      height="thumb"
+                      sizes="(min-width: 60rem) 13rem, 45vw"
+                    />
                     <p className="caption">
                       {photo.captionRu}
                       {photo.captionZh ? (

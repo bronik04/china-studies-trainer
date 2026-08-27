@@ -41,16 +41,17 @@ it('подпись карточки региона не повторяет её 
 });
 
 it('подпись карточки прямо говорит, что фотографий нет', () => {
-  expect(collectionCardSubtitle(byId('taklamakan'), regions)).toBe(
-    'Синьцзян-Уйгурский автономный район · фотографий пока нет',
+  /* У коллекции об объекте снимков пока нет — она держится справкой. */
+  expect(collectionCardSubtitle(byId('feature-yangtze'), regions)).toBe(
+    'Семь регионов · фотографий пока нет',
   );
 });
 
-it('подпись карточки не обещает снимков больше, чем описано мест', () => {
+it('подпись карточки не обещает снимков больше, чем их есть', () => {
   const wall = byId('great-wall');
 
   expect(collectionCardSubtitle(wall, regions)).toBe(
-    `Девять регионов · мест под съёмку: ${wall.photos.length}`,
+    `Девять регионов · снимков: ${wall.photos.length}`,
   );
 });
 
