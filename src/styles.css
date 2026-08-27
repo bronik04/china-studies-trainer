@@ -2750,6 +2750,169 @@ button.chip[aria-pressed='true'] {
   position: relative;
 }
 
+/* --- Лента династий ------------------------------------------------------ */
+
+/*
+ * Место карты в режиме «История» занимает лента времени. Она не карта: у неё
+ * нет ни увеличения, ни выбора. Верхнее поле большое намеренно — плашка
+ * вопроса стоит поверх кадра, и лента обязана начинаться ниже неё, иначе
+ * вопрос закрывает как раз ту часть ленты, о которой спрашивает.
+ */
+.history-stage {
+  align-items: center;
+  /*
+   * Своя поверхность, а не морской тон карты: карты в этом режиме нет, а
+   * `.stage-map` красит кадр под море. Лента печатается на бумаге — отсюда и
+   * бумажные токены у текста и линий ниже.
+   */
+  background: var(--surface-paper);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  /*
+   * Кадром, а не потоком: `flex: 1` давал ленте вырасти выше кадра карты, и
+   * бумага накрывала полосу вариантов под ним. Родитель `.stage-map`
+   * позиционирован, и `inset: 0` держит ленту ровно в его границах.
+   */
+  inset: 0;
+  justify-content: center;
+  overflow: hidden;
+  /*
+   * Верхнее поле — под плашку вопроса: она стоит поверх кадра абсолютом, и
+   * без запаса лента начинается прямо под ней, а вопрос закрывает как раз ту
+   * часть ленты, о которой спрашивает.
+   */
+  padding: calc(var(--s-8) + var(--s-5)) var(--s-6) var(--s-5);
+  position: absolute;
+}
+
+.dynasty-timeline {
+  inline-size: 100%;
+  max-inline-size: 64rem;
+  position: relative;
+}
+
+/* --- шкала --- */
+
+.timeline-scale {
+  block-size: 1.75rem;
+  position: relative;
+}
+
+/* Штрихи шкалы и подписи разрывов делят одну строку над лентой. */
+
+.timeline-tick {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/*
+ * Крайние метки прижимаются к своему краю: «2000 до н. э.» на левом конце
+ * иначе наполовину уезжает за кадр.
+ */
+.timeline-tick[data-edge='start'] {
+  transform: none;
+}
+
+.timeline-tick[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+/* --- полосы --- */
+
+.timeline-band {
+  block-size: 4rem;
+  border-block: var(--border-hair) solid var(--line-on-paper);
+  position: relative;
+}
+
+/*
+ * Полосы одного тона: лента показывает время, а не род династии, и красить их
+ * по-разному значило бы завести на экране второй смысл, которого нет.
+ * Спрошенная выделяется цветом и тушью — тем же приёмом, что объект на
+ * физической карте.
+ */
+.timeline-span {
+  background: var(--timeline-span);
+  block-size: 100%;
+  /* Разделитель цветом бумаги: полосы обязаны читаться поштучно, а не лентой. */
+  border-inline: var(--border-hair) solid var(--surface-paper);
+  /* Полоса Цинь — четырнадцать лет из четырёх тысяч: без минимума её не видно. */
+  min-inline-size: 2px;
+  position: absolute;
+  inset-block-start: 0;
+}
+
+/*
+ * Обводка, а не только цвет: киноварь и сланец на бумаге стоят близко, и
+ * рядом друг с другом их не различить. Тот же довод, что у выделения объекта
+ * на физической карте.
+ */
+.timeline-span[data-highlighted='true'] {
+  background: var(--timeline-span-current);
+  box-shadow: 0 0 0 2px var(--timeline-span-outline);
+  z-index: 1;
+}
+
+/* --- имена --- */
+
+.timeline-names {
+  block-size: 3.25rem;
+  position: relative;
+}
+
+/*
+ * Подпись разрыва стоит над ним, в строке шкалы: сам разрыв — 301 год из
+ * четырёх тысяч, и слово в него не помещается. Ниже, к именам, её уводить
+ * нельзя — там она попала бы между «Хань» и «Тан» и склеилась бы с ними.
+ */
+.timeline-gap {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+  font-style: italic;
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.timeline-name {
+  color: var(--text-on-paper-muted);
+  display: block;
+  font-size: var(--t-size-body);
+  padding-block-start: var(--s-1);
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.timeline-name[data-highlighted='true'] {
+  color: var(--text-on-paper);
+  font-weight: var(--t-weight-bold);
+}
+
+.timeline-name-years {
+  display: block;
+  font-weight: var(--t-weight-regular);
+}
+
+.history-hint,
+.history-note {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+  margin: 0;
+  max-inline-size: 44rem;
+  text-align: center;
+}
+
+.history-note {
+  color: var(--text-on-paper);
+  font-size: var(--t-size-body);
+}
+
 /* Полный экран отдаёт кадр оболочке: фон обязан быть её, а не прозрачным. */
 .round-stage:fullscreen {
   background: var(--surface-ground);

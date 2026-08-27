@@ -11,6 +11,25 @@ export type Fact = {
   readonly imageAlt?: string;
 };
 
+/**
+ * Династия и срок её правления. Годы числами: до нашей эры — отрицательные,
+ * подпись собирает `spanLabel`. Приблизительность отмечается у каждого конца
+ * отдельно: у Ся условны оба, у Шан — только начало.
+ */
+export type Dynasty = {
+  readonly id: string;
+  readonly nameRu: string;
+  readonly nameZh: string;
+  readonly pinyin: string;
+  readonly from: number;
+  readonly to: number;
+  readonly approximateFrom?: boolean;
+  readonly approximateTo?: boolean;
+  /** Одна-две фразы: чем эта династия запомнилась. Показывается после ответа. */
+  readonly note: string;
+  readonly sourceIds: readonly string[];
+};
+
 export type Source = {
   readonly id: string;
   readonly title: string;

@@ -152,6 +152,25 @@ describe('границы и поверхности', () => {
     expectAtLeast('--state-correct-on-ground', '--surface-raised', TEXT_CONTRAST);
   });
 
+  /*
+   * Лента династий печатается на бумаге. Полоса — значимая графика: по её
+   * длине и месту ученик и читает время, поэтому порог графики, а не текста.
+   */
+  it('полосы ленты династий видны на бумаге', () => {
+    expectAtLeast('--timeline-span', '--surface-paper', GRAPHIC_CONTRAST);
+    expectAtLeast('--timeline-span-current', '--surface-paper', GRAPHIC_CONTRAST);
+  });
+
+  /*
+   * Спрошенная полоса не должна опознаваться одним цветом: киноварь и
+   * тушь-500 различаются между собой всего на 1.08. Различает их обводка —
+   * она обязана быть видна и на самой полосе, и на соседних.
+   */
+  it('обводка спрошенной полосы видна на обеих заливках', () => {
+    expectAtLeast('--timeline-span-outline', '--timeline-span-current', GRAPHIC_CONTRAST);
+    expectAtLeast('--timeline-span-outline', '--timeline-span', GRAPHIC_CONTRAST);
+  });
+
   it('на любой поверхности видно кольцо фокуса', () => {
     const surfaces = [
       '--surface-ground',

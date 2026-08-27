@@ -14,8 +14,19 @@ import {
   type PhysicalSet,
 } from './content/physical-features';
 import { regions } from './content/regions';
-import { citiesWord, featuresWord } from './content/region-count';
-import type { City, CitySet, PhysicalFeature, Region } from './content/types';
+import { dynasties } from './content/dynasties';
+import {
+  citiesWord,
+  dynastiesWord,
+  featuresWord,
+} from './content/region-count';
+import type {
+  City,
+  CitySet,
+  Dynasty,
+  PhysicalFeature,
+  Region,
+} from './content/types';
 import { addAttempts } from './domain/progress';
 import {
   bestAccuracy,
@@ -31,6 +42,7 @@ import { HomePage } from './features/home/HomePage';
 import {
   AtlasPage,
   CityRound,
+  HistoryRound,
   CollectionPage,
   CollectionsPage,
   ExerciseRound,
@@ -54,6 +66,7 @@ type Screen =
   | 'exercise'
   | 'city-exercise'
   | 'physical-exercise'
+  | 'history-exercise'
   | 'results'
   | 'fill'
   | 'fill-results';
@@ -134,6 +147,12 @@ export default function App() {
    */
   const [physicalPool, setPhysicalPool] =
     useState<readonly PhysicalFeature[]>(physicalFeatures);
+  /*
+   * Пул династий. Как и у городов с физическими целями: «Повторить ошибки»
+   * задаёт его напрямую, и выводить его из набора нельзя — набора у истории
+   * нет.
+   */
+  const [historyPool, setHistoryPool] = useState<readonly Dynasty[]>(dynasties);
   const [exerciseTypes, setExerciseTypes] = useState<readonly ExerciseType[]>([
     'find-on-map',
   ]);
@@ -331,6 +350,22 @@ export default function App() {
     setScreen('physical-exercise');
   }
 
+  /*
+   * У истории нет ни набора, ни выбора языка: династию спрашивают по-русски с
+   * иероглифами рядом, а сроков ровно двенадцать. Поэтому запуск проще
+   * остальных — сид и идентификатор раунда, и всё.
+   */
+  function startHistoryRound(
+    nextLanguage: QuestionLanguage = language,
+    pool: readonly Dynasty[] = dynasties,
+  ) {
+    setHistoryPool(pool);
+    setLanguage(nextLanguage);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('history-exercise');
+  }
+
   function startFillRound(nextLanguage: QuestionLanguage) {
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
@@ -466,6 +501,21 @@ export default function App() {
     );
   }
 
+  if (screen === 'history-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <HistoryRound
+          dynasties={historyPool}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishTargetRound}
+          onExit={exitToModes}
+        />
+      </AppFrame>
+    );
+  }
+
   if (screen === 'results') {
     const summary = summariseRound(lastAttempts);
     /*
@@ -477,6 +527,7 @@ export default function App() {
     const roundKind = lastAttempts[0]?.target.kind ?? 'region';
     const isCityRound = roundKind === 'city';
     const isPhysicalRound = roundKind === 'physical';
+    const isHistoryRound = roundKind === 'history';
     /*
      * Набор повтора — ошибки этого раунда, те же, что показаны списком
      * (решение владельца от 2026-08-25). Отдельного источника у кнопки нет:
@@ -487,6 +538,9 @@ export default function App() {
     const repeatFeatures = physicalPool.filter((feature) =>
       repeatIds.includes(feature.id),
     );
+    const repeatDynasties = historyPool.filter((dynasty) =>
+      repeatIds.includes(dynasty.id),
+    );
 
     /*
      * Карта итога есть у раундов по регионам. У раунда по городам исход по
@@ -495,7 +549,7 @@ export default function App() {
      * хуже отсутствующей.
      */
     const roundMap =
-      isCityRound || isPhysicalRound ? undefined : (
+      isCityRound || isPhysicalRound || isHistoryRound ? undefined : (
         <ChinaMap
           regions={regions}
           selectedRegionId={null}
@@ -512,9 +566,23 @@ export default function App() {
       <AppFrame fillsFrame={false} current={null} onNavigate={navigate}>
         <RoundResultsPage
           summary={summary}
-          targets={isCityRound ? cityPool : isPhysicalRound ? physicalPool : regions}
+          targets={
+            isCityRound
+              ? cityPool
+              : isPhysicalRound
+                ? physicalPool
+                : isHistoryRound
+                  ? historyPool
+                  : regions
+          }
           countWord={
-            isCityRound ? citiesWord : isPhysicalRound ? featuresWord : undefined
+            isCityRound
+              ? citiesWord
+              : isPhysicalRound
+                ? featuresWord
+                : isHistoryRound
+                  ? dynastiesWord
+                  : undefined
           }
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
@@ -537,6 +605,11 @@ export default function App() {
               return;
             }
 
+            if (isHistoryRound) {
+              startHistoryRound(language, repeatDynasties);
+              return;
+            }
+
             startRound(exerciseTypes[0], language, repeatIds);
           }}
           onNewRound={() => {
@@ -553,6 +626,11 @@ export default function App() {
                 language,
                 physicalPool,
               );
+              return;
+            }
+
+            if (isHistoryRound) {
+              startHistoryRound();
               return;
             }
 
@@ -619,6 +697,7 @@ export default function App() {
           onStartRound={startRound}
           onStartFillRound={startFillRound}
           onStartCityRound={startCityRound}
+          onStartHistoryRound={startHistoryRound}
           onStartPhysicalRound={startPhysicalRound}
           onOpenAtlas={() => setScreen('atlas')}
           onOpenCollections={() => setScreen('collections')}

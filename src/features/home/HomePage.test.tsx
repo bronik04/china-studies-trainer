@@ -14,6 +14,7 @@ function renderHome(attempts: readonly Attempt[] = []) {
     onStartRound: vi.fn(),
     onStartFillRound: vi.fn(),
     onStartCityRound: vi.fn(),
+    onStartHistoryRound: vi.fn(),
     onStartPhysicalRound: vi.fn(),
     onOpenAtlas: vi.fn(),
     onOpenCollections: vi.fn(),
@@ -72,7 +73,7 @@ it('карточка ненаписанного режима не запуска
   const { onStartRound } = renderHome();
 
   const card = screen.getByRole('button', {
-    name: /История: династии и даты/,
+    name: /Культура: узнать по фотографии/,
   });
 
   expect(card).toBeDisabled();
@@ -95,7 +96,9 @@ it('заполнение карты идёт своим раундом, а не 
 it('объявленный, но ещё не написанный режим выключен и назван готовящимся', () => {
   renderHome();
 
-  const card = screen.getByRole('button', { name: /История: династии и даты/ });
+  const card = screen.getByRole('button', {
+    name: /Культура: узнать по фотографии/,
+  });
 
   expect(card).toBeDisabled();
   expect(card).toHaveTextContent('Готовится');
@@ -163,6 +166,7 @@ it('раздел режимов принимает фокус: шапка вед
       onStartRound={vi.fn()}
       onStartFillRound={vi.fn()}
       onStartCityRound={vi.fn()}
+      onStartHistoryRound={vi.fn()}
       onStartPhysicalRound={vi.fn()}
       onOpenAtlas={vi.fn()}
       onOpenCollections={vi.fn()}

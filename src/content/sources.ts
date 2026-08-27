@@ -1420,6 +1420,156 @@ export const sources = [
       'водный выход к Янцзы через озеро',
     ],
   },
+  /*
+   * Династии: по источнику на каждый срок правления. Даты не набираются по
+   * памяти — школьная лента дат тем и опасна, что выглядит одинаково верной
+   * при любой ошибке.
+   */
+  {
+    id: 'britannica-xia-dynasty',
+    title: 'Xia dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Xia-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Ся',
+      'предание об основателе Юе',
+    ],
+  },
+  {
+    id: 'britannica-shang-dynasty',
+    title: 'Shang dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Shang-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Шан',
+      'зарождение письменности и бронзовое литьё',
+    ],
+  },
+  {
+    id: 'britannica-zhou-dynasty',
+    title: 'Zhou dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Zhou-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Чжоу',
+      'нововведения эпохи: железо, плуг, арбалет',
+    ],
+  },
+  {
+    id: 'britannica-qin-dynasty',
+    title: 'Qin dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Qin-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Цинь',
+      'происхождение слова «Китай» и устройство империи',
+    ],
+  },
+  {
+    id: 'britannica-han-dynasty',
+    title: 'Han dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Han-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Хань',
+      'её влияние на последующие династии',
+    ],
+  },
+  {
+    id: 'britannica-six-dynasties',
+    title: 'History of China — The Six Dynasties',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/history-of-China/The-Six-Dynasties',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок Троецарствия (220–280)',
+      'отречение последнего императора Хань в 220 году',
+    ],
+  },
+  {
+    id: 'britannica-sui-dynasty',
+    title: 'Sui dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Sui-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Суй',
+      'объединение страны после четырёх веков раздробленности',
+      'столица Дасин, будущий Чанъань',
+    ],
+  },
+  {
+    id: 'britannica-tang-dynasty',
+    title: 'Tang dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Tang-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Тан',
+      'расцвет управления и искусства',
+    ],
+  },
+  {
+    id: 'britannica-song-dynasty',
+    title: 'Song dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Song-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Сун',
+      'деление на Северную и Южную Сун с 1127 года',
+    ],
+  },
+  {
+    id: 'britannica-yuan-dynasty',
+    title: 'Yuan dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Yuan-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'переименование державы в Юань в 1271 году и свержение в 1368-м',
+      'покорение юга в 1279 году, перенос столицы в Пекин',
+    ],
+  },
+  {
+    id: 'britannica-ming-dynasty',
+    title: 'Ming dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Ming-dynasty-Chinese-history',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Мин',
+      'Чжу Юаньчжан как основатель',
+    ],
+  },
+  {
+    id: 'britannica-qing-dynasty',
+    title: 'Qing dynasty',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Qing-dynasty',
+    accessedAt: '2026-08-27',
+    covers: [
+      'срок правления династии Цин',
+      'маньчжурское происхождение династии',
+    ],
+  },
 ] as const satisfies readonly Source[];
 
 const sourceIndex = new Map<string, Source>(

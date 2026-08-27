@@ -68,3 +68,19 @@ export function collectionsWord(count: number): string {
 
   return last >= 2 && last <= 4 ? 'коллекции' : 'коллекций';
 }
+
+/** 1 династия, 2–4 династии, 5+ династий. */
+export function dynastiesWord(count: number): string {
+  const teens = count % 100;
+  const last = count % 10;
+
+  if (teens >= 11 && teens <= 14) {
+    return 'династий';
+  }
+
+  if (last === 1) {
+    return 'династия';
+  }
+
+  return last >= 2 && last <= 4 ? 'династии' : 'династий';
+}

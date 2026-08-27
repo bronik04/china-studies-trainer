@@ -58,6 +58,8 @@ export type ModeCard = {
   | { readonly kind: 'city'; readonly exerciseType: ExerciseType }
   /** Игра по физической географии: цели берутся из справочника объектов. */
   | { readonly kind: 'physical'; readonly exerciseType: 'find-on-map' | 'name-target' }
+  /** Игра по династиям: цели берутся из ленты, а карта в ней не участвует. */
+  | { readonly kind: 'history' }
   | { readonly kind: 'fill' }
   /** Режим объявлен, но ещё не написан: карточка не запускается. */
   | { readonly kind: 'planned' }
@@ -102,6 +104,16 @@ export const PHYSICAL_MODES: Readonly<
     title: 'Назвать объект',
     eyebrow: 'Какой объект подсвечен',
   },
+};
+
+/**
+ * «История» — одна игра, а не три: у династии нет ни места на карте, ни
+ * второго каталога, с которым её связывают. Спрашивают имя, отвечают сроком.
+ */
+export const HISTORY_MODE: ExerciseMode = {
+  exerciseType: 'match-pair',
+  title: 'История: династии и даты',
+  eyebrow: 'Когда правила эта династия',
 };
 
 export const MODE_CARDS: readonly ModeCard[] = [
@@ -196,11 +208,12 @@ export const MODE_CARDS: readonly ModeCard[] = [
   },
   {
     id: 'history',
-    kind: 'planned',
+    kind: 'history',
     mark: '史',
     title: 'История: династии и даты',
-    summary: 'Лента династий, ключевые даты и связь события с местом на карте.',
-    volume: 'Содержание проверяется по школьной программе',
+    summary:
+      'Названа династия — выбрать её срок из четырёх. Отвлекают сроки соседних по времени династий, а под вопросом идёт лента: длина каждой полосы — её настоящий век.',
+    volume: '12 династий · около 4 минут',
   },
   {
     id: 'culture',

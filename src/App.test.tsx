@@ -313,12 +313,14 @@ it('все написанные игры открыты сразу, без вс�
     /Назвать регион/,
     /Регион — столица/,
     /Заполнить карту/,
+    /История: династии и даты/,
   ]) {
     expect(screen.getByRole('button', { name })).toBeEnabled();
   }
 
+  /* Закрытой карточка бывает только пока режим не написан. */
   expect(
-    screen.getByRole('button', { name: /История: династии и даты/ }),
+    screen.getByRole('button', { name: /Культура: узнать по фотографии/ }),
   ).toBeDisabled();
 });
 
@@ -365,6 +367,40 @@ function clickFillRegion(region: Region): void {
     }),
   );
 }
+
+/*
+ * История идёт своим экраном и своими целями, но заканчивается общим итогом.
+ * Проверяется именно стык: числа и склонение на итогах берутся из вида цели,
+ * и «12 регионов» вместо «12 династий» было бы видно только здесь.
+ */
+it('раунд по истории доходит до итога и считает династии', async () => {
+  render(<App />);
+
+  fireEvent.click(
+    screen.getByRole('button', { name: /История: династии и даты/ }),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+  await settle();
+
+  expect(screen.getByText(/Вопрос 1 из 12/)).toBeInTheDocument();
+
+  vi.useFakeTimers();
+  try {
+    for (let index = 0; index < 12; index += 1) {
+      fireEvent.click(screen.getAllByTestId('choice-option')[0]);
+      act(() => {
+        vi.advanceTimersByTime(CORRECT_PAUSE_MS + WRONG_PAUSE_MS);
+      });
+    }
+  } finally {
+    vi.useRealTimers();
+  }
+  await settle();
+
+  expect(screen.getByText(/из 12/)).toBeInTheDocument();
+  expect(document.body.textContent).toContain('династи');
+  expect(document.body.textContent).not.toContain('12 регионов');
+}, 20_000);
 
 it('итог заполнения ведёт в раунд по ошибочным регионам', async () => {
   render(<App />);
