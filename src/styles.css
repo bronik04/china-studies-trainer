@@ -272,6 +272,30 @@ p {
   margin: 0;
 }
 
+/*
+ * Коллекции региона — список ссылок, а не сетка карточек: карточки уже есть
+ * на своей странице, а здесь нужен переход, и он не должен весить больше
+ * справки, рядом с которой стоит.
+ */
+.atlas-collections {
+  border-block-start: var(--border-hair) solid var(--line-on-ground);
+  margin-block-start: var(--s-4);
+  padding-block-start: var(--s-3);
+}
+
+.atlas-collections ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.atlas-collections button {
+  text-align: start;
+}
+
 .atlas-map {
   margin-block-start: var(--s-5);
 }

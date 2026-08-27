@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cityById, citiesOfRegion } from '../../content/cities';
+import { collectionsOfRegion } from '../../content/collections';
 import { physicalFeatures } from '../../content/physical-features';
 import { featuresWord, regionsWord } from '../../content/region-count';
 import { sourceById } from '../../content/sources';
@@ -130,6 +131,7 @@ export type AtlasPageProps = {
   readonly zoom: MapZoom;
   readonly onZoomChange: (zoom: MapZoom) => void;
   readonly onTrain: () => void;
+  readonly onOpenCollection: (collectionId: string) => void;
 };
 
 /**
@@ -148,6 +150,7 @@ export function AtlasPage({
   zoom,
   onZoomChange,
   onTrain,
+  onOpenCollection,
 }: AtlasPageProps) {
   /*
    * Вид карты живёт здесь, а не в `App`: он не меняет ни прогресса, ни раунда
@@ -290,6 +293,31 @@ export function AtlasPage({
                   </span>
                 </p>
                 <CardFacts facts={selected.facts} />
+                {/*
+                  Коллекции региона — не новая сущность, а та же привязка
+                  `regionIds`, прочитанная с другой стороны: со страницы
+                  коллекции виден её регион, из атласа — коллекции региона.
+                  Пустой список — законное состояние, блок тогда не рисуется.
+                */}
+                {collectionsOfRegion(selected.id).length === 0 ? null : (
+                  <nav className="atlas-collections" aria-label="Коллекции региона">
+                    <p className="eyebrow">Коллекции</p>
+                    <ul>
+                      {collectionsOfRegion(selected.id).map((collection) => (
+                        <li key={collection.id}>
+                          <button
+                            type="button"
+                            className="text"
+                            onClick={() => onOpenCollection(collection.id)}
+                          >
+                            {collection.nameRu}{' '}
+                            <span lang="zh-Hans">{collection.nameZh}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                )}
                 {/*
                   Города региона перечислены словами, а не только точками на
                   карте: точка — не текст, читалке экрана её не прочесть, а

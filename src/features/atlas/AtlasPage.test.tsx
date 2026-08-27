@@ -16,6 +16,7 @@ function renderAtlas(selectedRegionId: string | null = null) {
       zoom={1}
       onZoomChange={() => {}}
       onTrain={onTrain}
+      onOpenCollection={() => {}}
     />,
   );
 
@@ -218,4 +219,40 @@ it('на политическом виде шкалы нет', () => {
   const { container } = renderAtlas();
 
   expect(container.querySelector('.relief-scale')).toBeNull();
+});
+
+/*
+ * Привязка `regionIds` уже есть у коллекций — карточка читает её с другой
+ * стороны: со страницы коллекции виден её регион, из атласа — коллекции
+ * региона. Новой сущности не появляется.
+ */
+it('ведёт из карточки региона в его коллекции', () => {
+  const onOpenCollection = vi.fn();
+
+  render(
+    <AtlasPage
+      regions={regions}
+      selectedRegionId="shaanxi"
+      onSelect={() => {}}
+      onClear={() => {}}
+      zoom={1}
+      onZoomChange={() => {}}
+      onTrain={() => {}}
+      onOpenCollection={onOpenCollection}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: /Шёлковый путь/ }));
+
+  expect(onOpenCollection).toHaveBeenCalledWith('silk-road');
+});
+
+/* Коллекции привязаны к регионам: у физического объекта блока нет. */
+it('не показывает коллекции у физического объекта', () => {
+  const { container } = renderAtlas();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+  fireEvent.keyDown(screen.getByLabelText(/Хуанхэ/), { key: 'Enter' });
+
+  expect(container.querySelector('.atlas-collections')).toBeNull();
 });

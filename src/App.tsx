@@ -561,6 +561,7 @@ export default function App() {
           zoom={zoom}
           onZoomChange={setZoom}
           onTrain={() => startRound('find-on-map', 'ru', null)}
+          onOpenCollection={openCollection}
         />
       ) : activeScreen === 'collections' ? (
         <CollectionsPage regions={regions} onOpenCollection={openCollection} />
