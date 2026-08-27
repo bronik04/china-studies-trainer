@@ -197,3 +197,25 @@ it('пустая справка физического объекта не ре�
   expect(card).toHaveTextContent('Хуанхэ');
   expect(card).not.toHaveTextContent('Справка');
 });
+
+/*
+ * Шкала стояла в колонке, а карта внутри колонки центрирована по пропорции:
+ * при карте в 426 px шкала занимала 844 px. На листе вопроса ширины не
+ * возникает вовсе, и карта забирает обратно высоту, которую занимала шкала.
+ */
+it('ставит шкалу высот на лист карты, а не в колонку', () => {
+  const { container } = renderAtlas();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+
+  const scale = container.querySelector('.relief-scale');
+
+  expect(scale).not.toBeNull();
+  expect(scale?.closest('.china-map-frame')).not.toBeNull();
+});
+
+it('на политическом виде шкалы нет', () => {
+  const { container } = renderAtlas();
+
+  expect(container.querySelector('.relief-scale')).toBeNull();
+});

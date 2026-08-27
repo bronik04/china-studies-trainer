@@ -80,6 +80,9 @@ describe('текст', () => {
 
   it('вспомогательный текст на бумаге читается', () => {
     expectAtLeast('--text-on-paper-muted', '--surface-paper', TEXT_CONTRAST);
+    /* Светлая бумага — плашка шкалы высот на листе карты: «равнины» и
+       «нагорье» набраны на ней приглушённым тоном. */
+    expectAtLeast('--text-on-paper-muted', '--surface-paper-bright', TEXT_CONTRAST);
   });
 
   it('текст на доске читается', () => {

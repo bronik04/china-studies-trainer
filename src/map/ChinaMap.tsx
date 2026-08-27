@@ -3,6 +3,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
 import mapMarkup from '../../public/maps/china-provinces.svg?raw';
@@ -105,6 +106,16 @@ type ChinaMapProps = {
   readonly showsPhysicalLabels?: boolean;
   /** Исход ответа по объектам физической карты: помечается штриховкой и штрихом. */
   readonly featureOutcomes?: Readonly<Record<string, FeatureOutcome>>;
+  /**
+   * Врезка на листе карты: легенда, шкала — то, что объясняет саму карту.
+   *
+   * Приходит готовой, а не собирается здесь: что означает заливка, знает
+   * поверхность, карта только даёт место. Место это — лист, а не полоса под
+   * ним: карта внутри своей колонки центрирована по пропорции, и шкала под
+   * ней получалась вдвое шире самой карты. По той же причине в углу листа
+   * стоит и управление масштабом.
+   */
+  readonly mapInset?: ReactNode;
 };
 
 /**
@@ -188,6 +199,7 @@ export function ChinaMap({
   onSelectFeature,
   showsPhysicalLabels = true,
   featureOutcomes = NO_FEATURE_OUTCOMES,
+  mapInset,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   /*
@@ -634,6 +646,11 @@ export function ChinaMap({
         {onZoomChange ? (
           <MapControls zoom={zoom} onZoomChange={onZoomChange} />
         ) : null}
+        {/*
+          Врезка — последней: она объясняет то, что уже нарисовано, и лежит
+          поверх листа, как и управление масштабом.
+        */}
+        {mapInset}
       </div>
       {/*
         В упражнении «назови регион» карта только показывает. Назвать
