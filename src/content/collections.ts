@@ -522,3 +522,19 @@ export function collectionsOfRegion(regionId: string): readonly Collection[] {
     collection.regionIds.includes(regionId),
   );
 }
+
+/**
+ * Коллекции, в которые регион входит помимо своей собственной.
+ *
+ * Разделено на две функции намеренно. `collectionsOfRegion` отвечает на
+ * вопрос о привязке и обязана видеть все коллекции — на этом стоит инвариант
+ * каталога. Здесь же вопрос другой: что ещё почитать про этот регион, и
+ * «Юньнань» в ответе на него ученик прочтёт как ошибку, а не как ссылку.
+ */
+export function otherCollectionsOfRegion(
+  regionId: string,
+): readonly Collection[] {
+  return collectionsOfRegion(regionId).filter(
+    (collection) => collection.aboutRegionId !== regionId,
+  );
+}

@@ -4,6 +4,7 @@ import {
   collectionsInGroup,
   collectionsOfRegion,
   isDraft,
+  otherCollectionsOfRegion,
 } from './collections';
 import { regions } from './regions';
 
@@ -89,4 +90,17 @@ it('сохраняет вводку и заметки там, где их нап
   expect(yunnan?.lead).toContain('Юньнань — горная');
   expect(yunnan?.notes).toHaveLength(4);
   expect(yunnan?.relatedIds).toContain('yuanyang-terraces');
+});
+
+/*
+ * Инвариант каталога держит `collectionsOfRegion`, а не эта функция: «что ещё
+ * почитать про Юньнань» — вопрос о других страницах, и «Юньнань» в ответе на
+ * него ученик прочтёт как ошибку, а не как ссылку.
+ */
+it('«что ещё» не предлагает коллекцию о самом регионе', () => {
+  const ids = otherCollectionsOfRegion('yunnan').map(({ id }) => id);
+
+  expect(ids).not.toContain('yunnan');
+  expect(ids).toContain('yuanyang-terraces');
+  expect(collectionsOfRegion('yunnan').map(({ id }) => id)).toContain('yunnan');
 });

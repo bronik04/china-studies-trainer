@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { collectionsOfRegion } from '../../content/collections';
+import { otherCollectionsOfRegion } from '../../content/collections';
 import { REGION_KIND_LABELS } from '../../content/regions';
 import { physicalFeatures } from '../../content/physical-features';
 import { featuresWord, regionsWord } from '../../content/region-count';
@@ -226,11 +226,11 @@ export function AtlasPage({
                   коллекции виден её регион, из атласа — коллекции региона.
                   Пустой список — законное состояние, блок тогда не рисуется.
                 */}
-                {collectionsOfRegion(selected.id).length === 0 ? null : (
+                {otherCollectionsOfRegion(selected.id).length === 0 ? null : (
                   <nav className="atlas-collections" aria-label="Коллекции региона">
                     <p className="eyebrow">Коллекции</p>
                     <ul>
-                      {collectionsOfRegion(selected.id).map((collection) => (
+                      {otherCollectionsOfRegion(selected.id).map((collection) => (
                         <li key={collection.id}>
                           <button
                             type="button"
