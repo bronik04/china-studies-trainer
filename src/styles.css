@@ -1400,6 +1400,39 @@ button.text:hover:enabled {
 }
 
 /*
+ * Знак крайней точки. Род читается формой: треугольник вверх у вершины, вниз у
+ * впадины, — а цвет здесь занят ступенью рельефа и родом различать не может.
+ * Вершина залита бумагой и обведена тушью, впадина залита тушью: два знака
+ * одной формы отличались бы только направлением, и в мелком масштабе это
+ * читается хуже, чем заливка.
+ */
+.china-map .physical-layer .point-mark-shape {
+  fill: var(--surface-paper-bright);
+  pointer-events: none;
+  stroke: var(--map-label);
+  stroke-width: 1;
+}
+
+.china-map .physical-layer .point-mark-shape[data-point='depression'] {
+  fill: var(--map-label);
+}
+
+.china-map .physical-layer .point-hit:focus-visible + .point-mark-shape,
+.china-map .physical-layer .point-mark[data-hovered='true'] .point-mark-shape,
+.china-map .physical-layer .point-mark[data-selected='true'] .point-mark-shape {
+  stroke: var(--map-highlight);
+  stroke-width: 1.6;
+}
+
+.china-map .physical-layer .point-hit {
+  fill: transparent;
+}
+
+.china-map .physical-layer .point-hit:focus {
+  outline: none;
+}
+
+/*
  * Круг цели остаётся: он задаёт размер, по которому карта считает попадание,
  * и остановку Tab. Указателя у него нет по той же причине, что у формы.
  */

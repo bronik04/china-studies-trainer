@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
 import { lakeMarks } from './lake-marks';
-import { LAKE_SHAPES, RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
+import { pointMarks } from './point-marks';
+import { LAKE_SHAPES, POINT_MARKS, RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
 import { RELIEF_BANDS } from './relief-bands';
 import {
   MAP_VIEWBOX_HEIGHT,
@@ -39,6 +40,28 @@ const LABEL_OFFSET = 4;
 
 /** Радиус знака озера: виден на целом виде, но не спорит с контуром. */
 const LAKE_MARK_RADIUS = 2.5;
+
+/** Полувысота треугольника крайней точки: чуть крупнее знака озера. */
+const POINT_MARK_RADIUS = 3;
+
+/**
+ * Знак крайней точки: треугольник вверх у вершины, вниз у впадины. Род
+ * читается формой, а не цветом: цвет на этой карте занят ступенью рельефа.
+ */
+function trianglePath(x: number, y: number, up: boolean): string {
+  const tip = up ? -POINT_MARK_RADIUS : POINT_MARK_RADIUS;
+  const base = up ? POINT_MARK_RADIUS * 0.7 : -POINT_MARK_RADIUS * 0.7;
+  const half = POINT_MARK_RADIUS * 0.92;
+
+  return `M ${x} ${y + tip} L ${x + half} ${y + base} L ${x - half} ${y + base} Z`;
+}
+
+/** Вид точки по её идентификатору: вершина или впадина. */
+const POINT_KIND_OF = new Map(
+  physicalFeatures.flatMap((feature) =>
+    feature.kind === 'point' ? [[feature.id, feature.point] as const] : [],
+  ),
+);
 
 /**
  * Точка подписи — середина самого длинного куска линии. У реки, разрезанной
@@ -77,6 +100,13 @@ const LABELLED: readonly { featureId: string; x: number; y: number }[] = [
     featureId: shape.featureId,
     x: shape.markX,
     y: shape.markY - LABEL_OFFSET,
+  })),
+  /* У крайней точки подпись над знаком: контура, к середине которого её можно
+     было бы привязать, у точки нет. */
+  ...POINT_MARKS.map((mark) => ({
+    featureId: mark.featureId,
+    x: mark.x,
+    y: mark.y - LABEL_OFFSET - POINT_MARK_RADIUS,
   })),
 ];
 
@@ -400,6 +430,59 @@ export function PhysicalLayer({
                 cx={mark.x}
                 cy={mark.y}
                 r={LAKE_MARK_RADIUS}
+                aria-hidden="true"
+              />
+            </g>
+          );
+        })}
+      </g>
+
+      {/*
+        Крайние точки. Контура у них нет вовсе, поэтому знак — единственное,
+        чем они на карте показаны; цель нажатия строится вокруг него, как у
+        озера. Род читается формой знака: треугольник вверх у вершины, вниз и
+        залитый — у впадины.
+      */}
+      <g className="points" mask={`url(#${MASK_ID})`}>
+        {pointMarks(zoom).map((mark) => {
+          const label = NAME_OF.get(mark.featureId) ?? mark.featureId;
+          const answers = onSelect !== undefined;
+          const up = POINT_KIND_OF.get(mark.featureId) === 'peak';
+
+          return (
+            <g
+              key={mark.featureId}
+              className="point-mark"
+              data-selected={mark.featureId === selectedFeatureId}
+              data-hovered={mark.featureId === hovered}
+            >
+              <circle
+                className="point-hit"
+                cx={mark.hitX}
+                cy={mark.hitY}
+                r={mark.radius}
+                data-feature-id={mark.featureId}
+                data-outcome={featureOutcomes[mark.featureId]}
+                role={answers ? 'button' : undefined}
+                aria-label={label}
+                tabIndex={answers ? 0 : -1}
+                onFocus={answers ? () => setHoveredNodeId(mark.featureId) : undefined}
+                onBlur={answers ? () => setHoveredNodeId(null) : undefined}
+                onKeyDown={
+                  answers
+                    ? (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          onSelect(mark.featureId);
+                        }
+                      }
+                    : undefined
+                }
+              />
+              <path
+                className="point-mark-shape"
+                d={trianglePath(mark.x, mark.y, up)}
+                data-point={up ? 'peak' : 'depression'}
                 aria-hidden="true"
               />
             </g>
