@@ -50,7 +50,7 @@ export type HomePageProps = {
   readonly onStartHistoryRound: (
     language: QuestionLanguage,
     pool?: undefined,
-    kind?: 'when' | 'who' | 'capital' | 'ruler',
+    kind?: 'when' | 'who' | 'capital' | 'ruler' | 'order',
   ) => void;
   readonly onStartPhysicalRound: (
     exerciseType: 'find-on-map' | 'name-target',

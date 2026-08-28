@@ -3215,6 +3215,19 @@ button.chip[aria-pressed='true'] {
   z-index: 1;
 }
 
+/*
+ * Занятая полоса: заливка нефритом, как у верного ответа, но обводка тоньше —
+ * исход уже показан, и повторять его в полную силу незачем.
+ */
+.timeline-span[data-mark='taken'] {
+  background: var(--timeline-span-correct);
+  box-shadow: 0 0 0 1px var(--timeline-span-outline);
+}
+
+.timeline-hit:disabled {
+  cursor: default;
+}
+
 /* Наведение и фокус: полоса светлеет, обводка киноварью. */
 .timeline-span[data-mark='hover'] {
   background: var(--surface-paper-bright);
@@ -3309,7 +3322,8 @@ button.chip[aria-pressed='true'] {
 }
 
 .timeline-name[data-mark='correct'],
-.timeline-name[data-mark='asked'] {
+.timeline-name[data-mark='asked'],
+.timeline-name[data-mark='taken'] {
   background: var(--surface-paper);
   border-radius: var(--radius-sm);
   color: var(--text-on-paper);
@@ -3478,6 +3492,40 @@ button.chip[aria-pressed='true'] {
   background: var(--surface-ground);
   border-block-start: var(--border-hair) solid var(--line-on-ground);
   padding: var(--s-3) var(--s-4);
+}
+
+/*
+ * Карточки имён под лентой в расстановке. Полоса вариантов у этой игры своя:
+ * имена не отвечают на вопрос, а ждут, когда их поставят, — поэтому у
+ * выбранного имени есть состояние, которого у кнопки варианта не бывает.
+ */
+.order-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.order-tile {
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground-strong);
+  cursor: pointer;
+  font: inherit;
+  min-block-size: var(--target-min);
+  padding: var(--s-2) var(--s-4);
+}
+
+/* Выбранное имя: не только цвет — рамка становится толще, набор жирнее. */
+.order-tile[aria-pressed='true'] {
+  border-color: var(--accent-on-ground);
+  border-width: 2px;
+  color: var(--accent-on-ground);
+  font-weight: var(--t-weight-bold);
 }
 
 .stage-choices {

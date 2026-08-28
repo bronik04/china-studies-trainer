@@ -250,8 +250,20 @@ function openCard(title: string | RegExp): void {
  * Одиннадцать равных карточек подряд требовали прочитать одиннадцать абзацев,
  * чтобы выбрать. Группы — те же справочники, из которых берутся цели.
  */
-it('игры разложены по предметам, и каждая попала ровно в одну группу', () => {
+it('игры разложены по пяти предметам, и каждая попала ровно в одну группу', () => {
   renderHome();
+
+  /*
+   * Пять полок, а не четыре: «История и культура» стояли вместе, пока у
+   * каждой было по одной игре; теперь у истории их пять.
+   */
+  expect(MODE_GROUPS).toHaveLength(5);
+  expect(
+    screen.getByRole('heading', { level: 3, name: 'История' }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { level: 3, name: 'Культура' }),
+  ).toBeInTheDocument();
 
   for (const group of MODE_GROUPS) {
     expect(
@@ -360,6 +372,15 @@ it('карточка правителей запускает игру о пра�
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
   expect(onStartHistoryRound).toHaveBeenCalledWith('ru', undefined, 'ruler');
+});
+
+it('карточка порядка запускает расстановку', () => {
+  const { onStartHistoryRound } = renderHome();
+
+  openCard(/Расставить по порядку/);
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(onStartHistoryRound).toHaveBeenCalledWith('ru', undefined, 'order');
 });
 
 it('«Отмена» закрывает окно и ничего не запускает', () => {

@@ -113,9 +113,10 @@ export type TimelineMark = {
   /**
    * `correct` и `wrong` — исход ответа. `asked` — «вот эта династия»: её
    * показывают в играх, где спрашивают не о времени (столица, правитель), и
-   * подпись там не утечка — ответом служит город или человек.
+   * подпись там не утечка — ответом служит город или человек. `taken` — полоса
+   * занята уже поставленным именем: она подписана и нажатий не принимает.
    */
-  readonly kind: 'correct' | 'wrong' | 'asked';
+  readonly kind: 'correct' | 'wrong' | 'asked' | 'taken';
 };
 
 export type DynastyTimelineProps = {
@@ -177,8 +178,16 @@ export function DynastyTimeline({
    * разбора оставалась бы подменённой сроком: курсор со сданной полосы никуда
    * не делся, а цели под ним уже нет.
    */
+  /*
+   * Занятая полоса из наведения выпадает: её кнопка выключена, а выключенная
+   * не шлёт `pointerleave` — иначе `hoveredId` застревал бы на ней навсегда, и
+   * строка под лентой продолжала бы показывать её срок (ревью 2026-08-28).
+   */
   const hovered = answers
-    ? dynasties.find((dynasty) => dynasty.id === hoveredId)
+    ? dynasties.find(
+        (dynasty) =>
+          dynasty.id === hoveredId && markOf(dynasty.id) !== 'taken',
+      )
     : undefined;
 
   return (
@@ -264,6 +273,12 @@ export function DynastyTimeline({
                   type="button"
                   className="timeline-hit"
                   data-hit-dynasty-id={hit.id}
+                  /*
+                   * Занятая полоса выключена, а не просто молчит: выключенная
+                   * кнопка сама выпадает из обхода клавиатурой, и читалка
+                   * экрана называет её недоступной.
+                   */
+                  disabled={markOf(hit.id) === 'taken'}
                   style={{ left: percent(hit.left), width: percent(hit.width) }}
                   onPointerEnter={() => setHoveredId(hit.id)}
                   onPointerLeave={() => setHoveredId(null)}
@@ -290,8 +305,11 @@ export function DynastyTimeline({
            */
           const mark = markOf(dynasty.id);
           const isAnswer = mark === 'correct';
-          /* Спрошенная подписана и тогда, когда лента в целом молчит. */
-          const isAsked = mark === 'asked';
+          /*
+           * Спрошенная и занятая подписаны и тогда, когда лента в целом
+           * молчит: первая называет, о ком речь, вторая — что место закрыто.
+           */
+          const isAsked = mark === 'asked' || mark === 'taken';
 
           if (!showsNames && !isAsked) {
             return null;

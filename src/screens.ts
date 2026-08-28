@@ -31,6 +31,7 @@ const loaders = {
   history: () => import('./features/exercise/HistoryRound'),
   culture: () => import('./features/exercise/CultureRound'),
   fill: () => import('./features/exercise/FillMapRound'),
+  order: () => import('./features/exercise/OrderRound'),
   results: () => import('./features/results/RoundResultsPage'),
   fillResults: () => import('./features/results/FillMapResultsPage'),
   physicalMap: loadPhysicalMap,
@@ -62,6 +63,9 @@ export const CultureRound = lazy(() =>
 );
 export const FillMapRound = lazy(() =>
   loaders.fill().then((module) => ({ default: module.FillMapRound })),
+);
+export const OrderRound = lazy(() =>
+  loaders.order().then((module) => ({ default: module.OrderRound })),
 );
 export const RoundResultsPage = lazy(() =>
   loaders.results().then((module) => ({ default: module.RoundResultsPage })),
