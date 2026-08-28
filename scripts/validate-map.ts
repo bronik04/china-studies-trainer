@@ -7,6 +7,7 @@ import { CALLOUT_TARGETS } from '../src/map/callout-targets';
 import {
   INPUTS_FINGERPRINT,
   LAKE_SHAPES,
+  POINT_MARKS,
   RELIEF_SHAPES,
   RIVER_LINES,
 } from '../src/map/physical-geometry';
@@ -233,6 +234,9 @@ const physical = validatePhysicalGeometry(
           [shape.labelX as number, shape.labelY as number] as Point,
         ],
       ),
+    ),
+    pointMarks: new Map(
+      POINT_MARKS.map((mark) => [mark.featureId, [mark.x, mark.y] as Point]),
     ),
     landRings: parseLandRings(svg),
   },

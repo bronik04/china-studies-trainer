@@ -360,6 +360,16 @@ export function validatePhysicalFeatures(
           errors.push(`Номер объекта не целое число у озера ${feature.id}: ${id}`);
         }
       }
+    } else if (feature.kind === 'point') {
+      /*
+       * У точки нет контура вовсе: на карте она живёт знаком, и связывает её с
+       * набором один номер. Номер не целый означал бы цель без места.
+       */
+      if (!Number.isInteger(feature.neId)) {
+        errors.push(
+          `Номер объекта не целое число у точки ${feature.id}: ${feature.neId}`,
+        );
+      }
     } else if (![1, 2, 3].includes(feature.step)) {
       errors.push(`Ступень рельефа у ${feature.id} вне 1..3: ${feature.step}`);
     }

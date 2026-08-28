@@ -666,6 +666,19 @@ const FEATURE_PHOTOS: Readonly<Record<string, CollectionPhoto>> = {
     captionRu: 'Крепость Цзяюйгуань в Хэсийском коридоре',
     place: 'Цзяюйгуань, Ганьсу',
   },
+  everest: {
+    id: 'feature-everest',
+    subject: 'северная стена',
+    captionRu: 'Северная стена Джомолунгмы с дороги к базовому лагерю, долина Ронгбук',
+    place: 'Тибетский автономный район',
+  },
+  'turpan-depression': {
+    id: 'feature-turpan-depression',
+    subject: 'низшая точка страны',
+    captionRu: 'Стела у высохшего озера Айдин — низшей точки Китая',
+    captionZh: '艾丁湖',
+    place: 'Турфанская впадина, Синьцзян',
+  },
   chaohu: {
     id: 'feature-chaohu',
     subject: 'озеро с высоты',

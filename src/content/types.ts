@@ -143,7 +143,7 @@ export type Region = {
  */
 export type ReliefStep = 1 | 2 | 3;
 
-export type PhysicalKind = 'river' | 'landform' | 'lake';
+export type PhysicalKind = 'river' | 'landform' | 'lake' | 'point';
 
 type PhysicalCommon = {
   readonly id: string;
@@ -194,5 +194,18 @@ export type PhysicalFeature = PhysicalCommon &
          * `rivernum`. Список, потому что крупное озеро набор режет на части.
          */
         readonly lakeIds: readonly number[];
+      }
+    | {
+        readonly kind: 'point';
+        /**
+         * Вершина или впадина. Род читается формой знака, а не цветом: цвет на
+         * этой карте занят ступенью рельефа.
+         */
+        readonly point: 'peak' | 'depression';
+        /**
+         * Номер объекта в Natural Earth — то же правило, что у озера: имена
+         * там не уникальны, номера уникальны.
+         */
+        readonly neId: number;
       }
   );

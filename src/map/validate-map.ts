@@ -255,6 +255,8 @@ export type PhysicalGeometry = {
   readonly lakes: ReadonlyMap<string, Point[][]>;
   /** Точка подписи формы: её ставит генератор, проверка её испытывает. */
   readonly shapeLabels: ReadonlyMap<string, Point>;
+  /** Знак крайней точки: у неё нет контура, и место — это всё, что есть. */
+  readonly pointMarks: ReadonlyMap<string, Point>;
   /** Кольца суши: подпись обязана стоять внутри Китая. */
   readonly landRings: readonly Point[][];
   /**
@@ -342,9 +344,51 @@ export function validatePhysicalGeometry(
       return geometry.rivers.get(feature.id);
     }
 
-    return feature.kind === 'lake'
-      ? geometry.lakes.get(feature.id)
-      : geometry.landforms.get(feature.id);
+    /*
+     * Знак крайней точки обязан стоять на суше Китая — цель строится вокруг
+     * него, и знак посреди чужой страны означал бы, что ученик целится мимо.
+     * Допуск тот же, что у городов на кромке: Джомолунгма стоит ровно на
+     * границе с Непалом, и генерализованный контур карты кладёт её вершину на
+     * 0,3 единицы наружу. Двигать знак ради контура значило бы учить неверному.
+     *
+     * Порог 24 px к самой точке не применяется: размера у неё нет вовсе, цель
+     * задаёт знак (`point-marks.ts`).
+     */
+    if (feature.kind === 'point') {
+      const mark = geometry.pointMarks.get(feature.id);
+      if (mark === undefined) {
+        errors.push(`Нет знака у крайней точки ${feature.id}`);
+      } else {
+        const land = geometry.landRings as Point[][];
+        const inside =
+          containsPoint(land, mark[0], mark[1]) ||
+          distanceToBoundary(land, mark[0], mark[1]) <= CITY_BOUNDARY_TOLERANCE;
+
+        if (!inside) {
+          errors.push(
+            `Знак крайней точки ${feature.id} вне суши Китая: ` +
+              `${mark[0].toFixed(1)}, ${mark[1].toFixed(1)}`,
+          );
+        }
+      }
+    }
+
+    if (feature.kind === 'lake') {
+      return geometry.lakes.get(feature.id);
+    }
+
+    /*
+     * У крайней точки геометрия — сам знак: одна точка вместо кольца. Так
+     * общие проверки (рамка карты, касание заявленного региона) работают ей
+     * без единой правки.
+     */
+    if (feature.kind === 'point') {
+      const mark = geometry.pointMarks.get(feature.id);
+
+      return mark === undefined ? undefined : [[mark]];
+    }
+
+    return geometry.landforms.get(feature.id);
   };
 
   for (const feature of features) {

@@ -62,6 +62,39 @@ describe('PhysicalLayer', () => {
     expect(shape?.getAttribute('aria-label')).toMatch(/,/);
   });
 
+  it('крайние точки нарисованы знаками: вершина вверх, впадина вниз', () => {
+    const { container } = renderLayer();
+
+    const marks = container.querySelectorAll('.point-mark');
+
+    expect(marks).toHaveLength(2);
+    expect(
+      container.querySelector('.point-mark-shape[data-point="peak"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.point-mark-shape[data-point="depression"]'),
+    ).not.toBeNull();
+  });
+
+  /*
+   * Джомолунгма стоит на границе, и генерализованный контур кладёт её наружу:
+   * под маской суши знак пропал бы у той самой цели, ради которой род заведён.
+   */
+  it('знаки крайних точек рисуются без маски суши', () => {
+    const { container } = renderLayer();
+
+    expect(container.querySelector('.points')?.getAttribute('mask')).toBeNull();
+  });
+
+  it('крайние точки названы читалке экрана', () => {
+    const { container } = renderLayer({ onSelect: () => {} });
+
+    const hit = container.querySelector('.point-hit[data-feature-id="everest"]');
+
+    expect(hit?.getAttribute('role')).toBe('button');
+    expect(hit?.getAttribute('aria-label')).toMatch(/Джомолунгма/);
+  });
+
   it('декоративные формы недоступны читалке экрана, а цели названы', () => {
     const { container } = renderLayer();
 
@@ -115,7 +148,7 @@ describe('PhysicalLayer', () => {
   it('подпись есть у каждой цели и ни у одной декоративной формы', () => {
     const { container } = renderLayer();
 
-    expect(container.querySelectorAll('.physical-label')).toHaveLength(32);
+    expect(container.querySelectorAll('.physical-label')).toHaveLength(34);
   });
 
   it('подпись помечена как видная только у выбранного объекта', () => {

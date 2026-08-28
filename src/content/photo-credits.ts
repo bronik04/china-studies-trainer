@@ -64,6 +64,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     page: "https://commons.wikimedia.org/wiki/File:%E6%B4%9E%E5%BA%AD%E6%B9%96%E5%A4%A7%E6%A1%A5.jpg",
     widths: [1200, 640],
   },
+  'feature-everest': {
+    author: "Luca Galuzzi (Lucag)",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "http://creativecommons.org/licenses/by-sa/3.0/",
+    page: "https://commons.wikimedia.org/wiki/File:Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006_edit_1.jpg",
+    widths: [1200, 640],
+  },
   'feature-gobi': {
     author: "Aineias at German Wikipedia",
     license: "CC BY-SA 3.0",
@@ -252,6 +259,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0",
     page: "https://commons.wikimedia.org/wiki/File:Tibet,_a_walk_into_no_where.JPG",
     widths: [1200, 640],
+  },
+  'feature-turpan-depression': {
+    author: "Gruschke",
+    license: "Public domain",
+    licenseUrl: "",
+    page: "https://commons.wikimedia.org/wiki/File:Aydingkol1.jpg",
+    widths: [740, 640],
   },
   'feature-yangtze': {
     author: "Jialiang Gao www.peace-on-earth.org",
