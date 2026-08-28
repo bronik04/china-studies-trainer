@@ -310,17 +310,6 @@ p {
   padding-block-start: var(--s-4);
 }
 
-/*
- * Подсказка про Esc: только в полноэкранном виде и только словом. Кнопка
- * возврата стоит на листе, а клавиша — путь для тех, кто и так держит руки на
- * клавиатуре.
- */
-.atlas-escape-hint {
-  color: var(--text-on-ground-muted);
-  font-size: var(--t-size-caption);
-  margin: 0;
-}
-
 .atlas-footer .map-attribution {
   color: var(--text-on-ground-muted);
   font-size: var(--t-size-caption);
@@ -421,19 +410,18 @@ p {
 }
 
 /*
- * Атлас во весь кадр. Своим слоем поверх страницы: шапка закреплена и лежит
- * ниже (z-index 2), поэтому слой перекрывает и её.
+ * Атлас во весь экран. Разворачивает его браузер (Fullscreen API), поэтому
+ * здесь только то, чего он не делает: своя бумага вместо чёрной подложки и
+ * колонка во всю ширину — обычная упирается в 1600 px и оставила бы поля.
  *
  * Подвал остаётся: в нём указание источников карты, а лицензия CC BY требует
  * их видимости — прятать его ради лишних 76 px нельзя.
  */
 .atlas-shell[data-expanded='true'] {
   background: var(--surface-ground);
-  inline-size: auto;
-  inset: 0;
+  inline-size: 100%;
+  max-inline-size: none;
   padding: var(--s-3) var(--s-4) 0;
-  position: fixed;
-  z-index: 5;
 }
 
 @media (min-width: 1024px) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { otherCollectionsOfRegion } from '../../content/collections';
 import { REGION_KIND_LABELS } from '../../content/regions';
 import {
@@ -11,6 +11,7 @@ import { ChinaMap } from '../../map/ChinaMap';
 import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { MapAttribution } from '../../map/MapAttribution';
 import type { MapZoom } from '../../map/MapControls';
+import { useFullscreen } from '../exercise/use-fullscreen';
 
 /**
  * Шкала высот. Полосой, а не списком плашек: шкала непрерывна, и прежние
@@ -71,13 +72,17 @@ export function AtlasPage({
    */
   const [mapKind, setMapKind] = useState<MapKind>('political');
   /*
-   * Атлас во весь кадр. Своим слоем поверх страницы, а не родным
-   * `requestFullscreen`: выход по Esc, возврат фокуса и скрытие шапки всё
-   * равно пришлось бы написать самим, а родного полноэкранного режима в jsdom
-   * нет — проверять было бы нечем.
+   * Атлас во весь экран — тем же приёмом, что и раунд: родной Fullscreen API,
+   * та же кнопка в подвале, те же слова. Второй способ разворачивать карту в
+   * одном приложении ученику пришлось бы узнавать заново, а Esc, скрытие
+   * шапки и возврат фокуса браузер берёт на себя.
+   *
+   * Разворачивается оболочка атласа, а не документ: за её краем ничего
+   * нужного нет, а шапка сайта в полноэкранном виде только мешает карте.
    */
-  const [isExpanded, setExpanded] = useState(false);
-  const expandRef = useRef<HTMLButtonElement>(null);
+  const shellRef = useRef<HTMLElement>(null);
+  const fullscreen = useFullscreen(shellRef);
+  const isExpanded = fullscreen.isFullscreen;
   /*
    * Выбранный объект физической географии. Живёт рядом с видом карты и вместе
    * с ним сбрасывается: на политической карте рек нет, и оставленный выбор
@@ -96,45 +101,6 @@ export function AtlasPage({
       : undefined;
 
   const hasSelection = selected !== undefined || selectedFeature !== undefined;
-
-  /*
-   * Esc в полноэкранном виде отменяет последнее: сначала снимает выбор, и
-   * только на пустой карте сворачивает вид. Иначе одно нажатие делало бы два
-   * дела сразу — карта и так снимает выбор по Esc, когда фокус на ней, и
-   * ученик, закрывавший карточку, вылетал бы из полноэкранного вида заодно.
-   *
-   * Слушатель на документе, а не на листе: рука может быть где угодно, а
-   * фокус — на карточке или в управлении масштабом.
-   */
-  useEffect(() => {
-    if (!isExpanded) {
-      return;
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'Escape') {
-        return;
-      }
-
-      if (hasSelection) {
-        clearSelection();
-
-        return;
-      }
-
-      setExpanded(false);
-    }
-
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => document.removeEventListener('keydown', onKeyDown);
-    /*
-     * Без списка зависимостей намеренно: слушателю нужен свежий ответ на
-     * вопрос «есть ли что снимать», а он меняется с каждым выбором. Подписка
-     * стоит один `addEventListener` на отрисовку — дешевле, чем ref-костыль
-     * ради того же самого.
-     */
-  });
 
   function clearSelection() {
     setSelectedFeatureId(null);
@@ -237,32 +203,8 @@ export function AtlasPage({
     </>
   );
 
-  /*
-   * Разворот на весь кадр. Кнопка-переключатель: `aria-pressed` говорит
-   * состояние, а имя — что произойдёт. Стрелки, а не уголки: уголки уже
-   * заняты «сбросить вид», и два одинаковых знака в одном столбике означали
-   * бы разное.
-   */
-  const expandButton = (
-    <button
-      type="button"
-      ref={expandRef}
-      aria-pressed={isExpanded}
-      aria-label={isExpanded ? 'Свернуть карту' : 'Развернуть карту на весь экран'}
-      onClick={() => setExpanded((expanded) => !expanded)}
-    >
-      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-        {isExpanded ? (
-          <path d="M13 7H9V3M9 7l4-4M3 9h4v4M7 9l-4 4" />
-        ) : (
-          <path d="M9 3h4v4M13 3l-4 4M7 13H3v-4M3 13l4-4" />
-        )}
-      </svg>
-    </button>
-  );
-
   return (
-    <main className="atlas-shell" data-expanded={isExpanded}>
+    <main className="atlas-shell" ref={shellRef} data-expanded={isExpanded}>
       <div className="atlas-layout">
         {/*
           Колонка прокручивается сама (см. `.atlas-panel` в styles.css), а
@@ -420,7 +362,6 @@ export function AtlasPage({
             selectedFeatureId={selectedFeatureId}
             onSelectFeature={selectFeature}
             mapInset={mapOverlay}
-            mapControlsExtra={expandButton}
           />
         </div>
       </div>
@@ -435,11 +376,14 @@ export function AtlasPage({
           Тренировать
         </button>
         {/*
-          Подсказка про Esc стоит в подвале, а не плашкой на карте: на карте
-          она заняла бы угол, а углов на листе всего четыре и все заняты.
+          Разворот стоит в подвале, теми же словами, что и в раунде: приём в
+          приложении уже есть. Кнопки нет вовсе там, где нет Fullscreen API
+          (iPhone), — деградация без обещаний.
         */}
-        {isExpanded ? (
-          <p className="atlas-escape-hint">Esc — выйти из полноэкранного вида</p>
+        {fullscreen.isAvailable ? (
+          <button type="button" className="secondary" onClick={fullscreen.toggle}>
+            {isExpanded ? 'Свернуть' : 'Во весь экран'}
+          </button>
         ) : null}
         <MapAttribution />
       </footer>

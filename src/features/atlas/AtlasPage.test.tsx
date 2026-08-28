@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { physicalFeatures } from '../../content/physical-features';
 import { regions } from '../../content/regions';
@@ -36,12 +36,44 @@ function renderAtlas(selectedRegionId: string | null = null) {
   return { container, onSelect, onTrain, onClear };
 }
 
-/** Кнопка разворота: имя у неё меняется вместе с состоянием. */
-function expandButton(): HTMLElement {
-  return screen.getByRole('button', {
-    name: /Развернуть карту на весь экран|Свернуть карту/,
+/*
+ * Полноэкранный вид разворачивает браузер, а jsdom Fullscreen API не знает:
+ * свойства ставит тест и он же их убирает. Приём тот же, что в
+ * `use-fullscreen.test.tsx` и `RoundStage.test.tsx`.
+ */
+function withFullscreenApi() {
+  Object.defineProperty(document, 'fullscreenEnabled', {
+    configurable: true,
+    value: true,
+  });
+  Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(undefined),
+  });
+  Object.defineProperty(document, 'exitFullscreen', {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(undefined),
   });
 }
+
+/** Браузер отвечает событием: состояние читается из него, а не из вызова. */
+function enterFullscreen(element: Element) {
+  Object.defineProperty(document, 'fullscreenElement', {
+    configurable: true,
+    value: element,
+  });
+  act(() => {
+    document.dispatchEvent(new Event('fullscreenchange'));
+  });
+}
+
+afterEach(() => {
+  Reflect.deleteProperty(document, 'fullscreenEnabled');
+  Reflect.deleteProperty(document, 'fullscreenElement');
+  Reflect.deleteProperty(HTMLElement.prototype, 'requestFullscreen');
+  Reflect.deleteProperty(document, 'exitFullscreen');
+  vi.restoreAllMocks();
+});
 
 it('без выбора приглашает выбрать регион, а не отчитывается о пустоте', () => {
   renderAtlas();
@@ -308,44 +340,28 @@ it('переключатель вида лежит на самом листе, �
   expect(frame?.contains(kind as Node)).toBe(true);
 });
 
-it('разворачивает атлас на весь кадр и сворачивает обратно', () => {
+/* Приём тот же, что в раунде: те же слова и тот же родной полноэкранный API. */
+it('разворачивает атлас на весь экран той же кнопкой, что и раунд', () => {
+  withFullscreenApi();
   const { container } = renderAtlas();
   const shell = container.querySelector('.atlas-shell');
 
   expect(shell).toHaveAttribute('data-expanded', 'false');
 
-  fireEvent.click(expandButton());
-  expect(shell).toHaveAttribute('data-expanded', 'true');
-  expect(expandButton()).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(screen.getByRole('button', { name: 'Во весь экран' }));
+  expect(HTMLElement.prototype.requestFullscreen).toHaveBeenCalledTimes(1);
 
-  fireEvent.click(expandButton());
-  expect(shell).toHaveAttribute('data-expanded', 'false');
+  enterFullscreen(shell as Element);
+
+  expect(shell).toHaveAttribute('data-expanded', 'true');
+  expect(screen.getByRole('button', { name: 'Свернуть' })).toBeInTheDocument();
 });
 
-/*
- * Esc делает одно дело за нажатие. Карта и сама снимает выбор по Esc, когда
- * фокус на ней, и ученик, закрывавший карточку, вылетал бы из полноэкранного
- * вида заодно.
- */
-it('Esc сначала снимает выбор и только на пустой карте сворачивает вид', () => {
-  const { container, onClear } = renderAtlas('hunan');
-  const shell = container.querySelector('.atlas-shell');
+/* Без Fullscreen API (iPhone) кнопки нет вовсе: обещать нечего. */
+it('без Fullscreen API кнопки разворота нет', () => {
+  renderAtlas();
 
-  fireEvent.click(expandButton());
-  fireEvent.keyDown(document, { key: 'Escape' });
-
-  expect(onClear).toHaveBeenCalled();
-  expect(shell).toHaveAttribute('data-expanded', 'true');
-});
-
-it('Esc на пустой карте сворачивает полноэкранный вид', () => {
-  const { container } = renderAtlas();
-  const shell = container.querySelector('.atlas-shell');
-
-  fireEvent.click(expandButton());
-  fireEvent.keyDown(document, { key: 'Escape' });
-
-  expect(shell).toHaveAttribute('data-expanded', 'false');
+  expect(screen.queryByRole('button', { name: 'Во весь экран' })).toBeNull();
 });
 
 /*
@@ -353,11 +369,12 @@ it('Esc на пустой карте сворачивает полноэкран
  * чем-то видимым. В обычном она стоит своей колонкой и ничего не загораживает.
  */
 it('кнопка закрытия карточки есть только в полноэкранном виде', () => {
-  const { onClear } = renderAtlas('hunan');
+  withFullscreenApi();
+  const { container, onClear } = renderAtlas('hunan');
 
   expect(screen.queryByRole('button', { name: 'Закрыть карточку' })).toBeNull();
 
-  fireEvent.click(expandButton());
+  enterFullscreen(container.querySelector('.atlas-shell') as Element);
   fireEvent.click(screen.getByRole('button', { name: 'Закрыть карточку' }));
 
   /* Сам выбор держит `App`: карточка исчезнет, когда он его снимет. */
