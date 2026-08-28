@@ -1,6 +1,12 @@
 import type { PhysicalFeature } from '../content/types';
 import { REGION_PALETTE } from './region-palette';
-import { containsPoint, largestInscribedCircle, type Point } from './svg-path';
+import {
+  containsPoint,
+  distanceToBoundary,
+  largestInscribedCircle,
+  polygonArea,
+  type Point,
+} from './svg-path';
 import {
   MAP_VIEWBOX_HEIGHT,
   MAP_VIEWBOX_MIN_X,
@@ -245,6 +251,10 @@ export type PhysicalGeometry = {
   readonly rivers: ReadonlyMap<string, Point[][]>;
   readonly landforms: ReadonlyMap<string, Point[][]>;
   readonly lakes: ReadonlyMap<string, Point[][]>;
+  /** Точка подписи формы: её ставит генератор, проверка её испытывает. */
+  readonly shapeLabels: ReadonlyMap<string, Point>;
+  /** Кольца суши: подпись обязана стоять внутри Китая. */
+  readonly landRings: readonly Point[][];
   /**
    * Знак озера. Отдельно от колец, потому что цель нажатия строится вокруг
    * него, а не вокруг контура: контур озера меньше порога.
@@ -278,6 +288,15 @@ export function validatePhysicalGeometry(
 ): PhysicalReport {
   const errors: string[] = [];
   const freeShare = new Map<string, number>();
+  /* Спрашиваемые формы с площадью: по ней ищется вложенность у подписи. */
+  const askedLandforms = features.flatMap((feature) => {
+    const rings =
+      feature.kind === 'landform' ? geometry.landforms.get(feature.id) : undefined;
+
+    return rings === undefined
+      ? []
+      : [{ id: feature.id, rings, area: polygonArea(rings) }];
+  });
   const frame = {
     minX: MAP_VIEWBOX_MIN_X,
     minY: MAP_VIEWBOX_MIN_Y,
@@ -378,6 +397,49 @@ export function validatePhysicalGeometry(
           `Форма ${feature.id} меньше ${MIN_TARGET_PX} px: ${availablePx.toFixed(1)} px ` +
             `при ширине карты ${REFERENCE_MAP_WIDTH} px`,
         );
+      }
+
+      /*
+       * Подпись формы обязана стоять там, куда можно нажать: внутри формы, на
+       * суше Китая и не внутри вложенной цели. Прежде подпись Тянь-Шаня стояла
+       * в Киргизии, а Гималаев — в Непале: нажатие там не давало ничего, потому
+       * что за границей проверка суши отсекает всё. Порог тот же, что у самой
+       * цели: подпись — это и есть место, куда целятся.
+       */
+      const label = geometry.shapeLabels.get(feature.id);
+      if (label === undefined) {
+        errors.push(`Нет подписи у формы ${feature.id}`);
+      } else if (!containsPoint(rings, label[0], label[1])) {
+        errors.push(`Подпись формы ${feature.id} вне её контура`);
+      } else if (
+        !containsPoint(geometry.landRings as Point[][], label[0], label[1])
+      ) {
+        errors.push(`Подпись формы ${feature.id} вне суши Китая`);
+      } else {
+        /*
+         * Свободное место меряется и до вложенных целей: середина Таримской
+         * впадины принадлежит Такла-Макану, и мерить одну лишь впадину значило
+         * бы засчитать место, куда нажать нельзя.
+         */
+        const nested = askedLandforms.filter(
+          (other) =>
+            other.id !== feature.id &&
+            other.area < polygonArea(rings) &&
+            other.rings.flat().every(([x, y]) => containsPoint(rings, x, y)),
+        );
+        const radius = Math.min(
+          distanceToBoundary(rings, label[0], label[1]),
+          ...nested.map((other) =>
+            distanceToBoundary(other.rings, label[0], label[1]),
+          ),
+        );
+        const freePx = unitsToPixels(radius * 2, REFERENCE_MAP_WIDTH);
+        if (freePx < MIN_TARGET_PX) {
+          errors.push(
+            `У подписи формы ${feature.id} свободно ${freePx.toFixed(1)} px, ` +
+              `нужно ${MIN_TARGET_PX}`,
+          );
+        }
       }
     }
   }

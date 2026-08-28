@@ -176,22 +176,29 @@ export type InscribedCircle = {
   readonly radius: number;
 };
 
+export type FreeCircleOptions = {
+  /** Вложенные цели: их место занято, и круг обязан их обойти. */
+  readonly nested?: readonly (readonly Point[][])[];
+  /** Где середине стоять можно. По умолчанию — где угодно внутри контура. */
+  readonly isAllowed?: (x: number, y: number) => boolean;
+  readonly step?: number;
+};
+
 /**
- * Наибольшая вписанная окружность — «полюс недоступности» контура.
- *
- * Габариты для оценки нажимаемости не годятся: у Ганьсу габарит 162 единицы,
- * а сама область — узкий коридор. Вписанная окружность отвечает на вопрос, на
- * который габариты не отвечают: поместится ли сюда палец. Она же даёт лучшую
- * точку для подписи региона.
+ * Наибольший круг, который лежит внутри контура, не задевает вложенные цели и
+ * стоит серединой там, где разрешено.
  *
  * Поиск по сетке с тремя уточняющими проходами: точное решение здесь не нужно,
  * а погрешность в сотые доли единицы viewBox не влияет ни на порог, ни на
- * положение подписи.
+ * положение подписи. Порядок проверок в теле — от дешёвых к дорогим:
+ * `isAllowed` зовётся последним, потому что за ним стоит обход всех колец
+ * суши.
  */
-export function largestInscribedCircle(
+export function largestFreeCircle(
   rings: readonly Point[][],
-  step = 1,
+  options: FreeCircleOptions,
 ): InscribedCircle {
+  const { nested = [], isAllowed = () => true, step = 1 } = options;
   const box = boundingBox(rings);
   let best: InscribedCircle = {
     x: (box.minX + box.maxX) / 2,
@@ -213,10 +220,26 @@ export function largestInscribedCircle(
           continue;
         }
 
-        const radius = distanceToBoundary(rings, x, y);
-        if (radius > best.radius) {
-          best = { x, y, radius };
+        let radius = distanceToBoundary(rings, x, y);
+        if (radius <= best.radius) {
+          continue;
         }
+
+        let insideNested = false;
+        for (const hole of nested) {
+          if (containsPoint(hole, x, y)) {
+            insideNested = true;
+            break;
+          }
+
+          radius = Math.min(radius, distanceToBoundary(hole, x, y));
+        }
+
+        if (insideNested || radius <= best.radius || !isAllowed(x, y)) {
+          continue;
+        }
+
+        best = { x, y, radius };
       }
     }
   }
@@ -226,4 +249,19 @@ export function largestInscribedCircle(
   }
 
   return best;
+}
+
+/**
+ * Наибольшая вписанная окружность — «полюс недоступности» контура.
+ *
+ * Габариты для оценки нажимаемости не годятся: у Ганьсу габарит 162 единицы,
+ * а сама область — узкий коридор. Вписанная окружность отвечает на вопрос, на
+ * который габариты не отвечают: поместится ли сюда палец. Она же даёт лучшую
+ * точку для подписи региона.
+ */
+export function largestInscribedCircle(
+  rings: readonly Point[][],
+  step = 1,
+): InscribedCircle {
+  return largestFreeCircle(rings, { step });
 }

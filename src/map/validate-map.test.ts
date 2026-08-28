@@ -2,6 +2,7 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import { physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
 import type { PhysicalFeature } from '../content/types';
+import { parseLandRings } from './land-rings';
 import { LAKE_SHAPES, RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
 import {
   containsPoint,
@@ -26,6 +27,7 @@ import {
   validateRegionPalette,
   validateTargetSizes,
   validateViewBox,
+  type PhysicalGeometry,
   type PlacementShapes,
 } from './validate-map';
 
@@ -193,6 +195,15 @@ function validateRealPhysicalGeometry(): void {
           [shape.markX, shape.markY] as Point,
         ]),
       ),
+      shapeLabels: new Map(
+        RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined).map(
+          (shape) => [
+            shape.featureId as string,
+            [shape.labelX as number, shape.labelY as number] as Point,
+          ],
+        ),
+      ),
+      landRings: parseLandRings(mapMarkup),
     },
     {
       contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),
@@ -201,6 +212,21 @@ function validateRealPhysicalGeometry(): void {
       mapAreaOf: (regionId) => mapAreaOf.get(regionId),
     },
   );
+}
+
+/** Пустая геометрия: тест задаёт только то, что испытывает. */
+function physicalGeometry(
+  overrides: Partial<PhysicalGeometry> = {},
+): PhysicalGeometry {
+  return {
+    rivers: new Map(),
+    landforms: new Map(),
+    lakes: new Map(),
+    lakeMarks: new Map(),
+    shapeLabels: new Map(),
+    landRings: [],
+    ...overrides,
+  };
 }
 
 describe('validatePhysicalGeometry', () => {
@@ -237,7 +263,7 @@ describe('validatePhysicalGeometry', () => {
     expect(() =>
       validatePhysicalGeometry(
         [river],
-        { rivers: new Map([['straight-river', [line]]]), landforms: new Map(), lakes: new Map(), lakeMarks: new Map() },
+        physicalGeometry({ rivers: new Map([['straight-river', [line]]]) }),
         shapes,
       ),
     ).not.toThrow();
@@ -247,7 +273,7 @@ describe('validatePhysicalGeometry', () => {
     expect(() =>
       validatePhysicalGeometry(
         [river],
-        { rivers: new Map(), landforms: new Map(), lakes: new Map(), lakeMarks: new Map() },
+        physicalGeometry(),
         shapes,
       ),
     ).toThrow(/straight-river/);
@@ -257,7 +283,7 @@ describe('validatePhysicalGeometry', () => {
     expect(() =>
       validatePhysicalGeometry(
         [{ ...river, regionIds: ['tibet'] }],
-        { rivers: new Map([['straight-river', [line]]]), landforms: new Map(), lakes: new Map(), lakeMarks: new Map() },
+        physicalGeometry({ rivers: new Map([['straight-river', [line]]]) }),
         shapes,
       ),
     ).toThrow(/tibet/);
@@ -267,7 +293,7 @@ describe('validatePhysicalGeometry', () => {
     expect(() =>
       validatePhysicalGeometry(
         [river],
-        {
+        physicalGeometry({
           rivers: new Map([
             [
               'straight-river',
@@ -279,10 +305,7 @@ describe('validatePhysicalGeometry', () => {
               ],
             ],
           ]),
-          landforms: new Map(),
-          lakes: new Map(),
-          lakeMarks: new Map(),
-        },
+        }),
         shapes,
       ),
     ).toThrow(/рамк/i);
@@ -294,7 +317,7 @@ describe('validatePhysicalGeometry', () => {
     expect(() =>
       validatePhysicalGeometry(
         [river, twin],
-        {
+        physicalGeometry({
           rivers: new Map([
             ['straight-river', [line]],
             [
@@ -307,13 +330,95 @@ describe('validatePhysicalGeometry', () => {
               ],
             ],
           ]),
-          landforms: new Map(),
-          lakes: new Map(),
-          lakeMarks: new Map(),
-        },
+        }),
         shapes,
       ),
     ).toThrow(/показать однозначно|свободн/i);
+  });
+
+  /* Форма-квадрат: подпись у неё проверяется тем же правилом, что у настоящей. */
+  const plateau: PhysicalFeature = {
+    id: 'square-plateau',
+    kind: 'landform',
+    nameRu: 'Квадратное',
+    nameZh: '方',
+    pinyin: 'Fāng',
+    step: 1,
+    landform: 'plateau',
+    regionIds: ['qinghai'],
+    facts: [],
+    sourceIds: ['natural-earth-geography-regions-5.1.2'],
+  };
+
+  const square: Point[][] = [
+    [
+      [0, 0],
+      [100, 0],
+      [100, 100],
+      [0, 100],
+    ],
+  ];
+
+  it('ловит подпись формы вне суши', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [plateau],
+        physicalGeometry({
+          landforms: new Map([['square-plateau', square]]),
+          shapeLabels: new Map([['square-plateau', [50, 50] as Point]]),
+          landRings: [],
+        }),
+        shapes,
+      ),
+    ).toThrow(/вне суши/);
+  });
+
+  it('ловит форму без подписи', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [plateau],
+        physicalGeometry({
+          landforms: new Map([['square-plateau', square]]),
+          landRings: [square[0]],
+        }),
+        shapes,
+      ),
+    ).toThrow(/Нет подписи/);
+  });
+
+  /*
+   * Вложенная цель забирает место у подписи: это случай Таримской впадины и
+   * Такла-Макана. Мерить одну лишь внешнюю форму значило бы засчитать место,
+   * куда нажать нельзя.
+   */
+  it('ловит подпись, у которой вложенная цель отняла место', () => {
+    const inner: PhysicalFeature = { ...plateau, id: 'inner', regionIds: ['qinghai'] };
+    const innerRings: Point[][] = [
+      [
+        [45, 5],
+        [95, 5],
+        [95, 95],
+        [45, 95],
+      ],
+    ];
+
+    expect(() =>
+      validatePhysicalGeometry(
+        [plateau, inner],
+        physicalGeometry({
+          landforms: new Map([
+            ['square-plateau', square],
+            ['inner', innerRings],
+          ]),
+          shapeLabels: new Map([
+            ['square-plateau', [43, 50] as Point],
+            ['inner', [70, 50] as Point],
+          ]),
+          landRings: [square[0]],
+        }),
+        shapes,
+      ),
+    ).toThrow(/свободно/);
   });
 
   it('принимает настоящую геометрию', () => {

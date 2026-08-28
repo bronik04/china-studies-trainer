@@ -64,3 +64,21 @@ it('вложенная форма побеждает накрывающую', ()
 
   expect(physicalTargetAt(kunlun.labelX!, kunlun.labelY!, 1)).toBe('kunlun');
 });
+
+/*
+ * Страховка от дефекта Гималаев: подпись стоит там, куда целятся, и нажатие в
+ * неё обязано достаться той самой цели. Проверяются все спрашиваемые формы
+ * разом — новая форма попадает под проверку сама, без правки теста.
+ */
+it('каждая форма достаётся себе в точке своей подписи', () => {
+  const asked = RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined);
+
+  expect(asked.length).toBeGreaterThan(0);
+
+  for (const shape of asked) {
+    expect(
+      physicalTargetAt(shape.labelX!, shape.labelY!, 1),
+      `${shape.key}: подпись достаётся не своей цели`,
+    ).toBe(shape.featureId);
+  }
+});

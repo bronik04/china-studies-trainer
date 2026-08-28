@@ -9,26 +9,18 @@
  * обрезки, — и без проверки Гималаи выбирались бы в Непале.
  */
 import mapMarkup from '../../public/maps/china-provinces.svg?raw';
-import { containsPoint, parseMapPath, type Point } from './svg-path';
+import { parseLandRings } from './land-rings';
+import { containsPoint, type Point } from './svg-path';
 
 /**
- * Кольца всех областей одним списком.
- *
- * Контуром в этой разметке записана только область: выноски Макао и Гонконга
- * и цели нажатия мелких областей — круги, линии и подписи. Поэтому отбор идёт
- * по тегу, а не по признаку, и лишнего в сушу не попадает.
+ * Кольца всех областей одним списком. Сам разбор живёт в `land-rings.ts`: тем
+ * же разбором пользуются генератор и проверки, у которых `?raw`-импорта нет.
  *
  * Правило чётности здесь то же, что у `containsPoint`: области не
  * накладываются друг на друга, а острова лежат рядом с материком, а не внутри
  * него, — взаимного погашения не возникает.
  */
-export const LAND_RINGS: readonly Point[][] = [
-  ...mapMarkup.matchAll(/<path\b([\s\S]*?)\/>/g),
-].flatMap((match) => {
-  const d = /\sd="([\s\S]*?)"/.exec(match[1])?.[1];
-
-  return d === undefined ? [] : parseMapPath(d);
-});
+export const LAND_RINGS: readonly Point[][] = parseLandRings(mapMarkup);
 
 /** На суше ли точка карты. */
 export function isOnLand(x: number, y: number): boolean {

@@ -24,8 +24,11 @@ import {
   toPathData,
   type Frame,
 } from '../src/map/polyline';
+import { parseLandRings } from '../src/map/land-rings';
 import { projectLonLat } from '../src/map/projection';
 import {
+  containsPoint,
+  largestFreeCircle,
   largestInscribedCircle,
   type InscribedCircle,
   type Point,
@@ -56,6 +59,17 @@ const source = JSON.parse(sourceJson) as {
 };
 
 const OUT = new URL('../src/map/physical-geometry.ts', import.meta.url);
+
+/*
+ * Суша нужна подписям: они обязаны стоять внутри Китая. Разметка читается
+ * файлом — `?raw`-импорт `land.ts` умеет только сборка.
+ */
+const landRings = parseLandRings(
+  readFileSync(
+    new URL('../public/maps/china-provinces.svg', import.meta.url),
+    'utf8',
+  ),
+);
 
 /** Допуск склейки в градусах: примерно километр, вдесятеро меньше звена. */
 const JOIN_TOLERANCE_DEG = 0.01;
@@ -169,38 +183,66 @@ if (withoutStep.length > 0) {
   );
 }
 
-const shapes = source.landforms
-  .map((landform) => {
-    const rings = landform.rings
+const clipped = source.landforms
+  .map((landform) => ({
+    key: landform.key,
+    step: RELIEF_STEPS[landform.key],
+    featureId: SHAPE_FEATURE_IDS[landform.key],
+    rings: landform.rings
       .map((ring) =>
         clipRingToFrame(
           simplifyRing(project(ring), SIMPLIFY_TOLERANCE_UNITS),
           FRAME,
         ),
       )
-      .filter((ring) => ring.length > 3);
-
-    const featureId = SHAPE_FEATURE_IDS[landform.key];
-
-    return {
-      key: landform.key,
-      step: RELIEF_STEPS[landform.key],
-      featureId,
-      rings,
-      /*
-       * Точка подписи считается здесь, а не на отрисовке: `largestInscribedCircle`
-       * — перебор по сетке в три прохода, и для региона его тоже считают на
-       * сборке (`generate-region-palette.ts`), а не в браузере. Нужна она только
-       * шести спрашиваемым формам: остальные тридцать две не подписываются.
-       */
-      label:
-        featureId === undefined
-          ? undefined
-          : (largestInscribedCircle(rings) as InscribedCircle),
-      area: rings.reduce((sum, ring) => sum + ringArea(ring), 0),
-    };
-  })
+      .filter((ring) => ring.length > 3),
+  }))
   .filter((shape) => shape.rings.length > 0)
+  .map((shape) => ({
+    ...shape,
+    area: shape.rings.reduce((sum, ring) => sum + ringArea(ring), 0),
+  }));
+
+const askedShapes = clipped.filter((shape) => shape.featureId !== undefined);
+
+/**
+ * Вложенные цели формы: спрашиваемые формы меньшей площади, лежащие внутри неё
+ * целиком. Такла-Макан лежит в Таримской впадине, и середина впадины
+ * принадлежит ему — по правилу «побеждает меньший» (`physical-hit.ts`).
+ * Подпись впадины обязана уйти оттуда, иначе имя стоит над чужой целью.
+ */
+function nestedOf(shape: (typeof clipped)[number]): Point[][][] {
+  return askedShapes
+    .filter(
+      (other) =>
+        other !== shape &&
+        other.area < shape.area &&
+        other.rings.flat().every(([x, y]) => containsPoint(shape.rings, x, y)),
+    )
+    .map((other) => other.rings);
+}
+
+const shapes = clipped
+  .map((shape) => ({
+    ...shape,
+    /*
+     * Точка подписи считается здесь, а не на отрисовке: перебор по сетке в три
+     * прохода, и для региона его тоже считают на сборке
+     * (`generate-region-palette.ts`), а не в браузере.
+     *
+     * Не середина всей формы, а середина свободного круга: он лежит внутри
+     * формы, на суше Китая и вне вложенных целей. Прежде подпись Тянь-Шаня
+     * стояла в Киргизии, а Гималаев — в Непале: нажатие там не давало ничего,
+     * потому что за границей проверка суши отсекает всё.
+     */
+    label:
+      shape.featureId === undefined
+        ? undefined
+        : (largestFreeCircle(shape.rings, {
+            nested: nestedOf(shape),
+            isAllowed: (x, y) => containsPoint(landRings, x, y),
+          }) as InscribedCircle),
+  }))
   /*
    * Крупные формы рисуются первыми: иначе Тибетское нагорье накрыло бы
    * Цайдамскую котловину, которая лежит внутри него.

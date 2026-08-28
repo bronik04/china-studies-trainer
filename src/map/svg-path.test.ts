@@ -4,6 +4,7 @@ import {
   containsPoint,
   distanceToBoundary,
   distanceToSegment,
+  largestFreeCircle,
   largestInscribedCircle,
   parseMapPath,
   polygonArea,
@@ -223,4 +224,64 @@ it('складывает площади колец', () => {
   ];
 
   expect(polygonArea(two)).toBeCloseTo(116);
+});
+
+/* Свободный круг: он же вписанная окружность, когда ничего не мешает. */
+it('свободный круг без ограничений — вписанная окружность', () => {
+  const square: Point[][] = [
+    [
+      [0, 0],
+      [100, 0],
+      [100, 100],
+      [0, 100],
+    ],
+  ];
+
+  const circle = largestFreeCircle(square, {});
+
+  expect(circle.radius).toBeCloseTo(50, 0);
+  expect(circle.x).toBeCloseTo(50, 0);
+});
+
+/* Вложенная цель забирает середину: круг уходит от неё в сторону. */
+it('свободный круг обходит вложенный контур', () => {
+  const square: Point[][] = [
+    [
+      [0, 0],
+      [100, 0],
+      [100, 100],
+      [0, 100],
+    ],
+  ];
+  const middle: Point[][] = [
+    [
+      [30, 30],
+      [70, 30],
+      [70, 70],
+      [30, 70],
+    ],
+  ];
+
+  const circle = largestFreeCircle(square, { nested: [middle] });
+
+  expect(circle.radius).toBeLessThan(30);
+  expect(circle.x < 30 || circle.x > 70 || circle.y < 30 || circle.y > 70).toBe(
+    true,
+  );
+});
+
+/* Середина может оказаться вне суши: тогда круг ищется там, где суша есть. */
+it('свободный круг ставит середину только в разрешённой точке', () => {
+  const square: Point[][] = [
+    [
+      [0, 0],
+      [100, 0],
+      [100, 100],
+      [0, 100],
+    ],
+  ];
+
+  const circle = largestFreeCircle(square, { isAllowed: (x) => x > 60 });
+
+  expect(circle.x).toBeGreaterThan(60);
 });
