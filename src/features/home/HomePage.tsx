@@ -102,7 +102,7 @@ const CULTURE_SET_ORDER: readonly CultureSet[] = ['culture', 'nature', 'all'];
 const PHYSICAL_SETS: readonly (readonly [PhysicalSet, string])[] = [
   ['base', 'Реки и формы'],
   ['ranges', 'И хребты'],
-  ['all', 'И озёра с крайними точками'],
+  ['all', 'И озёра, точки и моря'],
 ];
 
 function setChoiceFor(card: ModeCard) {

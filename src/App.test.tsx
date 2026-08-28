@@ -149,7 +149,7 @@ it('шапка стоит и на экране ответа', async () => {
   startFindOnMap();
   await settle();
 
-  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 39/)).toBeInTheDocument();
   expect(
     screen.getByRole('navigation', { name: 'Разделы сайта' }),
   ).toBeInTheDocument();
@@ -210,7 +210,7 @@ it('карточка режима запускает раунд и возвра�
 
   startFindOnMap();
   await settle();
-  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 39/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Прервать раунд' }));
 
@@ -309,13 +309,13 @@ it('повторяет все ошибки, а не только показан�
   );
   await settle();
 
-  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 39/)).toBeInTheDocument();
 }, 20_000);
 
 it('проходит раунд «регион — столица»', async () => {
   await startCapitalRound();
 
-  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 39/)).toBeInTheDocument();
   expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
 });
 
@@ -358,7 +358,7 @@ it('набор перед стартом задаёт длину физичес�
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();
 
-  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 39/)).toBeInTheDocument();
 });
 
 /** В заполнении по-русски спрошенный регион назван в плашке `fill-target`. */

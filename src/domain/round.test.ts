@@ -43,7 +43,7 @@ it('включает каждый регион ровно один раз', () =
   const answered = round.questions.map((question) => question.target.id);
 
   expect(answered).toHaveLength(34);
-  expect(new Set(answered).size).toBe(34);
+  expect(new Set(answered).size).toBe(39);
   expect([...answered].sort()).toEqual(regions.map((region) => region.id).sort());
 });
 
@@ -237,6 +237,6 @@ it('раунд по физическим целям спрашивает каж�
     random: createSeededRandom(7),
   });
 
-  expect(round.questions).toHaveLength(34);
-  expect(new Set(round.questions.map((question) => question.target.id)).size).toBe(34);
+  expect(round.questions).toHaveLength(39);
+  expect(new Set(round.questions.map((question) => question.target.id)).size).toBe(39);
 });

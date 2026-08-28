@@ -12,6 +12,14 @@ it('вершина и впадина называются по-своему', ()
   );
 });
 
+it('море, залив и пролив называются по-своему', () => {
+  expect(physicalKindLabel(physicalFeatureById('yellow-sea')!)).toBe('Море');
+  expect(physicalKindLabel(physicalFeatureById('bohai')!)).toBe('Залив');
+  expect(physicalKindLabel(physicalFeatureById('taiwan-strait')!)).toBe(
+    'Пролив',
+  );
+});
+
 it('хребет остаётся хребтом, а озеро озером', () => {
   expect(physicalKindLabel(physicalFeatureById('taihang')!)).toBe(
     'Горный хребет',

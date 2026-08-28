@@ -360,6 +360,13 @@ export function validatePhysicalFeatures(
           errors.push(`Номер объекта не целое число у озера ${feature.id}: ${id}`);
         }
       }
+    } else if (feature.kind === 'marine') {
+      /* Морская цель связана с набором тем же одним номером, что озеро. */
+      if (!Number.isInteger(feature.neId)) {
+        errors.push(
+          `Номер объекта не целое число у морской цели ${feature.id}: ${feature.neId}`,
+        );
+      }
     } else if (feature.kind === 'point') {
       /*
        * У точки нет контура вовсе: на карте она живёт знаком, и связывает её с

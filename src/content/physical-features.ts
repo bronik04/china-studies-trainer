@@ -31,6 +31,7 @@ export const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
   landform: 'Форма рельефа',
   lake: 'Озеро',
   point: 'Крайняя точка',
+  marine: 'Море',
 };
 
 /**
@@ -47,6 +48,14 @@ export function physicalKindLabel(feature: PhysicalFeature): string {
     return feature.point === 'peak' ? 'Вершина' : 'Впадина';
   }
 
+  if (feature.kind === 'marine') {
+    if (feature.marine === 'gulf') {
+      return 'Залив';
+    }
+
+    return feature.marine === 'strait' ? 'Пролив' : 'Море';
+  }
+
   return PHYSICAL_KIND_LABELS[feature.kind];
 }
 
@@ -61,6 +70,7 @@ const RIVERS = ['natural-earth-rivers-5.1.2'] as const;
 const LANDFORMS = ['natural-earth-geography-regions-5.1.2'] as const;
 const LAKES = ['natural-earth-lakes-5.1.2'] as const;
 const POINTS = ['natural-earth-elevation-points-5.1.2'] as const;
+const MARINE = ['natural-earth-marine-polys-5.1.2'] as const;
 
 function river(
   id: string,
@@ -124,6 +134,34 @@ function lake(
     regionIds,
     facts: FACTS[id] ?? [],
     sourceIds: LAKES,
+  };
+}
+
+/**
+ * Морской объект: море, залив или пролив. Контур есть, но лежит он вне суши, и
+ * маска карты его не касается — маска прячет ступени за границей Китая, а море
+ * за границей и живёт.
+ */
+function marine(
+  id: string,
+  nameRu: string,
+  nameZh: string,
+  pinyin: string,
+  kindOfMarine: 'sea' | 'gulf' | 'strait',
+  neId: number,
+  regionIds: readonly string[],
+): PhysicalFeature {
+  return {
+    id,
+    kind: 'marine',
+    nameRu,
+    nameZh,
+    pinyin,
+    marine: kindOfMarine,
+    neId,
+    regionIds,
+    facts: FACTS[id] ?? [],
+    sourceIds: MARINE,
   };
 }
 
@@ -774,6 +812,96 @@ const turpanDepressionFacts: readonly Fact[] = [
   },
 ];
 
+const yellowSeaFacts: readonly Fact[] = [
+  {
+    title: 'Между Китаем и Кореей',
+    body: 'Жёлтое море — большой залив западной части Тихого океана между материковым Китаем и Корейским полуостровом. С юга его отделяет от Восточно-Китайского линия от устья Янцзы к острову Чеджу. Протяжённость 960 км с севера на юг и 700 км с запада на восток, площадь без Бохайского залива около 380 000 км².',
+    sourceIds: ['britannica-yellow-sea'],
+  },
+  {
+    title: 'Отчего оно жёлтое',
+    body: 'Имя морю дал цвет воды, мутной от наносов: оно ежегодно принимает огромное их количество, главным образом от Хуанхэ — через Бохайский залив — и от Янцзы. У обеих рек в него сложились большие дельты.',
+    sourceIds: ['britannica-yellow-sea'],
+  },
+  {
+    title: 'Мелкое и молодое',
+    body: 'Средняя глубина всего 44 м, наибольшая около 152 м. Дно — часть материкового шельфа, затопленная после последнего оледенения, то есть за последние десять тысяч лет.',
+    sourceIds: ['britannica-yellow-sea'],
+  },
+];
+
+const bohaiFacts: readonly Fact[] = [
+  {
+    title: 'За двумя полуостровами',
+    body: 'Бохайский залив занимает северо-западный угол Жёлтого моря — за линией между Ляодунским полуостровом на севере и Шаньдунским на юге.',
+    sourceIds: ['britannica-yellow-sea'],
+  },
+  {
+    title: 'Мельче и преснее соседа',
+    body: 'Он мельче самого Жёлтого моря, а вода в нём преснее: солёность 30–31 ‰ против 31–33 ‰ в открытом море — сказывается речной сток. Внутренние прибрежные части зимой замерзают.',
+    sourceIds: ['britannica-yellow-sea'],
+  },
+  {
+    title: 'Куда впадает Хуанхэ',
+    body: 'Хуанхэ несёт наносы именно сюда, и уже отсюда они расходятся по Жёлтому морю; заодно приливы у берегов залива выше, чем вдоль остального китайского побережья.',
+    sourceIds: ['britannica-yellow-sea'],
+  },
+];
+
+const eastChinaSeaFacts: readonly Fact[] = [
+  {
+    title: 'От Рюкю до устья Янцзы',
+    body: 'Восточно-Китайское море тянется на северо-восток от Южно-Китайского, с которым связано мелким Тайваньским проливом. На востоке его замыкает цепь островов Рюкю, на севере — Кюсю, а северная граница идёт от острова Чеджу к устью Янцзы и отделяет его от Жёлтого моря. Вместе с Южно-Китайским оно образует Китайское море.',
+    sourceIds: ['britannica-east-china-sea'],
+  },
+  {
+    title: 'Мелкое, если не считать жёлоба',
+    body: 'Площадь около 750 000 км², и почти три четверти её мельче 200 м. Средняя глубина 350 м, но вдоль Рюкю тянется Окинавский жёлоб, где дно уходит на 2716 м.',
+    sourceIds: ['britannica-east-china-sea'],
+  },
+  {
+    title: 'Высокие приливы',
+    body: 'Из-за узости соседнего Жёлтого моря и воронкообразных заливов материка приливы у китайского берега особенно велики: сизигийный размах доходит до 7 м в бухте Саньша и до 9 м в Ханчжоуване.',
+    sourceIds: ['britannica-east-china-sea'],
+  },
+];
+
+const southChinaSeaFacts: readonly Fact[] = [
+  {
+    title: 'Самое большое окраинное море',
+    body: 'Южно-Китайское море — рукав Тихого океана у берегов Юго-Восточной Азии и самое большое окраинное море западной части океана: около 3 685 000 км² при средней глубине 1212 м.',
+    sourceIds: ['britannica-south-china-sea'],
+  },
+  {
+    title: 'Мелкий шельф и глубокая котловина',
+    body: 'Вдоль материка тянется широкий мелкий шельф — местами до 240 км; на нём лежат Тайваньский пролив, Тонкинский залив и острова Хайнань и Тайвань. На востоке море проваливается ромбовидной котловиной, дно которой уходит на 5016 м.',
+    sourceIds: ['britannica-south-china-sea'],
+  },
+  {
+    title: 'Какие реки в него впадают',
+    body: 'С китайской стороны в него несёт воду дельта Чжуцзяна южнее Гуанчжоу вместе с Сицзяном, а южнее — Хонгха у Хайфона и Меконг у Хошимина.',
+    sourceIds: ['britannica-south-china-sea'],
+  },
+];
+
+const taiwanStraitFacts: readonly Fact[] = [
+  {
+    title: 'Ворота между двумя морями',
+    body: 'Тайваньский пролив соединяет Южно-Китайское море с Восточно-Китайским. Ширина его около 160 км, глубина — около 70 м: по морским меркам это мелководье.',
+    sourceIds: ['britannica-south-china-sea'],
+  },
+  {
+    title: 'Часть материкового шельфа',
+    body: 'Пролив лежит на том же широком мелком шельфе, что тянется вдоль материка и несёт Тонкинский залив и острова Хайнань и Тайвань, — оттого он и мелок.',
+    sourceIds: ['britannica-south-china-sea'],
+  },
+  {
+    title: 'Течения обходят остров',
+    body: 'Спутниковые наблюдения показали, что Тайвань работает как форштевень корабля: идущие на север течения он разводит по обе стороны, и в местах расхождения вода поднимается с глубины. На этих подъёмах и встал промысловый лов.',
+    sourceIds: ['britannica-south-china-sea'],
+  },
+];
+
 const FACTS: Readonly<Record<string, readonly Fact[]>> = {
   yangtze: yangtzeFacts,
   'yellow-river': yellowRiverFacts,
@@ -809,6 +937,11 @@ const FACTS: Readonly<Record<string, readonly Fact[]>> = {
   'hexi-corridor': hexiCorridorFacts,
   everest: everestFacts,
   'turpan-depression': turpanDepressionFacts,
+  'yellow-sea': yellowSeaFacts,
+  bohai: bohaiFacts,
+  'east-china-sea': eastChinaSeaFacts,
+  'south-china-sea': southChinaSeaFacts,
+  'taiwan-strait': taiwanStraitFacts,
 };
 
 export const physicalFeatures: readonly PhysicalFeature[] = [
@@ -1030,6 +1163,53 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
     1159105721,
     ['xinjiang'],
   ),
+
+  /*
+   * Моря, залив и пролив. Род ставится по существу: Бохайский залив набор
+   * помечает морем, но заливом он от этого быть не перестал.
+   *
+   * Тайвань в омываемых регионах не заявлен, хотя геометрия его касается: в
+   * каталоге он есть, но приписывать ему берега — решение не карты, а
+   * владельца продукта, и оно не принималось.
+   */
+  marine('yellow-sea', 'Жёлтое море', '黄海', 'Huáng Hǎi', 'sea', 1159115999, [
+    'liaoning',
+    'shandong',
+    'jiangsu',
+  ]),
+  marine(
+    'east-china-sea',
+    'Восточно-Китайское море',
+    '东海',
+    'Dōng Hǎi',
+    'sea',
+    1159116027,
+    ['jiangsu', 'shanghai', 'zhejiang', 'fujian'],
+  ),
+  marine(
+    'south-china-sea',
+    'Южно-Китайское море',
+    '南海',
+    'Nán Hǎi',
+    'sea',
+    1159115273,
+    ['guangdong', 'hainan', 'fujian'],
+  ),
+  marine('bohai', 'Бохайский залив', '渤海', 'Bó Hǎi', 'gulf', 1159117171, [
+    'liaoning',
+    'hebei',
+    'tianjin',
+    'shandong',
+  ]),
+  marine(
+    'taiwan-strait',
+    'Тайваньский пролив',
+    '台湾海峡',
+    'Táiwān Hǎixiá',
+    'strait',
+    1159116947,
+    ['fujian'],
+  ),
 ];
 
 /**
@@ -1048,11 +1228,15 @@ export function physicalFeaturesUpTo(
   }
 
   /*
-   * Знаки — озёра и крайние точки — идут последним набором: контура у них нет,
-   * и целятся в них иначе, чем в реку или форму.
+   * Вода и знаки — озёра, крайние точки и моря — идут последним набором: они
+   * либо без контура вовсе, либо лежат за берегом, и целятся в них иначе, чем
+   * в реку или форму суши.
    */
   const withoutMarks = physicalFeatures.filter(
-    (feature) => feature.kind !== 'lake' && feature.kind !== 'point',
+    (feature) =>
+      feature.kind !== 'lake' &&
+      feature.kind !== 'point' &&
+      feature.kind !== 'marine',
   );
   if (set === 'ranges') {
     return withoutMarks;
