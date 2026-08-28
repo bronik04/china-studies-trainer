@@ -104,14 +104,7 @@ const placement = validateCityPlacement(
  * настоящей ошибки в координатах. Поэтому список закреплён, и любое
  * расхождение с ним требует человеческого взгляда.
  */
-const EXPECTED_ON_BOUNDARY = [
-  'heihe',
-  'hong-kong',
-  'manzhouli',
-  'qingdao',
-  'shenzhen',
-  'suifenhe',
-];
+const EXPECTED_ON_BOUNDARY = ['hong-kong', 'qingdao', 'shenzhen'];
 
 const onBoundary = [...placement.onBoundary].sort();
 const unexpected = onBoundary.filter((id) => !EXPECTED_ON_BOUNDARY.includes(id));

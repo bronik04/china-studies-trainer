@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
+import { citiesUpTo } from '../../content/cities';
 import { collections, collectionsInGroup } from '../../content/collections';
 import { MODE_CARDS, MODE_GROUPS } from '../exercise/exercise-modes';
 import { regions } from '../../content/regions';
@@ -299,6 +300,35 @@ it('запускает игру на выбранном языке', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
   expect(onStartRound).toHaveBeenCalledWith('find-on-map', 'zh', null);
+});
+
+/*
+ * Наборов городов два, а не три: приграничные с Россией сняты решением
+ * владельца продукта (DECISIONS.md, 2026-08-28). Числа в подписях считаются
+ * из каталога, поэтому проверка не повторяет их руками.
+ */
+it('окно городской игры предлагает два набора, оба из каталога', () => {
+  const { onStartCityRound } = renderHome();
+
+  openCard(/Найти город/);
+
+  const choice = within(screen.getByRole('group', { name: 'Какие города' }));
+  const options = choice.getAllByRole('radio');
+
+  expect(options).toHaveLength(2);
+  expect(
+    choice.getByRole('radio', {
+      name: `Только центры регионов — ${citiesUpTo('capital').length} города`,
+    }),
+  ).toBeInTheDocument();
+
+  const all = citiesUpTo('notable').length;
+  fireEvent.click(
+    choice.getByRole('radio', { name: `И значимые города — ${all} город` }),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(onStartCityRound).toHaveBeenCalledWith('find-on-map', 'ru', 'notable');
 });
 
 it('«Отмена» закрывает окно и ничего не запускает', () => {

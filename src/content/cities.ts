@@ -4,10 +4,10 @@ import type { City, CitySet } from './types';
  * Справочник городов. Второй набор учебных целей рядом с регионами.
  *
  * Координаты — в градусах и из Natural Earth (public domain): набор даёт и
- * долготу с широтой, и русское с китайским написанием для сверки. Четырёх
- * городов в нём нет — Пинъяо, Цюйфу, Яньань и Суйфэньхэ мельче его порога, —
- * и они взяты из Викиданных (CC0). Источник у каждого города свой, а не общий
- * на файл: иначе первая же замена одного города соврала бы про остальные.
+ * долготу с широтой, и русское с китайским написанием для сверки. Трёх
+ * городов в нём нет — Пинъяо, Цюйфу и Яньань мельче его порога, — и они взяты
+ * из Викиданных (CC0). Источник у каждого города свой, а не общий на файл:
+ * иначе первая же замена одного города соврала бы про остальные.
  *
  * Русские и китайские имена столиц берутся из `regions.ts`, где они уже
  * сверены по двум источникам, и здесь не переписываются заново.
@@ -80,8 +80,6 @@ const notable: readonly City[] = [
   city('qingdao', 'shandong', 'notable', 'Циндао', '青岛', 'Qīngdǎo', 120.328063, 36.091925),
   city('dalian', 'liaoning', 'notable', 'Далянь', '大连', 'Dàlián', 121.627885, 38.924784),
   city('xiamen', 'fujian', 'notable', 'Сямэнь', '厦门', 'Xiàmén', 118.078071, 24.451938),
-  city('ningbo', 'zhejiang', 'notable', 'Нинбо', '宁波', 'Níngbō', 121.548092, 29.881917),
-  city('sanya', 'hainan', 'notable', 'Санья', '三亚', 'Sānyà', 109.504032, 18.259105),
   city('luoyang', 'henan', 'notable', 'Лоян', '洛阳', 'Luòyáng', 112.468129, 34.681934),
   city('kaifeng', 'henan', 'notable', 'Кайфэн', '开封', 'Kāifēng', 114.348066, 34.851949),
   city('datong', 'shanxi', 'notable', 'Датун', '大同', 'Dàtóng', 113.298053, 40.081966),
@@ -93,21 +91,9 @@ const notable: readonly City[] = [
   city('kashgar', 'xinjiang', 'notable', 'Кашгар', '喀什', 'Kāshí', 75.969926, 39.476336),
   city('lijiang', 'yunnan', 'notable', 'Лицзян', '丽江', 'Lìjiāng', 100.266582, 26.800004),
   city('guilin', 'guangxi', 'notable', 'Гуйлинь', '桂林', 'Guìlín', 110.278082, 25.281939),
-  city('shigatse', 'tibet', 'notable', 'Шигадзе', '日喀则', 'Rìkāzé', 88.88335, 29.250009),
 ];
 
-/**
- * Города на границе с Россией. Отдельным набором, а не внутри значимых: их
- * ценность для русскоязычного класса особая, и включать их отдельно — решение
- * ученика, а не составителя каталога.
- */
-const border: readonly City[] = [
-  city('heihe', 'heilongjiang', 'border', 'Хэйхэ', '黑河', 'Hēihé', 127.446009, 50.250019),
-  city('suifenhe', 'heilongjiang', 'border', 'Суйфэньхэ', '绥芬河', 'Suífēnhé', 131.15629, 44.39447, WIKIDATA),
-  city('manzhouli', 'inner-mongolia', 'border', 'Маньчжурия', '满洲里', 'Mǎnzhōulǐ', 117.429979, 49.599982),
-];
-
-export const cities: readonly City[] = [...capitals, ...notable, ...border];
+export const cities: readonly City[] = [...capitals, ...notable];
 
 /** Города региона в порядке каталога: сначала центр, потом остальные. */
 export function citiesOfRegion(regionId: string): readonly City[] {
@@ -119,13 +105,13 @@ export function cityById(id: string): City | undefined {
 }
 
 /**
- * Города набора и всех наборов до него: «значимые» включают столицы, а
- * «приграничные» — и то и другое. Ученик выбирает, докуда, а не какой один.
+ * Города набора и всех наборов до него: «значимые» включают столицы. Ученик
+ * выбирает, докуда, а не какой один. Наборов два: третий, приграничный с
+ * Россией, снят решением владельца продукта (DECISIONS.md, 2026-08-28).
  */
 const SETS_UP_TO: Readonly<Record<CitySet, readonly CitySet[]>> = {
   capital: ['capital'],
   notable: ['capital', 'notable'],
-  border: ['capital', 'notable', 'border'],
 };
 
 export function citiesUpTo(set: CitySet): readonly City[] {
