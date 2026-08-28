@@ -50,6 +50,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     page: "https://commons.wikimedia.org/wiki/File:The_Western_Part_of_The_Great_Wall,_Ningxia_-_panoramio.jpg",
     widths: [1200, 640],
   },
+  'feature-bohai': {
+    author: "Wen2li3 (talk)",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    page: "https://commons.wikimedia.org/wiki/File:Bi_jia_shan_at_high_tide.JPG",
+    widths: [1200, 640],
+  },
   'feature-chaohu': {
     author: "fish4fish",
     license: "CC BY-SA 3.0",
@@ -62,6 +69,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     license: "CC BY-SA 4.0",
     licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
     page: "https://commons.wikimedia.org/wiki/File:%E6%B4%9E%E5%BA%AD%E6%B9%96%E5%A4%A7%E6%A1%A5.jpg",
+    widths: [1200, 640],
+  },
+  'feature-east-china-sea': {
+    author: "AbinaTang",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    page: "https://commons.wikimedia.org/wiki/File:%E8%88%9F%E5%B1%B1%E4%B8%B4%E5%9F%8E%E8%88%AA%E6%8B%8D.jpg",
     widths: [1200, 640],
   },
   'feature-everest': {
@@ -211,6 +225,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     page: "https://commons.wikimedia.org/wiki/File:Zitong-sichuan-china.jpg",
     widths: [1200, 640],
   },
+  'feature-south-china-sea': {
+    author: "Anna Frodesiak",
+    license: "Public domain",
+    licenseUrl: "",
+    page: "https://commons.wikimedia.org/wiki/File:Yalong_Bay_01.jpg",
+    widths: [1035, 640],
+  },
   'feature-taihang': {
     author: "Taken by Fanghong",
     license: "CC BY-SA 3.0",
@@ -223,6 +244,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     license: "CC BY-SA 4.0",
     licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
     page: "https://commons.wikimedia.org/wiki/File:LakeTaiThreeKingdoms.jpg",
+    widths: [1200, 640],
+  },
+  'feature-taiwan-strait': {
+    author: "Lhy123456",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    page: "https://commons.wikimedia.org/wiki/File:%E5%B0%8F%E5%BA%A0%E5%B2%9B%EF%BC%8820200819%EF%BC%89.jpg",
     widths: [1200, 640],
   },
   'feature-taklamakan': {
@@ -280,6 +308,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     licenseUrl: "https://creativecommons.org/licenses/by-sa/2.5/es/deed.en",
     page: "https://commons.wikimedia.org/wiki/File:Lanzhou-rio-amarillo-d01.jpg",
     widths: [1024, 640],
+  },
+  'feature-yellow-sea': {
+    author: "NASA",
+    license: "Public domain",
+    licenseUrl: "",
+    page: "https://commons.wikimedia.org/wiki/File:AEROSOLS_OVER_YELLOW_SEA_SEDIMENTS.jpg",
+    widths: [1200, 640],
   },
   'feature-yungui-plateau': {
     author: "автор не указан",

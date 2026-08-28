@@ -48,6 +48,15 @@
 - Оригинал: 2592×1936
 - Ширины в репозитории: 1200, 640
 
+## feature-bohai
+
+- Файл: Bi jia shan at high tide.JPG
+- Автор: Wen2li3 (talk)
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Bi_jia_shan_at_high_tide.JPG
+- Оригинал: 3008×2000
+- Ширины в репозитории: 1200, 640
+
 ## feature-chaohu
 
 - Файл: 20120408安徽巢湖市龟山顶望巢湖 - panoramio.jpg
@@ -64,6 +73,15 @@
 - Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
 - Страница: https://commons.wikimedia.org/wiki/File:%E6%B4%9E%E5%BA%AD%E6%B9%96%E5%A4%A7%E6%A1%A5.jpg
 - Оригинал: 2800×1867
+- Ширины в репозитории: 1200, 640
+
+## feature-east-china-sea
+
+- Файл: 舟山临城航拍.jpg
+- Автор: AbinaTang
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:%E8%88%9F%E5%B1%B1%E4%B8%B4%E5%9F%8E%E8%88%AA%E6%8B%8D.jpg
+- Оригинал: 4000×3000
 - Ширины в репозитории: 1200, 640
 
 ## feature-everest
@@ -255,6 +273,15 @@
 - Оригинал: 1600×1200
 - Ширины в репозитории: 1200, 640
 
+## feature-south-china-sea
+
+- Файл: Yalong Bay 01.jpg
+- Автор: Anna Frodesiak
+- Лицензия: Public domain
+- Страница: https://commons.wikimedia.org/wiki/File:Yalong_Bay_01.jpg
+- Оригинал: 1035×671
+- Ширины в репозитории: 1035, 640
+
 ## feature-taihang
 
 - Файл: TaihangMountain8.jpg
@@ -271,6 +298,15 @@
 - Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
 - Страница: https://commons.wikimedia.org/wiki/File:LakeTaiThreeKingdoms.jpg
 - Оригинал: 4208×2368
+- Ширины в репозитории: 1200, 640
+
+## feature-taiwan-strait
+
+- Файл: 小庠岛（20200819）.jpg
+- Автор: Lhy123456
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:%E5%B0%8F%E5%BA%A0%E5%B2%9B%EF%BC%8820200819%EF%BC%89.jpg
+- Оригинал: 6000×4000
 - Ширины в репозитории: 1200, 640
 
 ## feature-taklamakan
@@ -344,6 +380,15 @@
 - Страница: https://commons.wikimedia.org/wiki/File:Lanzhou-rio-amarillo-d01.jpg
 - Оригинал: 1024×768
 - Ширины в репозитории: 1024, 640
+
+## feature-yellow-sea
+
+- Файл: AEROSOLS OVER YELLOW SEA SEDIMENTS.jpg
+- Автор: NASA
+- Лицензия: Public domain
+- Страница: https://commons.wikimedia.org/wiki/File:AEROSOLS_OVER_YELLOW_SEA_SEDIMENTS.jpg
+- Оригинал: 2098×2696
+- Ширины в репозитории: 1200, 640
 
 ## feature-yungui-plateau
 
