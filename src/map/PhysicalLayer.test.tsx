@@ -62,7 +62,25 @@ describe('PhysicalLayer', () => {
     expect(shape?.getAttribute('aria-label')).toMatch(/,/);
   });
 
-  it('крайние точки нарисованы знаками: вершина вверх, впадина вниз', () => {
+it('моря нарисованы вне маски суши и без постоянных границ', () => {
+    const { container } = renderLayer();
+
+    expect(container.querySelectorAll('.sea-shape')).toHaveLength(5);
+    expect(container.querySelector('.seas')?.getAttribute('mask')).toBeNull();
+  });
+
+  it('морская цель названа читалке экрана', () => {
+    const { container } = renderLayer({ onSelect: () => {} });
+
+    const sea = container.querySelector(
+      '.sea-shape[data-feature-id="yellow-sea"]',
+    );
+
+    expect(sea?.getAttribute('role')).toBe('button');
+    expect(sea?.getAttribute('aria-label')).toMatch(/Жёлтое море/);
+  });
+
+    it('крайние точки нарисованы знаками: вершина вверх, впадина вниз', () => {
     const { container } = renderLayer();
 
     const marks = container.querySelectorAll('.point-mark');
@@ -148,7 +166,7 @@ describe('PhysicalLayer', () => {
   it('подпись есть у каждой цели и ни у одной декоративной формы', () => {
     const { container } = renderLayer();
 
-    expect(container.querySelectorAll('.physical-label')).toHaveLength(34);
+    expect(container.querySelectorAll('.physical-label')).toHaveLength(39);
   });
 
   it('подпись помечена как видная только у выбранного объекта', () => {

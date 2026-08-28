@@ -3,7 +3,13 @@ import { physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
 import { lakeMarks } from './lake-marks';
 import { pointMarks } from './point-marks';
-import { LAKE_SHAPES, POINT_MARKS, RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
+import {
+  LAKE_SHAPES,
+  MARINE_SHAPES,
+  POINT_MARKS,
+  RELIEF_SHAPES,
+  RIVER_LINES,
+} from './physical-geometry';
 import { RELIEF_BANDS } from './relief-bands';
 import {
   MAP_VIEWBOX_HEIGHT,
@@ -107,6 +113,13 @@ const LABELLED: readonly { featureId: string; x: number; y: number }[] = [
     featureId: mark.featureId,
     x: mark.x,
     y: mark.y - LABEL_OFFSET - POINT_MARK_RADIUS,
+  })),
+  /* У моря подпись стоит там, где её поставил генератор: в воде, вне суши и
+     мимо чужих целей. */
+  ...MARINE_SHAPES.map((shape) => ({
+    featureId: shape.featureId,
+    x: shape.labelX,
+    y: shape.labelY,
   })),
 ];
 
@@ -433,6 +446,50 @@ export function PhysicalLayer({
                 aria-hidden="true"
               />
             </g>
+          );
+        })}
+      </g>
+
+      {/*
+        Моря, залив и пролив. Маски суши здесь нет и быть не может: маска
+        прячет ступени за границей Китая, а море за границей и живёт.
+
+        Постоянных границ между морями не рисуется — вода остаётся ровной, и на
+        карте не появляется ни одной линии, которой нет в природе (решение
+        владельца продукта, вариант В макета). Контур показывается при
+        наведении, фокусе и выборе — тем же правилом, что подпись.
+      */}
+      <g className="seas">
+        {MARINE_SHAPES.map((shape) => {
+          const label = NAME_OF.get(shape.featureId) ?? shape.featureId;
+          const answers = onSelect !== undefined;
+
+          return (
+            <path
+              key={shape.featureId}
+              className="sea-shape"
+              d={shape.d}
+              data-feature-id={shape.featureId}
+              data-outcome={featureOutcomes[shape.featureId]}
+              data-selected={shape.featureId === selectedFeatureId}
+              data-hovered={shape.featureId === hovered}
+              role={answers ? 'button' : undefined}
+              aria-label={answers ? label : undefined}
+              aria-hidden={answers ? undefined : 'true'}
+              tabIndex={answers ? 0 : -1}
+              onFocus={answers ? () => setHoveredNodeId(shape.featureId) : undefined}
+              onBlur={answers ? () => setHoveredNodeId(null) : undefined}
+              onKeyDown={
+                answers
+                  ? (event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onSelect(shape.featureId);
+                      }
+                    }
+                  : undefined
+              }
+            />
           );
         })}
       </g>

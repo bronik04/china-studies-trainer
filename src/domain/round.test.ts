@@ -43,7 +43,7 @@ it('включает каждый регион ровно один раз', () =
   const answered = round.questions.map((question) => question.target.id);
 
   expect(answered).toHaveLength(34);
-  expect(new Set(answered).size).toBe(39);
+  expect(new Set(answered).size).toBe(34);
   expect([...answered].sort()).toEqual(regions.map((region) => region.id).sort());
 });
 
