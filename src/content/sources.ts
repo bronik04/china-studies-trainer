@@ -724,7 +724,12 @@ export const sources = [
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Guizhou',
     accessedAt: '2026-08-19',
-    covers: ['карстовый рельеф и водопад Хуангошу', 'мосты Гуйчжоу', 'производство байцзю Маотай'],
+    covers: [
+      'карстовый рельеф и водопад Хуангошу',
+      'высоты и сложение Юньнань-Гуйчжоуского плато',
+      'мосты Гуйчжоу',
+      'производство байцзю Маотай',
+    ],
   },
   {
     id: 'bre-kweichow-moutai',
@@ -980,6 +985,32 @@ export const sources = [
     url: 'https://www.britannica.com/place/Takla-Makan-Desert',
     accessedAt: '2026-08-19',
     covers: ['физическая география и площадь пустыни Такла-Макан', 'дюны и климат Такла-Макана', 'Шёлковый путь и исследование пустыни'],
+  },
+  {
+    id: 'britannica-qaidam-basin',
+    title: 'Qaidam Basin',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/place/Qaidam-Basin',
+    accessedAt: '2026-08-28',
+    covers: [
+      'положение и обрамление Цайдамской котловины',
+      'внутренний сток, Чарханский солончак и осадки',
+      'соль, поташ, бор, уголь и нефть котловины',
+    ],
+  },
+  {
+    id: 'britannica-china-junggar',
+    title: 'China — The Junggar Basin',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/place/China/The-Junggar-Basin',
+    accessedAt: '2026-08-28',
+    covers: [
+      'положение и границы Джунгарской котловины',
+      'высоты и уклон её дна',
+      'барханы джунгарской пустыни',
+    ],
   },
   {
     id: 'britannica-xian',

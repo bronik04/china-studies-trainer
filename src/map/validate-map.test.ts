@@ -430,7 +430,7 @@ describe('validatePhysicalGeometry', () => {
 it('у каждой формы-цели есть точка подписи, и она лежит внутри контура', () => {
   const targets = RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined);
 
-  expect(targets).toHaveLength(12);
+  expect(targets).toHaveLength(16);
 
   for (const shape of targets) {
     expect(shape.labelX, `${shape.key}: нет labelX`).toBeTypeOf('number');

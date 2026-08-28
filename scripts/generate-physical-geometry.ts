@@ -15,9 +15,11 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { physicalFeatures } from '../src/content/physical-features';
+import { TARGET_DIAMETER_UNITS } from '../src/map/city-hit-targets';
 import {
   clipRingToFrame,
   clipToFrame,
+  distanceToPolylines,
   ringArea,
   simplifyPath,
   simplifyRing,
@@ -168,7 +170,38 @@ const riverLines = physicalFeatures
         (lost > 0 ? `, отброшено ${lost}` : ''),
     );
 
-    return { featureId: feature.id, d: toPathData(parts) };
+    return { featureId: feature.id, parts, d: toPathData(parts) };
+  });
+
+// --- Озёра ------------------------------------------------------------------
+
+/*
+ * Озёра. Контур нужен, чтобы вода была водой, но целью он быть не может: 24 px
+ * на опорной ширине — это около 120 км, а Цинхай, самое большое озеро страны,
+ * даёт вписанную окружность около 13 px. Поэтому вместе с контуром считается
+ * точка знака, вокруг которой слой и строит цель нажатия.
+ */
+const lakesById = new Map<number, [number, number][][]>(
+  source.lakes.map((lake) => [lake.neId, lake.rings]),
+);
+
+const lakes = physicalFeatures
+  .filter((feature) => feature.kind === 'lake')
+  .map((feature) => {
+    const rings = (feature.kind === 'lake' ? feature.lakeIds : [])
+      .flatMap((neId) => lakesById.get(neId) ?? [])
+      .map((ring) =>
+        clipRingToFrame(simplifyRing(project(ring), SIMPLIFY_TOLERANCE_UNITS), FRAME),
+      )
+      .filter((ring) => ring.length > 3);
+
+    if (rings.length === 0) {
+      throw new Error(
+        `Нет колец у озера ${feature.id}. Запустите npm run extract:physical`,
+      );
+    }
+
+    return { featureId: feature.id, rings, mark: largestInscribedCircle(rings) };
   });
 
 // --- Формы рельефа ----------------------------------------------------------
@@ -222,6 +255,25 @@ function nestedOf(shape: (typeof clipped)[number]): Point[][][] {
     .map((other) => other.rings);
 }
 
+/**
+ * Свободна ли точка от воды: река и знак озера побеждают форму по правилу
+ * «побеждает меньший» (`physical-hit.ts`), и подпись, попавшая на них,
+ * досталась бы не своей цели. У Юньнань-Гуйчжоуского плато середина легла
+ * ровно на Янцзы — проверено тестом «каждая форма достаётся себе».
+ */
+const WATER_RADIUS_UNITS = TARGET_DIAMETER_UNITS / 2;
+
+function isFreeOfWater(x: number, y: number): boolean {
+  return (
+    riverLines.every(
+      (river) => distanceToPolylines(x, y, river.parts) > WATER_RADIUS_UNITS,
+    ) &&
+    lakes.every(
+      (lake) => Math.hypot(x - lake.mark.x, y - lake.mark.y) > WATER_RADIUS_UNITS,
+    )
+  );
+}
+
 const shapes = clipped
   .map((shape) => ({
     ...shape,
@@ -240,7 +292,8 @@ const shapes = clipped
         ? undefined
         : (largestFreeCircle(shape.rings, {
             nested: nestedOf(shape),
-            isAllowed: (x, y) => containsPoint(landRings, x, y),
+            isAllowed: (x, y) =>
+              containsPoint(landRings, x, y) && isFreeOfWater(x, y),
           }) as InscribedCircle),
   }))
   /*
@@ -248,35 +301,6 @@ const shapes = clipped
    * Цайдамскую котловину, которая лежит внутри него.
    */
   .sort((left, right) => right.area - left.area);
-
-/*
- * Озёра. Контур нужен, чтобы вода была водой, но целью он быть не может: 24 px
- * на опорной ширине — это около 120 км, а Цинхай, самое большое озеро страны,
- * даёт вписанную окружность около 13 px. Поэтому вместе с контуром считается
- * точка знака, вокруг которой слой и строит цель нажатия.
- */
-const lakesById = new Map<number, [number, number][][]>(
-  source.lakes.map((lake) => [lake.neId, lake.rings]),
-);
-
-const lakes = physicalFeatures
-  .filter((feature) => feature.kind === 'lake')
-  .map((feature) => {
-    const rings = (feature.kind === 'lake' ? feature.lakeIds : [])
-      .flatMap((neId) => lakesById.get(neId) ?? [])
-      .map((ring) =>
-        clipRingToFrame(simplifyRing(project(ring), SIMPLIFY_TOLERANCE_UNITS), FRAME),
-      )
-      .filter((ring) => ring.length > 3);
-
-    if (rings.length === 0) {
-      throw new Error(
-        `Нет колец у озера ${feature.id}. Запустите npm run extract:physical`,
-      );
-    }
-
-    return { featureId: feature.id, rings, mark: largestInscribedCircle(rings) };
-  });
 
 // --- Запись -----------------------------------------------------------------
 

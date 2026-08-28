@@ -50,10 +50,10 @@ function openAnswerList() {
   }
 }
 
-it('спрашивает двадцать четыре объекта подряд', () => {
+it('спрашивает двадцать восемь объектов подряд', () => {
   renderRound('find-on-map');
 
-  expect(screen.getByText(/Вопрос 1 из 24/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 28/)).toBeInTheDocument();
 });
 
 it('в «найти» вопрос называет объект, а карта его не подписывает', () => {
@@ -180,20 +180,20 @@ it('озеро отвлекают только озёрами: знак от з�
   expect(new Set(kinds)).toEqual(new Set(['lake']));
 });
 
-it('на 320 px список отвечает за все двадцать четыре объекта', () => {
+it('на 320 px список отвечает за все двадцать восемь объектов', () => {
   renderRound('find-on-map', physicalFeaturesUpTo('all'));
 
   openAnswerList();
   const list = screen.getByRole('list', { name: 'Список объектов' });
 
-  expect(within(list).getAllByRole('button')).toHaveLength(24);
+  expect(within(list).getAllByRole('button')).toHaveLength(28);
 });
 
 it('каждый набор спрашивает свои цели ровно по разу', () => {
   for (const [set, length] of [
-    ['base', 12],
-    ['ranges', 18],
-    ['all', 24],
+    ['base', 16],
+    ['ranges', 22],
+    ['all', 28],
   ] as const) {
     const pool = physicalFeaturesUpTo(set);
     const round = createRound(
