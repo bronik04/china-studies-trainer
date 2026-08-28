@@ -97,8 +97,12 @@ export type ModeCard = {
   | { readonly kind: 'city'; readonly exerciseType: ExerciseType }
   /** Игра по физической географии: цели берутся из справочника объектов. */
   | { readonly kind: 'physical'; readonly exerciseType: 'find-on-map' | 'name-target' }
-  /** Игра по династиям: цели берутся из ленты, а карта в ней не участвует. */
-  | { readonly kind: 'history' }
+  /**
+   * Игра по династиям: цели берутся из ленты, а карта в ней не участвует.
+   * `historyKind` называет, что спрашивают: срок названной династии или
+   * династию названного года.
+   */
+  | { readonly kind: 'history'; readonly historyKind: 'when' | 'who' }
   /** Игра по снимкам коллекций: вопрос — сама фотография. */
   | { readonly kind: 'culture' }
   | { readonly kind: 'fill' }
@@ -155,6 +159,18 @@ export const HISTORY_MODE: ExerciseMode = {
   exerciseType: 'match-pair',
   title: 'История: династии и даты',
   eyebrow: 'Когда правила эта династия',
+};
+
+/**
+ * «Кто правил в этом году» — зеркальная к «Династиям и датам»: там названа
+ * династия и спрашивают срок, здесь назван год и спрашивают династию. Цель,
+ * лента и отвлекающие у них общие, поэтому это признак раунда, а не второй
+ * экран.
+ */
+export const HISTORY_YEAR_MODE: ExerciseMode = {
+  exerciseType: 'match-pair',
+  title: 'История: кто правил в этом году',
+  eyebrow: 'Кто правил в этом году',
 };
 
 /**
@@ -275,10 +291,22 @@ export const MODE_CARDS: readonly ModeCard[] = [
   {
     id: 'history',
     kind: 'history',
+    historyKind: 'when',
     mark: '史',
     title: 'Династии и даты',
     summary:
       'Названа династия — выбрать её срок из четырёх. Отвлекают сроки соседних по времени династий, а под вопросом идёт лента: длина каждой полосы — её настоящий век.',
+    volume: '12 династий · около 4 минут',
+    groupId: 'humanities',
+  },
+  {
+    id: 'history-year',
+    kind: 'history',
+    historyKind: 'who',
+    mark: '年',
+    title: 'Кто правил в этом году',
+    summary:
+      'Назван год — выбрать династию из четырёх или нажать её полосу на ленте. Годы, которые лента знает надвое, не спрашиваются: в 1275 году Сун и Юань существовали разом.',
     volume: '12 династий · около 4 минут',
     groupId: 'humanities',
   },

@@ -169,6 +169,15 @@ export function spanLabel(dynasty: Dynasty): string {
   return `${from}–${to}`;
 }
 
+/**
+ * Один год для вопроса: «1275», «221 до н. э.». Отдельно от `spanLabel`, где
+ * год — конец срока и приблизительность помечается «ок.»: у года в вопросе
+ * приблизительности нет, спрашивают о конкретном.
+ */
+export function askedYearLabel(year: number): string {
+  return year < 0 ? `${-year} до н. э.` : String(year);
+}
+
 export function dynastyById(id: string): Dynasty | undefined {
   return dynasties.find((dynasty) => dynasty.id === id);
 }

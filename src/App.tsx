@@ -161,6 +161,12 @@ export default function App() {
    * нет.
    */
   const [historyPool, setHistoryPool] = useState<readonly Dynasty[]>(dynasties);
+  /*
+   * Что спрашивает раунд истории. Хранится здесь, а не в карточке: повтор
+   * ошибок обязан идти в той же игре, где ошиблись, а он запускается с экрана
+   * итогов, где карточки уже нет.
+   */
+  const [historyKind, setHistoryKind] = useState<'when' | 'who'>('when');
   /* Пул снимков. Как и у прочих: «Повторить ошибки» задаёт его напрямую. */
   const [culturePool, setCulturePool] = useState<readonly Collection[]>(() =>
     cultureCollectionsUpTo('culture'),
@@ -371,8 +377,10 @@ export default function App() {
   function startHistoryRound(
     nextLanguage: QuestionLanguage = language,
     pool: readonly Dynasty[] = dynasties,
+    kind: 'when' | 'who' = historyKind,
   ) {
     setHistoryPool(pool);
+    setHistoryKind(kind);
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
     setSeed(Math.floor(Math.random() * 2 ** 31));
@@ -536,6 +544,7 @@ export default function App() {
     return (
       <AppFrame fillsFrame current={null} onNavigate={navigate}>
         <HistoryRound
+          kind={historyKind}
           dynasties={historyPool}
           language={language}
           roundId={roundId}

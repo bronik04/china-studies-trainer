@@ -3185,14 +3185,67 @@ button.chip[aria-pressed='true'] {
 }
 
 /*
- * Обводка, а не только цвет: киноварь и сланец на бумаге стоят близко, и
- * рядом друг с другом их не различить. Тот же довод, что у выделения объекта
- * на физической карте.
+ * Обводка, а не только цвет: заливки исхода и сама лента на бумаге стоят
+ * близко, и рядом друг с другом их не различить. Тот же довод, что у
+ * выделения объекта на физической карте.
  */
-.timeline-span[data-highlighted='true'] {
-  background: var(--timeline-span-current);
+.timeline-span[data-mark='correct'] {
+  background: var(--timeline-span-correct);
   box-shadow: 0 0 0 2px var(--timeline-span-outline);
   z-index: 1;
+}
+
+/*
+ * Ошибочная — пунктиром: исход не передаётся одним цветом, и штрих здесь тот
+ * же, что у ошибочной кнопки варианта.
+ */
+.timeline-span[data-mark='wrong'] {
+  background: var(--timeline-span-wrong);
+  outline: 2px dashed var(--timeline-span-outline);
+  outline-offset: -1px;
+  z-index: 1;
+}
+
+/* Наведение и фокус: полоса светлеет, обводка киноварью. */
+.timeline-span[data-mark='hover'] {
+  background: var(--surface-paper-bright);
+  box-shadow: 0 0 0 2px var(--accent);
+  z-index: 1;
+}
+
+/*
+ * Слой целей нажатия внутри самой полосы ленты. Цели прозрачны и лежат поверх
+ * полос: полоса нарисована честно, по годам, а нажимать её надо пальцем —
+ * 44 px против 3.6 px у Цинь.
+ */
+.timeline-hits {
+  inset: 0;
+  position: absolute;
+  z-index: 2;
+}
+
+.timeline-hit {
+  background: none;
+  block-size: 100%;
+  border: 0;
+  cursor: pointer;
+  inset-block-start: 0;
+  padding: 0;
+  position: absolute;
+}
+
+/*
+ * Кольцо фокуса внутрь: цели стоят вплотную друг к другу, и наружу оно
+ * перекрыло бы соседнюю.
+ */
+.timeline-hit:focus-visible {
+  outline: var(--border-focus) solid var(--focus-on-paper);
+  outline-offset: calc(-1 * var(--border-focus));
+}
+
+/* Строка под лентой: подсказка, срок наведённой полосы или разбор. */
+.timeline-hint {
+  min-block-size: 1.5rem;
 }
 
 /* --- имена --- */
@@ -3234,7 +3287,19 @@ button.chip[aria-pressed='true'] {
  * Прятать соседей пришлось бы измерением ширины текста, а бумага под подписью
  * решает то же самое разметкой.
  */
-.timeline-name[data-highlighted='true'] {
+/*
+ * Крайние подписи прижимаются к своему краю: подпись Ся начинается у нуля
+ * ленты, и центрированная уезжала бы за обрез наполовину.
+ */
+.timeline-name[data-edge='start'] {
+  transform: none;
+}
+
+.timeline-name[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+.timeline-name[data-mark='correct'] {
   background: var(--surface-paper);
   border-radius: var(--radius-sm);
   color: var(--text-on-paper);

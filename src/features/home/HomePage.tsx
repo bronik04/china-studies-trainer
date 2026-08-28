@@ -47,7 +47,11 @@ export type HomePageProps = {
     language: QuestionLanguage,
     set: CultureSet,
   ) => void;
-  readonly onStartHistoryRound: (language: QuestionLanguage) => void;
+  readonly onStartHistoryRound: (
+    language: QuestionLanguage,
+    pool?: undefined,
+    kind?: 'when' | 'who',
+  ) => void;
   readonly onStartPhysicalRound: (
     exerciseType: 'find-on-map' | 'name-target',
     language: QuestionLanguage,
@@ -181,7 +185,7 @@ export function HomePage({
     } else if (card.kind === 'physical') {
       onStartPhysicalRound(card.exerciseType, language, set as PhysicalSet);
     } else if (card.kind === 'history') {
-      onStartHistoryRound(language);
+      onStartHistoryRound(language, undefined, card.historyKind);
     } else if (card.kind === 'culture') {
       onStartCultureRound(language, set as CultureSet);
     }

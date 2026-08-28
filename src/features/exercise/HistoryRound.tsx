@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
-import { dynasties as allDynasties, spanLabel } from '../../content/dynasties';
+import {
+  dynasties as allDynasties,
+  spanLabel,
+  askedYearLabel,
+} from '../../content/dynasties';
 import type { Dynasty } from '../../content/types';
 import { buildDynastyChoices } from '../../domain/dynasty-choices';
+import { pickYear } from '../../domain/dynasty-years';
 import {
   labelOf,
   langOf,
@@ -18,8 +23,8 @@ import {
   type Attempt,
   type Round,
 } from '../../domain/round';
-import { DynastyTimeline } from './DynastyTimeline';
-import { HISTORY_MODE } from './exercise-modes';
+import { DynastyTimeline, type TimelineMark } from './DynastyTimeline';
+import { HISTORY_MODE, HISTORY_YEAR_MODE } from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
@@ -35,6 +40,12 @@ function startClock(): number {
 }
 
 export type HistoryRoundProps = {
+  /**
+   * Что спрашивают: `when` — срок названной династии, `who` — династию
+   * названного года. Раунд, цель, лента и отвлекающие у них общие, различаются
+   * вопрос и подписи вариантов.
+   */
+  readonly kind?: 'when' | 'who';
   /**
    * Пул раунда. По умолчанию вся лента; «Повторить ошибки» задаёт его
    * напрямую, и никакому набору он не соответствует.
@@ -66,6 +77,7 @@ export type HistoryRoundProps = {
  * даты, а не отсевом нелепого.
  */
 export function HistoryRound({
+  kind = 'when',
   dynasties = allDynasties,
   language,
   roundId,
@@ -113,11 +125,49 @@ export function HistoryRound({
     [round.questions, seed],
   );
 
+  /*
+   * Год на вопрос считается один раз на раунд, как и варианты: пересчёт на
+   * каждый рендер менял бы вопрос под рукой ученика.
+   */
+  const yearByQuestion = useMemo(() => {
+    if (kind !== 'who') {
+      return [];
+    }
+
+    const random = createSeededRandom(seed + 2);
+
+    return round.questions.map((item) =>
+      pickYear(allDynasties, item.target.id, random),
+    );
+  }, [kind, round.questions, seed]);
+
   const target = allDynasties.find(
     (dynasty) => dynasty.id === question.target.id,
   ) as Dynasty;
+  const mode = kind === 'who' ? HISTORY_YEAR_MODE : HISTORY_MODE;
+  const askedYear = kind === 'who' ? yearByQuestion[round.currentIndex] : null;
   const lastAttempt = round.attempts[round.attempts.length - 1];
   const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
+
+  /*
+   * Метки ленты. При верном ответе одна — верная полоса; при ошибке две:
+   * верная и выбранная. Расстояние между ними и есть величина промаха, и
+   * увидеть его на ленте важнее, чем прочитать «неверно». Прежде полоса
+   * красилась киноварью при любом ответе, и верный ответ читался как ошибка.
+   */
+  const marks: readonly TimelineMark[] =
+    round.status !== 'feedback' || answeredId === null
+      ? []
+      : answeredId === target.id
+        ? [{ dynastyId: target.id, kind: 'correct' }]
+        : [
+            { dynastyId: target.id, kind: 'correct' },
+            { dynastyId: answeredId, kind: 'wrong' },
+          ];
+
+  const answeredDynasty = allDynasties.find(
+    (dynasty) => dynasty.id === answeredId,
+  );
 
   function goNext(from: Round) {
     const next = goToNextQuestion(from);
@@ -169,13 +219,15 @@ export function HistoryRound({
     round.currentIndex
   ].map((choice) => ({
     id: choice.id,
-    label: spanLabel(choice),
+    label: kind === 'who' ? choice.nameRu : spanLabel(choice),
     result: resultOf(choice.id),
   }));
 
   const prompt = showsAnswer ? (
     <>
-      <p className="eyebrow">Эту дату стоит повторить</p>
+      <p className="eyebrow">
+        {kind === 'who' ? 'Эту династию стоит повторить' : 'Эту дату стоит повторить'}
+      </p>
       <h1 className="stage-target" data-testid="exercise-target">
         <span lang={langOf(language)}>{labelOf(target, language)}</span> —{' '}
         {spanLabel(target)}
@@ -183,19 +235,29 @@ export function HistoryRound({
     </>
   ) : (
     <>
-      <p className="eyebrow">{HISTORY_MODE.eyebrow}</p>
+      <p className="eyebrow">{mode.eyebrow}</p>
       {/*
         Язык вопроса тот же, что и в остальных играх: русское имя или одни
         иероглифы. Иероглифическая династия — та же задача на шаг труднее, и
         отнимать её у истории незачем.
       */}
-      <h1
-        className="stage-target"
-        data-testid="exercise-target"
-        lang={langOf(language)}
-      >
-        {labelOf(target, language)}
-      </h1>
+      {/*
+        В игре по годам вопрос — сам год, и языка у него нет: цифры одинаковы
+        по-русски и по-китайски.
+      */}
+      {kind === 'who' ? (
+        <h1 className="stage-target" data-testid="exercise-target">
+          {askedYearLabel(askedYear as number)}
+        </h1>
+      ) : (
+        <h1
+          className="stage-target"
+          data-testid="exercise-target"
+          lang={langOf(language)}
+        >
+          {labelOf(target, language)}
+        </h1>
+      )}
     </>
   );
 
@@ -232,17 +294,44 @@ export function HistoryRound({
         */}
         <DynastyTimeline
           dynasties={allDynasties}
-          highlightedId={round.status === 'feedback' ? target.id : null}
+          marks={marks}
           showsNames={round.status === 'feedback'}
+          /*
+           * Лента отвечает, пока вопрос открыт. Кнопки вариантов остаются: два
+           * пути к одному ответу, как карта и «ответить из списка» в играх по
+           * регионам.
+           */
+          onAnswer={round.status === 'ready' ? answer : undefined}
+          hint={
+            round.status === 'feedback' ? (
+              <p className="history-note">
+                {/*
+                  Выбранную по ошибке называет строка разбора, а не подпись на
+                  ленте: две выделенные подписи рядом налезают друг на друга, а
+                  у Тан и Сун они рядом.
+                */}
+                {answeredDynasty !== undefined &&
+                answeredDynasty.id !== target.id ? (
+                  <>
+                    Вы показали {answeredDynasty.nameRu} —{' '}
+                    {/*
+                      Точка ставится только если её нет: срок до нашей эры уже
+                      кончается точкой, и вторая давала «1046 до н. э..».
+                    */}
+                    {spanLabel(answeredDynasty)}
+                    {spanLabel(answeredDynasty).endsWith('.') ? '' : '.'}{' '}
+                  </>
+                ) : null}
+                {target.note}
+              </p>
+            ) : (
+              <p className="history-hint">
+                Нажмите по ленте или выберите срок ниже: длина каждой полосы —
+                настоящий срок династии.
+              </p>
+            )
+          }
         />
-        {round.status === 'feedback' ? (
-          <p className="history-note">{target.note}</p>
-        ) : (
-          <p className="history-hint">
-            Полоса показывает четыре тысячи лет: длина каждой династии — её
-            настоящий срок.
-          </p>
-        )}
       </div>
     </RoundStage>
   );
