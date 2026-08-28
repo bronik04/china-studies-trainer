@@ -58,6 +58,14 @@ export const sources = [
     covers: ['контуры шести крупнейших озёр Китая'],
   },
   {
+    id: 'natural-earth-elevation-points-5.1.2',
+    title: 'Natural Earth 10m Geographic Regions Elevation Points, версия 5.1.2',
+    organization: 'Natural Earth',
+    url: 'https://www.naturalearthdata.com/downloads/10m-physical-vectors/',
+    accessedAt: '2026-08-28',
+    covers: ['координаты крайних точек Китая'],
+  },
+  {
     id: 'bre-beijing-economy',
     title: 'Пекин. Хозяйство',
     organization: 'Большая российская энциклопедия',
@@ -985,6 +993,32 @@ export const sources = [
     url: 'https://www.britannica.com/place/Takla-Makan-Desert',
     accessedAt: '2026-08-19',
     covers: ['физическая география и площадь пустыни Такла-Макан', 'дюны и климат Такла-Макана', 'Шёлковый путь и исследование пустыни'],
+  },
+  {
+    id: 'britannica-mount-everest',
+    title: 'Mount Everest',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/place/Mount-Everest',
+    accessedAt: '2026-08-28',
+    covers: [
+      'высота Джомолунгмы и её положение на границе',
+      'вид со стороны Тибета и сложение вершины',
+      'кислород, температуры и ветер на вершине',
+    ],
+  },
+  {
+    id: 'britannica-turfan-depression',
+    title: 'Turfan Depression',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/place/Turfan-Depression',
+    accessedAt: '2026-08-28',
+    covers: [
+      'глубина и площадь Турфанской впадины',
+      'её обрамление и озеро Айдин',
+      'климат, кяризы, виноград и Шёлковый путь',
+    ],
   },
   {
     id: 'britannica-northeast-plain',

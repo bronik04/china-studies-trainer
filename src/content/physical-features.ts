@@ -30,15 +30,21 @@ export const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
   river: 'Река',
   landform: 'Форма рельефа',
   lake: 'Озеро',
+  point: 'Крайняя точка',
 };
 
 /**
  * Слово рода в карточке. Одного `kind` мало: хребет — тоже `landform` и
- * получил бы «Форма рельефа», хотя ученик ищет глазами именно хребет.
+ * получил бы «Форма рельефа», хотя ученик ищет глазами именно хребет; вершина
+ * и впадина — обе `point`, а вида у них разного.
  */
 export function physicalKindLabel(feature: PhysicalFeature): string {
   if (feature.kind === 'landform' && feature.landform === 'range') {
     return 'Горный хребет';
+  }
+
+  if (feature.kind === 'point') {
+    return feature.point === 'peak' ? 'Вершина' : 'Впадина';
   }
 
   return PHYSICAL_KIND_LABELS[feature.kind];
@@ -54,6 +60,7 @@ export function physicalFeatureById(
 const RIVERS = ['natural-earth-rivers-5.1.2'] as const;
 const LANDFORMS = ['natural-earth-geography-regions-5.1.2'] as const;
 const LAKES = ['natural-earth-lakes-5.1.2'] as const;
+const POINTS = ['natural-earth-elevation-points-5.1.2'] as const;
 
 function river(
   id: string,
@@ -117,6 +124,35 @@ function lake(
     regionIds,
     facts: FACTS[id] ?? [],
     sourceIds: LAKES,
+  };
+}
+
+/**
+ * Крайняя точка: у неё нет контура вовсе, и на карте она живёт знаком. Высота
+ * идёт фактом с источником, а не полем, — по тому же правилу, по которому у
+ * реки не хранится длина: у Джомолунгмы это и 8848, и 8848,86 после обмера
+ * 2020 года, и число без источника выдавало бы одно за единственное.
+ */
+function point(
+  id: string,
+  nameRu: string,
+  nameZh: string,
+  pinyin: string,
+  kindOfPoint: 'peak' | 'depression',
+  neId: number,
+  regionIds: readonly string[],
+): PhysicalFeature {
+  return {
+    id,
+    kind: 'point',
+    nameRu,
+    nameZh,
+    pinyin,
+    point: kindOfPoint,
+    neId,
+    regionIds,
+    facts: FACTS[id] ?? [],
+    sourceIds: POINTS,
   };
 }
 
@@ -702,6 +738,42 @@ const hexiCorridorFacts: readonly Fact[] = [
   },
 ];
 
+const everestFacts: readonly Fact[] = [
+  {
+    title: 'Высшая точка планеты',
+    body: 'Джомолунгма стоит на гребне Больших Гималаев, на самой границе Непала и Тибетского автономного района, и поднимается на 8849 м — выше всех гор мира. Тибетское имя означает «богиня-мать мира»; китайское 珠穆朗玛峰 передаёт его же.',
+    sourceIds: ['britannica-mount-everest'],
+  },
+  {
+    title: 'Со стороны Китая видна целиком',
+    body: 'С северо-востока гора поднимается примерно на 3600 м над Тибетским нагорьем: она сложена трёхгранной пирамидой, и Северная стена смотрит как раз в Тибет.',
+    sourceIds: ['britannica-mount-everest'],
+  },
+  {
+    title: 'Воздуха втрое меньше',
+    body: 'У вершины кислорода примерно втрое меньше, чем на уровне моря. Средняя температура июля там −19 °C, января −36 °C, а ветер разгоняется свыше 160 км/ч: ни растений, ни животных на этой высоте нет.',
+    sourceIds: ['britannica-mount-everest'],
+  },
+];
+
+const turpanDepressionFacts: readonly Fact[] = [
+  {
+    title: 'Низшая точка Китая',
+    body: 'Турфанская впадина — тектонический грабен: дно опускается до 155 м ниже уровня моря, и это самое низкое место страны. Соседние Тарим и Лобнор лежат при этом на 600–900 м выше уровня моря. Площадь впадины около 50 000 км².',
+    sourceIds: ['britannica-turfan-depression'],
+  },
+  {
+    title: 'Между Богдашанем и Куруктагом',
+    body: 'С севера впадину держит Богдашань, с юга — северная часть Куруктага, а внутренний разлом делит её надвое. Северная половина стекает в нижнюю по каньонам, а на юге лежит солёное болото — озеро Айдин.',
+    sourceIds: ['britannica-turfan-depression'],
+  },
+  {
+    title: 'Жара, кяризы и виноград',
+    body: 'Средняя температура января −10 °C, июля +32 °C, а в городе Турфан записан самый высокий в Китае максимум — +48 °C. Осадков выпадает 16–30 мм в год, поэтому впадину орошают: на юге — кяризами, подземными галереями, отводящими воду с высот. Славится она виноградом и дынями хами, а её северная часть была отрезком Шёлкового пути, который на юго-востоке смыкается с Хэсийским коридором.',
+    sourceIds: ['britannica-turfan-depression'],
+  },
+];
+
 const FACTS: Readonly<Record<string, readonly Fact[]>> = {
   yangtze: yangtzeFacts,
   'yellow-river': yellowRiverFacts,
@@ -735,6 +807,8 @@ const FACTS: Readonly<Record<string, readonly Fact[]>> = {
   taklamakan: taklamakanFacts,
   taihang: taihangFacts,
   'hexi-corridor': hexiCorridorFacts,
+  everest: everestFacts,
+  'turpan-depression': turpanDepressionFacts,
 };
 
 export const physicalFeatures: readonly PhysicalFeature[] = [
@@ -932,6 +1006,30 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
   lake('taihu', 'Тайху', '太湖', 'Tài Hú', [1159113611], ['jiangsu', 'zhejiang']),
   lake('hongze', 'Хунцзэху', '洪泽湖', 'Hóngzé Hú', [1159113359], ['jiangsu']),
   lake('chaohu', 'Чаоху', '巢湖', 'Cháo Hú', [1159115069], ['anhui']),
+
+  /*
+   * Крайние точки. Высшая и низшая точки страны — то, чем кончается разговор о
+   * ступенях рельефа: одна стоит на первой ступени, другая лежит ниже уровня
+   * моря на второй.
+   */
+  point(
+    'everest',
+    'Джомолунгма',
+    '珠穆朗玛峰',
+    'Zhūmùlǎngmǎ Fēng',
+    'peak',
+    1159105715,
+    ['tibet'],
+  ),
+  point(
+    'turpan-depression',
+    'Турфанская впадина',
+    '吐鲁番盆地',
+    'Tǔlǔfān Péndì',
+    'depression',
+    1159105721,
+    ['xinjiang'],
+  ),
 ];
 
 /**
@@ -949,12 +1047,18 @@ export function physicalFeaturesUpTo(
     return physicalFeatures;
   }
 
-  const withoutLakes = physicalFeatures.filter((feature) => feature.kind !== 'lake');
+  /*
+   * Знаки — озёра и крайние точки — идут последним набором: контура у них нет,
+   * и целятся в них иначе, чем в реку или форму.
+   */
+  const withoutMarks = physicalFeatures.filter(
+    (feature) => feature.kind !== 'lake' && feature.kind !== 'point',
+  );
   if (set === 'ranges') {
-    return withoutLakes;
+    return withoutMarks;
   }
 
-  return withoutLakes.filter(
+  return withoutMarks.filter(
     (feature) => feature.kind !== 'landform' || feature.landform !== 'range',
   );
 }
