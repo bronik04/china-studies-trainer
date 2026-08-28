@@ -331,6 +331,19 @@ it('окно городской игры предлагает два набор�
   expect(onStartCityRound).toHaveBeenCalledWith('find-on-map', 'ru', 'notable');
 });
 
+/*
+ * Две игры по истории различает не экран, а признак: карточка обязана донести
+ * его до запуска, иначе год спрашивался бы сроком.
+ */
+it('карточка года запускает игру «кто правил»', () => {
+  const { onStartHistoryRound } = renderHome();
+
+  openCard(/Кто правил в этом году/);
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(onStartHistoryRound).toHaveBeenCalledWith('ru', undefined, 'who');
+});
+
 it('«Отмена» закрывает окно и ничего не запускает', () => {
   const { onStartRound } = renderHome();
 

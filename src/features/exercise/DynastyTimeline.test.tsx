@@ -104,3 +104,21 @@ it('без колбэка полос-кнопок нет', () => {
 
   expect(screen.queryAllByRole('button')).toHaveLength(0);
 });
+
+/*
+ * Найдено проверкой в браузере: подпись Ся центрируется по полосе у самого
+ * нуля ленты, и половина её уезжает за обрез.
+ */
+it('крайняя подпись прижата к краю, а не центрирована', () => {
+  render(
+    <DynastyTimeline
+      dynasties={dynasties}
+      marks={[{ dynastyId: 'xia', kind: 'correct' }]}
+      showsNames
+    />,
+  );
+
+  const name = screen.getByText('Ся').closest('.timeline-name') as HTMLElement;
+
+  expect(name.dataset.edge).toBe('start');
+});

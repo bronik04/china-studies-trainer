@@ -3,6 +3,7 @@ import { expect, it, vi } from 'vitest';
 import { dynasties, spanLabel } from '../../content/dynasties';
 import { createSeededRandom } from '../../domain/random';
 import { buildDynastyChoices } from '../../domain/dynasty-choices';
+import { answerableYears } from '../../domain/dynasty-years';
 import { HistoryRound } from './HistoryRound';
 import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 
@@ -12,6 +13,24 @@ function renderRound(seed = 5) {
 
   render(
     <HistoryRound
+      language="ru"
+      roundId="round-1"
+      seed={seed}
+      onFinish={onFinish}
+      onExit={onExit}
+    />,
+  );
+
+  return { onFinish, onExit };
+}
+
+function renderYearRound(seed = 5) {
+  const onFinish = vi.fn();
+  const onExit = vi.fn();
+
+  render(
+    <HistoryRound
+      kind="who"
       language="ru"
       roundId="round-1"
       seed={seed}
@@ -214,6 +233,30 @@ it('после ответа строка под лентой показывае�
   expect(document.querySelector('.history-note')).not.toBeNull();
 });
 
+/*
+ * Найдено проверкой в браузере: срок до нашей эры уже кончается точкой, и
+ * приписанная вторая давала «ок. 1600–1046 до н. э..».
+ */
+it('в разборе не двоится точка после срока до нашей эры', () => {
+  renderYearRound(5);
+
+  const asked = Number(screen.getByTestId('exercise-target').textContent);
+  const target = dynasties.find(
+    (dynasty) => asked >= dynasty.from && asked <= dynasty.to,
+  )!;
+  /* Нужна именно ошибка, и именно на сроке до нашей эры: он кончается точкой. */
+  const wrong = dynasties.find(
+    (dynasty) => dynasty.id !== target.id && dynasty.to < 0,
+  )!;
+
+  fireEvent.click(ribbonButton(spanLabel(wrong)));
+
+  const note = document.querySelector('.history-note')!.textContent ?? '';
+
+  expect(note).toContain(`Вы показали ${wrong.nameRu}`);
+  expect(note).not.toMatch(/\.\./);
+});
+
 it('раунд идёт по всем династиям и заканчивается итогом', () => {
   const { onFinish } = renderRound();
 
@@ -270,4 +313,35 @@ it('пул можно сузить: повтор ошибок спрашивае
   expect(screen.getByText(/Вопрос 1 из 2/)).toBeInTheDocument();
   /* Отвлекающие всё равно из полной ленты: иначе четвёртому неоткуда взяться. */
   expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+/*
+ * Зеркальная игра: там названа династия и спрашивают срок, здесь назван год и
+ * спрашивают династию.
+ */
+it('спрашивает год и предлагает четыре имени', () => {
+  renderYearRound();
+
+  const asked = Number(screen.getByTestId('exercise-target').textContent);
+
+  expect(answerableYears(dynasties)).toContain(asked);
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+
+  const names = dynasties.map((dynasty) => dynasty.nameRu);
+  for (const option of screen.getAllByTestId('choice-option')) {
+    expect(names.some((name) => option.textContent?.includes(name))).toBe(true);
+  }
+});
+
+it('на год отвечают и нажатием по ленте', () => {
+  renderYearRound();
+
+  const asked = Number(screen.getByTestId('exercise-target').textContent);
+  const target = dynasties.find(
+    (dynasty) => asked >= dynasty.from && asked <= dynasty.to,
+  )!;
+
+  fireEvent.click(ribbonButton(spanLabel(target)));
+
+  expect(spanOf(target.id).dataset.mark).toBe('correct');
 });

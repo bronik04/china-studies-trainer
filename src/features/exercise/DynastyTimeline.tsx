@@ -28,6 +28,13 @@ import { hitAreas, minHitShare } from './timeline-hit';
 /** Доля ширины, ниже которой подпись не помещается. */
 const LABEL_MIN_SHARE = 0.055;
 
+/**
+ * Насколько близко к краю ленты подпись перестаёт центрироваться. Ширина
+ * подписи «Ся ок. 2070–ок. 1600 до н. э.» — около десятой доли ленты, и
+ * половина её уезжает за обрез, если центрировать по полосе у самого края.
+ */
+const EDGE_SHARE = 0.06;
+
 /** Метки шкалы: круглые даты, по которым глаз находит место на ленте. */
 const TICKS = [-2000, -1000, 0, 1000, 2000] as const;
 
@@ -286,12 +293,26 @@ export function DynastyTimeline({
             return null;
           }
 
+          /*
+           * Крайние подписи прижимаются к своему краю, а не центрируются по
+           * полосе: подпись Ся начинается у нуля ленты, и половина её уезжала
+           * за обрез. Тот же приём, что у крайних меток шкалы.
+           */
+          const centre = left + width / 2;
+
           return (
             <span
               key={dynasty.id}
               className="timeline-name"
               data-mark={isAnswer ? 'correct' : undefined}
-              style={{ left: percent(left + width / 2) }}
+              data-edge={
+                centre < EDGE_SHARE
+                  ? 'start'
+                  : centre > 1 - EDGE_SHARE
+                    ? 'end'
+                    : undefined
+              }
+              style={{ left: percent(centre) }}
             >
               {dynasty.nameRu}
               {isAnswer ? (

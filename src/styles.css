@@ -3287,6 +3287,18 @@ button.chip[aria-pressed='true'] {
  * Прятать соседей пришлось бы измерением ширины текста, а бумага под подписью
  * решает то же самое разметкой.
  */
+/*
+ * Крайние подписи прижимаются к своему краю: подпись Ся начинается у нуля
+ * ленты, и центрированная уезжала бы за обрез наполовину.
+ */
+.timeline-name[data-edge='start'] {
+  transform: none;
+}
+
+.timeline-name[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
 .timeline-name[data-mark='correct'] {
   background: var(--surface-paper);
   border-radius: var(--radius-sm);
