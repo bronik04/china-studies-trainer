@@ -59,6 +59,7 @@ const source = JSON.parse(sourceJson) as {
   landforms: { key: string; nameRu: string; nameZh: string; rings: [number, number][][] }[];
   lakes: { neId: number; rings: [number, number][][] }[];
   points: { neId: number; at: [number, number] }[];
+  marine: { neId: number; rings: [number, number][][] }[];
 };
 
 const OUT = new URL('../src/map/physical-geometry.ts', import.meta.url);
@@ -232,6 +233,37 @@ const points = physicalFeatures.flatMap((feature) => {
   return [{ featureId: feature.id, x, y }];
 });
 
+// --- Моря -------------------------------------------------------------------
+
+/*
+ * Морские тела. Контуры обрезаются по рамке карты: у Южно-Китайского моря
+ * середина целого контура лежит за краем листа, и подпись, посчитанная по
+ * необрезанному кольцу, ушла бы в пустоту.
+ */
+const marineById = new Map<number, [number, number][][]>(
+  source.marine.map((item) => [item.neId, item.rings]),
+);
+
+const marineShapes = physicalFeatures.flatMap((feature) => {
+  if (feature.kind !== 'marine') {
+    return [];
+  }
+
+  const rings = (marineById.get(feature.neId) ?? [])
+    .map((ring) =>
+      clipRingToFrame(simplifyRing(project(ring), SIMPLIFY_TOLERANCE_UNITS), FRAME),
+    )
+    .filter((ring) => ring.length > 3);
+
+  if (rings.length === 0) {
+    throw new Error(
+      `Нет колец у морской цели ${feature.id}. Запустите npm run extract:physical`,
+    );
+  }
+
+  return [{ featureId: feature.id, rings }];
+});
+
 // --- Формы рельефа ----------------------------------------------------------
 
 const withoutStep = source.landforms.filter(
@@ -338,6 +370,18 @@ const shapes = clipped
    */
   .sort((left, right) => right.area - left.area);
 
+/*
+ * Подпись моря обязана стоять в воде: на суше её перехватила бы форма рельефа
+ * или регион, а в ленте реки — река. Правило то же, что у формы, только суша
+ * здесь запрещена, а не обязательна.
+ */
+const marine = marineShapes.map((shape) => ({
+  ...shape,
+  label: largestFreeCircle(shape.rings, {
+    isAllowed: (x, y) => !containsPoint(landRings, x, y) && isFreeOfWater(x, y),
+  }),
+}));
+
 // --- Запись -----------------------------------------------------------------
 
 /*
@@ -429,6 +473,28 @@ ${lakes
   .join('\n')}
 ];
 
+export type MarineShape = {
+  readonly featureId: string;
+  readonly d: string;
+  /**
+   * Куда ставить подпись: середина свободного круга в воде. Не середина
+   * контура: у Южно-Китайского моря она лежит за краем листа, а на суше и в
+   * ленте реки подпись досталась бы не своей цели.
+   */
+  readonly labelX: number;
+  readonly labelY: number;
+};
+
+export const MARINE_SHAPES: readonly MarineShape[] = [
+${marine
+  .map(
+    (sea) =>
+      `  { featureId: ${quote(sea.featureId)}, labelX: ${sea.label.x.toFixed(2)}, ` +
+      `labelY: ${sea.label.y.toFixed(2)}, d: ${quote(toPathData(sea.rings, { closed: true }))} },`,
+  )
+  .join('\n')}
+];
+
 export type PointMark = {
   readonly featureId: string;
   readonly x: number;
@@ -460,6 +526,6 @@ ${riverLines
 writeFileSync(OUT, module);
 console.info(
   `Записано: форм ${shapes.length}, рек ${riverLines.length}, ` +
-    `озёр ${lakes.length}, крайних точек ${points.length}, размер ${(module.length / 1024).toFixed(0)} КБ, ` +
+    `озёр ${lakes.length}, крайних точек ${points.length}, морей ${marine.length}, размер ${(module.length / 1024).toFixed(0)} КБ, ` +
     `отпечаток входов ${fingerprint}`,
 );
