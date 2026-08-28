@@ -3494,6 +3494,40 @@ button.chip[aria-pressed='true'] {
   padding: var(--s-3) var(--s-4);
 }
 
+/*
+ * Карточки имён под лентой в расстановке. Полоса вариантов у этой игры своя:
+ * имена не отвечают на вопрос, а ждут, когда их поставят, — поэтому у
+ * выбранного имени есть состояние, которого у кнопки варианта не бывает.
+ */
+.order-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.order-tile {
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground-strong);
+  cursor: pointer;
+  font: inherit;
+  min-block-size: var(--target-min);
+  padding: var(--s-2) var(--s-4);
+}
+
+/* Выбранное имя: не только цвет — рамка становится толще, набор жирнее. */
+.order-tile[aria-pressed='true'] {
+  border-color: var(--accent-on-ground);
+  border-width: 2px;
+  color: var(--accent-on-ground);
+  font-weight: var(--t-weight-bold);
+}
+
 .stage-choices {
   display: flex;
   flex-wrap: wrap;
