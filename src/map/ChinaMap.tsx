@@ -273,6 +273,14 @@ export function ChinaMap({
   );
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
 
+  /*
+   * Витрина ли это. Признаком, а не самим колбэком: колбэк приходит
+   * встроенной стрелкой и меняет ссылку на каждый рендер, а эффект ниже
+   * обходит все области карты — он не должен просыпаться от того, что
+   * перерисовалась страница вокруг.
+   */
+  const opensRegion = onOpenRegion !== undefined;
+
   /* Область под рукой — только у витрины: у остальных карт её и не бывает. */
   const hoveredRegion =
     hoveredRegionId === null
@@ -345,7 +353,7 @@ export function ChinaMap({
      * Скрытие живёт здесь, а не в таблице стилей, намеренно: утечка ответа —
      * не оформление, и проверять её нужно там, где стили не подключены.
      */
-    const hidesCallouts = usage === 'answer' && onOpenRegion === undefined;
+    const hidesCallouts = usage === 'answer' && !opensRegion;
     mapRef.current
       ?.querySelectorAll<SVGElement>('.map-callout text')
       .forEach((label) => {
@@ -364,6 +372,18 @@ export function ChinaMap({
       const regionId = area.dataset.regionId ?? '';
       area.dataset.selected = String(regionId === selectedRegionId);
       area.setAttribute('tabindex', interactive ? '0' : '-1');
+      /*
+       * Витрина — дверь целиком, а не тридцать четыре кнопки. Роль снимается,
+       * иначе читалка экрана объявляет управление, до которого нет пути с
+       * клавиатуры: фокус областям там не даётся, а в атлас ведёт соседняя
+       * кнопка. Возвращается роль так же явно — карта живёт в одном узле, и
+       * снятое однажды само не вернулось бы.
+       */
+      if (opensRegion) {
+        area.removeAttribute('role');
+      } else {
+        area.setAttribute('role', 'button');
+      }
 
       const answerState = answerStates[regionId];
       if (answerState) {
@@ -437,7 +457,7 @@ export function ChinaMap({
     highlight,
     interactive,
     memberRegionIds,
-    onOpenRegion,
+    opensRegion,
     outcomes,
     paused,
     progressStates,

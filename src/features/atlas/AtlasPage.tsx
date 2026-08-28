@@ -11,7 +11,7 @@ import { ChinaMap } from '../../map/ChinaMap';
 import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { MapAttribution } from '../../map/MapAttribution';
 import type { MapZoom } from '../../map/MapControls';
-import { useFullscreen } from '../exercise/use-fullscreen';
+import { useFullscreen } from '../../ui/use-fullscreen';
 
 /**
  * Шкала высот. Полосой, а не списком плашек: шкала непрерывна, и прежние

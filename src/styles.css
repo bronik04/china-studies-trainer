@@ -410,6 +410,41 @@ p {
 }
 
 /*
+ * Закрыть карточку. Правило вне медиа-запроса намеренно: кнопка рисуется
+ * везде, где атлас развёрнут и что-то выбрано, — Fullscreen API есть и на
+ * телефоне, — а стили, запертые за порогом 1024 px, оставили бы там кнопку
+ * браузерного вида с чёрным залитым крестом.
+ */
+.atlas-panel-close {
+  align-items: center;
+  align-self: flex-end;
+  background: none;
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-ground);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  min-block-size: 32px;
+  min-inline-size: 32px;
+  padding: 0;
+}
+
+.atlas-panel-close:hover {
+  border-color: var(--line-on-ground-strong);
+  color: var(--text-on-ground-strong);
+}
+
+.atlas-panel-close svg {
+  block-size: 16px;
+  fill: none;
+  inline-size: 16px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+}
+
+/*
  * Атлас во весь экран. Разворачивает его браузер (Fullscreen API), поэтому
  * здесь только то, чего он не делает: своя бумага вместо чёрной подложки и
  * колонка во всю ширину — обычная упирается в 1600 px и оставила бы поля.
@@ -421,7 +456,7 @@ p {
   background: var(--surface-ground);
   inline-size: 100%;
   max-inline-size: none;
-  padding: var(--s-3) var(--s-4) 0;
+  padding: var(--s-3) var(--s-4);
 }
 
 @media (min-width: 1024px) {
@@ -456,36 +491,6 @@ p {
     padding: var(--s-4);
     position: absolute;
     z-index: 1;
-  }
-
-  /* Закрыть карточку: та же бумага и тот же размер цели, что у кнопок зума. */
-  .atlas-shell[data-expanded='true'] .atlas-panel-close {
-    align-items: center;
-    align-self: flex-end;
-    background: none;
-    border: var(--border-hair) solid var(--line-on-ground);
-    border-radius: var(--radius-sm);
-    color: var(--text-on-ground);
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    min-block-size: 32px;
-    min-inline-size: 32px;
-    padding: 0;
-  }
-
-  .atlas-shell[data-expanded='true'] .atlas-panel-close:hover {
-    border-color: var(--line-on-ground-strong);
-    color: var(--text-on-ground-strong);
-  }
-
-  .atlas-panel-close svg {
-    block-size: 16px;
-    fill: none;
-    inline-size: 16px;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-width: 1.5;
   }
 
   /*
@@ -2653,7 +2658,7 @@ button.chip[aria-pressed='true'] {
   cursor: pointer;
   display: flex;
   font-size: var(--t-size-caption);
-  min-height: calc(var(--target-min) - var(--s-2));
+  min-height: var(--target-min);
   padding-inline: var(--s-3);
   white-space: nowrap;
 }
