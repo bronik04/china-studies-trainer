@@ -1,6 +1,14 @@
 import type { PhysicalFeature } from '../content/types';
+import { TARGET_DIAMETER_UNITS } from './city-hit-targets';
+import { distanceToPolylines } from './polyline';
 import { REGION_PALETTE } from './region-palette';
-import { containsPoint, largestInscribedCircle, type Point } from './svg-path';
+import {
+  containsPoint,
+  distanceToBoundary,
+  largestInscribedCircle,
+  polygonArea,
+  type Point,
+} from './svg-path';
 import {
   MAP_VIEWBOX_HEIGHT,
   MAP_VIEWBOX_MIN_X,
@@ -245,6 +253,10 @@ export type PhysicalGeometry = {
   readonly rivers: ReadonlyMap<string, Point[][]>;
   readonly landforms: ReadonlyMap<string, Point[][]>;
   readonly lakes: ReadonlyMap<string, Point[][]>;
+  /** Точка подписи формы: её ставит генератор, проверка её испытывает. */
+  readonly shapeLabels: ReadonlyMap<string, Point>;
+  /** Кольца суши: подпись обязана стоять внутри Китая. */
+  readonly landRings: readonly Point[][];
   /**
    * Знак озера. Отдельно от колец, потому что цель нажатия строится вокруг
    * него, а не вокруг контура: контур озера меньше порога.
@@ -257,6 +269,37 @@ export type PhysicalShapes = {
   readonly distanceToBoundary: (mapAreaId: string, x: number, y: number) => number;
   readonly mapAreaOf: (regionId: string) => string | undefined;
 };
+
+/**
+ * Ширина цели воды в единицах карты: половина той же ленты в 24 px, которой
+ * меряют цель города. То же число держит `river-hit.ts`; здесь оно взято из
+ * общего источника, чтобы проверка и карта не разошлись.
+ */
+const WATER_HIT_RADIUS_UNITS = TARGET_DIAMETER_UNITS / 2;
+
+/** Ближайшая к точке река или знак озера — то, что побеждает форму. */
+function nearestWater(
+  geometry: PhysicalGeometry,
+  point: Point,
+): { readonly id: string; readonly distance: number } | null {
+  let nearest: { id: string; distance: number } | null = null;
+
+  const consider = (id: string, distance: number) => {
+    if (nearest === null || distance < nearest.distance) {
+      nearest = { id, distance };
+    }
+  };
+
+  for (const [id, parts] of geometry.rivers) {
+    consider(id, distanceToPolylines(point[0], point[1], parts));
+  }
+
+  for (const [id, mark] of geometry.lakeMarks) {
+    consider(id, Math.hypot(point[0] - mark[0], point[1] - mark[1]));
+  }
+
+  return nearest;
+}
 
 export type PhysicalReport = {
   /** Доля свободных точек по каждой реке: её видно в логе сборки. */
@@ -278,6 +321,15 @@ export function validatePhysicalGeometry(
 ): PhysicalReport {
   const errors: string[] = [];
   const freeShare = new Map<string, number>();
+  /* Спрашиваемые формы с площадью: по ней ищется вложенность у подписи. */
+  const askedLandforms = features.flatMap((feature) => {
+    const rings =
+      feature.kind === 'landform' ? geometry.landforms.get(feature.id) : undefined;
+
+    return rings === undefined
+      ? []
+      : [{ id: feature.id, rings, area: polygonArea(rings) }];
+  });
   const frame = {
     minX: MAP_VIEWBOX_MIN_X,
     minY: MAP_VIEWBOX_MIN_Y,
@@ -378,6 +430,65 @@ export function validatePhysicalGeometry(
           `Форма ${feature.id} меньше ${MIN_TARGET_PX} px: ${availablePx.toFixed(1)} px ` +
             `при ширине карты ${REFERENCE_MAP_WIDTH} px`,
         );
+      }
+
+      /*
+       * Подпись формы обязана стоять там, куда можно нажать: внутри формы, на
+       * суше Китая и не внутри вложенной цели. Прежде подпись Тянь-Шаня стояла
+       * в Киргизии, а Гималаев — в Непале: нажатие там не давало ничего, потому
+       * что за границей проверка суши отсекает всё. Порог тот же, что у самой
+       * цели: подпись — это и есть место, куда целятся.
+       */
+      const label = geometry.shapeLabels.get(feature.id);
+      if (label === undefined) {
+        errors.push(`Нет подписи у формы ${feature.id}`);
+      } else if (!containsPoint(rings, label[0], label[1])) {
+        errors.push(`Подпись формы ${feature.id} вне её контура`);
+      } else if (
+        !containsPoint(geometry.landRings as Point[][], label[0], label[1])
+      ) {
+        errors.push(`Подпись формы ${feature.id} вне суши Китая`);
+      } else {
+        /*
+         * Свободное место меряется и до вложенных целей: середина Таримской
+         * впадины принадлежит Такла-Макану, и мерить одну лишь впадину значило
+         * бы засчитать место, куда нажать нельзя.
+         */
+        const area = polygonArea(rings);
+        const nested = askedLandforms.filter(
+          (other) =>
+            other.id !== feature.id &&
+            other.area < area &&
+            other.rings.flat().every(([x, y]) => containsPoint(rings, x, y)),
+        );
+        const radius = Math.min(
+          distanceToBoundary(rings, label[0], label[1]),
+          ...nested.map((other) =>
+            distanceToBoundary(other.rings, label[0], label[1]),
+          ),
+        );
+        const freePx = unitsToPixels(radius * 2, REFERENCE_MAP_WIDTH);
+        if (freePx < MIN_TARGET_PX) {
+          errors.push(
+            `У подписи формы ${feature.id} свободно ${freePx.toFixed(1)} px, ` +
+              `нужно ${MIN_TARGET_PX}`,
+          );
+        }
+
+        /*
+         * Вода проверяется здесь же: река и знак озера побеждают форму, и
+         * подпись, попавшая в их цель, досталась бы не своей. Порог — тот же,
+         * которым целится карта, а не запас генератора: проверка испытывает
+         * правило, а не привычки того, кто его исполняет.
+         */
+        const water = nearestWater(geometry, label);
+        if (water !== null && water.distance <= WATER_HIT_RADIUS_UNITS) {
+          errors.push(
+            `Подпись формы ${feature.id} в цели воды (${water.id}): ` +
+              `${water.distance.toFixed(1)} единицы при пороге ` +
+              `${WATER_HIT_RADIUS_UNITS.toFixed(1)}`,
+          );
+        }
       }
     }
   }

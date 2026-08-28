@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { cities } from '../src/content/cities';
 import { physicalFeatures } from '../src/content/physical-features';
 import { regions } from '../src/content/regions';
+import { parseLandRings } from '../src/map/land-rings';
 import { CALLOUT_TARGETS } from '../src/map/callout-targets';
 import {
   INPUTS_FINGERPRINT,
@@ -225,6 +226,15 @@ const physical = validatePhysicalGeometry(
         [shape.markX, shape.markY] as Point,
       ]),
     ),
+    shapeLabels: new Map(
+      RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined).map(
+        (shape) => [
+          shape.featureId as string,
+          [shape.labelX as number, shape.labelY as number] as Point,
+        ],
+      ),
+    ),
+    landRings: parseLandRings(svg),
   },
   {
     contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),

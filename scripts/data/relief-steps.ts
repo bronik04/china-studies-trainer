@@ -79,4 +79,12 @@ export const SHAPE_FEATURE_IDS: Readonly<Record<string, string>> = {
   'Qinling Mountains': 'qinling',
   'GREATER KHINGAN RANGE': 'greater-khingan',
   'Nan Ling Mts.': 'nanling',
+  'MONGOLIAN PLATEAU': 'mongolian-plateau',
+  'YUNGUI PLATEAU': 'yungui-plateau',
+  'Junggar Basin': 'junggar-basin',
+  'Qaidam Basin': 'qaidam-basin',
+  'MANCHURIAN PLAIN': 'northeast-plain',
+  'TAKLIMAKAN DESERT': 'taklamakan',
+  'Taihang Mts.': 'taihang',
+  'Hexi Corridor': 'hexi-corridor',
 };

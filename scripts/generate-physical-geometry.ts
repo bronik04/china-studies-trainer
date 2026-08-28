@@ -15,17 +15,22 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { physicalFeatures } from '../src/content/physical-features';
+import { TARGET_DIAMETER_UNITS } from '../src/map/city-hit-targets';
 import {
   clipRingToFrame,
   clipToFrame,
+  distanceToPolylines,
   ringArea,
   simplifyPath,
   simplifyRing,
   toPathData,
   type Frame,
 } from '../src/map/polyline';
+import { parseLandRings } from '../src/map/land-rings';
 import { projectLonLat } from '../src/map/projection';
 import {
+  containsPoint,
+  largestFreeCircle,
   largestInscribedCircle,
   type InscribedCircle,
   type Point,
@@ -56,6 +61,17 @@ const source = JSON.parse(sourceJson) as {
 };
 
 const OUT = new URL('../src/map/physical-geometry.ts', import.meta.url);
+
+/*
+ * Суша нужна подписям: они обязаны стоять внутри Китая. Разметка читается
+ * файлом — `?raw`-импорт `land.ts` умеет только сборка.
+ */
+const landRings = parseLandRings(
+  readFileSync(
+    new URL('../public/maps/china-provinces.svg', import.meta.url),
+    'utf8',
+  ),
+);
 
 /** Допуск склейки в градусах: примерно километр, вдесятеро меньше звена. */
 const JOIN_TOLERANCE_DEG = 0.01;
@@ -154,58 +170,10 @@ const riverLines = physicalFeatures
         (lost > 0 ? `, отброшено ${lost}` : ''),
     );
 
-    return { featureId: feature.id, d: toPathData(parts) };
+    return { featureId: feature.id, parts, d: toPathData(parts) };
   });
 
-// --- Формы рельефа ----------------------------------------------------------
-
-const withoutStep = source.landforms.filter(
-  (landform) => !Object.hasOwn(RELIEF_STEPS, landform.key),
-);
-if (withoutStep.length > 0) {
-  throw new Error(
-    `Нет ступени у форм: ${withoutStep.map((landform) => landform.key).join(', ')}. ` +
-      'Разметка живёт в scripts/data/relief-steps.ts',
-  );
-}
-
-const shapes = source.landforms
-  .map((landform) => {
-    const rings = landform.rings
-      .map((ring) =>
-        clipRingToFrame(
-          simplifyRing(project(ring), SIMPLIFY_TOLERANCE_UNITS),
-          FRAME,
-        ),
-      )
-      .filter((ring) => ring.length > 3);
-
-    const featureId = SHAPE_FEATURE_IDS[landform.key];
-
-    return {
-      key: landform.key,
-      step: RELIEF_STEPS[landform.key],
-      featureId,
-      rings,
-      /*
-       * Точка подписи считается здесь, а не на отрисовке: `largestInscribedCircle`
-       * — перебор по сетке в три прохода, и для региона его тоже считают на
-       * сборке (`generate-region-palette.ts`), а не в браузере. Нужна она только
-       * шести спрашиваемым формам: остальные тридцать две не подписываются.
-       */
-      label:
-        featureId === undefined
-          ? undefined
-          : (largestInscribedCircle(rings) as InscribedCircle),
-      area: rings.reduce((sum, ring) => sum + ringArea(ring), 0),
-    };
-  })
-  .filter((shape) => shape.rings.length > 0)
-  /*
-   * Крупные формы рисуются первыми: иначе Тибетское нагорье накрыло бы
-   * Цайдамскую котловину, которая лежит внутри него.
-   */
-  .sort((left, right) => right.area - left.area);
+// --- Озёра ------------------------------------------------------------------
 
 /*
  * Озёра. Контур нужен, чтобы вода была водой, но целью он быть не может: 24 px
@@ -235,6 +203,112 @@ const lakes = physicalFeatures
 
     return { featureId: feature.id, rings, mark: largestInscribedCircle(rings) };
   });
+
+// --- Формы рельефа ----------------------------------------------------------
+
+const withoutStep = source.landforms.filter(
+  (landform) => !Object.hasOwn(RELIEF_STEPS, landform.key),
+);
+if (withoutStep.length > 0) {
+  throw new Error(
+    `Нет ступени у форм: ${withoutStep.map((landform) => landform.key).join(', ')}. ` +
+      'Разметка живёт в scripts/data/relief-steps.ts',
+  );
+}
+
+const clipped = source.landforms
+  .map((landform) => ({
+    key: landform.key,
+    step: RELIEF_STEPS[landform.key],
+    featureId: SHAPE_FEATURE_IDS[landform.key],
+    rings: landform.rings
+      .map((ring) =>
+        clipRingToFrame(
+          simplifyRing(project(ring), SIMPLIFY_TOLERANCE_UNITS),
+          FRAME,
+        ),
+      )
+      .filter((ring) => ring.length > 3),
+  }))
+  .filter((shape) => shape.rings.length > 0)
+  .map((shape) => ({
+    ...shape,
+    area: shape.rings.reduce((sum, ring) => sum + ringArea(ring), 0),
+  }));
+
+const askedShapes = clipped.filter((shape) => shape.featureId !== undefined);
+
+/**
+ * Вложенные цели формы: спрашиваемые формы меньшей площади, лежащие внутри неё
+ * целиком. Такла-Макан лежит в Таримской впадине, и середина впадины
+ * принадлежит ему — по правилу «побеждает меньший» (`physical-hit.ts`).
+ * Подпись впадины обязана уйти оттуда, иначе имя стоит над чужой целью.
+ */
+function nestedOf(shape: (typeof clipped)[number]): Point[][][] {
+  return askedShapes
+    .filter(
+      (other) =>
+        other !== shape &&
+        other.area < shape.area &&
+        other.rings.flat().every(([x, y]) => containsPoint(shape.rings, x, y)),
+    )
+    .map((other) => other.rings);
+}
+
+/**
+ * Свободна ли точка от воды: река и знак озера побеждают форму по правилу
+ * «побеждает меньший» (`physical-hit.ts`), и подпись, попавшая на них,
+ * досталась бы не своей цели. У Юньнань-Гуйчжоуского плато середина легла
+ * ровно на Янцзы — проверено тестом «каждая форма достаётся себе».
+ *
+ * Порог взят с запасом в допуск упрощения, а не впритык к ленте реки. Поиск
+ * максимизирует радиус при жёстком ограничении и потому ставит середину
+ * вплотную к границе: у того же плато запас вышел 0,06 единицы при пороге
+ * 8,64. Линия реки при этом сама отходит от исходной до целой единицы
+ * (`SIMPLIFY_TOLERANCE_UNITS`), и следующий пересчёт геометрии загнал бы
+ * подпись внутрь ленты. Знак озера меряется тем же порогом: цель озера может
+ * отойти от знака разводкой (`spreadHitTargets`), и запас покрывает и это.
+ */
+const WATER_RADIUS_UNITS = TARGET_DIAMETER_UNITS / 2 + SIMPLIFY_TOLERANCE_UNITS;
+
+function isFreeOfWater(x: number, y: number): boolean {
+  return (
+    riverLines.every(
+      (river) => distanceToPolylines(x, y, river.parts) > WATER_RADIUS_UNITS,
+    ) &&
+    lakes.every(
+      (lake) => Math.hypot(x - lake.mark.x, y - lake.mark.y) > WATER_RADIUS_UNITS,
+    )
+  );
+}
+
+const shapes = clipped
+  .map((shape) => ({
+    ...shape,
+    /*
+     * Точка подписи считается здесь, а не на отрисовке: перебор по сетке в три
+     * прохода, и для региона его тоже считают на сборке
+     * (`generate-region-palette.ts`), а не в браузере.
+     *
+     * Не середина всей формы, а середина свободного круга: он лежит внутри
+     * формы, на суше Китая и вне вложенных целей. Прежде подпись Тянь-Шаня
+     * стояла в Киргизии, а Гималаев — в Непале: нажатие там не давало ничего,
+     * потому что за границей проверка суши отсекает всё.
+     */
+    label:
+      shape.featureId === undefined
+        ? undefined
+        : (largestFreeCircle(shape.rings, {
+            nested: nestedOf(shape),
+            isAllowed: (x, y) =>
+              containsPoint(landRings, x, y) && isFreeOfWater(x, y),
+          }) as InscribedCircle),
+  }))
+  /*
+   * Крупные формы рисуются первыми: иначе Тибетское нагорье накрыло бы
+   * Цайдамскую котловину, которая лежит внутри него.
+   */
+  .sort((left, right) => right.area - left.area);
 
 // --- Запись -----------------------------------------------------------------
 

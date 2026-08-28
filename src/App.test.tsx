@@ -58,9 +58,18 @@ beforeEach(() => {
  * не видит — куски дотянуты заранее, в простое после первого экрана.
  */
 async function settle(): Promise<void> {
-  await waitFor(() => {
-    expect(screen.queryByText('Экран загружается.')).toBeNull();
-  });
+  /*
+   * Запас времени втрое против умолчания `waitFor`: куски экранов подросли
+   * вместе с содержанием, и на полном прогоне, где файлы идут parallel, секунды
+   * им не всегда хватает. В одиночку файл проходил и с умолчанием — то есть
+   * ждали мы не экрана, а свободного процессора.
+   */
+  await waitFor(
+    () => {
+      expect(screen.queryByText('Экран загружается.')).toBeNull();
+    },
+    { timeout: 3000 },
+  );
 }
 
 /*
@@ -338,7 +347,7 @@ it('запускает раунд по физической географии �
   await settle();
 
   // Без выбора берётся первый набор — реки и формы, двенадцать целей.
-  expect(screen.getByText(/Вопрос 1 из 12/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 19/)).toBeInTheDocument();
 });
 
 it('набор перед стартом задаёт длину физического раунда', async () => {
@@ -349,7 +358,7 @@ it('набор перед стартом задаёт длину физичес�
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();
 
-  expect(screen.getByText(/Вопрос 1 из 24/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 32/)).toBeInTheDocument();
 });
 
 /** В заполнении по-русски спрошенный регион назван в плашке `fill-target`. */

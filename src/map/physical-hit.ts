@@ -20,6 +20,7 @@ import {
   boundingBox,
   containsPoint,
   parseMapPath,
+  polygonArea,
   type BoundingBox,
   type Point,
 } from './svg-path';
@@ -28,20 +29,34 @@ type ShapeHit = {
   readonly featureId: string;
   readonly rings: Point[][];
   readonly box: BoundingBox;
+  readonly area: number;
 };
 
 /**
  * Только спрашиваемые формы: остальные заливают фон, имени на экране не имеют
  * и целью быть не могут. Габарит считается один раз — внутри рамки точки
  * оказывается одна-две формы, и вхождение считается только для них.
+ *
+ * Порядок — по площади вверх, и это не тот порядок, в котором формы рисуются.
+ * Рисуются крупные первыми, иначе Тибетское нагорье закрасило бы вложенную
+ * Цайдамскую котловину; проверяются мелкие первыми, иначе нагорье забирает
+ * нажатие по Куньлуню. Правило одно и то же, названное словами: побеждает
+ * меньший.
  */
 const SHAPE_HITS: readonly ShapeHit[] = RELIEF_SHAPES.filter(
   (shape) => shape.featureId !== undefined,
-).map((shape) => {
-  const rings = parseMapPath(shape.d);
+)
+  .map((shape) => {
+    const rings = parseMapPath(shape.d);
 
-  return { featureId: shape.featureId!, rings, box: boundingBox(rings) };
-});
+    return {
+      featureId: shape.featureId!,
+      rings,
+      box: boundingBox(rings),
+      area: polygonArea(rings),
+    };
+  })
+  .sort((left, right) => left.area - right.area);
 
 /**
  * Цель под точкой карты или `null`, если её там нет: тогда точка достаётся

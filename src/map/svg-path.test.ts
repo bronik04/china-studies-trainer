@@ -4,8 +4,10 @@ import {
   containsPoint,
   distanceToBoundary,
   distanceToSegment,
+  largestFreeCircle,
   largestInscribedCircle,
   parseMapPath,
+  polygonArea,
   type Point,
 } from './svg-path';
 
@@ -161,4 +163,125 @@ it('вырожденный контур не притворяется целью
       1,
     ),
   ).toThrow('Контур без внутренних точек');
+});
+
+/* Площадь нужна порядку попадания: побеждает форма меньшей площади. */
+it('считает площадь квадрата', () => {
+  const square: Point[][] = [
+    [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+      [0, 0],
+    ],
+  ];
+
+  expect(polygonArea(square)).toBeCloseTo(100);
+});
+
+/* Кольцо без повтора первой точки — обычное дело в разобранном пути. */
+it('замыкает кольцо сам', () => {
+  const open: Point[][] = [
+    [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+    ],
+  ];
+
+  expect(polygonArea(open)).toBeCloseTo(100);
+});
+
+it('площадь не зависит от направления обхода', () => {
+  const clockwise: Point[][] = [
+    [
+      [0, 0],
+      [0, 10],
+      [10, 10],
+      [10, 0],
+    ],
+  ];
+
+  expect(polygonArea(clockwise)).toBeCloseTo(100);
+});
+
+it('складывает площади колец', () => {
+  const two: Point[][] = [
+    [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+    ],
+    [
+      [20, 20],
+      [24, 20],
+      [24, 24],
+      [20, 24],
+    ],
+  ];
+
+  expect(polygonArea(two)).toBeCloseTo(116);
+});
+
+/* Свободный круг: он же вписанная окружность, когда ничего не мешает. */
+it('свободный круг без ограничений — вписанная окружность', () => {
+  const square: Point[][] = [
+    [
+      [0, 0],
+      [100, 0],
+      [100, 100],
+      [0, 100],
+    ],
+  ];
+
+  const circle = largestFreeCircle(square, {});
+
+  expect(circle.radius).toBeCloseTo(50, 0);
+  expect(circle.x).toBeCloseTo(50, 0);
+});
+
+/* Вложенная цель забирает середину: круг уходит от неё в сторону. */
+it('свободный круг обходит вложенный контур', () => {
+  const square: Point[][] = [
+    [
+      [0, 0],
+      [100, 0],
+      [100, 100],
+      [0, 100],
+    ],
+  ];
+  const middle: Point[][] = [
+    [
+      [30, 30],
+      [70, 30],
+      [70, 70],
+      [30, 70],
+    ],
+  ];
+
+  const circle = largestFreeCircle(square, { nested: [middle] });
+
+  expect(circle.radius).toBeLessThan(30);
+  expect(circle.x < 30 || circle.x > 70 || circle.y < 30 || circle.y > 70).toBe(
+    true,
+  );
+});
+
+/* Середина может оказаться вне суши: тогда круг ищется там, где суша есть. */
+it('свободный круг ставит середину только в разрешённой точке', () => {
+  const square: Point[][] = [
+    [
+      [0, 0],
+      [100, 0],
+      [100, 100],
+      [0, 100],
+    ],
+  ];
+
+  const circle = largestFreeCircle(square, { isAllowed: (x) => x > 60 });
+
+  expect(circle.x).toBeGreaterThan(60);
 });
