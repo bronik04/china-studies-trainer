@@ -5,7 +5,13 @@ import {
   askedYearLabel,
 } from '../../content/dynasties';
 import type { Dynasty } from '../../content/types';
+import { cityById } from '../../content/cities';
+import {
+  capitalOfDynasty,
+  dynastyCapitals,
+} from '../../content/dynasty-capitals';
 import { buildDynastyChoices } from '../../domain/dynasty-choices';
+import { buildCapitalChoices } from '../../domain/dynasty-pair-choices';
 import { pickYear } from '../../domain/dynasty-years';
 import {
   labelOf,
@@ -24,7 +30,11 @@ import {
   type Round,
 } from '../../domain/round';
 import { DynastyTimeline, type TimelineMark } from './DynastyTimeline';
-import { HISTORY_MODE, HISTORY_YEAR_MODE } from './exercise-modes';
+import {
+  HISTORY_CAPITAL_MODE,
+  HISTORY_MODE,
+  HISTORY_YEAR_MODE,
+} from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
@@ -45,7 +55,7 @@ export type HistoryRoundProps = {
    * названного года. Раунд, цель, лента и отвлекающие у них общие, различаются
    * вопрос и подписи вариантов.
    */
-  readonly kind?: 'when' | 'who';
+  readonly kind?: 'when' | 'who' | 'capital';
   /**
    * Пул раунда. По умолчанию вся лента; «Повторить ошибки» задаёт его
    * напрямую, и никакому набору он не соответствует.
@@ -85,9 +95,21 @@ export function HistoryRound({
   onFinish,
   onExit,
 }: HistoryRoundProps) {
+  /*
+   * В игре о столицах спрашиваются не все двенадцать: у Ся, Шан, Чжоу, Цинь и
+   * Троецарствия столицы нет в каталоге городов, и вопрос о них собрать не из
+   * чего.
+   */
+  const pool =
+    kind === 'capital'
+      ? dynasties.filter(
+          (dynasty) => capitalOfDynasty(dynasty.id) !== undefined,
+        )
+      : dynasties;
+
   const [round, setRound] = useState<Round>(() =>
     createRound(
-      dynasties.map((dynasty) => historyTarget(dynasty.id)),
+      pool.map((dynasty) => historyTarget(dynasty.id)),
       {
         roundId,
         /*
@@ -141,10 +163,37 @@ export function HistoryRound({
     );
   }, [kind, round.questions, seed]);
 
+  /*
+   * Варианты игры о столицах: ответом служит город, а не династия, поэтому
+   * идентификатор варианта — `cityId`, и он же передаётся в `expectedId`.
+   */
+  const capitalChoicesByQuestion = useMemo(() => {
+    if (kind !== 'capital') {
+      return [];
+    }
+
+    const random = createSeededRandom(seed + 3);
+
+    return round.questions.map((item) =>
+      buildCapitalChoices(
+        dynastyCapitals,
+        allDynasties,
+        item.target.id,
+        random,
+      ),
+    );
+  }, [kind, round.questions, seed]);
+
   const target = allDynasties.find(
     (dynasty) => dynasty.id === question.target.id,
   ) as Dynasty;
-  const mode = kind === 'who' ? HISTORY_YEAR_MODE : HISTORY_MODE;
+  const capital = kind === 'capital' ? capitalOfDynasty(target.id) : undefined;
+  const mode =
+    kind === 'who'
+      ? HISTORY_YEAR_MODE
+      : kind === 'capital'
+        ? HISTORY_CAPITAL_MODE
+        : HISTORY_MODE;
   const askedYear = kind === 'who' ? yearByQuestion[round.currentIndex] : null;
   const lastAttempt = round.attempts[round.attempts.length - 1];
   const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
@@ -156,14 +205,20 @@ export function HistoryRound({
    * красилась киноварью при любом ответе, и верный ответ читался как ошибка.
    */
   const marks: readonly TimelineMark[] =
-    round.status !== 'feedback' || answeredId === null
-      ? []
-      : answeredId === target.id
-        ? [{ dynastyId: target.id, kind: 'correct' }]
-        : [
-            { dynastyId: target.id, kind: 'correct' },
-            { dynastyId: answeredId, kind: 'wrong' },
-          ];
+    /*
+     * В игре о столицах на ленте нечего помечать исходом: ответом служит
+     * город, а не время. Полоса лишь показывает, о какой династии речь.
+     */
+    kind === 'capital'
+      ? [{ dynastyId: target.id, kind: 'asked' }]
+      : round.status !== 'feedback' || answeredId === null
+        ? []
+        : answeredId === target.id
+          ? [{ dynastyId: target.id, kind: 'correct' }]
+          : [
+              { dynastyId: target.id, kind: 'correct' },
+              { dynastyId: answeredId, kind: 'wrong' },
+            ];
 
   const answeredDynasty = allDynasties.find(
     (dynasty) => dynasty.id === answeredId,
@@ -182,14 +237,22 @@ export function HistoryRound({
     setAskedAt(startClock());
   }
 
-  function answer(dynastyId: string) {
+  /**
+   * Что считается верным ответом. В играх о времени это сама династия, в игре
+   * о столицах — город: спрашивают одно, отвечают другим, и домен для этого
+   * уже носит `expectedId` (заведён игрой «город — регион»).
+   */
+  const expectedId = kind === 'capital' ? capital?.cityId : undefined;
+
+  function answer(answeredValueId: string) {
     if (round.status !== 'ready') {
       return;
     }
 
-    setAnsweredId(dynastyId);
+    setAnsweredId(answeredValueId);
     const answered = answerQuestion(round, {
-      answeredId: dynastyId,
+      answeredId: answeredValueId,
+      expectedId,
       durationMs: Math.round(startClock() - askedAt),
       answeredAt: new Date().toISOString(),
     });
@@ -208,29 +271,50 @@ export function HistoryRound({
       return undefined;
     }
 
-    if (choiceId === target.id) {
+    if (choiceId === (expectedId ?? target.id)) {
       return 'correct';
     }
 
     return choiceId === answeredId ? 'incorrect' : undefined;
   }
 
-  const choices: readonly StageChoice[] = choicesByQuestion[
-    round.currentIndex
-  ].map((choice) => ({
-    id: choice.id,
-    label: kind === 'who' ? choice.nameRu : spanLabel(choice),
-    result: resultOf(choice.id),
-  }));
+  const choices: readonly StageChoice[] =
+    kind === 'capital'
+      ? capitalChoicesByQuestion[round.currentIndex].map((choice) => ({
+          id: choice.cityId,
+          label: cityById(choice.cityId)?.nameRu ?? choice.historicNameRu,
+          result: resultOf(choice.cityId),
+        }))
+      : choicesByQuestion[round.currentIndex].map((choice) => ({
+          id: choice.id,
+          label: kind === 'who' ? choice.nameRu : spanLabel(choice),
+          result: resultOf(choice.id),
+        }));
+
+  /* Что стоит на плашке вопроса: имя династии, год или уточнение о столице. */
+  const askedLabel =
+    kind === 'capital' ? (capital?.qualifier ?? target.nameRu) : target.nameRu;
 
   const prompt = showsAnswer ? (
     <>
       <p className="eyebrow">
-        {kind === 'who' ? 'Эту династию стоит повторить' : 'Эту дату стоит повторить'}
+        {kind === 'who'
+          ? 'Эту династию стоит повторить'
+          : kind === 'capital'
+            ? 'Эту столицу стоит повторить'
+            : 'Эту дату стоит повторить'}
       </p>
       <h1 className="stage-target" data-testid="exercise-target">
-        <span lang={langOf(language)}>{labelOf(target, language)}</span> —{' '}
-        {spanLabel(target)}
+        {kind === 'capital' ? (
+          <>
+            {askedLabel} — {capital?.historicNameRu}
+          </>
+        ) : (
+          <>
+            <span lang={langOf(language)}>{labelOf(target, language)}</span> —{' '}
+            {spanLabel(target)}
+          </>
+        )}
       </h1>
     </>
   ) : (
@@ -248,6 +332,14 @@ export function HistoryRound({
       {kind === 'who' ? (
         <h1 className="stage-target" data-testid="exercise-target">
           {askedYearLabel(askedYear as number)}
+        </h1>
+      ) : kind === 'capital' ? (
+        /*
+         * Уточнение вместо имени там, где столицу переносили: «столица Хань»
+         * имеет два верных ответа, «столица Западной Хань» — один.
+         */
+        <h1 className="stage-target" data-testid="exercise-target">
+          {askedLabel}
         </h1>
       ) : (
         <h1
@@ -301,16 +393,31 @@ export function HistoryRound({
            * пути к одному ответу, как карта и «ответить из списка» в играх по
            * регионам.
            */
-          onAnswer={round.status === 'ready' ? answer : undefined}
+          onAnswer={
+            kind !== 'capital' && round.status === 'ready' ? answer : undefined
+          }
           hint={
             round.status === 'feedback' ? (
               <p className="history-note">
+                {/*
+                  Разбор столицы называет оба имени: город в учебнике истории и
+                  город на нынешней карте — один и тот же, и в этом весь урок.
+                */}
+                {kind === 'capital' && capital !== undefined ? (
+                  <>
+                    Столица {askedLabel} — {capital.historicNameRu} (
+                    <span lang="zh-Hans">{capital.historicNameZh}</span>),
+                    нынешний {cityById(capital.cityId)?.nameRu}.
+                    {capital.note !== undefined ? ` ${capital.note}` : ''}
+                  </>
+                ) : null}
                 {/*
                   Выбранную по ошибке называет строка разбора, а не подпись на
                   ленте: две выделенные подписи рядом налезают друг на друга, а
                   у Тан и Сун они рядом.
                 */}
-                {answeredDynasty !== undefined &&
+                {kind !== 'capital' &&
+                answeredDynasty !== undefined &&
                 answeredDynasty.id !== target.id ? (
                   <>
                     Вы показали {answeredDynasty.nameRu} —{' '}
@@ -322,12 +429,13 @@ export function HistoryRound({
                     {spanLabel(answeredDynasty).endsWith('.') ? '' : '.'}{' '}
                   </>
                 ) : null}
-                {target.note}
+                {kind === 'capital' ? null : target.note}
               </p>
             ) : (
               <p className="history-hint">
-                Нажмите по ленте или выберите срок ниже: длина каждой полосы —
-                настоящий срок династии.
+                {kind === 'capital'
+                  ? 'Полоса на ленте показывает, о какой династии речь.'
+                  : 'Нажмите по ленте или выберите срок ниже: длина каждой полосы — настоящий срок династии.'}
               </p>
             )
           }

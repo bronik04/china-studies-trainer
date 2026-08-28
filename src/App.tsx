@@ -166,7 +166,9 @@ export default function App() {
    * ошибок обязан идти в той же игре, где ошиблись, а он запускается с экрана
    * итогов, где карточки уже нет.
    */
-  const [historyKind, setHistoryKind] = useState<'when' | 'who'>('when');
+  const [historyKind, setHistoryKind] = useState<'when' | 'who' | 'capital'>(
+    'when',
+  );
   /* Пул снимков. Как и у прочих: «Повторить ошибки» задаёт его напрямую. */
   const [culturePool, setCulturePool] = useState<readonly Collection[]>(() =>
     cultureCollectionsUpTo('culture'),
@@ -377,7 +379,7 @@ export default function App() {
   function startHistoryRound(
     nextLanguage: QuestionLanguage = language,
     pool: readonly Dynasty[] = dynasties,
-    kind: 'when' | 'who' = historyKind,
+    kind: 'when' | 'who' | 'capital' = historyKind,
   ) {
     setHistoryPool(pool);
     setHistoryKind(kind);
