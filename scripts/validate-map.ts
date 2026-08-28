@@ -31,7 +31,9 @@ import {
   validateTargetSizes,
   validateViewBox,
 } from '../src/map/validate-map';
+import { PALETTE_INPUTS_FINGERPRINT } from '../src/map/region-palette';
 import { physicalInputsFingerprint } from './physical-fingerprint';
+import { paletteInputsFingerprint } from './palette-fingerprint';
 import { reliefInputsFingerprint } from './relief-fingerprint';
 
 const assetPath = new URL('../public/maps/china-provinces.svg', import.meta.url);
@@ -91,9 +93,48 @@ const placement = validateCityPlacement(
   },
 );
 
+/*
+ * Города на кромке контура — известное и законное состояние: координаты
+ * настоящие, а контуры карты генерализованы, и приморский или приграничный
+ * город выходит наружу на доли единицы, оставаясь на своём месте. Двигать его
+ * ради контура значило бы учить неверному.
+ *
+ * Но «названы и пропущены» — не то же, что «разрешены»: новый город на кромке
+ * попал бы в тот же лог и прошёл незамеченным, а он мог оказаться там из-за
+ * настоящей ошибки в координатах. Поэтому список закреплён, и любое
+ * расхождение с ним требует человеческого взгляда.
+ */
+const EXPECTED_ON_BOUNDARY = [
+  'heihe',
+  'hong-kong',
+  'manzhouli',
+  'qingdao',
+  'shenzhen',
+  'suifenhe',
+];
+
+const onBoundary = [...placement.onBoundary].sort();
+const unexpected = onBoundary.filter((id) => !EXPECTED_ON_BOUNDARY.includes(id));
+const gone = EXPECTED_ON_BOUNDARY.filter((id) => !onBoundary.includes(id));
+
+if (unexpected.length > 0) {
+  throw new Error(
+    `Новые города на кромке контура: ${unexpected.join(', ')}. Проверьте их ` +
+      'координаты по источнику; если город и правда приморский или ' +
+      'приграничный, добавьте его в EXPECTED_ON_BOUNDARY.',
+  );
+}
+
+if (gone.length > 0) {
+  throw new Error(
+    `Города ушли с кромки контура: ${gone.join(', ')}. Список ` +
+      'EXPECTED_ON_BOUNDARY устарел — уберите их из него.',
+  );
+}
+
 console.info(
-  `Проверено городов: ${cities.length}. На кромке контура: ${placement.onBoundary.length}` +
-    (placement.onBoundary.length > 0 ? ` (${placement.onBoundary.join(', ')})` : ''),
+  `Проверено городов: ${cities.length}. На кромке контура: ${onBoundary.length}` +
+    (onBoundary.length > 0 ? ` (${onBoundary.join(', ')})` : ''),
 );
 
 /*
@@ -134,6 +175,21 @@ if (expectedFingerprint !== INPUTS_FINGERPRINT) {
   throw new Error(
     `Геометрия физической карты собрана из других входов: в файле ${INPUTS_FINGERPRINT}, ` +
       `у нынешних входов ${expectedFingerprint}. Запустите npm run generate:physical`,
+  );
+}
+
+/*
+ * Палитра — тем же приёмом. `validateRegionPalette` выше спрашивает, есть ли
+ * запись у каждого региона, и на этот вопрос сдвинутый контур ответит «да»:
+ * запись останется прежней. Отпечаток спрашивает другое — из этих ли контуров
+ * она собрана. Он же сторожит цели нажатия: их расставляет `generate:hit-targets`
+ * по точкам и диаметрам палитры.
+ */
+const expectedPaletteFingerprint = paletteInputsFingerprint(svg);
+if (expectedPaletteFingerprint !== PALETTE_INPUTS_FINGERPRINT) {
+  throw new Error(
+    `Палитра собрана из других контуров: в файле ${PALETTE_INPUTS_FINGERPRINT}, ` +
+      `у нынешних ${expectedPaletteFingerprint}. Запустите npm run generate:palette`,
   );
 }
 

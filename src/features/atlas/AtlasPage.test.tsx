@@ -1,7 +1,19 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
+import { physicalFeatures } from '../../content/physical-features';
 import { regions } from '../../content/regions';
+import { loadPhysicalMap } from '../../map/load-physical-map';
 import { AtlasPage } from './AtlasPage';
+
+/*
+ * Физический слой приезжает отдельным куском сборки, и карта берёт его
+ * `import()`-ом. Загружается он здесь, один раз на файл: дальше карта
+ * получает его прямо при монтировании, и проверки остаются синхронными — как
+ * и в браузере, где кусок дотянут заранее.
+ */
+beforeAll(async () => {
+  await loadPhysicalMap();
+});
 
 function renderAtlas(selectedRegionId: string | null = null) {
   const onSelect = vi.fn();
@@ -56,6 +68,7 @@ it('показывает карточку выбранного региона с
 
   expect(card).toHaveTextContent('Хунань');
   expect(card).toHaveTextContent('湖南');
+
   expect(card).toHaveTextContent('Чанша');
   expect(card).toHaveTextContent('长沙');
 });
@@ -182,12 +195,13 @@ it('карточка региона показывает справку с те�
 });
 
 /*
- * У физических объектов facts пока пусты (контентные ветки наполняли регионы
- * и коллекции) — блок обязан молча не рендериться, а не показывать пустую
- * «Справку». Когда факты объектов наполнят, компонент заработает без правок,
- * и этот тест нужно будет заменить позитивным.
+ * Прежде здесь стоял обратный тест: у объектов не было фактов, и проверялось,
+ * что блок молча не рендерится. Факты написаны — проверяется то, ради чего
+ * блок и делали. Темы берутся из справочника, а не переписываются сюда: тест
+ * о том, что справка дошла до карточки, а не о том, что в ней написано.
  */
-it('пустая справка физического объекта не рендерится', () => {
+it('показывает справку физического объекта с источниками', () => {
+  const feature = physicalFeatures.find(({ id }) => id === 'yellow-river');
   renderAtlas();
 
   fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
@@ -196,7 +210,21 @@ it('пустая справка физического объекта не ре�
   const card = screen.getByTestId('atlas-region-card');
 
   expect(card).toHaveTextContent('Хуанхэ');
-  expect(card).not.toHaveTextContent('Справка');
+  expect(card).toHaveTextContent('Справка');
+  expect(card).toHaveTextContent('Источники:');
+  for (const fact of feature?.facts ?? []) {
+    expect(card).toHaveTextContent(fact.title);
+  }
+});
+
+/* У каждой цели справка есть: без неё карточка снова замолчала бы. */
+it('не оставляет ни одной цели без справки', () => {
+  for (const feature of physicalFeatures) {
+    expect(
+      feature.facts.length,
+      `${feature.id}: фактов ${feature.facts.length}`,
+    ).toBeGreaterThanOrEqual(2);
+  }
 });
 
 /*

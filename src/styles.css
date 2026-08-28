@@ -384,6 +384,12 @@ p {
   }
 }
 
+/*
+ * Надзаголовок. Иногда это настоящий заголовок раздела — «Справка» в карточке
+ * атласа и на странице коллекции, — поэтому размер и вес задаются здесь, а не
+ * достаются от `h2`: иначе один и тот же надзаголовок выглядел бы по-разному
+ * в зависимости от того, каким узлом его набрали.
+ */
 .eyebrow {
   color: var(--accent-on-ground);
   font-size: var(--t-size-caption);
@@ -985,7 +991,7 @@ button.text:hover:enabled {
 .china-map .city-label {
   fill: var(--map-label);
   font-family: var(--t-family-text);
-  font-size: 12px;
+  font-size: var(--map-label-size);
   font-weight: var(--t-weight-bold);
   opacity: 0;
   paint-order: stroke;
@@ -1316,7 +1322,7 @@ button.text:hover:enabled {
 .china-map .physical-label {
   fill: var(--map-label);
   font-family: var(--t-family-text);
-  font-size: 10px;
+  font-size: var(--map-label-size);
   font-weight: var(--t-weight-bold);
   opacity: 0;
   paint-order: stroke;
@@ -1966,6 +1972,8 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   cursor: pointer;
   display: flex;
   gap: var(--s-3);
+  display: inline-flex;
+  align-items: center;
   min-height: var(--target-min);
   padding: var(--s-2) var(--s-4);
 }
@@ -2031,7 +2039,12 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   margin-bottom: var(--s-5);
 }
 
-button.chip {
+/*
+ * Чип. Кнопкой он фильтрует витрину на главной, ссылкой — ведёт к группе в
+ * разделе коллекций. Вид один: это одна и та же вещь на экране, и разный вид
+ * у одинакового поведения читался бы как разное поведение.
+ */
+.chip {
   background: transparent;
   border: var(--border-hair) solid var(--line-on-ground-strong);
   border-radius: var(--radius-sm);
@@ -2041,7 +2054,7 @@ button.chip {
   padding: var(--s-2) var(--s-4);
 }
 
-button.chip:hover {
+.chip:hover {
   border-color: var(--accent-on-ground);
 }
 
@@ -2129,6 +2142,60 @@ button.chip[aria-pressed='true'] {
   border: var(--border-hair) dashed var(--line-on-paper);
   border-radius: var(--radius-md);
   min-height: 8rem;
+}
+
+/*
+ * Снимок коллекции. Высоты те же, что у места под него: заполненная карточка
+ * не должна менять раскладку рядом с незаполненной.
+ *
+ * `object-fit: cover` вместо подгонки пропорций: снимки приходят с Викисклада
+ * какими есть — от панорамы 3:1 до почти квадрата, — и подрезка кадра честнее
+ * растяжения.
+ */
+.collection-photo {
+  border-bottom: var(--border-hair) solid var(--line-on-paper);
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.collection-photo img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.collection-photo[data-photo-height='card'] {
+  height: 10.5rem;
+}
+
+.collection-photo[data-photo-height='hero'] {
+  border: var(--border-hair) solid var(--line-on-paper);
+  border-radius: var(--radius-md);
+  height: 16rem;
+}
+
+.collection-photo[data-photo-height='thumb'] {
+  border: var(--border-hair) solid var(--line-on-paper);
+  border-radius: var(--radius-md);
+  height: 8rem;
+}
+
+/*
+ * Подпись об авторе и лицензии — условие показа по CC BY и CC BY-SA, поэтому
+ * она лежит на самом кадре и уехать от него не может. Тёмная подложка, а не
+ * прозрачность: снимок бывает любым, и текст обязан читаться на светлом небе
+ * так же, как на тёмной стене.
+ */
+.collection-photo figcaption {
+  background: rgb(0 0 0 / 60%);
+  bottom: 0;
+  color: #fff;
+  font-size: var(--t-size-caption);
+  inset-inline: 0;
+  padding: var(--s-1) var(--s-2);
+  position: absolute;
 }
 
 .photo-slot-label {
@@ -2694,6 +2761,287 @@ button.chip[aria-pressed='true'] {
   flex-direction: column;
   min-block-size: 0;
   position: relative;
+}
+
+/*
+ * Переход к группе коллекций. Ссылками, а не кнопками: они ведут на место
+ * страницы, и работать это должно так же, как любая ссылка, — с историей и с
+ * открытием в новой вкладке.
+ */
+.group-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-block: var(--s-5) var(--s-6);
+}
+
+.group-jump .chip {
+  text-decoration: none;
+}
+
+/*
+ * Запаса под шапку здесь нет намеренно: он один на весь сайт —
+ * `scroll-padding-block-start` у корня, — и второй сложился бы с ним.
+ */
+
+/*
+ * Сообщение об отказе физической карты. Поверх карты и по центру: смотрят на
+ * карту, и объяснение должно стоять там же, а не в углу страницы.
+ */
+.map-failure {
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+  color: var(--text-on-ground);
+  font-size: var(--t-size-caption);
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  margin: 0;
+  max-inline-size: min(90%, 26rem);
+  padding: var(--s-3) var(--s-4);
+  position: absolute;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+}
+
+/* --- Кадр режима «Культура» ------------------------------------------------ */
+
+/*
+ * Место карты занимает сам вопрос — фотография. Кадром, а не потоком, по той
+ * же причине, что и лента династий: `.stage-map` позиционирован, и `inset: 0`
+ * держит снимок ровно в его границах.
+ */
+.culture-stage {
+  align-items: center;
+  background: var(--surface-ground);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  inset: 0;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(var(--s-7), 11vh, calc(var(--s-8) + var(--s-5))) var(--s-6)
+    var(--s-5);
+  position: absolute;
+}
+
+/*
+ * Снимок вписывается целиком, а не подрезается: подрезка кадра здесь отняла бы
+ * у вопроса ту самую подробность, по которой место и узнают.
+ */
+.collection-photo[data-photo-height='stage'] {
+  block-size: 100%;
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-md);
+  inline-size: 100%;
+  max-inline-size: 64rem;
+}
+
+.collection-photo[data-photo-height='stage'] img {
+  object-fit: contain;
+}
+
+.culture-note {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: 0;
+  max-inline-size: 52rem;
+  text-align: center;
+}
+
+/* Подсказка в плашке ответа: где это увидят. */
+.stage-hint {
+  font-size: var(--t-size-body);
+  font-weight: var(--t-weight-regular);
+}
+
+/* --- Лента династий ------------------------------------------------------ */
+
+/*
+ * Место карты в режиме «История» занимает лента времени. Она не карта: у неё
+ * нет ни увеличения, ни выбора. Верхнее поле большое намеренно — плашка
+ * вопроса стоит поверх кадра, и лента обязана начинаться ниже неё, иначе
+ * вопрос закрывает как раз ту часть ленты, о которой спрашивает.
+ */
+.history-stage {
+  align-items: center;
+  /*
+   * Своя поверхность, а не морской тон карты: карты в этом режиме нет, а
+   * `.stage-map` красит кадр под море. Лента печатается на бумаге — отсюда и
+   * бумажные токены у текста и линий ниже.
+   */
+  background: var(--surface-paper);
+  display: flex;
+  flex-direction: column;
+  /*
+   * Промежутки и поля тянутся за высотой кадра: в низком окне лента иначе
+   * обрезалась бы краем, а обрезанная лента врёт о времени сильнее, чем
+   * мелкая.
+   */
+  gap: clamp(var(--s-3), 3vh, var(--s-5));
+  /*
+   * Кадром, а не потоком: `flex: 1` давал ленте вырасти выше кадра карты, и
+   * бумага накрывала полосу вариантов под ним. Родитель `.stage-map`
+   * позиционирован, и `inset: 0` держит ленту ровно в его границах.
+   */
+  inset: 0;
+  justify-content: center;
+  overflow: hidden;
+  /*
+   * Верхнее поле — под плашку вопроса: она стоит поверх кадра абсолютом, и
+   * без запаса лента начинается прямо под ней, а вопрос закрывает как раз ту
+   * часть ленты, о которой спрашивает.
+   */
+  padding: calc(var(--s-8) + var(--s-5)) var(--s-6) var(--s-5);
+  position: absolute;
+}
+
+.dynasty-timeline {
+  /* Лента не сжимается до нуля: её теснит текст под ней, а не наоборот. */
+  flex: 0 0 auto;
+  inline-size: 100%;
+  max-inline-size: 64rem;
+  position: relative;
+}
+
+/* --- шкала --- */
+
+.timeline-scale {
+  block-size: clamp(1.25rem, 3vh, 1.75rem);
+  position: relative;
+}
+
+/* Штрихи шкалы и подписи разрывов делят одну строку над лентой. */
+
+.timeline-tick {
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/*
+ * Крайние метки прижимаются к своему краю: «2000 до н. э.» на левом конце
+ * иначе наполовину уезжает за кадр.
+ */
+.timeline-tick[data-edge='start'] {
+  transform: none;
+}
+
+.timeline-tick[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+/* --- полосы --- */
+
+.timeline-band {
+  block-size: clamp(2rem, 7vh, 4rem);
+  border-block: var(--border-hair) solid var(--line-on-paper);
+  position: relative;
+}
+
+/*
+ * Полосы одного тона: лента показывает время, а не род династии, и красить их
+ * по-разному значило бы завести на экране второй смысл, которого нет.
+ * Спрошенная выделяется цветом и тушью — тем же приёмом, что объект на
+ * физической карте.
+ */
+.timeline-span {
+  background: var(--timeline-span);
+  block-size: 100%;
+  /* Разделитель цветом бумаги: полосы обязаны читаться поштучно, а не лентой. */
+  border-inline: var(--border-hair) solid var(--surface-paper);
+  /* Полоса Цинь — четырнадцать лет из четырёх тысяч: без минимума её не видно. */
+  min-inline-size: 2px;
+  position: absolute;
+  inset-block-start: 0;
+}
+
+/*
+ * Обводка, а не только цвет: киноварь и сланец на бумаге стоят близко, и
+ * рядом друг с другом их не различить. Тот же довод, что у выделения объекта
+ * на физической карте.
+ */
+.timeline-span[data-highlighted='true'] {
+  background: var(--timeline-span-current);
+  box-shadow: 0 0 0 2px var(--timeline-span-outline);
+  z-index: 1;
+}
+
+/* --- имена --- */
+
+.timeline-names {
+  block-size: clamp(2.25rem, 6vh, 3.25rem);
+  position: relative;
+}
+
+/*
+ * Подпись разрыва стоит над ним, в строке шкалы: сам разрыв — 301 год из
+ * четырёх тысяч, и слово в него не помещается. Ниже, к именам, её уводить
+ * нельзя — там она попала бы между «Хань» и «Тан» и склеилась бы с ними.
+ */
+.timeline-gap {
+  block-size: clamp(2rem, 7vh, 4rem);
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+  font-style: italic;
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.timeline-name {
+  color: var(--text-on-paper-muted);
+  display: block;
+  font-size: var(--t-size-body);
+  padding-block-start: var(--s-1);
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/*
+ * Подпись спрошенной династии кладётся поверх соседних, на своей бумаге: у
+ * Цинь и Троецарствия полоса уже подписи, и она неизбежно налезает на соседа.
+ * Прятать соседей пришлось бы измерением ширины текста, а бумага под подписью
+ * решает то же самое разметкой.
+ */
+.timeline-name[data-highlighted='true'] {
+  background: var(--surface-paper);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-paper);
+  font-weight: var(--t-weight-bold);
+  padding-inline: var(--s-2);
+  z-index: 1;
+}
+
+.timeline-name-years {
+  display: block;
+  font-weight: var(--t-weight-regular);
+}
+
+/*
+ * Текст под лентой сжимается и обрезается первым: если чему-то и не хватать
+ * места, то объяснению, а не самой ленте.
+ */
+.history-hint,
+.history-note {
+  color: var(--text-on-paper-muted);
+  min-block-size: 0;
+  overflow: hidden;
+  font-size: var(--t-size-caption);
+  margin: 0;
+  max-inline-size: 44rem;
+  text-align: center;
+}
+
+.history-note {
+  color: var(--text-on-paper);
+  font-size: var(--t-size-body);
 }
 
 /* Полный экран отдаёт кадр оболочке: фон обязан быть её, а не прозрачным. */

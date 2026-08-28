@@ -90,3 +90,21 @@ it('берёт язык последней попытки', () => {
 it('при пустой истории спрашивает по-русски', () => {
   expect(nextStep([], NOW).language).toBe('ru');
 });
+
+/*
+ * Главный шаг — раунд по регионам. Чужой раунд не должен его подменять: у
+ * династий форма `match-pair`, и, взяв её как «последнюю игру», кабинет
+ * предложил бы «Регион — столица», которую ученик не выбирал.
+ */
+it('не берёт режим и язык из раунда по другим целям', () => {
+  const region = attempt('hunan', 'r1', true, 'find-on-map', 'ru');
+  const dynasty: Attempt = {
+    ...attempt('tang', 'r2', true, 'match-pair', 'zh'),
+    target: { kind: 'history', id: 'tang' },
+  };
+
+  const step = nextStep([region, dynasty], NOW);
+
+  expect(step.exerciseType).toBe('find-on-map');
+  expect(step.language).toBe('ru');
+});

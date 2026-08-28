@@ -27,7 +27,28 @@ function canWrite(storage: Storage): boolean {
   }
 }
 
-export function createProgressStore(storage: Storage | null): ProgressStore {
+/**
+ * Хранилище браузера или null, если политика запрещает даже обращение к нему.
+ *
+ * Живёт здесь, а не у приложения: правило «компоненты не трогают localStorage»
+ * записано без исключений, а `App` вынужденно держал этот try у себя. Теперь
+ * хранилище берут здесь, и правилу больше нечего нарушать.
+ */
+function browserStorage(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Без довода берётся хранилище браузера. Довод остаётся ради тестов: они
+ * подсовывают карту в памяти и явное `null`, чтобы проверить деградацию.
+ */
+export function createProgressStore(
+  storage: Storage | null = browserStorage(),
+): ProgressStore {
   if (storage === null || !canWrite(storage)) {
     return {
       isAvailable: false,

@@ -2,9 +2,15 @@ import { expect, it } from 'vitest';
 import { missingGlyphs } from './font-coverage';
 import type { FontSpec } from './font-manifest';
 
-const GROUPS = { han: '安', pinyin: 'ā', symbol: '✓', rest: 'А' };
+/* `latin` — прочая диакритика: её несёт текстовый шрифт, а не китайский. */
+const GROUPS = { han: '安', pinyin: 'ā', symbol: '✓', latin: 'ř', rest: 'А' };
 const FONTS: readonly FontSpec[] = [
-  { file: 'latin.woff2', family: 'Golos Text', weight: 400, requires: ['rest'] },
+  {
+    file: 'latin.woff2',
+    family: 'Golos Text',
+    weight: 400,
+    requires: ['rest', 'latin'],
+  },
   {
     file: 'han.woff2',
     family: 'Noto Serif SC',
@@ -17,7 +23,7 @@ const points = (chars: string) => [...chars].map((c) => c.codePointAt(0)!);
 
 it('пропускает, когда всё покрыто', () => {
   const coverage = {
-    'latin.woff2': points('А'),
+    'latin.woff2': points('Аř'),
     'han.woff2': points('安ā✓'),
   };
 
@@ -26,7 +32,7 @@ it('пропускает, когда всё покрыто', () => {
 
 it('называет знак, шрифт и кодовую точку', () => {
   const coverage = {
-    'latin.woff2': points('А'),
+    'latin.woff2': points('Аř'),
     'han.woff2': points('安ā'),
   };
 
@@ -37,7 +43,7 @@ it('называет знак, шрифт и кодовую точку', () => {
 
 it('молчит о знаке из списка исключений', () => {
   const coverage = {
-    'latin.woff2': points('А'),
+    'latin.woff2': points('Аř'),
     'han.woff2': points('安ā'),
   };
 
@@ -51,7 +57,7 @@ it('падает, если для шрифта нет записи о покры
 it('не спрашивает с латинского шрифта того, что он не набирает', () => {
   // У Golos Text нет `ā`, но пиньинь уходит в китайский шрифт по `lang`.
   const coverage = {
-    'latin.woff2': points('А'),
+    'latin.woff2': points('Аř'),
     'han.woff2': points('安ā✓'),
   };
 

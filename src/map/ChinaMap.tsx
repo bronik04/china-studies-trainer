@@ -10,7 +10,7 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
 import { CityLayer } from './CityLayer';
-import { PhysicalLayer, type FeatureOutcome } from './PhysicalLayer';
+import type { FeatureOutcome } from './PhysicalLayer';
 import { cityPointsOfRegions } from './city-points';
 import {
   clampView,
@@ -30,7 +30,11 @@ import {
   type RegionProgressState,
 } from './region-progress';
 import { isRegionSelectable, type AnswerState } from './region-selection';
-import { physicalTargetAt } from './physical-hit';
+import {
+  loadedPhysicalMap,
+  loadPhysicalMap,
+  type PhysicalMap,
+} from './load-physical-map';
 import { RegionAnswerList } from './RegionAnswerList';
 
 export type { AnswerState } from './region-selection';
@@ -237,11 +241,53 @@ export function ChinaMap({
    * саму линию, а на полосу вокруг неё, и браузер о такой цели не знает.
    */
   const [hoveredFeatureId, setHoveredFeatureId] = useState<string | null>(null);
+  /*
+   * Физический слой приезжает отдельным куском сборки: на первом экране он не
+   * нужен, а весит больше всего после самой карты. Начальное значение — то,
+   * что уже загружено: приложение тянет кусок в простое после первого экрана,
+   * и обычно он здесь ещё до того, как кто-то откроет физическую карту.
+   * Иначе слой появится кадром позже, а до тех пор карта просто политическая.
+   */
+  const [physicalMap, setPhysicalMap] = useState<PhysicalMap | null>(
+    loadedPhysicalMap,
+  );
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
 
   useEffect(() => {
     setCitySvg(mapRef.current?.querySelector<SVGSVGElement>('svg') ?? null);
   }, []);
+
+  /*
+   * Отказ виден. Кусок приезжает по сети, и в классе с упавшим Wi-Fi он может
+   * не приехать вовсе; молча оставленная политическая карта на вкладке
+   * «Физическая» выглядит поломкой без объяснения, а на вопрос «найдите реку»
+   * отвечать было бы нечем.
+   */
+  const [physicalFailed, setPhysicalFailed] = useState(false);
+
+  useEffect(() => {
+    if (variant !== 'physical' || physicalMap !== null) {
+      return;
+    }
+
+    let alive = true;
+    void loadPhysicalMap().then(
+      (module) => {
+        if (alive) {
+          setPhysicalMap(module);
+        }
+      },
+      () => {
+        if (alive) {
+          setPhysicalFailed(true);
+        }
+      },
+    );
+
+    return () => {
+      alive = false;
+    };
+  }, [variant, physicalMap]);
 
   /*
    * Вид применяется к самой разметке, а не к состоянию React: карта вставлена
@@ -463,7 +509,8 @@ export function ChinaMap({
 
     const [x, y] = pointAtClient(view, svg.getBoundingClientRect(), clientX, clientY);
 
-    return physicalTargetAt(x, y, view.zoom);
+    /* Кусок ещё не приехал — под точкой пока ничего нет, и это правда. */
+    return physicalMap?.physicalTargetAt(x, y, view.zoom) ?? null;
   }
 
   const resolvesFeatures = variant === 'physical' && onSelectFeature !== undefined;
@@ -621,9 +668,9 @@ export function ChinaMap({
           карты. Области под ним уже нарисованы и дают нейтральный тон тем
           27.8 % суши, которых нет ни в одной названной форме.
         */}
-        {variant === 'physical' && citySvg !== null
+        {variant === 'physical' && citySvg !== null && physicalMap !== null
           ? createPortal(
-              <PhysicalLayer
+              <physicalMap.PhysicalLayer
                 selectedFeatureId={selectedFeatureId}
                 hoveredFeatureId={hoveredFeatureId}
                 onSelect={onSelectFeature}
@@ -634,6 +681,22 @@ export function ChinaMap({
               citySvg,
             )
           : null}
+        {/*
+          Сообщение об отказе — на самой карте, а не в углу страницы: смотрят
+          на карту, и там же должно стоять объяснение, почему на ней ничего
+          нет.
+        */}
+        {/*
+          Признак неудачи не сбрасывается при новой попытке: сброс — это
+          setState прямо в эффекте. Сообщение гаснет само, когда кусок всё же
+          приезжает, потому что условие спрашивает и о нём.
+        */}
+        {variant === 'physical' && physicalFailed && physicalMap === null ? (
+          <p className="map-failure" role="status">
+            Физическая карта не загрузилась: нет связи. Она появится, когда
+            связь вернётся, — обновите страницу.
+          </p>
+        ) : null}
         {/* Зум идёт после карты в разметке: сначала предмет, потом управление им. */}
         {/*
           Управление показывается тому, кто его попросил, — и только ему.

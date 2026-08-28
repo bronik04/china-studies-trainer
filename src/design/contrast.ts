@@ -9,9 +9,6 @@
 /** Порог для обычного текста (WCAG 1.4.3). */
 export const TEXT_CONTRAST = 4.5;
 
-/** Порог для крупного текста от 24 px, а также от 18.66 px полужирного. */
-export const LARGE_TEXT_CONTRAST = 3;
-
 /**
  * Порог для границ, состояний и графики, без которой контент не понять
  * (WCAG 1.4.11). Тот же порог требует MAP_SPEC.md от обводки и фокуса.
@@ -52,7 +49,11 @@ export function relativeLuminance(hex: string): number {
   );
 }
 
-export function contrastRatio(foreground: string, background: string): number {
+/*
+ * Не наружу: снаружи нужен только округлённый вниз результат, а сырое число
+ * приглашает сравнить его с порогом самому — и получить 2.995 за проходное 3.
+ */
+function contrastRatio(foreground: string, background: string): number {
   const first = relativeLuminance(foreground);
   const second = relativeLuminance(background);
   const lighter = Math.max(first, second);

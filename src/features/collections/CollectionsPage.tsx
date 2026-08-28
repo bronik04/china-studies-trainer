@@ -4,6 +4,7 @@ import {
   collections,
   collectionsInGroup,
 } from '../../content/collections';
+import { collectionsWord } from '../../content/region-count';
 import type { Region } from '../../content/types';
 import { SiteFooter } from '../../ui/SiteFooter';
 import { CollectionCard } from '../home/CollectionCard';
@@ -36,15 +37,31 @@ export function CollectionsPage({
           </p>
         </div>
         <p className="page-head-count">
-          {collections.length} коллекций · {COLLECTION_GROUPS.length} группы
+          {collections.length} {collectionsWord(collections.length)} ·{' '}
+          {COLLECTION_GROUPS.length} группы
         </p>
       </div>
+
+      {/*
+        Переход к группе. Раздел вырос с двенадцати карточек до шестидесяти
+        пяти — это почти шесть тысяч пикселей прокрутки, — и «по регионам»
+        оказалось посреди неё. Якоря, а не фильтр: фильтр прячет остальное, а
+        здесь всё показано намеренно (см. вводку раздела ниже), и человеку
+        нужно не отсеять, а попасть.
+      */}
+      <nav className="group-jump" aria-label="Группы коллекций">
+        {COLLECTION_GROUPS.map((group) => (
+          <a key={group.id} className="chip" href={`#group-${group.id}`}>
+            {group.title} {collectionsInGroup(group.id).length}
+          </a>
+        ))}
+      </nav>
 
       {COLLECTION_GROUPS.map((group) => {
         const inGroup = collectionsInGroup(group.id);
 
         return (
-          <section key={group.id} className="landing-section">
+          <section key={group.id} className="landing-section" id={`group-${group.id}`}>
             <div className="landing-section-head">
               <h2>{group.title}</h2>
               <p className="group-hint">

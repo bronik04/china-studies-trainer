@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { collectionById, type Collection } from '../../content/collections';
+import { physicalFeatures } from '../../content/physical-features';
 import { regions } from '../../content/regions';
 import { CollectionPage } from './CollectionPage';
 
@@ -159,4 +160,152 @@ it('называет источники именами, а не идентифи
 
   expect(panel).toHaveTextContent('ЮНЕСКО');
   expect(panel).not.toHaveTextContent('unesco-great-wall-438');
+});
+
+/*
+ * У коллекции «по регионам» имя, иероглифы и пиньинь дословно совпадают с
+ * регионом — их уже говорит заголовок страницы. Место под фотографию, которой
+ * нет, здесь занимала заглушка, тогда как справочник о регионе давно написан:
+ * центр, факты с источниками, города. Она и встаёт на это место.
+ */
+it('показывает справку региона вместо места под фотографию', () => {
+  renderPage('region-yunnan');
+
+  expect(
+    document.querySelector('.photo-slot[data-photo-height="hero"]'),
+  ).toBeNull();
+  expect(screen.getByText(/Административный центр: Куньмин/)).toBeInTheDocument();
+  expect(screen.getByText('Ботанический рекордсмен')).toBeInTheDocument();
+  expect(screen.getByText(/Источники: /)).toBeInTheDocument();
+});
+
+/*
+ * Имя не повторяется: его уже несёт заголовок страницы. В хлебных крошках и в
+ * списке регионов коллекции слово «Юньнань» стоит законно, поэтому считаются
+ * заголовки, а не вхождения текста.
+ */
+it('не повторяет имя региона вторым заголовком', () => {
+  renderPage('region-yunnan');
+
+  expect(screen.getAllByRole('heading', { name: 'Юньнань' })).toHaveLength(1);
+});
+
+/*
+ * Коллекция не о регионе, а о месте: её нельзя подменять справкой того
+ * региона, в котором место стоит. На её месте — крупный кадр, а пока снимка
+ * нет — место под него.
+ */
+it('не подменяет коллекцию о месте справкой региона', () => {
+  renderPage('yuanyang-terraces');
+
+  expect(screen.queryByText(/Административный центр/)).not.toBeInTheDocument();
+  expect(
+    document.querySelector(
+      '.collection-photo[data-photo-height="hero"], .photo-slot[data-photo-height="hero"]',
+    ),
+  ).not.toBeNull();
+});
+
+/*
+ * У региона без дописок справка приходит из справочника и стоит на странице
+ * целиком. Пометки «описание ещё не написано» и «справка ещё не написана» под
+ * ней были бы прямой неправдой.
+ */
+it('не объявляет пустой страницу региона, у которой есть справка', () => {
+  renderPage('region-hainan');
+
+  expect(screen.getByText(/Административный центр: Хайкоу/)).toBeInTheDocument();
+  expect(screen.queryByText(/Описание ещё не написано/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Справка ещё не написана/)).not.toBeInTheDocument();
+  expect(screen.queryByTestId('draft-note')).not.toBeInTheDocument();
+});
+
+/* Дописки не пропадают: у Юньнани раздел «Что стоит знать» остаётся. */
+it('оставляет дописанную справку там, где её написали', () => {
+  renderPage('region-yunnan');
+
+  expect(
+    screen.getByRole('heading', { level: 2, name: 'Что стоит знать' }),
+  ).toBeInTheDocument();
+});
+
+/*
+ * Страница объекта показывает те же факты, что карточка атласа: справка
+ * написана один раз в справочнике объектов. Регионы объекта сюда не идут —
+ * они справа, у карты, и второй раз списком не повторяются.
+ *
+ * Проверяется инвариант, а не сегодняшнее состояние каталога: пустого тела у
+ * страницы не бывает. Есть факты — стоят факты; нет — страница вслух говорит,
+ * что справка не написана. Ветка переключится сама, когда факты напишут.
+ */
+it('называет вслух оба состояния справки об объекте', () => {
+  const feature = physicalFeatures.find(({ id }) => id === 'yangtze');
+  renderPage('feature-yangtze');
+
+  if (feature !== undefined && feature.facts.length > 0) {
+    expect(screen.getByText(feature.facts[0].title)).toBeInTheDocument();
+    expect(
+      document.querySelector('.photo-slot[data-photo-height="hero"]'),
+    ).toBeNull();
+  } else {
+    expect(screen.getByText(/Справка ещё не написана/)).toBeInTheDocument();
+  }
+});
+
+/* Охват объекта берётся из дописки, а не из проверяемого картой списка. */
+it('перечисляет регионы объекта так, как их называет коллекция', () => {
+  renderPage('feature-yellow-river');
+
+  const list = document.querySelector('.member-list');
+
+  expect(list?.querySelectorAll('li')).toHaveLength(9);
+  expect(list).toHaveTextContent('Сычуань');
+});
+
+/*
+ * Снимок и подпись об авторе идут вместе: CC BY и CC BY-SA разрешают показ при
+ * условии, что автор назван. Подпись берётся из того же генератора, что и
+ * файл, поэтому проверяется её наличие, а не текст.
+ */
+it('показывает снимок с подписью об авторе и лицензии', () => {
+  renderPage('great-wall');
+
+  const hero = document.querySelector('.collection-photo[data-photo-height="hero"]');
+
+  expect(hero).not.toBeNull();
+  expect(hero?.querySelector('img')?.getAttribute('src')).toMatch(
+    /^\/photos\/badaling-\d+\.webp$/,
+  );
+  expect(hero?.querySelector('figcaption')?.textContent).toContain('CC BY');
+});
+
+/* Первый снимок ушёл в крупный кадр и не повторяется в сетке ниже. */
+it('не показывает главный снимок дважды', () => {
+  renderPage('great-wall');
+
+  const wall = collectionById('great-wall');
+  const thumbs = document.querySelectorAll('.photo-grid li');
+
+  expect(thumbs).toHaveLength((wall?.photos.length ?? 0) - 1);
+  expect(document.querySelectorAll('img[src*="badaling"]')).toHaveLength(1);
+});
+
+/*
+ * Снимок на странице описан словами — читалке экрана `alt` обязателен. Снимок
+ * внутри карточки-ссылки украшает её: что там, говорит заголовок карточки, и
+ * второе имя только удлинило бы имя кнопки. Такому `alt` положено быть пустым,
+ * но присутствовать: отсутствующий читалка прочтёт именем файла.
+ */
+it('снимок на странице описан словами, снимок в карточке — пустым alt', () => {
+  renderPage('great-wall');
+
+  for (const image of document.querySelectorAll('img')) {
+    const inCard = image.closest('.collection-card') !== null;
+
+    expect(image.getAttribute('alt'), image.getAttribute('src') ?? '').not.toBeNull();
+    expect(
+      (image.getAttribute('alt') ?? '').trim().length > 0,
+      image.getAttribute('src') ?? '',
+    ).toBe(!inCard);
+  }
 });

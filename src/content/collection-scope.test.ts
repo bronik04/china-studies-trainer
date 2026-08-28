@@ -3,11 +3,6 @@ import { collectionCardSubtitle, collectionScope } from './collection-scope';
 import { collectionById, collections, type Collection } from './collections';
 import { regions } from './regions';
 
-/*
- * `collections` объявлен через `as const`, поэтому его тип — union из двенадцати
- * литералов, и необязательные поля видны только у тех, у кого они есть.
- * Обходу по списку нужен общий тип: он проверяет как раз тех, у кого поля нет.
- */
 const all: readonly Collection[] = collections;
 
 function byId(id: string) {
@@ -34,17 +29,47 @@ it('охват без привязки к регионам берётся из �
   expect(collectionScope(byId('spring-festival'), regions)).toBe('Вся страна');
 });
 
-it('подпись карточки прямо говорит, что фотографий нет', () => {
-  expect(collectionCardSubtitle(byId('yunnan'), regions)).toBe(
-    'Юньнань · фотографий пока нет',
+/*
+ * Прежде подпись повторяла заголовок карточки слово в слово: «Юньнань» под
+ * «Юньнань». На четырёх коллекциях это была мелочь, на тридцати четырёх —
+ * колонка одинаковых строк.
+ */
+it('подпись карточки региона не повторяет её заголовок', () => {
+  expect(collectionCardSubtitle(byId('region-yunnan'), regions)).toBe(
+    'Провинция · центр Куньмин',
   );
 });
 
-it('подпись карточки не обещает снимков больше, чем описано мест', () => {
+/*
+ * У коллекции об объекте — род и охват. Обещать снимки здесь нечем: их не
+ * задумывали, страница держится справкой.
+ */
+it('подпись карточки объекта называет род и охват', () => {
+  expect(collectionCardSubtitle(byId('feature-yangtze'), regions)).toBe(
+    'Река · семь регионов',
+  );
+  expect(collectionCardSubtitle(byId('feature-taihu'), regions)).toBe(
+    'Озеро · два региона',
+  );
+});
+
+/* Там, где место под съёмку описано, а файла нет, об этом сказано прямо. */
+it('подпись карточки прямо говорит, что фотографий нет', () => {
+  const draft: Collection = {
+    ...byId('great-wall'),
+    photos: [],
+  };
+
+  expect(collectionCardSubtitle(draft, regions)).toBe(
+    'Девять регионов · фотографий пока нет',
+  );
+});
+
+it('подпись карточки не обещает снимков больше, чем их есть', () => {
   const wall = byId('great-wall');
 
   expect(collectionCardSubtitle(wall, regions)).toBe(
-    `Девять регионов · мест под съёмку: ${wall.photos.length}`,
+    `Девять регионов · снимков: ${wall.photos.length}`,
   );
 });
 

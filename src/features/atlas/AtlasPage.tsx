@@ -1,31 +1,16 @@
 import { useState } from 'react';
-import { cityById, citiesOfRegion } from '../../content/cities';
-import { collectionsOfRegion } from '../../content/collections';
-import { physicalFeatures } from '../../content/physical-features';
+import { otherCollectionsOfRegion } from '../../content/collections';
+import { REGION_KIND_LABELS } from '../../content/regions';
+import {
+  physicalFeatures,
+  physicalKindLabel,
+} from '../../content/physical-features';
 import { featuresWord, regionsWord } from '../../content/region-count';
-import { sourceById } from '../../content/sources';
-import type {
-  Fact,
-  PhysicalFeature,
-  PhysicalKind,
-  Region,
-  RegionKind,
-} from '../../content/types';
+import type { Region } from '../../content/types';
 import { ChinaMap } from '../../map/ChinaMap';
+import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { MapAttribution } from '../../map/MapAttribution';
 import type { MapZoom } from '../../map/MapControls';
-
-/**
- * Тип единицы назван словом. На справочной карте он же передан цветом, но
- * цвет — не единственный канал: соседи одного типа сливаются в общее поле, и
- * опознать тип по заливке нельзя (DESIGN_SYSTEM.md).
- */
-const KIND_LABELS: Readonly<Record<RegionKind, string>> = {
-  province: 'Провинция',
-  'autonomous-region': 'Автономный район',
-  municipality: 'Город центрального подчинения',
-  sar: 'Специальный административный район',
-};
 
 /**
  * Шкала высот. Полосой, а не списком плашек: шкала непрерывна, и прежние
@@ -44,84 +29,12 @@ const RELIEF_BAND_TONES = [0, ...RELIEF_TICKS] as const;
 const SCALE_TOP_DOWN = [...RELIEF_BAND_TONES].reverse();
 const SCALE_TICKS_TOP_DOWN = [...RELIEF_TICKS].reverse();
 
-/** Род объекта назван словом — по той же причине, что и тип региона. */
-const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
-  river: 'Река',
-  landform: 'Форма рельефа',
-  lake: 'Озеро',
-};
-
-/**
- * Слово рода в карточке. Одного `kind` мало: хребет — тоже `landform` и
- * получил бы «Форма рельефа», хотя ученик ищет глазами именно хребет.
- */
-function kindLabelOf(feature: PhysicalFeature): string {
-  if (feature.kind === 'landform' && feature.landform === 'range') {
-    return 'Горный хребет';
-  }
-
-  return PHYSICAL_KIND_LABELS[feature.kind];
-}
-
 const MAP_KINDS = [
   ['political', 'Политическая'],
   ['physical', 'Физическая'],
 ] as const;
 
 type MapKind = (typeof MAP_KINDS)[number][0];
-
-/**
- * Строка «Источники: ...». Дедупликация — по показанному имени, а не по
- * организации: два подразделения ЮНЕСКО в реестре должны схлопнуться в одно
- * слово.
- */
-function factSourcesLine(facts: readonly Fact[]): string | null {
-  const labels: string[] = [];
-  const seen = new Set<string>();
-  for (const fact of facts) {
-    for (const sourceId of fact.sourceIds) {
-      const source = sourceById(sourceId);
-      if (source === undefined) {
-        continue;
-      }
-      const label = source.shortLabel ?? source.organization;
-      if (!seen.has(label)) {
-        seen.add(label);
-        labels.push(label);
-      }
-    }
-  }
-
-  return labels.length === 0 ? null : labels.join(' · ');
-}
-
-/**
- * Справка карточки: темы и тела фактов, внизу — строка источников. Блок один
- * для региона и физического объекта (утверждённый макет
- * docs/screens/04-atlas-card-facts-v1.html, вариант А).
- */
-function CardFacts({ facts }: { readonly facts: readonly Fact[] }) {
-  if (facts.length === 0) {
-    return null;
-  }
-
-  const sourcesLine = factSourcesLine(facts);
-
-  return (
-    <section className="atlas-facts" aria-label="Справка">
-      <p className="eyebrow">Справка</p>
-      {facts.map((fact) => (
-        <div className="atlas-fact" key={fact.title}>
-          <h3>{fact.title}</h3>
-          <p>{fact.body}</p>
-        </div>
-      ))}
-      {sourcesLine === null ? null : (
-        <p className="atlas-sources">Источники: {sourcesLine}</p>
-      )}
-    </section>
-  );
-}
 
 export type AtlasPageProps = {
   readonly regions: readonly Region[];
@@ -262,7 +175,7 @@ export function AtlasPage({
                 </h1>
                 <p lang="zh-Latn-pinyin">{selectedFeature.pinyin}</p>
                 <p className="status-note">
-                  {kindLabelOf(selectedFeature)}
+                  {physicalKindLabel(selectedFeature)}
                 </p>
                 {/*
                   Регионы перечислены словами: по какой земле проходит река —
@@ -285,25 +198,19 @@ export function AtlasPage({
                   {selected.nameRu} <span lang="zh-Hans">{selected.nameZh}</span>
                 </h1>
                 <p lang="zh-Latn-pinyin">{selected.pinyin}</p>
-                <p className="status-note">{KIND_LABELS[selected.kind]}</p>
-                <p>
-                  Административный центр: {cityById(selected.capitalCityId)?.nameRu}{' '}
-                  <span lang="zh-Hans">
-                    ({cityById(selected.capitalCityId)?.nameZh})
-                  </span>
-                </p>
-                <CardFacts facts={selected.facts} />
+                <p className="status-note">{REGION_KIND_LABELS[selected.kind]}</p>
+                <RegionReference region={selected} />
                 {/*
                   Коллекции региона — не новая сущность, а та же привязка
                   `regionIds`, прочитанная с другой стороны: со страницы
                   коллекции виден её регион, из атласа — коллекции региона.
                   Пустой список — законное состояние, блок тогда не рисуется.
                 */}
-                {collectionsOfRegion(selected.id).length === 0 ? null : (
+                {otherCollectionsOfRegion(selected.id).length === 0 ? null : (
                   <nav className="atlas-collections" aria-label="Коллекции региона">
                     <p className="eyebrow">Коллекции</p>
                     <ul>
-                      {collectionsOfRegion(selected.id).map((collection) => (
+                      {otherCollectionsOfRegion(selected.id).map((collection) => (
                         <li key={collection.id}>
                           <button
                             type="button"
@@ -318,20 +225,6 @@ export function AtlasPage({
                     </ul>
                   </nav>
                 )}
-                {/*
-                  Города региона перечислены словами, а не только точками на
-                  карте: точка — не текст, читалке экрана её не прочесть, а
-                  делать полсотни знаков остановками Tab дороже, чем дать
-                  список там, где регион и так разглядывают.
-                */}
-                <ul className="region-city-list">
-                  {citiesOfRegion(selected.id).map((city) => (
-                    <li key={city.id}>
-                      {city.nameRu} <span lang="zh-Hans">{city.nameZh}</span>{' '}
-                      <span lang="zh-Latn-pinyin">{city.pinyin}</span>
-                    </li>
-                  ))}
-                </ul>
               </>
             ) : (
               <>

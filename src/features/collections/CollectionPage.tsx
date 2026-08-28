@@ -5,12 +5,15 @@ import {
   isDraft,
   type Collection,
 } from '../../content/collections';
+import { physicalFeatureById } from '../../content/physical-features';
 import { regionsWord } from '../../content/region-count';
 import type { Region } from '../../content/types';
 import { sourceById } from '../../content/sources';
 import { ChinaMap } from '../../map/ChinaMap';
 import { MapAttribution } from '../../map/MapAttribution';
+import { CollectionImage } from '../../ui/CollectionImage';
 import { PhotoSlot } from '../../ui/PhotoSlot';
+import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { SiteFooter } from '../../ui/SiteFooter';
 import { CollectionCard } from '../home/CollectionCard';
 
@@ -47,6 +50,33 @@ export function CollectionPage({
     .map((id) => collectionById(id))
     .filter((item): item is Collection => item !== undefined);
   const draft = isDraft(collection);
+  /*
+   * Регион, о котором коллекция. Признак стоит в каталоге, а не выводится из
+   * числа регионов: у коллекции о месте регион тоже один, но она не о нём.
+   */
+  const aboutRegion = regions.find(
+    (region) => region.id === collection.aboutRegionId,
+  );
+  const aboutFeature =
+    collection.aboutFeatureId === undefined
+      ? undefined
+      : physicalFeatureById(collection.aboutFeatureId);
+  /*
+   * Справка из справочника стоит на странице и говорит за неё. У региона она
+   * есть всегда — центр и города написаны, даже когда фактов нет; у объекта
+   * она и есть факты, поэтому до того, как их напишут, страница честно
+   * называет себя незаполненной, а не делает вид, что полна.
+   */
+  /*
+   * Первый снимок идёт крупным кадром вместо места под фотографию, остальные —
+   * в сетку ниже. Отдельного поля «главный снимок» не заводится: их было бы
+   * два места правды, и однажды главный исчез бы из галереи или задвоился в
+   * ней.
+   */
+  const [hero, ...gallery] = collection.photos;
+  const referenceShown =
+    aboutRegion !== undefined ||
+    (aboutFeature !== undefined && aboutFeature.facts.length > 0);
 
   return (
     <main className="site-main">
@@ -74,32 +104,76 @@ export function CollectionPage({
             {collection.pinyin}
           </p>
 
-          {collection.lead === '' ? (
+          {/*
+            Пустая вводка — незаполненность только там, где вводку пишут
+            руками. У коллекции о регионе её нет по устройству: сразу за
+            заголовком идёт справка из справочника, и объявлять недостачу
+            перед ней значило бы называть страницу пустой на глазах у полной.
+          */}
+          {collection.lead !== '' ? (
+            <p className="lead">{collection.lead}</p>
+          ) : !referenceShown ? (
             <p className="empty-note">
               Описание ещё не написано. Пока коллекция держит только привязку к
               регионам — по ней уже можно собрать раунд.
             </p>
-          ) : (
-            <p className="lead">{collection.lead}</p>
+          ) : null}
+
+          {/*
+            Место под фотографию, которой нет, занимала заглушка — а справочник
+            давно написан. У региона это центр, факты с источниками и города; у
+            объекта — те же факты, что показывает карточка атласа. Список
+            регионов объекта сюда не идёт: он стоит справа, у карты.
+
+            Условие — признак в каталоге, а не «ровно один регион»: у
+            коллекции о месте регион тоже один, но она не о нём.
+          */}
+          {/*
+            Снимок идёт первым, справка за ним: сначала место, потом рассказ о
+            нём. Раньше у коллекции о регионе снимка не было вовсе, и справка
+            стояла сразу за заголовком; теперь снимок есть у всех, и прятать
+            его под три факта значило бы отдать ему худшее место на странице.
+          */}
+          {hero === undefined ? null : (
+            <CollectionImage
+              photo={hero}
+              height="hero"
+              sizes="(min-width: 60rem) 40rem, 100vw"
+            />
           )}
 
-          <PhotoSlot subject={collection.nameRu} height="hero" />
+          {aboutRegion !== undefined ? (
+            <RegionReference region={aboutRegion} />
+          ) : aboutFeature !== undefined && aboutFeature.facts.length > 0 ? (
+            <CardFacts facts={aboutFeature.facts} />
+          ) : hero === undefined ? (
+            <PhotoSlot subject={collection.nameRu} height="hero" />
+          ) : null}
 
-          <section className="collection-block">
-            <h2>Что стоит знать</h2>
-            {collection.notes.length === 0 ? (
-              <p className="empty-note">
-                Справка ещё не написана: её пишет учитель и подтверждает
-                источником.
-              </p>
-            ) : (
-              <ul className="rule-list">
-                {collection.notes.map((note) => (
-                  <li key={note}>{note}</li>
-                ))}
-              </ul>
-            )}
-          </section>
+          {/*
+            Раздел не исчезает, когда справку просто не написали: экран без
+            него выглядит сломанным, а с пометкой — незаполненным, и это
+            правда. Исчезает он только у коллекции о регионе без дописок: там
+            справка уже стоит выше, и «справка ещё не написана» под ней было
+            бы прямой неправдой.
+          */}
+          {referenceShown && collection.notes.length === 0 ? null : (
+            <section className="collection-block">
+              <h2>Что стоит знать</h2>
+              {collection.notes.length === 0 ? (
+                <p className="empty-note">
+                  Справка ещё не написана: её пишет учитель и подтверждает
+                  источником.
+                </p>
+              ) : (
+                <ul className="rule-list">
+                  {collection.notes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
 
           <section className="collection-block">
             <div className="landing-section-head">
@@ -107,19 +181,27 @@ export function CollectionPage({
               <p className="group-hint">
                 {collection.photos.length === 0
                   ? 'снимков пока нет'
-                  : `мест под съёмку: ${collection.photos.length} · подпись у каждого`}
+                  : `снимков: ${collection.photos.length} · подпись у каждого`}
               </p>
             </div>
-            {collection.photos.length === 0 ? (
+            {gallery.length === 0 ? (
               <p className="empty-note">
-                Фотографии подбирает учитель. Пока их нет, коллекция работает
-                как список регионов.
+                {hero === undefined
+                  ? 'Фотографии подбирает учитель. Пока их нет, '
+                  : 'Других снимков пока нет, '}
+                {referenceShown
+                  ? 'страница держится справкой и картой.'
+                  : 'коллекция работает как список регионов.'}
               </p>
             ) : (
               <ul className="photo-grid">
-                {collection.photos.map((photo) => (
+                {gallery.map((photo) => (
                   <li key={photo.id}>
-                    <PhotoSlot subject={photo.subject} height="thumb" />
+                    <CollectionImage
+                      photo={photo}
+                      height="thumb"
+                      sizes="(min-width: 60rem) 13rem, 45vw"
+                    />
                     <p className="caption">
                       {photo.captionRu}
                       {photo.captionZh ? (

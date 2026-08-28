@@ -23,11 +23,24 @@ function lowerFirst(text: string): string {
 }
 
 /**
+ * Главный шаг — раунд по регионам, поэтому и режим с языком берутся из
+ * попыток по регионам, а не из последней попытки вообще.
+ *
+ * Разница видна после чужого раунда. Раунд по династиям идёт формой
+ * `match-pair`; взяв её как «последнюю игру», кабинет предложил бы «Регион —
+ * столица», которую ученик не выбирал, — и в том языке, на котором спрашивали
+ * династии. То же было бы после раунда по городам.
+ */
+function regionAttempts(attempts: readonly Attempt[]): readonly Attempt[] {
+  return attempts.filter((attempt) => attempt.target.kind === 'region');
+}
+
+/**
  * Режим берётся из истории, а не из отдельного поля: у `Attempt` есть
  * `exerciseType`, поэтому запоминать «последний режим» в хранилище незачем.
  */
 function lastExerciseType(attempts: readonly Attempt[]): ExerciseType {
-  return attempts.at(-1)?.exerciseType ?? 'find-on-map';
+  return regionAttempts(attempts).at(-1)?.exerciseType ?? 'find-on-map';
 }
 
 /**
@@ -35,7 +48,7 @@ function lastExerciseType(attempts: readonly Attempt[]): ExerciseType {
  * перешедший на иероглифы, не должен возвращать их вручную каждый раз.
  */
 function lastLanguage(attempts: readonly Attempt[]): QuestionLanguage {
-  return attempts.at(-1)?.language ?? 'ru';
+  return regionAttempts(attempts).at(-1)?.language ?? 'ru';
 }
 
 export function nextStep(attempts: readonly Attempt[], now: Date): NextStep {

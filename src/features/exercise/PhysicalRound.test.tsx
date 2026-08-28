@@ -6,8 +6,19 @@ import {
   physicalFeaturesUpTo,
 } from '../../content/physical-features';
 import { createSeededRandom } from '../../domain/random';
+import { loadPhysicalMap } from '../../map/load-physical-map';
 import { createRound, physicalTarget } from '../../domain/round';
 import { PhysicalRound } from './PhysicalRound';
+
+/*
+ * Физический слой приезжает отдельным куском сборки, и карта берёт его
+ * `import()`-ом. Загружается он здесь, один раз на файл: дальше карта
+ * получает его прямо при монтировании, и проверки остаются синхронными — как
+ * и в браузере, где кусок дотянут заранее.
+ */
+beforeAll(async () => {
+  await loadPhysicalMap();
+});
 
 function renderRound(
   exerciseType: 'find-on-map' | 'name-target',
@@ -55,6 +66,7 @@ it('в «найти» вопрос называет объект, а карта 
     'data-labels',
     'false',
   );
+
 });
 
 it('в «назвать» даёт четыре имени того же вида', () => {

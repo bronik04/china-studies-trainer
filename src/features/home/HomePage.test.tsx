@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
-import { collections } from '../../content/collections';
+import { collections, collectionsInGroup } from '../../content/collections';
+import { MODE_CARDS } from '../exercise/exercise-modes';
 import { regions } from '../../content/regions';
 import type { Attempt } from '../../domain/round';
 import { HomePage } from './HomePage';
@@ -14,6 +15,8 @@ function renderHome(attempts: readonly Attempt[] = []) {
     onStartRound: vi.fn(),
     onStartFillRound: vi.fn(),
     onStartCityRound: vi.fn(),
+    onStartCultureRound: vi.fn(),
+    onStartHistoryRound: vi.fn(),
     onStartPhysicalRound: vi.fn(),
     onOpenAtlas: vi.fn(),
     onOpenCollections: vi.fn(),
@@ -68,18 +71,24 @@ it('карточка игры запускается без всякой ист�
   expect(onStartRound).toHaveBeenCalledWith('match-pair', 'ru', null);
 });
 
-it('карточка ненаписанного режима не запускается и говорит почему', () => {
-  const { onStartRound } = renderHome();
+/*
+ * Ненаписанных режимов не осталось: «Культура» была последней. Проверяется то,
+ * что теперь верно, — ни одна карточка не выключена и ни одна не помечена
+ * готовящейся. Приём для пометки остаётся в коде: следующий объявленный режим
+ * снова им воспользуется, и `ModeCard` держит вид `planned` ради этого.
+ */
+it('все объявленные режимы написаны и запускаются', () => {
+  renderHome();
 
-  const card = screen.getByRole('button', {
-    name: /История: династии и даты/,
-  });
+  const cards = screen
+    .getAllByRole('button')
+    .filter((button) => button.closest('.mode-card') !== null);
 
-  expect(card).toBeDisabled();
-  expect(card).toHaveTextContent('Готовится');
-
-  fireEvent.click(card);
-  expect(onStartRound).not.toHaveBeenCalled();
+  expect(cards).toHaveLength(MODE_CARDS.length);
+  for (const card of cards) {
+    expect(card, card.textContent ?? '').toBeEnabled();
+  }
+  expect(screen.queryByText('Готовится')).not.toBeInTheDocument();
 });
 
 it('заполнение карты идёт своим раундом, а не упражнением', () => {
@@ -90,15 +99,6 @@ it('заполнение карты идёт своим раундом, а не 
 
   expect(onStartFillRound).toHaveBeenCalledWith('ru');
   expect(onStartRound).not.toHaveBeenCalled();
-});
-
-it('объявленный, но ещё не написанный режим выключен и назван готовящимся', () => {
-  renderHome();
-
-  const card = screen.getByRole('button', { name: /История: династии и даты/ });
-
-  expect(card).toBeDisabled();
-  expect(card).toHaveTextContent('Готовится');
 });
 
 it('ведёт в атлас', () => {
@@ -133,23 +133,25 @@ it('витрина коллекций фильтруется по группе',
   expect(onOpenCollection).toHaveBeenCalledWith('spring-festival');
 });
 
+/* Счёт в подписи чипа берётся из каталога, а не пишется в тесте руками. */
 it('выбранная группа помечена не только цветом', () => {
   renderHome();
 
-  const chip = screen.getByRole('button', { name: 'География 4' });
+  const inGroup = collectionsInGroup('geography').length;
+  const chip = screen.getByRole('button', { name: `География ${inGroup}` });
   fireEvent.click(chip);
 
   expect(chip).toHaveAttribute('aria-pressed', 'true');
 });
 
-it('витрина показывает четыре коллекции из двенадцати', () => {
+it('витрина показывает четыре коллекции из всего каталога', () => {
   renderHome();
 
   const cards = screen
     .getAllByRole('listitem')
     .filter((item) => item.classList.contains('collection-card'));
 
-  expect(collections).toHaveLength(12);
+  expect(collections.length).toBeGreaterThan(4);
   expect(cards).toHaveLength(4);
 });
 
@@ -161,6 +163,8 @@ it('раздел режимов принимает фокус: шапка вед
       onStartRound={vi.fn()}
       onStartFillRound={vi.fn()}
       onStartCityRound={vi.fn()}
+      onStartCultureRound={vi.fn()}
+      onStartHistoryRound={vi.fn()}
       onStartPhysicalRound={vi.fn()}
       onOpenAtlas={vi.fn()}
       onOpenCollections={vi.fn()}

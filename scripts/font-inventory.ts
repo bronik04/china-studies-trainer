@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-export type GlyphGroup = 'han' | 'pinyin' | 'symbol' | 'rest';
+export type GlyphGroup = 'han' | 'pinyin' | 'symbol' | 'latin' | 'rest';
 
 const HAN = /[一-鿿]/;
 /** Стрелки, математика и геометрические фигуры: `→ ↻ ≈ ○ ● ✓`. */
@@ -9,10 +9,23 @@ const SYMBOL = /[←-⯿]/;
 const LATIN_LETTER = /\p{Script=Latin}/u;
 
 /**
+ * Буквы пиньиня с тонами — и только они. Список явный, а не «вся латиница за
+ * пределами ASCII»: прежнее правило держалось, пока такой латиницы в проекте
+ * не было ничего, кроме пиньиня, и сломалось на именах фотографов — Ondřej
+ * Žváček, Jakub Hałun. Их набирает текстовый шрифт, а не китайский.
+ */
+const PINYIN_LETTERS = new Set(
+  'āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜüńňǹĀÁǍÀĒÉĚÈĪÍǏÌŌÓǑÒŪÚǓÙǕǗǙǛÜŃŇǸ',
+);
+
+/**
  * Деление не косметическое: от него зависит, какой шрифт что обязан покрывать.
  * Пиньинь и значки уходят в китайский шрифт — латинские их не несут: у Prata
  * нет всей диакритики, у Golos Text нет `ǎ ǔ`, значков нет ни у одного из
- * двух. Проверено разбором cmap, см. спецификацию типографики.
+ * двух. Прочая латиница с диакритикой — имена фотографов — наоборот, уходит в
+ * Golos Text: у него `č ł ř Ž` есть, у Prata и Noto Serif SC нет, а имена
+ * стоят только в подписи под кадром, набранной текстовым шрифтом. Проверено
+ * разбором cmap, см. спецификацию типографики.
  */
 export function groupGlyphs(
   source: string,
@@ -21,6 +34,7 @@ export function groupGlyphs(
     han: new Set(),
     pinyin: new Set(),
     symbol: new Set(),
+    latin: new Set(),
     rest: new Set(),
   };
 
@@ -36,8 +50,10 @@ export function groupGlyphs(
       groups.han.add(char);
     } else if (SYMBOL.test(char)) {
       groups.symbol.add(char);
-    } else if (code > 0x7f && LATIN_LETTER.test(char)) {
+    } else if (PINYIN_LETTERS.has(char)) {
       groups.pinyin.add(char);
+    } else if (code > 0x7f && LATIN_LETTER.test(char)) {
+      groups.latin.add(char);
     } else {
       groups.rest.add(char);
     }
@@ -47,6 +63,7 @@ export function groupGlyphs(
     han: [...groups.han].sort().join(''),
     pinyin: [...groups.pinyin].sort().join(''),
     symbol: [...groups.symbol].sort().join(''),
+    latin: [...groups.latin].sort().join(''),
     rest: [...groups.rest].sort().join(''),
   };
 }

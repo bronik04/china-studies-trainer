@@ -24,11 +24,12 @@ npm run build                    # три валидатора → tsc -b → vi
 
 | Команда | Что делает |
 | --- | --- |
-| `npm run generate:palette` | перезаписывает `src/map/region-palette.ts` целиком по геометрии SVG |
+| `npm run generate:palette` | перезаписывает `src/map/region-palette.ts` целиком по геометрии SVG; сторожится отпечатком контуров |
 | `npm run generate:callouts` | правит `public/maps/china-provinces.svg` на месте — выноски для Макао и Гонконга |
 | `npm run generate:hit-targets` | правит тот же SVG — невидимые цели нажатия для регионов мельче порога WCAG |
 | `npm run generate:fonts` | пересобирает подмножества шрифтов в `src/assets/fonts` и `scripts/font-coverage.json` |
 | `npm run extract:physical` | перезаписывает `scripts/data/physical-source.json` — выжимку из Natural Earth; нужна сеть, в сборку не входит |
+| `npm run fetch:photos` | скачивает снимки коллекций с Викисклада в `public/photos`, переписывает `src/content/photo-credits.ts` и `docs/sources/photos.md`; нужна сеть, в сборку не входит |
 | `npm run generate:physical` | перезаписывает `src/map/physical-geometry.ts` целиком по выжимке Natural Earth |
 
 Оба SVG-генератора идемпотентны, их блоки ограничены комментариями-метками. Перед правкой любого файла в `src/map/` или самого SVG прочитайте шапку файла: сгенерированные помечены явно.
@@ -46,7 +47,7 @@ npm run build                    # три валидатора → tsc -b → vi
 
 | Каталог | Правило |
 | --- | --- |
-| `src/content` | справочники регионов, коллекций и источников; чистые TS-модули, валидируются на сборке |
+| `src/content` | справочники регионов, городов, физических объектов, династий, коллекций и источников; чистые TS-модули, валидируются на сборке |
 | `src/domain` | чистые функции: раунды, оценивание, прогресс. Не знает ни React, ни DOM |
 | `src/features` | поверхности: `home`, `atlas`, `collections`, `exercise`, `results` |
 | `src/map` | SVG, фокус, масштаб, сопоставление областей с `regionId` |

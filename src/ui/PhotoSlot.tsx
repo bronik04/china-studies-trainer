@@ -13,7 +13,7 @@ export type PhotoSlotProps = {
   /** Что должно быть на снимке: «Бадалин», «праздник весны». */
   readonly subject: string;
   /** Высота кадра в вёрстке. Пропорции у разных мест разные. */
-  readonly height: 'card' | 'hero' | 'thumb';
+  readonly height: 'card' | 'hero' | 'thumb' | 'stage';
 };
 
 export function PhotoSlot({ subject, height }: PhotoSlotProps) {

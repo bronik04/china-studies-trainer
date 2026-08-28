@@ -284,17 +284,36 @@ export function validatePhysicalFeatures(
     }
 
     /*
+     * Столько же, сколько у региона: меньше двух — карточка снова молчит,
+     * больше трёх — справка перестаёт помещаться рядом с картой.
+     */
+    if (feature.facts.length < 2 || feature.facts.length > 3) {
+      errors.push(
+        `У цели ${feature.id} фактов должно быть 2–3, сейчас ${feature.facts.length}`,
+      );
+    }
+
+    /*
      * Тема факта служит React-ключом в справке карточки атласа, поэтому
      * внутри одного носителя темы обязаны быть уникальны.
      */
     const factTitles = new Set<string>();
     for (const fact of feature.facts) {
+      if (fact.title.trim().length === 0 || fact.body.trim().length === 0) {
+        errors.push(`У цели ${feature.id}: пустые title или body у факта`);
+      }
       if (factTitles.has(fact.title)) {
         errors.push(
           `У цели ${feature.id} повторяющаяся тема факта «${fact.title}»`,
         );
       }
       factTitles.add(fact.title);
+      if (/<[a-z/]/i.test(fact.body)) {
+        errors.push(`У цели ${feature.id}: HTML в тексте факта «${fact.title}»`);
+      }
+      if (fact.sourceIds.length === 0) {
+        errors.push(`У цели ${feature.id}: факт «${fact.title}» без источника`);
+      }
     }
 
     if (feature.kind === 'river') {
@@ -352,16 +371,79 @@ export function validateCollections(
 ): void {
   const errors: string[] = [];
   const sourceIds = new Set(sources.map((source) => source.id));
+  const seenIds = new Set<string>();
 
   for (const collection of collections) {
-    if (collection.lead.trim().length === 0) {
+    /*
+     * Идентификаторы коллекций теперь из двух источников: написанные руками и
+     * взятые у регионов. Совпадение молча спрятало бы одну страницу за
+     * другой — `collectionById` вернёт первую.
+     */
+    if (seenIds.has(collection.id)) {
+      errors.push(`Коллекция ${collection.id}: повторный идентификатор`);
+    }
+    seenIds.add(collection.id);
+
+    if (
+      collection.aboutRegionId !== undefined &&
+      !collection.regionIds.includes(collection.aboutRegionId)
+    ) {
+      errors.push(
+        `Коллекция ${collection.id}: регион ${collection.aboutRegionId} не в её списке`,
+      );
+    }
+    /* У страницы один предмет: либо регион, либо объект, либо ни того ни другого. */
+    if (
+      collection.aboutRegionId !== undefined &&
+      collection.aboutFeatureId !== undefined
+    ) {
+      errors.push(
+        `Коллекция ${collection.id}: и регион, и объект как предмет страницы`,
+      );
+    }
+
+    /*
+     * Коллекция о регионе или об объекте не пишет вводку и заметки: её тело —
+     * справка из справочника, и та проверена своим правилом. Требовать здесь
+     * ещё три заметки значило бы требовать написать то же самое дважды.
+     * Дописанные сверх справки — по общему правилу: три-четыре или ни одной.
+     */
+    const written =
+      collection.aboutRegionId === undefined &&
+      collection.aboutFeatureId === undefined;
+    if (written && collection.lead.trim().length === 0) {
       errors.push(`Коллекция ${collection.id}: пустая вводка`);
     }
-    if (collection.notes.length < 3 || collection.notes.length > 4) {
+    if (
+      (written || collection.notes.length > 0) &&
+      (collection.notes.length < 3 || collection.notes.length > 4)
+    ) {
       errors.push(
         `Коллекция ${collection.id}: заметок должно быть 3–4, сейчас ${collection.notes.length}`,
       );
     }
+    /*
+     * Идентификатор снимка — это и имя файла в `public/photos`, и ключ записи
+     * об авторе. Повтор внутри коллекции значил бы, что один снимок показан
+     * дважды, а `id` служит ключом React в сетке.
+     */
+    const photoIds = new Set<string>();
+    for (const photo of collection.photos) {
+      if (photoIds.has(photo.id)) {
+        errors.push(`Коллекция ${collection.id}: повторный снимок ${photo.id}`);
+      }
+      photoIds.add(photo.id);
+      if (
+        photo.subject.trim().length === 0 ||
+        photo.captionRu.trim().length === 0 ||
+        photo.place.trim().length === 0
+      ) {
+        errors.push(
+          `Коллекция ${collection.id}: у снимка ${photo.id} пустое описание`,
+        );
+      }
+    }
+
     if (collection.sourceIds.length === 0) {
       errors.push(`Коллекция ${collection.id}: без источников`);
     }

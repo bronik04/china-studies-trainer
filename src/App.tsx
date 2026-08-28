@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { citiesUpTo } from './content/cities';
 import { collectionById } from './content/collections';
 import {
@@ -7,8 +14,25 @@ import {
   type PhysicalSet,
 } from './content/physical-features';
 import { regions } from './content/regions';
-import { citiesWord, featuresWord } from './content/region-count';
-import type { City, CitySet, PhysicalFeature, Region } from './content/types';
+import type { Collection } from './content/collections';
+import {
+  cultureCollectionsUpTo,
+  type CultureSet,
+} from './content/culture-sets';
+import { dynasties } from './content/dynasties';
+import {
+  citiesWord,
+  dynastiesWord,
+  featuresWord,
+  photosWord,
+} from './content/region-count';
+import type {
+  City,
+  CitySet,
+  Dynasty,
+  PhysicalFeature,
+  Region,
+} from './content/types';
 import { addAttempts } from './domain/progress';
 import {
   bestAccuracy,
@@ -20,16 +44,21 @@ import { createProgressStore } from './domain/progress-storage';
 import type { QuestionLanguage } from './domain/question-language';
 import { outcomesByTarget } from './domain/round-outcomes';
 import type { Attempt, ExerciseType } from './domain/round';
-import { CityRound } from './features/exercise/CityRound';
-import { PhysicalRound } from './features/exercise/PhysicalRound';
-import { ExerciseRound } from './features/exercise/ExerciseRound';
-import { FillMapRound } from './features/exercise/FillMapRound';
-import { FillMapResultsPage } from './features/results/FillMapResultsPage';
-import { RoundResultsPage } from './features/results/RoundResultsPage';
-import { AtlasPage } from './features/atlas/AtlasPage';
-import { CollectionPage } from './features/collections/CollectionPage';
-import { CollectionsPage } from './features/collections/CollectionsPage';
 import { HomePage } from './features/home/HomePage';
+import {
+  AtlasPage,
+  CityRound,
+  CultureRound,
+  HistoryRound,
+  CollectionPage,
+  CollectionsPage,
+  ExerciseRound,
+  FillMapResultsPage,
+  FillMapRound,
+  PhysicalRound,
+  prefetchScreens,
+  RoundResultsPage,
+} from './screens';
 import { ChinaMap } from './map/ChinaMap';
 import type { MapZoom } from './map/MapControls';
 import { SiteHeader, type SiteSection } from './ui/SiteHeader';
@@ -44,6 +73,8 @@ type Screen =
   | 'exercise'
   | 'city-exercise'
   | 'physical-exercise'
+  | 'history-exercise'
+  | 'culture-exercise'
   | 'results'
   | 'fill'
   | 'fill-results';
@@ -77,7 +108,20 @@ function AppFrame({
   return (
     <div className="app-frame" data-fills-frame={fillsFrame}>
       <SiteHeader current={current} onNavigate={onNavigate} />
-      {children}
+      {/*
+        Ожидание куска экрана. Оболочка и шапка уже нарисованы, поэтому
+        подменяется только содержимое — страница не прыгает. Видно это редко:
+        куски дотягиваются в простое сразу после первого экрана.
+      */}
+      <Suspense
+        fallback={
+          <p className="empty-note" role="status">
+            Экран загружается.
+          </p>
+        }
+      >
+        {children}
+      </Suspense>
     </div>
   );
 }
@@ -94,21 +138,12 @@ const ACTIVE_SECTION: Partial<Record<Screen, SiteSection>> = {
   collection: 'collections',
 };
 
-/** Хранилище может быть запрещено политикой браузера — обращение к нему бросает. */
-function readStorage(): Storage | null {
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 function newRoundId(): string {
   return `round-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
 }
 
 export default function App() {
-  const store = useMemo(() => createProgressStore(readStorage()), []);
+  const store = useMemo(() => createProgressStore(), []);
   const [progress, setProgress] = useState(() => store.read());
   const [screen, setScreen] = useState<Screen>('home');
   const [roundPool, setRoundPool] = useState<readonly Region[]>(regions);
@@ -120,6 +155,16 @@ export default function App() {
    */
   const [physicalPool, setPhysicalPool] =
     useState<readonly PhysicalFeature[]>(physicalFeatures);
+  /*
+   * Пул династий. Как и у городов с физическими целями: «Повторить ошибки»
+   * задаёт его напрямую, и выводить его из набора нельзя — набора у истории
+   * нет.
+   */
+  const [historyPool, setHistoryPool] = useState<readonly Dynasty[]>(dynasties);
+  /* Пул снимков. Как и у прочих: «Повторить ошибки» задаёт его напрямую. */
+  const [culturePool, setCulturePool] = useState<readonly Collection[]>(() =>
+    cultureCollectionsUpTo('culture'),
+  );
   const [exerciseTypes, setExerciseTypes] = useState<readonly ExerciseType[]>([
     'find-on-map',
   ]);
@@ -153,6 +198,14 @@ export default function App() {
    * раздел главной, прокрутка наверх обязана случиться раньше, а не отменить
    * его.
    */
+  /*
+   * Остальные экраны дотягиваются в простое сразу после первого. Без этого
+   * деление на куски отняло бы обещание работать без сети после
+   * первоначальной загрузки (`AGENTS.md`): атлас в классе с упавшим Wi-Fi не
+   * открылся бы вовсе.
+   */
+  useEffect(prefetchScreens, []);
+
   useEffect(() => {
     if (pendingAnchor.current === null) {
       window.scrollTo(0, 0);
@@ -309,6 +362,40 @@ export default function App() {
     setScreen('physical-exercise');
   }
 
+  /*
+   * У истории нет ни набора, ни выбора языка: династию спрашивают по-русски с
+   * иероглифами рядом, а сроков ровно двенадцать. Поэтому запуск проще
+   * остальных — сид и идентификатор раунда, и всё.
+   */
+  function startHistoryRound(
+    nextLanguage: QuestionLanguage = language,
+    pool: readonly Dynasty[] = dynasties,
+  ) {
+    setHistoryPool(pool);
+    setLanguage(nextLanguage);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('history-exercise');
+  }
+
+  function startCultureRound(
+    nextLanguage: QuestionLanguage,
+    set: CultureSet = 'culture',
+  ) {
+    startCulturePool(nextLanguage, cultureCollectionsUpTo(set));
+  }
+
+  function startCulturePool(
+    nextLanguage: QuestionLanguage,
+    pool: readonly Collection[],
+  ) {
+    setCulturePool(pool);
+    setLanguage(nextLanguage);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('culture-exercise');
+  }
+
   function startFillRound(nextLanguage: QuestionLanguage) {
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
@@ -444,6 +531,36 @@ export default function App() {
     );
   }
 
+  if (screen === 'history-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <HistoryRound
+          dynasties={historyPool}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishTargetRound}
+          onExit={exitToModes}
+        />
+      </AppFrame>
+    );
+  }
+
+  if (screen === 'culture-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <CultureRound
+          collections={culturePool}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishTargetRound}
+          onExit={exitToModes}
+        />
+      </AppFrame>
+    );
+  }
+
   if (screen === 'results') {
     const summary = summariseRound(lastAttempts);
     /*
@@ -455,6 +572,8 @@ export default function App() {
     const roundKind = lastAttempts[0]?.target.kind ?? 'region';
     const isCityRound = roundKind === 'city';
     const isPhysicalRound = roundKind === 'physical';
+    const isHistoryRound = roundKind === 'history';
+    const isCultureRound = roundKind === 'collection';
     /*
      * Набор повтора — ошибки этого раунда, те же, что показаны списком
      * (решение владельца от 2026-08-25). Отдельного источника у кнопки нет:
@@ -465,6 +584,12 @@ export default function App() {
     const repeatFeatures = physicalPool.filter((feature) =>
       repeatIds.includes(feature.id),
     );
+    const repeatDynasties = historyPool.filter((dynasty) =>
+      repeatIds.includes(dynasty.id),
+    );
+    const repeatCollections = culturePool.filter((collection) =>
+      repeatIds.includes(collection.id),
+    );
 
     /*
      * Карта итога есть у раундов по регионам. У раунда по городам исход по
@@ -473,7 +598,9 @@ export default function App() {
      * хуже отсутствующей.
      */
     const roundMap =
-      isCityRound || isPhysicalRound ? undefined : (
+      isCityRound || isPhysicalRound || isHistoryRound || isCultureRound
+        ? undefined
+        : (
         <ChinaMap
           regions={regions}
           selectedRegionId={null}
@@ -490,9 +617,27 @@ export default function App() {
       <AppFrame fillsFrame={false} current={null} onNavigate={navigate}>
         <RoundResultsPage
           summary={summary}
-          targets={isCityRound ? cityPool : isPhysicalRound ? physicalPool : regions}
+          targets={
+            isCityRound
+              ? cityPool
+              : isPhysicalRound
+                ? physicalPool
+                : isHistoryRound
+                  ? historyPool
+                  : isCultureRound
+                    ? culturePool
+                    : regions
+          }
           countWord={
-            isCityRound ? citiesWord : isPhysicalRound ? featuresWord : undefined
+            isCityRound
+              ? citiesWord
+              : isPhysicalRound
+                ? featuresWord
+                : isHistoryRound
+                  ? dynastiesWord
+                  : isCultureRound
+                    ? photosWord
+                    : undefined
           }
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
@@ -515,6 +660,16 @@ export default function App() {
               return;
             }
 
+            if (isHistoryRound) {
+              startHistoryRound(language, repeatDynasties);
+              return;
+            }
+
+            if (isCultureRound) {
+              startCulturePool(language, repeatCollections);
+              return;
+            }
+
             startRound(exerciseTypes[0], language, repeatIds);
           }}
           onNewRound={() => {
@@ -531,6 +686,16 @@ export default function App() {
                 language,
                 physicalPool,
               );
+              return;
+            }
+
+            if (isHistoryRound) {
+              startHistoryRound();
+              return;
+            }
+
+            if (isCultureRound) {
+              startCulturePool(language, culturePool);
               return;
             }
 
@@ -597,6 +762,8 @@ export default function App() {
           onStartRound={startRound}
           onStartFillRound={startFillRound}
           onStartCityRound={startCityRound}
+          onStartCultureRound={startCultureRound}
+          onStartHistoryRound={startHistoryRound}
           onStartPhysicalRound={startPhysicalRound}
           onOpenAtlas={() => setScreen('atlas')}
           onOpenCollections={() => setScreen('collections')}

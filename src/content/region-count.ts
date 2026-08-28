@@ -52,3 +52,51 @@ export function featuresWord(count: number): string {
 
   return last >= 2 && last <= 4 ? 'объекта' : 'объектов';
 }
+
+/** 1 коллекция, 2–4 коллекции, 5+ коллекций. */
+export function collectionsWord(count: number): string {
+  const teens = count % 100;
+  const last = count % 10;
+
+  if (teens >= 11 && teens <= 14) {
+    return 'коллекций';
+  }
+
+  if (last === 1) {
+    return 'коллекция';
+  }
+
+  return last >= 2 && last <= 4 ? 'коллекции' : 'коллекций';
+}
+
+/** 1 династия, 2–4 династии, 5+ династий. */
+export function dynastiesWord(count: number): string {
+  const teens = count % 100;
+  const last = count % 10;
+
+  if (teens >= 11 && teens <= 14) {
+    return 'династий';
+  }
+
+  if (last === 1) {
+    return 'династия';
+  }
+
+  return last >= 2 && last <= 4 ? 'династии' : 'династий';
+}
+
+/** 1 снимок, 2–4 снимка, 5+ снимков. */
+export function photosWord(count: number): string {
+  const teens = count % 100;
+  const last = count % 10;
+
+  if (teens >= 11 && teens <= 14) {
+    return 'снимков';
+  }
+
+  if (last === 1) {
+    return 'снимок';
+  }
+
+  return last >= 2 && last <= 4 ? 'снимка' : 'снимков';
+}
