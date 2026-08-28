@@ -55,6 +55,10 @@ export type HomePageProps = {
     citySet: CitySet,
   ) => void;
   readonly onOpenAtlas: () => void;
+  /** Нажатие по области карты в герое: атлас открывается на этом регионе. */
+  readonly onOpenRegion: (regionId: string) => void;
+  /** Главный шаг героя: раздел «Режимы» на этой же странице. */
+  readonly onGoToModes: () => void;
   readonly onOpenCollections: () => void;
   readonly onOpenCollection: (collectionId: string) => void;
 };
@@ -147,6 +151,8 @@ export function HomePage({
   onStartHistoryRound,
   onStartPhysicalRound,
   onOpenAtlas,
+  onOpenRegion,
+  onGoToModes,
   onOpenCollections,
   onOpenCollection,
 }: HomePageProps) {
@@ -202,18 +208,24 @@ export function HomePage({
             явления. Короткий раунд на 5–15 минут, разбор после ошибки и повтор
             того, что не запомнилось.
           </p>
+          {/*
+            Главный шаг ведёт туда, где выбирают, а не запускает раунд сам.
+            Прежде здесь стоял вычисленный шаг — «Повторить 2 региона»: он
+            отвечает вернувшемуся ученику и молчит новому, а на первом экране
+            «2 региона» читается как объём всего тренажёра. Сам повтор никуда
+            не делся — он стоит над карточками режимов, среди своих.
+          */}
           <div className="landing-hero-actions">
-            <button
-              type="button"
-              className="primary"
-              onClick={() =>
-                onStartRound(step.exerciseType, step.language, step.regionIds)
-              }
-            >
-              {step.label}
+            <button type="button" className="primary" onClick={onGoToModes}>
+              Выбрать режим
             </button>
+            {/*
+              «Исследовать карту», а не «Открыть атлас»: слово называет
+              занятие, а не раздел. Эта же кнопка — путь к карте без
+              указателя, и потому её нельзя убирать вслед за подписью.
+            */}
             <button type="button" className="text" onClick={onOpenAtlas}>
-              Открыть атлас →
+              Исследовать карту →
             </button>
           </div>
           <p className="status-note">
@@ -223,12 +235,17 @@ export function HomePage({
         </div>
         <div className="landing-hero-map">
           {/*
-            Карта в герое только показывает: разглядывают и выбирают регион в
-            атласе, и второй интерактивной карте на этой же странице
-            понадобился бы второй равнозначный список на 34 пункта.
+            Карта в герое — дверь в атлас: наведение называет область, нажатие
+            открывает её карточку. Прежде она была нарисована и не нажималась,
+            то есть не делала ничего.
 
-            Зума у неё поэтому нет. Управление показывает `ChinaMap` только
-            интерактивной карте, и передавать сюда `onZoomChange` больше нечем.
+            Дверь, а не вторая интерактивная карта: области не получают фокус
+            и не выбираются здесь, поэтому второй равнозначный список на 34
+            пункта на этой странице не нужен — с клавиатуры в атлас ведёт
+            кнопка «Исследовать карту» слева.
+
+            Зума у неё нет. Управление показывает `ChinaMap` только тому, кто
+            передал `onZoomChange`, а разглядывают карту в атласе.
           */}
           <ChinaMap
             regions={regions}
@@ -236,10 +253,17 @@ export function HomePage({
             onSelect={() => {}}
             onClear={() => {}}
             interactive={false}
+            usage="answer"
+            onOpenRegion={onOpenRegion}
           />
+          {/*
+            Подпись зовёт, а не оправдывается. Про заливку — «цвет означает тип
+            единицы» — довод для того, кто уже играет, и место ему в атласе,
+            где карту разглядывают.
+          */}
           <p className="caption">
-            Цвет означает тип единицы, а не конкретный регион: по заливке нельзя
-            выучить провинцию и получить преимущество в игре.
+            Нажмите единицу — откроется её карточка в атласе: имя, иероглифы,
+            пиньинь, административный центр и справка с источниками.
           </p>
         </div>
       </section>
@@ -250,13 +274,31 @@ export function HomePage({
         продолжился бы от шапки, а читалка экрана не сказала бы, куда попали.
       */}
       <section className="landing-section raised" id="modes" tabIndex={-1}>
-        <div className="landing-section-head">
-          <h2>Режимы</h2>
-          <p>
-            Карта — только начало. География, история и культура спрашиваются по
-            одним правилам: весь набор в каждом раунде, разбор ошибок на итогах,
-            повтор ошибок за последние 14 дней.
-          </p>
+        <div className="landing-section-head landing-section-head-split">
+          <div>
+            <h2>Режимы</h2>
+            <p>
+              Карта — только начало. География, история и культура спрашиваются
+              по одним правилам: весь набор в каждом раунде, разбор ошибок на
+              итогах, повтор ошибок за последние 14 дней.
+            </p>
+          </div>
+          {/*
+            Повтор ошибок стоит здесь, а не в герое: он отвечает вернувшемуся
+            ученику, а новому сказать нечего — `regionIds` пуст, и строки
+            просто нет. Форма и язык те же, в которых ошибались (`nextStep`).
+          */}
+          {step.regionIds === null ? null : (
+            <button
+              type="button"
+              className="text"
+              onClick={() =>
+                onStartRound(step.exerciseType, step.language, step.regionIds)
+              }
+            >
+              {step.label} →
+            </button>
+          )}
         </div>
         <ul className="mode-card-grid">
           {MODE_CARDS.map((card) => {

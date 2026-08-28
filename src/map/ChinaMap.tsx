@@ -120,6 +120,20 @@ type ChinaMapProps = {
    * стоит и управление масштабом.
    */
   readonly mapInset?: ReactNode;
+  /**
+   * Нажатие по области ведёт на другую поверхность, а не выбирает регион
+   * здесь. Витрина в герое: карта — дверь в атлас.
+   *
+   * Отдельно от `onSelect` намеренно. Выбор — состояние этой карты, переход —
+   * уход с неё, и путать их нельзя: витрина не подсвечивает выбранное, не
+   * объявляет «Выбрано: …» и не показывает равнозначный список.
+   *
+   * Области при этом не получают фокус (`interactive={false}`): тридцать
+   * четыре остановки табуляции на первом экране стоят между шапкой и всем
+   * остальным. С клавиатуры в атлас ведёт соседняя кнопка — она же и есть
+   * текстовая замена карте.
+   */
+  readonly onOpenRegion?: (regionId: string) => void;
 };
 
 /**
@@ -204,6 +218,7 @@ export function ChinaMap({
   showsPhysicalLabels = true,
   featureOutcomes = NO_FEATURE_OUTCOMES,
   mapInset,
+  onOpenRegion,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   /*
@@ -213,6 +228,11 @@ export function ChinaMap({
    * отсюда состояние.
    */
   const [citySvg, setCitySvg] = useState<SVGSVGElement | null>(null);
+  /*
+   * Область под рукой на витрине. Только для подписи: подсветку рисует
+   * `:hover` в таблице стилей, и состояние ей не нужно.
+   */
+  const [hoveredRegionId, setHoveredRegionId] = useState<string | null>(null);
   /*
    * Середина вида. Увеличение приходит снаружи — им управляет экран, — а
    * сдвиг живёт здесь: он не меняет ни ответа, ни состояния раунда, и
@@ -252,6 +272,12 @@ export function ChinaMap({
     loadedPhysicalMap,
   );
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
+
+  /* Область под рукой — только у витрины: у остальных карт её и не бывает. */
+  const hoveredRegion =
+    hoveredRegionId === null
+      ? undefined
+      : regions.find((region) => region.mapAreaId === hoveredRegionId);
 
   useEffect(() => {
     setCitySvg(mapRef.current?.querySelector<SVGSVGElement>('svg') ?? null);
@@ -311,13 +337,19 @@ export function ChinaMap({
      * «найти на карте», где карта раскрашена по типу региона. Прежняя проверка
      * по `variant === 'fill'` закрывала только игру.
      *
+     * Витрина из условия исключена: она тоже идёт с `usage="answer"` — ни
+     * заголовка, ни списка ей не нужно, — но вопроса на ней нет, а выдать
+     * можно только ответ. Прятать там подписи значило бы оставить на первом
+     * экране два безымянных кружка в море.
+     *
      * Скрытие живёт здесь, а не в таблице стилей, намеренно: утечка ответа —
      * не оформление, и проверять её нужно там, где стили не подключены.
      */
+    const hidesCallouts = usage === 'answer' && onOpenRegion === undefined;
     mapRef.current
       ?.querySelectorAll<SVGElement>('.map-callout text')
       .forEach((label) => {
-        label.style.setProperty('display', usage === 'answer' ? 'none' : '');
+        label.style.setProperty('display', hidesCallouts ? 'none' : '');
       });
 
     const areas = mapRef.current?.querySelectorAll<SVGElement>('[data-region-id]');
@@ -405,6 +437,7 @@ export function ChinaMap({
     highlight,
     interactive,
     memberRegionIds,
+    onOpenRegion,
     outcomes,
     paused,
     progressStates,
@@ -545,7 +578,21 @@ export function ChinaMap({
     }
 
     const regionId = getRegionId(target);
-    if (regionId !== null && isRegionSelectable(selectionRules, regionId)) {
+    if (regionId === null) {
+      return;
+    }
+
+    /*
+     * Переход идёт перед правилами выбираемости: витрина неинтерактивна, и
+     * `isRegionSelectable` отказал бы каждой области. Дверь при этом остаётся
+     * дверью — состояния выбора у витрины нет вовсе.
+     */
+    if (onOpenRegion !== undefined) {
+      onOpenRegion(regionId);
+      return;
+    }
+
+    if (isRegionSelectable(selectionRules, regionId)) {
       onSelect(regionId);
     }
   }
@@ -612,8 +659,23 @@ export function ChinaMap({
                 previous === featureId ? previous : featureId,
               );
             }
+
+            /*
+             * Витрина называет то, что под рукой: без имени нажатие по
+             * области — прыжок неизвестно куда. Состояние меняется только на
+             * смене области, иначе setState шёл бы на каждое движение руки.
+             */
+            if (onOpenRegion !== undefined) {
+              const regionId = getRegionId(event.target);
+              setHoveredRegionId((previous) =>
+                previous === regionId ? previous : regionId,
+              );
+            }
           }}
-          onPointerLeave={() => setHoveredFeatureId(null)}
+          onPointerLeave={() => {
+            setHoveredFeatureId(null);
+            setHoveredRegionId(null);
+          }}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onKeyDown={(event) => {
@@ -714,6 +776,18 @@ export function ChinaMap({
           поверх листа, как и управление масштабом.
         */}
         {mapInset}
+        {/*
+          Подпись под рукой. Скрыта от читалки экрана намеренно: навести
+          указатель клавиатурой нельзя, а путь без указателя — соседняя
+          кнопка, которая называет то же самое словом.
+        */}
+        {hoveredRegion === undefined ? null : (
+          <p className="map-open-hint" aria-hidden="true">
+            {hoveredRegion.nameRu}{' '}
+            <span lang="zh-Hans">{hoveredRegion.nameZh}</span> · открыть в
+            атласе
+          </p>
+        )}
       </div>
       {/*
         В упражнении «назови регион» карта только показывает. Назвать

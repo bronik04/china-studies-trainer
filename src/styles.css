@@ -708,6 +708,30 @@ button.text:hover:enabled {
 }
 
 /*
+ * Подпись под рукой на витрине: как называется область, по которой сейчас
+ * откроется атлас. В нижнем левом углу листа, а не у курсора: плашка,
+ * бегущая за рукой, закрывает как раз то, на что смотрят, и дрожит вместе с
+ * ней. Слева внизу под ней Индокитай — суши 0 %, как и у шкалы высот справа.
+ *
+ * Указателем её не поймать (`pointer-events: none`): иначе рука, дошедшая до
+ * плашки, потеряла бы область под собой и подпись замигала бы.
+ */
+.map-open-hint {
+  background: var(--surface-paper-bright);
+  border: var(--border-hair) solid var(--line-on-paper);
+  border-radius: var(--radius-sm);
+  bottom: var(--s-3);
+  color: var(--text-on-paper);
+  font-size: var(--t-size-caption);
+  left: var(--s-3);
+  margin: 0;
+  max-inline-size: calc(100% - var(--s-3) * 2);
+  padding: var(--s-2) var(--s-3);
+  pointer-events: none;
+  position: absolute;
+}
+
+/*
  * Увеличенную карту можно тянуть, и курсор об этом говорит. `touch-action`
  * снимает у пальца прокрутку страницы внутри карты — иначе на телефоне
  * попытка сдвинуть карту листала бы страницу.
@@ -1543,7 +1567,7 @@ button.text:hover:enabled {
  * нет, и `href="#"` обещал бы адрес, которого не существует.
  */
 button.site-header-mark {
-  align-items: baseline;
+  align-items: center;
   background: none;
   border: none;
   color: inherit;
@@ -1576,9 +1600,26 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   font-size: 1.375rem;
 }
 
-.site-header-tagline {
-  color: var(--text-on-ground-muted);
-  font-size: 0.875rem;
+/*
+ * Печать. Киноварь здесь не украшение: в проекте это печатная краска 朱砂 —
+ * ею набраны метки режимов и цель на карте, и знак сайта складывается из того
+ * же материала. Пара «бумага на киновари» та же, что у главной кнопки, и
+ * проверена в scripts/validate-tokens.test.ts.
+ *
+ * Квадрат, а не круг, и скруглён едва: настоящая печать — оттиск камня.
+ */
+.site-header-seal {
+  align-items: center;
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--surface-paper-bright);
+  display: inline-flex;
+  font-family: var(--t-family-han);
+  font-size: 1.0625rem;
+  height: 28px;
+  justify-content: center;
+  line-height: 1;
+  width: 28px;
 }
 
 .site-nav {
