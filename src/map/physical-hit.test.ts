@@ -1,5 +1,9 @@
 import { lakeMarks } from './lake-marks';
-import { POINT_MARKS, RELIEF_SHAPES } from './physical-geometry';
+import {
+  MARINE_SHAPES,
+  POINT_MARKS,
+  RELIEF_SHAPES,
+} from './physical-geometry';
 import { physicalTargetAt } from './physical-hit';
 import { RIVER_SHAPES } from './river-hit';
 
@@ -36,8 +40,13 @@ it('не отдаёт форму за границей страны', () => {
   expect(physicalTargetAt(120, 430, 1)).toBeNull();
 });
 
-it('молчит там, где нет ни реки, ни озера, ни спрашиваемой формы', () => {
-  expect(physicalTargetAt(650, 320, 1)).toBeNull();
+/*
+ * Точка на 650, 320 прежде была пустой водой, а с 2026-08-28 это Жёлтое море.
+ * Пустое место ищется теперь севернее: Монголия за Гоби — ни суши Китая, ни
+ * моря.
+ */
+it('молчит там, где нет ни воды, ни спрашиваемой формы', () => {
+  expect(physicalTargetAt(400, 60, 1)).toBeNull();
 });
 
 /*
@@ -91,4 +100,14 @@ it('крайняя точка побеждает форму, на которой
   const everest = POINT_MARKS.find((mark) => mark.featureId === 'everest')!;
 
   expect(physicalTargetAt(everest.x, everest.y, 1)).toBe('everest');
+});
+
+/* Море — последнее в правиле, но своё место оно держать обязано. */
+it('каждая морская цель достаётся себе в точке своей подписи', () => {
+  for (const shape of MARINE_SHAPES) {
+    expect(
+      physicalTargetAt(shape.labelX, shape.labelY, 1),
+      shape.featureId,
+    ).toBe(shape.featureId);
+  }
 });

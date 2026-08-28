@@ -5,6 +5,7 @@ import type { PhysicalFeature } from '../content/types';
 import { parseLandRings } from './land-rings';
 import {
   LAKE_SHAPES,
+  MARINE_SHAPES,
   POINT_MARKS,
   RELIEF_SHAPES,
   RIVER_LINES,
@@ -211,6 +212,15 @@ function validateRealPhysicalGeometry(): void {
       pointMarks: new Map(
         POINT_MARKS.map((mark) => [mark.featureId, [mark.x, mark.y] as Point]),
       ),
+      marine: new Map(
+        MARINE_SHAPES.map((shape) => [shape.featureId, parseMapPath(shape.d)]),
+      ),
+      marineLabels: new Map(
+        MARINE_SHAPES.map((shape) => [
+          shape.featureId,
+          [shape.labelX, shape.labelY] as Point,
+        ]),
+      ),
       landRings: parseLandRings(mapMarkup),
     },
     {
@@ -233,6 +243,8 @@ function physicalGeometry(
     lakeMarks: new Map(),
     shapeLabels: new Map(),
     pointMarks: new Map(),
+    marine: new Map(),
+    marineLabels: new Map(),
     landRings: [],
     ...overrides,
   };
@@ -495,6 +507,45 @@ describe('validatePhysicalGeometry', () => {
         shapes,
       ),
     ).toThrow(/вне суши/);
+  });
+
+  /*
+   * Подпись моря — зеркало правила формы: на суше её перехватила бы форма или
+   * область, и нажатие в имя моря досталось бы берегу.
+   */
+  it('ловит подпись морской цели на суше', () => {
+    const sea: PhysicalFeature = {
+      id: 'square-sea',
+      kind: 'marine',
+      nameRu: 'Квадратное',
+      nameZh: '方海',
+      pinyin: 'Fāng Hǎi',
+      marine: 'sea',
+      neId: 2,
+      regionIds: ['qinghai'],
+      facts: [],
+      sourceIds: ['natural-earth-marine-polys-5.1.2'],
+    };
+    const square: Point[][] = [
+      [
+        [0, 0],
+        [100, 0],
+        [100, 100],
+        [0, 100],
+      ],
+    ];
+
+    expect(() =>
+      validatePhysicalGeometry(
+        [sea],
+        physicalGeometry({
+          marine: new Map([['square-sea', square]]),
+          marineLabels: new Map([['square-sea', [50, 50] as Point]]),
+          landRings: square,
+        }),
+        shapes,
+      ),
+    ).toThrow(/стоит на суше/);
   });
 
   it('принимает настоящую геометрию', () => {

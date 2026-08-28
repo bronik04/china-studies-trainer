@@ -31,6 +31,10 @@ export function physicalInputsFingerprint(
         return `lake:${feature.id}:${[...feature.lakeIds].sort((a, b) => a - b).join(',')}`;
       }
 
+      if (feature.kind === 'marine') {
+        return `marine:${feature.id}:${feature.neId}`;
+      }
+
       if (feature.kind === 'point') {
         return `point:${feature.id}:${feature.neId}`;
       }

@@ -1400,6 +1400,52 @@ button.text:hover:enabled {
 }
 
 /*
+ * Море рисуется без постоянной границы: вода остаётся ровной, и на карте не
+ * появляется ни одной линии, которой нет в природе (решение владельца
+ * продукта, вариант В макета). Контур показывается при наведении, фокусе и
+ * выборе — тем же правилом, что подпись, и той же обводкой, что у формы.
+ *
+ * Указателя у него нет по той же причине, что у формы: цель под курсором
+ * решает карта одним правилом, а узел, принявший событие, перехватил бы его
+ * раньше расчёта.
+ */
+.china-map .physical-layer .sea-shape {
+  fill: transparent;
+  pointer-events: none;
+  stroke: none;
+}
+
+.china-map .physical-layer .sea-shape:focus {
+  outline: none;
+}
+
+.china-map .physical-layer .sea-shape:focus-visible,
+.china-map .physical-layer .sea-shape[data-hovered='true'],
+.china-map .physical-layer .sea-shape[data-selected='true'] {
+  stroke: var(--map-highlight);
+  stroke-width: 1.6;
+}
+
+/*
+ * Исход ответа — теми же двумя каналами, что у формы рельефа: штриховка и
+ * обводка. Штриховка берётся та же, готовая: цвет один исход не различает, и у
+ * моря нет ни ступени, ни высоты, которыми его можно было бы поддержать.
+ */
+.china-map .physical-layer .sea-shape[data-outcome='correct'] {
+  fill: url('#map-hatch-physical-correct');
+  stroke: var(--map-correct-mark);
+  stroke-width: 1.2;
+}
+
+.china-map .physical-layer .sea-shape[data-outcome='incorrect'] {
+  fill: url('#map-hatch-physical-incorrect');
+  stroke: var(--map-incorrect-mark-relief);
+  stroke-dasharray: 6 3;
+  stroke-width: 1.2;
+}
+
+
+/*
  * Знак крайней точки. Род читается формой: треугольник вверх у вершины, вниз у
  * впадины, — а цвет здесь занят ступенью рельефа и родом различать не может.
  * Вершина залита бумагой и обведена тушью, впадина залита тушью: два знака

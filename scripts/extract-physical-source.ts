@@ -155,6 +155,37 @@ if (missingLakes.length > 0) {
 }
 
 /*
+ * Морские тела. Их контуры лежат вне суши, и маска карты их не касается: маска
+ * прячет ступени за границей Китая, а море за границей и живёт.
+ */
+const marineIds = new Set(
+  physicalFeatures.flatMap((feature) =>
+    feature.kind === 'marine' ? [feature.neId] : [],
+  ),
+);
+
+const marineFeatures = await load('ne_10m_geography_marine_polys');
+const marine = marineFeatures
+  .filter(
+    (feature) =>
+      feature.geometry !== null &&
+      marineIds.has(feature.properties.ne_id as number),
+  )
+  .map((feature) => ({
+    neId: feature.properties.ne_id as number,
+    rings: polygonRings(feature.geometry as Geometry).map((ring) =>
+      ring.map(round),
+    ),
+  }));
+
+const missingMarine = [...marineIds].filter(
+  (id) => !marine.some((item) => item.neId === id),
+);
+if (missingMarine.length > 0) {
+  throw new Error(`Не найдены морские тела: ${missingMarine.join(', ')}`);
+}
+
+/*
  * Крайние точки. Набор отдаёт их отдельным слоем точек, и координата у каждой
  * одна — контура у вершины и впадины нет вовсе.
  */
@@ -204,14 +235,17 @@ writeFileSync(
     landforms,
     lakes,
     points,
+    marine,
   })}\n`,
 );
 
 const vertices =
+  marine.reduce((n, item) => n + item.rings.flat().length, 0) +
   rivers.reduce((n, river) => n + river.parts.flat().length, 0) +
   landforms.reduce((n, landform) => n + landform.rings.flat().length, 0) +
   lakes.reduce((n, lake) => n + lake.rings.flat().length, 0);
 console.info(
   `Выжимка записана: отрезков рек ${rivers.length}, форм ${landforms.length}, ` +
-    `озёр ${lakes.length}, крайних точек ${points.length}, вершин ${vertices}`,
+    `озёр ${lakes.length}, крайних точек ${points.length}, ` +
+    `морских тел ${marine.length}, вершин ${vertices}`,
 );

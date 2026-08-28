@@ -666,6 +666,36 @@ const FEATURE_PHOTOS: Readonly<Record<string, CollectionPhoto>> = {
     captionRu: 'Крепость Цзяюйгуань в Хэсийском коридоре',
     place: 'Цзяюйгуань, Ганьсу',
   },
+  'yellow-sea': {
+    id: 'feature-yellow-sea',
+    subject: 'наносы с высоты',
+    captionRu: 'Наносы рек в Бохайском заливе и Жёлтом море — снимок из космоса',
+    place: 'Жёлтое море',
+  },
+  'east-china-sea': {
+    id: 'feature-east-china-sea',
+    subject: 'острова архипелага',
+    captionRu: 'Чжоушаньский архипелаг на закате',
+    place: 'Чжоушань, Чжэцзян',
+  },
+  'south-china-sea': {
+    id: 'feature-south-china-sea',
+    subject: 'берег моря',
+    captionRu: 'Бухта Ялунвань на юге Хайнаня',
+    place: 'Санья, Хайнань',
+  },
+  bohai: {
+    id: 'feature-bohai',
+    subject: 'берег залива',
+    captionRu: 'Гора Бицзяшань у Цзиньчжоу в прилив',
+    place: 'Цзиньчжоу, Ляонин',
+  },
+  'taiwan-strait': {
+    id: 'feature-taiwan-strait',
+    subject: 'остров в проливе',
+    captionRu: 'Остров Сяосян у Пиндана, снятый с парома',
+    place: 'Пиндань, Фуцзянь',
+  },
   everest: {
     id: 'feature-everest',
     subject: 'северная стена',

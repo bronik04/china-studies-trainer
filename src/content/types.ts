@@ -143,7 +143,12 @@ export type Region = {
  */
 export type ReliefStep = 1 | 2 | 3;
 
-export type PhysicalKind = 'river' | 'landform' | 'lake' | 'point';
+export type PhysicalKind =
+  | 'river'
+  | 'landform'
+  | 'lake'
+  | 'point'
+  | 'marine';
 
 type PhysicalCommon = {
   readonly id: string;
@@ -194,6 +199,16 @@ export type PhysicalFeature = PhysicalCommon &
          * `rivernum`. Список, потому что крупное озеро набор режет на части.
          */
         readonly lakeIds: readonly number[];
+      }
+    | {
+        readonly kind: 'marine';
+        /**
+         * Море, залив или пролив. Род ставится по существу, а не по полю
+         * набора: Бохайский залив Natural Earth помечает `sea`.
+         */
+        readonly marine: 'sea' | 'gulf' | 'strait';
+        /** Номер объекта в Natural Earth — как у озера и крайней точки. */
+        readonly neId: number;
       }
     | {
         readonly kind: 'point';
