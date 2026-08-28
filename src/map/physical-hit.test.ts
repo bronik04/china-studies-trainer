@@ -1,4 +1,5 @@
 import { lakeMarks } from './lake-marks';
+import { RELIEF_SHAPES } from './physical-geometry';
 import { physicalTargetAt } from './physical-hit';
 import { RIVER_SHAPES } from './river-hit';
 
@@ -49,4 +50,17 @@ it('сужает полосу реки на увеличении', () => {
 
   expect(physicalTargetAt(aside[0], aside[1], 1)).toBe('yangtze');
   expect(physicalTargetAt(aside[0], aside[1], 3)).not.toBe('yangtze');
+});
+
+/*
+ * Ревью 2026-08-28: правило «побеждает меньший» между формами не выполнялось.
+ * Порядок проверки совпадал с порядком рисования, а рисуются крупные первыми,
+ * чтобы нагорье не закрасило вложенное, — и нажатие по Куньлуню доставалось
+ * Тибетскому нагорью. С клавиатуры оба отвечали верно: узел в фокусе зовёт
+ * `onSelect` сам, минуя расчёт, — потому дефект и дожил до браузера.
+ */
+it('вложенная форма побеждает накрывающую', () => {
+  const kunlun = RELIEF_SHAPES.find((shape) => shape.featureId === 'kunlun')!;
+
+  expect(physicalTargetAt(kunlun.labelX!, kunlun.labelY!, 1)).toBe('kunlun');
 });
