@@ -630,6 +630,78 @@ const qaidamBasinFacts: readonly Fact[] = [
   },
 ];
 
+const northeastPlainFacts: readonly Fact[] = [
+  {
+    title: 'Чернозёмы Северо-Востока',
+    body: 'Равнина занимает около 350 000 км², и вся она ниже 300 м. Сложена сносом с окрестных возвышенностей, поверхность волнистая, почвы — плодородные чернозёмы.',
+    sourceIds: ['britannica-northeast-plain'],
+  },
+  {
+    title: 'Кем ограничена',
+    body: 'С запада равнину держит Большой Хинган, с севера — Малый Хинган, с востока — хребты Чанбайшань, а на юг она открыта к Ляодунскому заливу. Дренируют её Сунгари с притоком Нэньцзян на севере и Ляохэ на юге.',
+    sourceIds: ['britannica-northeast-plain'],
+  },
+  {
+    title: 'Главный соевый край',
+    body: 'Это главный соевый край Китая; кроме сои растят кукурузу, рис, пшеницу, сорго, сахарную свёклу и лён. Равнина богата железной рудой, углём и нефтью, а крупнейшие её города — Харбин, Шэньян и Чанчунь.',
+    sourceIds: ['britannica-northeast-plain'],
+  },
+];
+
+const taklamakanFacts: readonly Fact[] = [
+  {
+    title: 'Пустыня внутри впадины',
+    body: 'Такла-Макан занимает середину Таримской впадины: 960 км с запада на восток, до 420 км в ширину, около 320 000 км² — одна из крупнейших песчаных пустынь мира.',
+    sourceIds: ['britannica-takla-makan'],
+  },
+  {
+    title: 'Обрамление',
+    body: 'С севера её отгораживает Тянь-Шань, с юга — Куньлунь, с запада — Памир; на востоке пустыня постепенно переходит в котловину Лобнора.',
+    sourceIds: ['britannica-takla-makan'],
+  },
+  {
+    title: 'Песок в движении',
+    body: 'Цепи дюн поднимаются на 30–150 м, пирамидальные — до 200–300 м. Весной пыльные бури забивают воздух пылью до четырёх километров высоты, и пустыня почти круглый год стоит под пылевой пеленой. Реки Куньлуня уходят в пески через 100–200 км, и только Хотан пересекает пустыню, летом иногда донося воду до Тарима.',
+    sourceIds: ['britannica-takla-makan'],
+  },
+];
+
+const taihangFacts: readonly Fact[] = [
+  {
+    title: 'Рубеж второй и третьей ступени',
+    body: 'По Тайханшаню проходит край второй ступени рельефа: к востоку от него и от гор Далоу и Ушань начинается третья — холмы и равнины ниже 450 м.',
+    sourceIds: ['britannica-china-relief'],
+  },
+  {
+    title: 'Стена между Шаньси и Хэбэем',
+    body: 'Хребет тянется на 400 км с севера на юг и разделяет Шаньси и Хэбэй, плато Шаньси и Великую Китайскую равнину. От равнины он поднимается круто, до 1000–1200 м, а вершина Сяоутайшань на северо-западе Хэбэя достигает 2882 м.',
+    sourceIds: ['britannica-taihang-mountains'],
+  },
+  {
+    title: 'Дорога через Тайхан',
+    body: 'Хребет веками мешал ходить между Шаньси и Хэбэем, и «дорога через Тайхан» стала поэтическим образом житейских тягот. Переходов было восемь; главный — перевал Цзинсин, по которому теперь идёт железная дорога из Шицзячжуана в Тайюань.',
+    sourceIds: ['britannica-taihang-mountains'],
+  },
+];
+
+const hexiCorridorFacts: readonly Fact[] = [
+  {
+    title: 'Проход между нагорьем и пустыней',
+    body: 'Юг коридора — Тибетское нагорье, слишком высокое и холодное для земледелия, север — Гоби. Китайская цивилизация растекалась на запад по этой полосе, где талые снега Циляньшаня давали воду оазисам, а западный конец коридора стал местом встречи древних Востока и Запада.',
+    sourceIds: ['britannica-china-relief'],
+  },
+  {
+    title: 'Ровная жёлтая земля',
+    body: 'Коридор начинается примерно в 190 км к северо-западу от Ланьчжоу полосой внутреннего стока: питаемые ледниками реки, среди них Хэйхэ, исчезают в пустыне. Горы рядом покрыты лесом, их нижние склоны — травой, а дно самого коридора — однообразно ровная и голая жёлтая земля.',
+    sourceIds: ['britannica-gansu'],
+  },
+  {
+    title: 'Житница Ганьсу',
+    body: 'При этом плодородный коридор даёт бо́льшую часть продовольствия провинции — пшеницу, ячмень, просо, кукурузу и клубнеплоды, — а орошение держится на талой воде Циляньшаня. Здесь же разводят двугорбых верблюдов.',
+    sourceIds: ['britannica-gansu'],
+  },
+];
+
 const FACTS: Readonly<Record<string, readonly Fact[]>> = {
   yangtze: yangtzeFacts,
   'yellow-river': yellowRiverFacts,
@@ -659,6 +731,10 @@ const FACTS: Readonly<Record<string, readonly Fact[]>> = {
   'yungui-plateau': yunguiPlateauFacts,
   'junggar-basin': junggarBasinFacts,
   'qaidam-basin': qaidamBasinFacts,
+  'northeast-plain': northeastPlainFacts,
+  taklamakan: taklamakanFacts,
+  taihang: taihangFacts,
+  'hexi-corridor': hexiCorridorFacts,
 };
 
 export const physicalFeatures: readonly PhysicalFeature[] = [
@@ -761,6 +837,33 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
     ['qinghai'],
   ),
   landform(
+    'northeast-plain',
+    'Северо-Восточная равнина',
+    '东北平原',
+    'Dōngběi Píngyuán',
+    3,
+    'plain',
+    ['heilongjiang', 'jilin', 'liaoning'],
+  ),
+  landform(
+    'taklamakan',
+    'Такла-Макан',
+    '塔克拉玛干沙漠',
+    'Tǎkèlāmǎgān Shāmò',
+    2,
+    'desert',
+    ['xinjiang'],
+  ),
+  landform(
+    'hexi-corridor',
+    'Хэсийский коридор',
+    '河西走廊',
+    'Héxī Zǒuláng',
+    2,
+    'plain',
+    ['gansu'],
+  ),
+  landform(
     'north-china-plain',
     'Великая Китайская равнина',
     '华北平原',
@@ -789,6 +892,11 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
   landform('qinling', 'Циньлин', '秦岭', 'Qín Lǐng', 2, 'range', [
     'shaanxi',
     'gansu',
+    'henan',
+  ]),
+  landform('taihang', 'Тайханшань', '太行山', 'Tàiháng Shān', 2, 'range', [
+    'hebei',
+    'shanxi',
     'henan',
   ]),
   landform(

@@ -430,7 +430,7 @@ describe('validatePhysicalGeometry', () => {
 it('у каждой формы-цели есть точка подписи, и она лежит внутри контура', () => {
   const targets = RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined);
 
-  expect(targets).toHaveLength(16);
+  expect(targets).toHaveLength(20);
 
   for (const shape of targets) {
     expect(shape.labelX, `${shape.key}: нет labelX`).toBeTypeOf('number');
@@ -448,12 +448,12 @@ it('декоративная форма точки подписи не несё�
   }
 });
 
-it('шесть хребтов — цели, и каждый крупнее порога нажатия', () => {
+it('семь хребтов — цели, и каждый крупнее порога нажатия', () => {
   const ranges = physicalFeatures.filter(
     (feature) => feature.kind === 'landform' && feature.landform === 'range',
   );
 
-  expect(ranges).toHaveLength(6);
+  expect(ranges).toHaveLength(7);
 
   for (const range of ranges) {
     const shape = RELIEF_SHAPES.find((item) => item.featureId === range.id);

@@ -987,6 +987,32 @@ export const sources = [
     covers: ['физическая география и площадь пустыни Такла-Макан', 'дюны и климат Такла-Макана', 'Шёлковый путь и исследование пустыни'],
   },
   {
+    id: 'britannica-northeast-plain',
+    title: 'Northeast Plain',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/place/Northeast-Plain',
+    accessedAt: '2026-08-28',
+    covers: [
+      'площадь, высоты и почвы Северо-Восточной равнины',
+      'её обрамление и реки',
+      'соя и прочее хозяйство равнины',
+    ],
+  },
+  {
+    id: 'britannica-taihang-mountains',
+    title: 'Taihang Mountains',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/place/Taihang-Mountains',
+    accessedAt: '2026-08-28',
+    covers: [
+      'протяжённость Тайханшаня и рубеж между Шаньси и Хэбэем',
+      'высоты хребта и вершина Сяоутайшань',
+      'восемь переходов и перевал Цзинсин',
+    ],
+  },
+  {
     id: 'britannica-qaidam-basin',
     title: 'Qaidam Basin',
     organization: 'Encyclopaedia Britannica',

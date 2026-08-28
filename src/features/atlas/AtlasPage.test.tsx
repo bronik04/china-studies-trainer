@@ -92,7 +92,7 @@ it('до выбора рассказывает, что лежит в каждо�
 
   expect(screen.getByText(/Справочник по карте/)).toBeInTheDocument();
   expect(screen.getByText(/34 региона провинциального уровня/)).toBeInTheDocument();
-  expect(screen.getByText(/28 объектов: реки, формы рельефа и озёра/)).toBeInTheDocument();
+  expect(screen.getByText(/32 объекта: реки, формы рельефа и озёра/)).toBeInTheDocument();
 });
 
 it('убирает вводку, когда регион выбран', () => {

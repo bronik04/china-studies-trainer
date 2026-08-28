@@ -83,4 +83,8 @@ export const SHAPE_FEATURE_IDS: Readonly<Record<string, string>> = {
   'YUNGUI PLATEAU': 'yungui-plateau',
   'Junggar Basin': 'junggar-basin',
   'Qaidam Basin': 'qaidam-basin',
+  'MANCHURIAN PLAIN': 'northeast-plain',
+  'TAKLIMAKAN DESERT': 'taklamakan',
+  'Taihang Mts.': 'taihang',
+  'Hexi Corridor': 'hexi-corridor',
 };
