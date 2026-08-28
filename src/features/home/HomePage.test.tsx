@@ -362,6 +362,15 @@ it('карточка правителей запускает игру о пра�
   expect(onStartHistoryRound).toHaveBeenCalledWith('ru', undefined, 'ruler');
 });
 
+it('карточка порядка запускает расстановку', () => {
+  const { onStartHistoryRound } = renderHome();
+
+  openCard(/Расставить по порядку/);
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(onStartHistoryRound).toHaveBeenCalledWith('ru', undefined, 'order');
+});
+
 it('«Отмена» закрывает окно и ничего не запускает', () => {
   const { onStartRound } = renderHome();
 

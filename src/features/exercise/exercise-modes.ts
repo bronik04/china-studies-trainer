@@ -104,7 +104,7 @@ export type ModeCard = {
    */
   | {
       readonly kind: 'history';
-      readonly historyKind: 'when' | 'who' | 'capital' | 'ruler';
+      readonly historyKind: 'when' | 'who' | 'capital' | 'ruler' | 'order';
     }
   /** Игра по снимкам коллекций: вопрос — сама фотография. */
   | { readonly kind: 'culture' }
@@ -355,6 +355,17 @@ export const MODE_CARDS: readonly ModeCard[] = [
     summary:
       'Названа династия — выбрать правителя, которым она известна. У Ся и Шан правитель легендарный, и разбор говорит об этом прямо. Троецарствие не спрашивается: у эпохи трёх государств единственного правителя нет.',
     volume: '11 династий · около 4 минут',
+    groupId: 'humanities',
+  },
+  {
+    id: 'history-order',
+    kind: 'history',
+    historyKind: 'order',
+    mark: '序',
+    title: 'Расставить по порядку',
+    summary:
+      'Четыре имени за круг: выбрать династию и нажать её место на ленте времени. Три круга закрывают все двенадцать. На имя три попытки; после третьей оно встанет само.',
+    volume: '12 династий · около 6 минут',
     groupId: 'humanities',
   },
   {

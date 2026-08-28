@@ -55,6 +55,7 @@ import {
   ExerciseRound,
   FillMapResultsPage,
   FillMapRound,
+  OrderRound,
   PhysicalRound,
   prefetchScreens,
   RoundResultsPage,
@@ -77,7 +78,8 @@ type Screen =
   | 'culture-exercise'
   | 'results'
   | 'fill'
-  | 'fill-results';
+  | 'fill-results'
+  | 'order-exercise';
 
 /**
  * Кадр приложения: закреплённая шапка и поверхность в одной колонке.
@@ -167,7 +169,7 @@ export default function App() {
    * итогов, где карточки уже нет.
    */
   const [historyKind, setHistoryKind] = useState<
-    'when' | 'who' | 'capital' | 'ruler'
+    'when' | 'who' | 'capital' | 'ruler' | 'order'
   >('when');
   /* Пул снимков. Как и у прочих: «Повторить ошибки» задаёт его напрямую. */
   const [culturePool, setCulturePool] = useState<readonly Collection[]>(() =>
@@ -379,14 +381,15 @@ export default function App() {
   function startHistoryRound(
     nextLanguage: QuestionLanguage = language,
     pool: readonly Dynasty[] = dynasties,
-    kind: 'when' | 'who' | 'capital' | 'ruler' = historyKind,
+    kind: 'when' | 'who' | 'capital' | 'ruler' | 'order' = historyKind,
   ) {
     setHistoryPool(pool);
     setHistoryKind(kind);
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
     setSeed(Math.floor(Math.random() * 2 ** 31));
-    setScreen('history-exercise');
+    /* Расстановка — свой экран: там один экран и несколько решений. */
+    setScreen(kind === 'order' ? 'order-exercise' : 'history-exercise');
   }
 
   function startCultureRound(
@@ -542,7 +545,27 @@ export default function App() {
     );
   }
 
-  if (screen === 'history-exercise') {
+  if (screen === 'order-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <OrderRound
+          dynasties={historyPool}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishTargetRound}
+          onExit={goToModes}
+        />
+      </AppFrame>
+    );
+  }
+
+  /*
+   * Расстановка сюда не попадает: у неё свой экран выше. Условие названо
+   * явно, а не приведением типа, — если состояние однажды разойдётся с
+   * экраном, ученик окажется на главной, а не перед пустым кадром.
+   */
+  if (screen === 'history-exercise' && historyKind !== 'order') {
     return (
       <AppFrame fillsFrame current={null} onNavigate={navigate}>
         <HistoryRound
