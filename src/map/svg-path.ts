@@ -145,6 +145,31 @@ export function distanceToBoundary(
   return nearest;
 }
 
+/**
+ * Площадь всех колец контура в единицах карты.
+ *
+ * Нужна порядку попадания: из двух форм, накрывших точку, побеждает меньшая
+ * (`physical-hit.ts`). Вписанная окружность для этого не годится — у
+ * Хэсийского коридора она мала, а накрывает он полосу в полстраны.
+ *
+ * Знак обхода не важен: у каждого кольца берётся модуль. Вложенных колец
+ * («дырок») у форм рельефа нет — они пришли из Natural Earth отдельными
+ * контурами.
+ */
+export function polygonArea(rings: readonly Point[][]): number {
+  return rings.reduce((total, ring) => {
+    let sum = 0;
+
+    for (let index = 0; index < ring.length; index += 1) {
+      const [x1, y1] = ring[index];
+      const [x2, y2] = ring[(index + 1) % ring.length];
+      sum += x1 * y2 - x2 * y1;
+    }
+
+    return total + Math.abs(sum) / 2;
+  }, 0);
+}
+
 export type InscribedCircle = {
   readonly x: number;
   readonly y: number;

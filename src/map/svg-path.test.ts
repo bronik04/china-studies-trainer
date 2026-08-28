@@ -6,6 +6,7 @@ import {
   distanceToSegment,
   largestInscribedCircle,
   parseMapPath,
+  polygonArea,
   type Point,
 } from './svg-path';
 
@@ -161,4 +162,65 @@ it('вырожденный контур не притворяется целью
       1,
     ),
   ).toThrow('Контур без внутренних точек');
+});
+
+/* Площадь нужна порядку попадания: побеждает форма меньшей площади. */
+it('считает площадь квадрата', () => {
+  const square: Point[][] = [
+    [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+      [0, 0],
+    ],
+  ];
+
+  expect(polygonArea(square)).toBeCloseTo(100);
+});
+
+/* Кольцо без повтора первой точки — обычное дело в разобранном пути. */
+it('замыкает кольцо сам', () => {
+  const open: Point[][] = [
+    [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+    ],
+  ];
+
+  expect(polygonArea(open)).toBeCloseTo(100);
+});
+
+it('площадь не зависит от направления обхода', () => {
+  const clockwise: Point[][] = [
+    [
+      [0, 0],
+      [0, 10],
+      [10, 10],
+      [10, 0],
+    ],
+  ];
+
+  expect(polygonArea(clockwise)).toBeCloseTo(100);
+});
+
+it('складывает площади колец', () => {
+  const two: Point[][] = [
+    [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+    ],
+    [
+      [20, 20],
+      [24, 20],
+      [24, 24],
+      [20, 24],
+    ],
+  ];
+
+  expect(polygonArea(two)).toBeCloseTo(116);
 });
