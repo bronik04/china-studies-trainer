@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { collections, collectionsInGroup } from '../../content/collections';
-import { MODE_CARDS } from '../exercise/exercise-modes';
+import { MODE_CARDS, MODE_GROUPS } from '../exercise/exercise-modes';
 import { regions } from '../../content/regions';
 import type { Attempt } from '../../domain/round';
 import { HomePage } from './HomePage';
@@ -245,6 +245,43 @@ function openCard(title: string | RegExp): void {
   fireEvent.click(screen.getByRole('button', { name: title }));
 }
 
+/*
+ * Одиннадцать равных карточек подряд требовали прочитать одиннадцать абзацев,
+ * чтобы выбрать. Группы — те же справочники, из которых берутся цели.
+ */
+it('игры разложены по предметам, и каждая попала ровно в одну группу', () => {
+  renderHome();
+
+  for (const group of MODE_GROUPS) {
+    expect(
+      screen.getByRole('heading', { level: 3, name: group.title }),
+    ).toBeInTheDocument();
+  }
+
+  const grids = document.querySelectorAll('.mode-group .mode-card-grid');
+  const cards = [...grids].flatMap((grid) => [
+    ...grid.querySelectorAll('.mode-card'),
+  ]);
+
+  expect(grids).toHaveLength(MODE_GROUPS.length);
+  expect(cards).toHaveLength(MODE_CARDS.length);
+});
+
+/*
+ * Описание игры ушло с карточки в окно старта: там ученик уже выбрал игру и
+ * спрашивает, как в ней спрашивают, а не сравнивает одиннадцать абзацев.
+ */
+it('описание игры стоит в окне перед стартом, а не на карточке', () => {
+  renderHome();
+
+  const summary = MODE_CARDS[0].summary;
+  expect(screen.queryByText(summary)).toBeNull();
+
+  openCard(/Найти на карте/);
+
+  expect(within(screen.getByRole('dialog')).getByText(summary)).toBeInTheDocument();
+});
+
 it('спрашивает язык перед стартом, а не запускает раунд сразу', () => {
   const { onStartRound } = renderHome();
 
@@ -307,7 +344,7 @@ it('показывает обе игры по физической геогра�
   renderHome();
 
   expect(
-    screen.getByRole('button', { name: /Найти на физической карте/ }),
+    screen.getByRole('button', { name: /Найти объект/ }),
   ).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Назвать объект/ })).toBeInTheDocument();
 });

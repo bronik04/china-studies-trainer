@@ -25,7 +25,11 @@ import type { QuestionLanguage } from '../../domain/question-language';
 import type { Attempt, ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { SiteFooter } from '../../ui/SiteFooter';
-import { MODE_CARDS, type ModeCard } from '../exercise/exercise-modes';
+import {
+  MODE_CARDS,
+  MODE_GROUPS,
+  type ModeCard,
+} from '../exercise/exercise-modes';
 import { CollectionCard } from './CollectionCard';
 import { ModeStartDialog } from './ModeStartDialog';
 import { nextStep } from './next-step';
@@ -300,43 +304,76 @@ export function HomePage({
             </button>
           )}
         </div>
-        <ul className="mode-card-grid">
-          {MODE_CARDS.map((card) => {
-            const isPlanned = card.kind === 'planned';
+        {/*
+          Игры разложены по предметам, а не одной сеткой на одиннадцать
+          карточек. Группы — те же справочники, из которых берутся цели:
+          ученик выбирает сначала предмет, а потом форму вопроса. Пока игр
+          было четыре, разница читалась и без этого; на одиннадцати между
+          «Заполнить карту» и «Найти город» не осталось видимой границы, хотя
+          это разные предметы.
 
-            return (
-              <li key={card.id} className="mode-card" data-planned={isPlanned}>
-                <button
-                  type="button"
-                  disabled={isPlanned}
-                  onClick={() => setStartingCard(card)}
-                >
-                  <span className="mode-card-head">
-                    <span lang="zh-Hans" className="mode-card-mark">
-                      {card.mark}
-                    </span>
-                    {/*
-                      Строка справа отвечает, почему карточка не нажимается.
-                      Причина осталась одна — режим ещё не написан: заслужить
-                      игру нельзя, все открыты сразу. У работающих карточек
-                      строки нет: писать «доступно» на том, что и так
-                      нажимается, незачем.
-                    */}
-                    {isPlanned ? (
-                      <span className="mode-card-status">Готовится</span>
-                    ) : null}
-                  </span>
-                  <span className="mode-card-title">{card.title}</span>
-                  <span className="mode-card-summary">{card.summary}</span>
-                  <span className="mode-card-volume">{card.volume}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+          Название группы — заголовок третьего уровня внутри «Режимов», а не
+          абзац покрупнее: порядок уровней на странице должен совпадать с
+          устройством раздела.
+        */}
+        {MODE_GROUPS.map((group) => (
+          <section key={group.id} className="mode-group">
+            <div className="mode-group-head">
+              <h3>{group.title}</h3>
+              <p>{group.note}</p>
+            </div>
+            <ul className="mode-card-grid">
+              {MODE_CARDS.filter((card) => card.groupId === group.id).map(
+                (card) => {
+                  const isPlanned = card.kind === 'planned';
+
+                  return (
+                    <li
+                      key={card.id}
+                      className="mode-card"
+                      data-planned={isPlanned}
+                    >
+                      <button
+                        type="button"
+                        disabled={isPlanned}
+                        onClick={() => setStartingCard(card)}
+                      >
+                        <span className="mode-card-head">
+                          <span lang="zh-Hans" className="mode-card-mark">
+                            {card.mark}
+                          </span>
+                          {/*
+                            Строка справа отвечает, почему карточка не
+                            нажимается. Причина осталась одна — режим ещё не
+                            написан: заслужить игру нельзя, все открыты сразу.
+                            У работающих карточек строки нет: писать
+                            «доступно» на том, что и так нажимается, незачем.
+                          */}
+                          {isPlanned ? (
+                            <span className="mode-card-status">Готовится</span>
+                          ) : null}
+                        </span>
+                        <span className="mode-card-title">{card.title}</span>
+                        {/*
+                          Абзаца с описанием на карточке больше нет: одиннадцать
+                          абзацев подряд — это одиннадцать абзацев, которые
+                          нужно прочитать, чтобы выбрать. Он переехал в окно
+                          перед стартом, где ученик уже решил играть именно в
+                          эту игру.
+                        */}
+                        <span className="mode-card-volume">{card.volume}</span>
+                      </button>
+                    </li>
+                  );
+                },
+              )}
+            </ul>
+          </section>
+        ))}
         {startingCard === null ? null : (
           <ModeStartDialog
             title={startingCard.title}
+            summary={startingCard.summary}
             volume={startingCard.volume}
             defaultLanguage={step.language}
             setChoice={setChoiceFor(startingCard)}

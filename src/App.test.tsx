@@ -322,8 +322,8 @@ it('все написанные игры открыты сразу, без вс�
     /Назвать регион/,
     /Регион — столица/,
     /Заполнить карту/,
-    /История: династии и даты/,
-    /Культура: узнать по фотографии/,
+    /Династии и даты/,
+    /Узнать по фотографии/,
   ]) {
     expect(screen.getByRole('button', { name })).toBeEnabled();
   }
@@ -332,7 +332,7 @@ it('все написанные игры открыты сразу, без вс�
 it('запускает раунд по физической географии с главной', async () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: /Найти на физической карте/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Найти объект/ }));
   // Точное имя, а не «начинается с»: в герое стоит «Начать: найти на карте».
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();
@@ -344,7 +344,7 @@ it('запускает раунд по физической географии �
 it('набор перед стартом задаёт длину физического раунда', async () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: /Найти на физической карте/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Найти объект/ }));
   fireEvent.click(screen.getByRole('radio', { name: /И озёра/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();
@@ -382,7 +382,7 @@ it('раунд по истории доходит до итога и счита�
   render(<App />);
 
   fireEvent.click(
-    screen.getByRole('button', { name: /История: династии и даты/ }),
+    screen.getByRole('button', { name: /Династии и даты/ }),
   );
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();

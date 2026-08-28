@@ -1849,6 +1849,32 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 
 /* --- Карточки режимов --------------------------------------------------- */
 
+/*
+ * Группа игр: название слева, карточки справа. Одиннадцать равных карточек
+ * подряд читались одним полотном — порядок в них был, но ничем не назван.
+ * Название группы стоит рельсой сбоку, а не строкой над сеткой: строка
+ * добавила бы к разделу четыре высоты заголовка, а рельса занимает поле,
+ * которое и так пустует слева от карточек.
+ */
+.mode-group + .mode-group {
+  margin-top: var(--s-6);
+}
+
+.mode-group-head h3 {
+  color: var(--text-on-ground-strong);
+  font-family: var(--t-family-display);
+  font-size: 1.1875rem;
+  font-weight: var(--t-weight-regular);
+  line-height: var(--t-leading-tight);
+  margin: 0;
+}
+
+.mode-group-head p {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: var(--s-1) 0 var(--s-3);
+}
+
 .mode-card-grid,
 .collection-grid {
   display: grid;
@@ -1889,7 +1915,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 .mode-card button {
   flex: 1;
   gap: var(--s-2);
-  padding: var(--s-5);
+  padding: var(--s-4);
 }
 
 .mode-card button:hover:enabled,
@@ -2052,16 +2078,24 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   color: var(--accent);
 }
 
+/*
+ * Описание игры в окне перед стартом. Стояло на карточке, где одиннадцать
+ * таких абзацев подряд требовалось прочитать, чтобы выбрать.
+ */
+.mode-dialog-summary {
+  color: var(--text-on-paper);
+  margin: 0 0 var(--s-2);
+}
+
+/*
+ * Кегль меньше прежнего: карточка сузилась с 437 до 268 px, и «Найти на
+ * физической карте» в 21 px разваливалось на три строки.
+ */
 .mode-card-title {
   color: inherit;
   font-family: var(--t-family-display);
-  font-size: 1.3125rem;
+  font-size: 1.125rem;
   line-height: var(--t-leading-tight);
-}
-
-.mode-card-summary {
-  color: var(--c-ink-700);
-  font-size: 0.9375rem;
 }
 
 .mode-card-volume {
@@ -2719,9 +2753,28 @@ button.chip[aria-pressed='true'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .mode-card-grid,
   .collection-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /*
+   * У режимов колонок четыре, а не три: в самой большой группе ровно четыре
+   * игры, и она укладывается в один ряд. Карточки при этом одной ширины во
+   * всех группах — ряды не разъезжаются.
+   */
+  .mode-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mode-group {
+    align-items: start;
+    display: grid;
+    gap: var(--s-5);
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .mode-group-head p {
+    margin-bottom: 0;
   }
 
   .photo-grid {
