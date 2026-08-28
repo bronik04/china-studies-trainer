@@ -18,7 +18,7 @@ type Region = {
 type City = {
   id: string;              // chengdu
   regionId: string;        // sichuan
-  set: 'capital' | 'notable' | 'border';
+  set: 'capital' | 'notable';
   nameRu: string;
   nameZh: string;
   pinyin: string;
