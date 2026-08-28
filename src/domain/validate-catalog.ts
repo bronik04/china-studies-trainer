@@ -1,4 +1,12 @@
-import type { City, PhysicalFeature, Region, Source } from '../content/types';
+import type {
+  City,
+  Dynasty,
+  DynastyCapital,
+  PhysicalFeature,
+  Region,
+  Source,
+} from '../content/types';
+import { CHOICE_COUNT } from './choices';
 import type { Collection } from '../content/collections';
 
 type ValidationOptions = {
@@ -454,6 +462,94 @@ export function validateCollections(
         );
       }
     }
+  }
+
+  if (errors.length > 0) {
+    throw new ContentValidationError(errors);
+  }
+}
+
+/**
+ * Династии, их столицы и правители.
+ *
+ * Прежде лента не проверялась вовсе: её `sourceIds` никто не сверял с
+ * каталогом источников, и опечатка в идентификаторе дожила бы до экрана.
+ */
+export function validateDynasties(
+  dynasties: readonly Dynasty[],
+  capitals: readonly DynastyCapital[],
+  cities: readonly City[],
+  sources: readonly Source[],
+): void {
+  const errors: string[] = [];
+  const sourceIds = new Set(sources.map((source) => source.id));
+  const dynastyIds = new Set(dynasties.map((dynasty) => dynasty.id));
+  const cityIds = new Set(cities.map((city) => city.id));
+
+  const checkSources = (
+    what: string,
+    ids: readonly string[],
+  ): void => {
+    if (ids.length === 0) {
+      errors.push(`У ${what} нет источника`);
+    }
+
+    for (const sourceId of ids) {
+      if (!sourceIds.has(sourceId)) {
+        errors.push(`Неизвестный источник: ${sourceId}`);
+      }
+    }
+  };
+
+  for (const dynasty of dynasties) {
+    if (dynasty.from >= dynasty.to) {
+      errors.push(`Срок династии ${dynasty.id} идёт вспять`);
+    }
+
+    checkSources(`династии ${dynasty.id}`, dynasty.sourceIds);
+  }
+
+  /* Спрашиваемых столиц на династию — не больше одной: цель спрашивается раз. */
+  const askedByDynasty = new Map<string, number>();
+
+  for (const capital of capitals) {
+    if (!dynastyIds.has(capital.dynastyId)) {
+      errors.push(`Столица ${capital.id} ссылается на чужую династию`);
+    }
+
+    if (!cityIds.has(capital.cityId)) {
+      errors.push(`Столица ${capital.id} ссылается на город вне каталога`);
+    }
+
+    checkSources(`столицы ${capital.id}`, capital.sourceIds);
+
+    if (capital.asked) {
+      askedByDynasty.set(
+        capital.dynastyId,
+        (askedByDynasty.get(capital.dynastyId) ?? 0) + 1,
+      );
+    }
+  }
+
+  for (const [dynastyId, count] of askedByDynasty) {
+    if (count > 1) {
+      errors.push(
+        `У династии ${dynastyId} ${count} спрашиваемых столиц: цель раунда ` +
+          'спрашивается ровно один раз',
+      );
+    }
+  }
+
+  /*
+   * Отвлекающие берутся из городов этого же справочника: меньше четырёх
+   * разных — и вопрос собрать не из чего.
+   */
+  const distinctCities = new Set(capitals.map((capital) => capital.cityId));
+  if (capitals.length > 0 && distinctCities.size < CHOICE_COUNT) {
+    errors.push(
+      `Разных городов среди столиц ${distinctCities.size}, а вариантов в ` +
+        `вопросе ${CHOICE_COUNT}`,
+    );
   }
 
   if (errors.length > 0) {
