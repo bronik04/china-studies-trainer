@@ -682,10 +682,24 @@ export type PhysicalGeometry = {
       } else if (!containsPoint(geometry.landRings as Point[][], label[0], label[1])) {
         errors.push(`Подпись формы ${feature.id} вне суши Китая`);
       } else {
-        const free = unitsToPixels(
-          distanceToBoundary(rings, label[0], label[1]) * 2,
-          REFERENCE_MAP_WIDTH,
+        /*
+         * Свободное место меряется и до вложенных целей: середина Таримской
+         * впадины принадлежит Такла-Макану, и мерить одну лишь впадину значило
+         * бы засчитать место, куда нажать нельзя.
+         */
+        const nested = askedLandforms.filter(
+          (other) =>
+            other.id !== feature.id &&
+            other.area < polygonArea(rings) &&
+            other.rings.flat().every(([x, y]) => containsPoint(rings, x, y)),
         );
+        const radius = Math.min(
+          distanceToBoundary(rings, label[0], label[1]),
+          ...nested.map((other) =>
+            distanceToBoundary(other.rings, label[0], label[1]),
+          ),
+        );
+        const free = unitsToPixels(radius * 2, REFERENCE_MAP_WIDTH);
         if (free < MIN_TARGET_PX) {
           errors.push(
             `У подписи формы ${feature.id} свободно ${free.toFixed(1)} px, нужно ${MIN_TARGET_PX}`,
@@ -695,30 +709,77 @@ export type PhysicalGeometry = {
     }
 ```
 
-Добавьте `distanceToBoundary` к импорту из `./svg-path`.
+`askedLandforms` считается один раз перед циклом по целям — там же, где
+объявлен `errors`:
+
+```ts
+  const askedLandforms = features.flatMap((item) => {
+    const rings = item.kind === 'landform' ? geometry.landforms.get(item.id) : undefined;
+
+    return rings === undefined ? [] : [{ id: item.id, rings, area: polygonArea(rings) }];
+  });
+```
+
+Добавьте `distanceToBoundary` и `polygonArea` к импорту из `./svg-path`.
 
 - [ ] **Шаг 12: Написать тест проверки**
 
-В `src/map/validate-map.test.ts` — рядом с прочими тестами
-`validatePhysicalGeometry`:
+Два новых поля `PhysicalGeometry` обязательны, а в `src/map/validate-map.test.ts`
+объект геометрии собран литералом в восьми местах. Сначала заведите один
+помощник в этом файле — рядом с прочими заготовками:
+
+```ts
+/** Пустая геометрия: тест задаёт только то, что испытывает. */
+function physicalGeometry(
+  overrides: Partial<PhysicalGeometry> = {},
+): PhysicalGeometry {
+  return {
+    rivers: new Map(),
+    landforms: new Map(),
+    lakes: new Map(),
+    lakeMarks: new Map(),
+    shapeLabels: new Map(),
+    landRings: [],
+    ...overrides,
+  };
+}
+```
+
+и перепишите через него прежние литералы: вместо
+`{ rivers: new Map([['straight-river', [line]]]), landforms: new Map(), lakes: new Map(), lakeMarks: new Map() }`
+— `physicalGeometry({ rivers: new Map([['straight-river', [line]]]) })`.
+
+Затем сам тест:
 
 ```ts
 it('ловит подпись формы вне суши', () => {
-  const geometry = physicalGeometryFixture();
-  const broken = {
-    ...geometry,
-    shapeLabels: new Map([['tibetan-plateau', [-10, -10] as Point]]),
-  };
+  const square: Point[][] = [
+    [
+      [100, 100],
+      [200, 100],
+      [200, 200],
+      [100, 200],
+    ],
+  ];
 
   expect(() =>
-    validatePhysicalGeometry([tibetanPlateauFixture], broken, shapesFixture),
+    validatePhysicalGeometry(
+      [plateauFeature],
+      physicalGeometry({
+        landforms: new Map([['plateau', square]]),
+        shapeLabels: new Map([['plateau', [150, 150] as Point]]),
+        landRings: [],
+      }),
+      shapes,
+    ),
   ).toThrow(/вне суши/);
 });
 ```
 
-Названия помощников (`physicalGeometryFixture`, `shapesFixture`,
-`tibetanPlateauFixture`) возьмите те, что уже используются в этом файле, —
-он построен на своих заготовках, новых заводить не нужно.
+`plateauFeature` и `shapes` — заготовки формы и областей карты, которые в этом
+файле уже есть; возьмите те, что используются соседними тестами
+`validatePhysicalGeometry`, и при необходимости добавьте форму с `id: 'plateau'`
+тем же способом, что заведена река `straight-river`.
 
 - [ ] **Шаг 13: Передать подписи и сушу из скрипта проверки**
 
