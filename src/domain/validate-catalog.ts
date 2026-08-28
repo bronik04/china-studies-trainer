@@ -4,6 +4,7 @@ import type {
   DynastyCapital,
   PhysicalFeature,
   Region,
+  Ruler,
   Source,
 } from '../content/types';
 import { CHOICE_COUNT } from './choices';
@@ -478,6 +479,7 @@ export function validateCollections(
 export function validateDynasties(
   dynasties: readonly Dynasty[],
   capitals: readonly DynastyCapital[],
+  rulers: readonly Ruler[],
   cities: readonly City[],
   sources: readonly Source[],
 ): void {
@@ -536,6 +538,48 @@ export function validateDynasties(
       errors.push(
         `У династии ${dynastyId} ${count} спрашиваемых столиц: цель раунда ` +
           'спрашивается ровно один раз',
+      );
+    }
+  }
+
+  const rulerDynasties = new Set<string>();
+
+  for (const ruler of rulers) {
+    const dynasty = dynasties.find((item) => item.id === ruler.dynastyId);
+    if (dynasty === undefined) {
+      errors.push(`Правитель ${ruler.id} ссылается на чужую династию`);
+    }
+
+    if (rulerDynasties.has(ruler.dynastyId)) {
+      errors.push(`У династии ${ruler.dynastyId} больше одного правителя`);
+    }
+
+    rulerDynasties.add(ruler.dynastyId);
+
+    checkSources(`правителя ${ruler.id}`, ruler.sourceIds);
+
+    /*
+     * Годы известны не у всех: у легендарного правителя их нет, и это
+     * записано пометкой. Год без пометки — пропуск, а не решение.
+     */
+    const hasYears = ruler.from !== undefined && ruler.to !== undefined;
+    if (!hasYears && ruler.legendary !== true) {
+      errors.push(
+        `У правителя ${ruler.id} нет годов правления и нет пометки о предании`,
+      );
+    }
+
+    /*
+     * Пересечение, а не вложенность: Хубилай стал ханом в 1260 году, а
+     * державу переименовали в Юань только в 1271-м.
+     */
+    if (
+      hasYears &&
+      dynasty !== undefined &&
+      (ruler.from! > dynasty.to || ruler.to! < dynasty.from)
+    ) {
+      errors.push(
+        `Правление ${ruler.id} не пересекается со сроком династии ${dynasty.id}`,
       );
     }
   }
