@@ -35,10 +35,16 @@ export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
  * одиннадцати между «Заполнить карту» и «Найти город» не осталось никакой
  * видимой границы, хотя это разные предметы.
  *
- * История и культура стоят вместе: у обеих по одной игре и общий признак —
- * карты в них нет.
+ * История и культура стояли вместе, пока у каждой было по одной игре и общий
+ * признак — карты в них нет. Историй стало пять, и общая полка перестала
+ * что-либо объяснять: теперь это две группы (DECISIONS.md, 2026-08-28).
  */
-export type ModeGroupId = 'regions' | 'cities' | 'physical' | 'humanities';
+export type ModeGroupId =
+  | 'regions'
+  | 'cities'
+  | 'physical'
+  | 'history'
+  | 'culture';
 
 export const MODE_GROUPS: readonly {
   readonly id: ModeGroupId;
@@ -57,7 +63,12 @@ export const MODE_GROUPS: readonly {
     title: 'Физическая карта',
     note: 'реки, формы рельефа и озёра',
   },
-  { id: 'humanities', title: 'История и культура', note: 'без карты' },
+  {
+    id: 'history',
+    title: 'История',
+    note: 'двенадцать династий на ленте времени',
+  },
+  { id: 'culture', title: 'Культура', note: 'снимки коллекций' },
 ];
 
 /**
@@ -322,7 +333,7 @@ export const MODE_CARDS: readonly ModeCard[] = [
     summary:
       'Названа династия — выбрать её срок из четырёх. Отвлекают сроки соседних по времени династий, а под вопросом идёт лента: длина каждой полосы — её настоящий век.',
     volume: '12 династий · около 4 минут',
-    groupId: 'humanities',
+    groupId: 'history',
   },
   {
     id: 'history-year',
@@ -333,7 +344,7 @@ export const MODE_CARDS: readonly ModeCard[] = [
     summary:
       'Назван год — выбрать династию из четырёх или нажать её полосу на ленте. Годы, которые лента знает надвое, не спрашиваются: в 1275 году Сун и Юань существовали разом.',
     volume: '12 династий · около 4 минут',
-    groupId: 'humanities',
+    groupId: 'history',
   },
   {
     id: 'history-capital',
@@ -344,7 +355,7 @@ export const MODE_CARDS: readonly ModeCard[] = [
     summary:
       'Названа династия — выбрать город, откуда она правила. Разбор называет и старое имя, и нынешнее: Чанъань — это Сиань. Где столицу переносили, вопрос называет время: «столица Западной Хань».',
     volume: '7 династий · около 3 минут',
-    groupId: 'humanities',
+    groupId: 'history',
   },
   {
     id: 'history-ruler',
@@ -355,7 +366,7 @@ export const MODE_CARDS: readonly ModeCard[] = [
     summary:
       'Названа династия — выбрать правителя, которым она известна. У Ся и Шан правитель легендарный, и разбор говорит об этом прямо. Троецарствие не спрашивается: у эпохи трёх государств единственного правителя нет.',
     volume: '11 династий · около 4 минут',
-    groupId: 'humanities',
+    groupId: 'history',
   },
   {
     id: 'history-order',
@@ -366,7 +377,7 @@ export const MODE_CARDS: readonly ModeCard[] = [
     summary:
       'Четыре имени за круг: выбрать династию и нажать её место на ленте времени. Три круга закрывают все двенадцать. На имя три попытки; после третьей оно встанет само.',
     volume: '12 династий · около 6 минут',
-    groupId: 'humanities',
+    groupId: 'history',
   },
   {
     id: 'culture',
@@ -376,6 +387,6 @@ export const MODE_CARDS: readonly ModeCard[] = [
     summary:
       'Показан снимок — выбрать, что на нём, из четырёх названий. Отвлекают названия того же рода: памятник памятниками, гора горами, иначе ответ читался бы по виду кадра.',
     volume: 'Набор выбирается перед стартом · около 5 минут',
-    groupId: 'humanities',
+    groupId: 'culture',
   },
 ];
