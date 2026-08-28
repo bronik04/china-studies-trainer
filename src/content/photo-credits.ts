@@ -85,6 +85,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     page: "https://commons.wikimedia.org/wiki/File:%D0%90%D0%BC%D1%83%D1%80%D1%81%D0%BA%D0%B8%D0%B5_%D0%BE%D1%81%D1%82%D1%80%D0%BE%D0%B2%D0%B0.jpg",
     widths: [1200, 640],
   },
+  'feature-hexi-corridor': {
+    author: "Zhangzhugang",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    page: "https://commons.wikimedia.org/wiki/File:Jiayu_Guan_2014.01.01_11-03-14.jpg",
+    widths: [1200, 640],
+  },
   'feature-himalayas': {
     author: "Luca Galuzzi (Lucag)",
     license: "CC BY-SA 2.5",
@@ -97,6 +104,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     license: "CC BY-SA 4.0",
     licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
     page: "https://commons.wikimedia.org/wiki/File:The_scenery_of_Sihong_Wetland_Park.jpg",
+    widths: [1200, 640],
+  },
+  'feature-junggar-basin': {
+    author: "Nyx Ning",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0",
+    page: "https://commons.wikimedia.org/wiki/File:%E6%96%B0%E7%96%86-%E5%88%B6%E9%AB%98%E7%82%B9%E4%B8%8A%E8%A7%82%E9%AD%94%E9%AC%BC%E5%9F%8E_-_panoramio.jpg",
     widths: [1200, 640],
   },
   'feature-kunlun': {
@@ -120,6 +134,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     page: "https://commons.wikimedia.org/wiki/File:Loess_landscape_china.jpg",
     widths: [1200, 640],
   },
+  'feature-mongolian-plateau': {
+    author: "大漠1208",
+    license: "CC BY 3.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/3.0",
+    page: "https://commons.wikimedia.org/wiki/File:%E5%91%BC%E4%BC%A6%E8%B4%9D%E5%B0%94_%E5%93%88%E5%85%8B_-_panoramio.jpg",
+    widths: [860, 640],
+  },
   'feature-nanling': {
     author: "xiquinhosilva",
     license: "CC BY 2.0",
@@ -132,6 +153,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     license: "CC BY-SA 3.0",
     licenseUrl: "http://creativecommons.org/licenses/by-sa/3.0/",
     page: "https://commons.wikimedia.org/wiki/File:NorthChinaPlain.jpg",
+    widths: [1200, 640],
+  },
+  'feature-northeast-plain': {
+    author: "wanghongliu",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0",
+    page: "https://commons.wikimedia.org/wiki/File:%E7%8E%89%E7%B1%B3%E5%92%8C%E5%A4%A7%E8%B1%86_corn_%5E_soybean_-_panoramio.jpg",
     widths: [1200, 640],
   },
   'feature-pearl-river': {
@@ -147,6 +175,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     licenseUrl: "https://creativecommons.org/licenses/by-sa/2.0",
     page: "https://commons.wikimedia.org/wiki/File:Birds_on_Poyang_Lake_(15273717673).jpg",
     widths: [1200, 640],
+  },
+  'feature-qaidam-basin': {
+    author: "neverdance",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0",
+    page: "https://commons.wikimedia.org/wiki/File:Ulan,_Haixi,_Qinghai,_China_-_panoramio_-_neverdance_(13).jpg",
+    widths: [968, 640],
   },
   'feature-qinghai-lake': {
     author: "NASA",
@@ -169,12 +204,26 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     page: "https://commons.wikimedia.org/wiki/File:Zitong-sichuan-china.jpg",
     widths: [1200, 640],
   },
+  'feature-taihang': {
+    author: "Taken by Fanghong",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "http://creativecommons.org/licenses/by-sa/3.0/",
+    page: "https://commons.wikimedia.org/wiki/File:TaihangMountain8.jpg",
+    widths: [1200, 640],
+  },
   'feature-taihu': {
     author: "Haha169",
     license: "CC BY-SA 4.0",
     licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
     page: "https://commons.wikimedia.org/wiki/File:LakeTaiThreeKingdoms.jpg",
     widths: [1200, 640],
+  },
+  'feature-taklamakan': {
+    author: "Pravit",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    page: "https://commons.wikimedia.org/wiki/File:Taklamakan_desert.jpg",
+    widths: [986, 640],
   },
   'feature-tarim': {
     author: "Yoshi Canopus",
@@ -217,6 +266,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     licenseUrl: "https://creativecommons.org/licenses/by-sa/2.5/es/deed.en",
     page: "https://commons.wikimedia.org/wiki/File:Lanzhou-rio-amarillo-d01.jpg",
     widths: [1024, 640],
+  },
+  'feature-yungui-plateau': {
+    author: "автор не указан",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "http://creativecommons.org/licenses/by-sa/3.0/",
+    page: "https://commons.wikimedia.org/wiki/File:Yunnanshilin2.jpg",
+    widths: [797, 640],
   },
   'jiayuguan': {
     author: "User:Doron",

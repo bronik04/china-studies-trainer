@@ -93,6 +93,15 @@
 - Оригинал: 4715×2967
 - Ширины в репозитории: 1200, 640
 
+## feature-hexi-corridor
+
+- Файл: Jiayu Guan 2014.01.01 11-03-14.jpg
+- Автор: Zhangzhugang
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Jiayu_Guan_2014.01.01_11-03-14.jpg
+- Оригинал: 5472×3648
+- Ширины в репозитории: 1200, 640
+
 ## feature-himalayas
 
 - Файл: Everest North Face toward Base Camp Tibet Luca Galuzzi 2006.jpg
@@ -109,6 +118,15 @@
 - Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
 - Страница: https://commons.wikimedia.org/wiki/File:The_scenery_of_Sihong_Wetland_Park.jpg
 - Оригинал: 6000×4000
+- Ширины в репозитории: 1200, 640
+
+## feature-junggar-basin
+
+- Файл: 新疆-制高点上观魔鬼城 - panoramio.jpg
+- Автор: Nyx Ning
+- Лицензия: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)
+- Страница: https://commons.wikimedia.org/wiki/File:%E6%96%B0%E7%96%86-%E5%88%B6%E9%AB%98%E7%82%B9%E4%B8%8A%E8%A7%82%E9%AD%94%E9%AC%BC%E5%9F%8E_-_panoramio.jpg
+- Оригинал: 2848×2136
 - Ширины в репозитории: 1200, 640
 
 ## feature-kunlun
@@ -138,6 +156,15 @@
 - Оригинал: 1600×1067
 - Ширины в репозитории: 1200, 640
 
+## feature-mongolian-plateau
+
+- Файл: 呼伦贝尔 哈克 - panoramio.jpg
+- Автор: 大漠1208
+- Лицензия: CC BY 3.0 (https://creativecommons.org/licenses/by/3.0)
+- Страница: https://commons.wikimedia.org/wiki/File:%E5%91%BC%E4%BC%A6%E8%B4%9D%E5%B0%94_%E5%93%88%E5%85%8B_-_panoramio.jpg
+- Оригинал: 860×576
+- Ширины в репозитории: 860, 640
+
 ## feature-nanling
 
 - Файл: 39002-Danxiashan (48989060302).jpg
@@ -154,6 +181,15 @@
 - Лицензия: CC BY-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
 - Страница: https://commons.wikimedia.org/wiki/File:NorthChinaPlain.jpg
 - Оригинал: 2506×1110
+- Ширины в репозитории: 1200, 640
+
+## feature-northeast-plain
+
+- Файл: 玉米和大豆 corn ^ soybean - panoramio.jpg
+- Автор: wanghongliu
+- Лицензия: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)
+- Страница: https://commons.wikimedia.org/wiki/File:%E7%8E%89%E7%B1%B3%E5%92%8C%E5%A4%A7%E8%B1%86_corn_%5E_soybean_-_panoramio.jpg
+- Оригинал: 2000×1333
 - Ширины в репозитории: 1200, 640
 
 ## feature-pearl-river
@@ -173,6 +209,15 @@
 - Страница: https://commons.wikimedia.org/wiki/File:Birds_on_Poyang_Lake_(15273717673).jpg
 - Оригинал: 5184×3456
 - Ширины в репозитории: 1200, 640
+
+## feature-qaidam-basin
+
+- Файл: Ulan, Haixi, Qinghai, China - panoramio - neverdance (13).jpg
+- Автор: neverdance
+- Лицензия: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Ulan,_Haixi,_Qinghai,_China_-_panoramio_-_neverdance_(13).jpg
+- Оригинал: 968×634
+- Ширины в репозитории: 968, 640
 
 ## feature-qinghai-lake
 
@@ -201,6 +246,15 @@
 - Оригинал: 1600×1200
 - Ширины в репозитории: 1200, 640
 
+## feature-taihang
+
+- Файл: TaihangMountain8.jpg
+- Автор: Taken by Fanghong
+- Лицензия: CC BY-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
+- Страница: https://commons.wikimedia.org/wiki/File:TaihangMountain8.jpg
+- Оригинал: 1920×2060
+- Ширины в репозитории: 1200, 640
+
 ## feature-taihu
 
 - Файл: LakeTaiThreeKingdoms.jpg
@@ -209,6 +263,15 @@
 - Страница: https://commons.wikimedia.org/wiki/File:LakeTaiThreeKingdoms.jpg
 - Оригинал: 4208×2368
 - Ширины в репозитории: 1200, 640
+
+## feature-taklamakan
+
+- Файл: Taklamakan desert.jpg
+- Автор: Pravit
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Taklamakan_desert.jpg
+- Оригинал: 986×739
+- Ширины в репозитории: 986, 640
 
 ## feature-tarim
 
@@ -263,6 +326,15 @@
 - Страница: https://commons.wikimedia.org/wiki/File:Lanzhou-rio-amarillo-d01.jpg
 - Оригинал: 1024×768
 - Ширины в репозитории: 1024, 640
+
+## feature-yungui-plateau
+
+- Файл: Yunnanshilin2.jpg
+- Автор: автор не указан
+- Лицензия: CC BY-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
+- Страница: https://commons.wikimedia.org/wiki/File:Yunnanshilin2.jpg
+- Оригинал: 797×280
+- Ширины в репозитории: 797, 640
 
 ## jiayuguan
 
