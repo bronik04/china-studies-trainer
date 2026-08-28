@@ -1,10 +1,11 @@
 /**
  * Что на физической карте под точкой.
  *
- * Правило одно и называется словами: **побеждает меньший объект** — озеро,
- * потом река, потом форма рельефа, потом регион. Оно выводится из размера:
- * знак озера и линия реки меньше формы, на которой лежат, и рука, целившая в
- * них, метила не в подложку.
+ * Правило одно и называется словами: **побеждает меньший объект** — знак
+ * крайней точки, потом знак озера, потом река, потом форма рельефа (из
+ * накрывших — меньшая по площади), потом регион. Оно выводится из размера:
+ * знак и линия реки меньше формы, на которой лежат, и рука, целившая в них,
+ * метила не в подложку.
  *
  * Прежде источников было два, и они не спорили, а не видели друг друга: реку
  * карта считала расстоянием, а форма и озеро отвечали на нажатие своими
@@ -14,6 +15,7 @@
  */
 import { isOnLand } from './land';
 import { lakeMarks } from './lake-marks';
+import { pointMarks } from './point-marks';
 import { RELIEF_SHAPES } from './physical-geometry';
 import { RIVER_HIT_RADIUS_UNITS, riverAt } from './river-hit';
 import {
@@ -70,6 +72,16 @@ export function physicalTargetAt(
   y: number,
   zoom: number,
 ): string | null {
+  /*
+   * Крайняя точка идёт первой: Джомолунгма лежит внутри Гималаев, Гималаи — в
+   * Тибетском нагорье, и знак обязан опередить обе формы.
+   */
+  for (const mark of pointMarks(zoom)) {
+    if (Math.hypot(x - mark.hitX, y - mark.hitY) <= mark.radius) {
+      return mark.featureId;
+    }
+  }
+
   for (const mark of lakeMarks(zoom)) {
     if (Math.hypot(x - mark.hitX, y - mark.hitY) <= mark.radius) {
       return mark.featureId;

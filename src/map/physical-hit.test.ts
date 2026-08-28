@@ -1,5 +1,5 @@
 import { lakeMarks } from './lake-marks';
-import { RELIEF_SHAPES } from './physical-geometry';
+import { POINT_MARKS, RELIEF_SHAPES } from './physical-geometry';
 import { physicalTargetAt } from './physical-hit';
 import { RIVER_SHAPES } from './river-hit';
 
@@ -81,4 +81,14 @@ it('каждая форма достаётся себе в точке своей
       `${shape.key}: подпись достаётся не своей цели`,
     ).toBe(shape.featureId);
   }
+});
+
+/*
+ * Джомолунгма лежит внутри Гималаев, а те — внутри Тибетского нагорья. По
+ * правилу «побеждает меньший» знак обязан опередить обе формы.
+ */
+it('крайняя точка побеждает форму, на которой стоит', () => {
+  const everest = POINT_MARKS.find((mark) => mark.featureId === 'everest')!;
+
+  expect(physicalTargetAt(everest.x, everest.y, 1)).toBe('everest');
 });
