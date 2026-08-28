@@ -5,6 +5,7 @@ import { createSeededRandom } from '../../domain/random';
 import { buildDynastyChoices } from '../../domain/dynasty-choices';
 import { cityById } from '../../content/cities';
 import { capitalOfDynasty } from '../../content/dynasty-capitals';
+import { rulerOfDynasty, rulers } from '../../content/rulers';
 import { answerableYears } from '../../domain/dynasty-years';
 import { HistoryRound } from './HistoryRound';
 import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
@@ -51,6 +52,24 @@ function renderCapitalRound(seed = 5) {
   render(
     <HistoryRound
       kind="capital"
+      language="ru"
+      roundId="round-1"
+      seed={seed}
+      onFinish={onFinish}
+      onExit={onExit}
+    />,
+  );
+
+  return { onFinish, onExit };
+}
+
+function renderRulerRound(seed = 5) {
+  const onFinish = vi.fn();
+  const onExit = vi.fn();
+
+  render(
+    <HistoryRound
+      kind="ruler"
       language="ru"
       roundId="round-1"
       seed={seed}
@@ -445,4 +464,94 @@ it('в игре о столицах подсказка не зовёт нажи�
 
   expect(screen.queryByText(/Нажмите по ленте/)).toBeNull();
   expect(document.querySelector('.history-hint')).not.toBeNull();
+});
+
+it('спрашивает правителя династии и предлагает четыре имени', () => {
+  renderRulerRound();
+
+  const dynasty = askedDynasty();
+
+  expect(rulerOfDynasty(dynasty.id)).toBeDefined();
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+/* Троецарствие исключено: у эпохи трёх государств правителя не назвать. */
+it('спрашиваются одиннадцать династий, Троецарствия среди них нет', () => {
+  renderRulerRound();
+
+  expect(screen.getByText(/Вопрос 1 из 11/)).toBeInTheDocument();
+});
+
+it('верным считается правитель, а не династия', () => {
+  renderRulerRound();
+
+  const dynasty = askedDynasty();
+  const ruler = rulerOfDynasty(dynasty.id)!;
+  const option = screen
+    .getAllByTestId('choice-option')
+    .find((item) => item.textContent?.includes(ruler.nameRu))!;
+
+  fireEvent.click(option);
+
+  expect(option).toHaveAttribute('data-result', 'correct');
+});
+
+/* Легендарность произносится словом, а не молчит. */
+it('у правителя без годов разбор говорит о предании', () => {
+  const legendary = rulers.find(
+    (ruler) => ruler.legendary === true && ruler.from === undefined,
+  )!;
+  const dynasty = dynasties.find((item) => item.id === legendary.dynastyId)!;
+
+  render(
+    <HistoryRound
+      kind="ruler"
+      dynasties={[dynasty]}
+      language="ru"
+      roundId="round-2"
+      seed={1}
+      onFinish={vi.fn()}
+      onExit={vi.fn()}
+    />,
+  );
+
+  const wrong = screen
+    .getAllByTestId('choice-option')
+    .find((item) => !item.textContent?.includes(legendary.nameRu))!;
+  fireEvent.click(wrong);
+
+  expect(document.querySelector('.history-note')!.textContent).toMatch(
+    /по преданию/i,
+  );
+});
+
+/*
+ * Та же ошибка набора, что нашлась в игре по годам: срок до нашей эры уже
+ * кончается точкой, и приписанная вторая давала «210 до н. э..».
+ */
+it('в разборе правителя не двоится точка после срока до нашей эры', () => {
+  const qin = dynasties.find((dynasty) => dynasty.id === 'qin')!;
+
+  render(
+    <HistoryRound
+      kind="ruler"
+      dynasties={[qin]}
+      language="ru"
+      roundId="round-3"
+      seed={2}
+      onFinish={vi.fn()}
+      onExit={vi.fn()}
+    />,
+  );
+
+  const ruler = rulerOfDynasty('qin')!;
+  fireEvent.click(
+    screen
+      .getAllByTestId('choice-option')
+      .find((item) => !item.textContent?.includes(ruler.nameRu))!,
+  );
+
+  expect(document.querySelector('.history-note')!.textContent).not.toMatch(
+    /\.\./,
+  );
 });

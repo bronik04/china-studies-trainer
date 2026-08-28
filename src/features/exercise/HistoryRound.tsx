@@ -3,6 +3,7 @@ import {
   dynasties as allDynasties,
   spanLabel,
   askedYearLabel,
+  reignLabel,
 } from '../../content/dynasties';
 import type { Dynasty } from '../../content/types';
 import { cityById } from '../../content/cities';
@@ -11,7 +12,11 @@ import {
   dynastyCapitals,
 } from '../../content/dynasty-capitals';
 import { buildDynastyChoices } from '../../domain/dynasty-choices';
-import { buildCapitalChoices } from '../../domain/dynasty-pair-choices';
+import {
+  buildCapitalChoices,
+  buildRulerChoices,
+} from '../../domain/dynasty-pair-choices';
+import { rulerOfDynasty, rulers as allRulers } from '../../content/rulers';
 import { pickYear } from '../../domain/dynasty-years';
 import {
   labelOf,
@@ -33,6 +38,7 @@ import { DynastyTimeline, type TimelineMark } from './DynastyTimeline';
 import {
   HISTORY_CAPITAL_MODE,
   HISTORY_MODE,
+  HISTORY_RULER_MODE,
   HISTORY_YEAR_MODE,
 } from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
@@ -55,7 +61,7 @@ export type HistoryRoundProps = {
    * названного года. Раунд, цель, лента и отвлекающие у них общие, различаются
    * вопрос и подписи вариантов.
    */
-  readonly kind?: 'when' | 'who' | 'capital';
+  readonly kind?: 'when' | 'who' | 'capital' | 'ruler';
   /**
    * Пул раунда. По умолчанию вся лента; «Повторить ошибки» задаёт его
    * напрямую, и никакому набору он не соответствует.
@@ -105,7 +111,11 @@ export function HistoryRound({
       ? dynasties.filter(
           (dynasty) => capitalOfDynasty(dynasty.id) !== undefined,
         )
-      : dynasties;
+      : kind === 'ruler'
+        ? dynasties.filter(
+            (dynasty) => rulerOfDynasty(dynasty.id) !== undefined,
+          )
+        : dynasties;
 
   const [round, setRound] = useState<Round>(() =>
     createRound(
@@ -184,16 +194,31 @@ export function HistoryRound({
     );
   }, [kind, round.questions, seed]);
 
+  const rulerChoicesByQuestion = useMemo(() => {
+    if (kind !== 'ruler') {
+      return [];
+    }
+
+    const random = createSeededRandom(seed + 4);
+
+    return round.questions.map((item) =>
+      buildRulerChoices(allRulers, allDynasties, item.target.id, random),
+    );
+  }, [kind, round.questions, seed]);
+
   const target = allDynasties.find(
     (dynasty) => dynasty.id === question.target.id,
   ) as Dynasty;
   const capital = kind === 'capital' ? capitalOfDynasty(target.id) : undefined;
+  const ruler = kind === 'ruler' ? rulerOfDynasty(target.id) : undefined;
   const mode =
     kind === 'who'
       ? HISTORY_YEAR_MODE
       : kind === 'capital'
         ? HISTORY_CAPITAL_MODE
-        : HISTORY_MODE;
+        : kind === 'ruler'
+          ? HISTORY_RULER_MODE
+          : HISTORY_MODE;
   const askedYear = kind === 'who' ? yearByQuestion[round.currentIndex] : null;
   const lastAttempt = round.attempts[round.attempts.length - 1];
   const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
@@ -209,7 +234,7 @@ export function HistoryRound({
      * В игре о столицах на ленте нечего помечать исходом: ответом служит
      * город, а не время. Полоса лишь показывает, о какой династии речь.
      */
-    kind === 'capital'
+    kind === 'capital' || kind === 'ruler'
       ? [{ dynastyId: target.id, kind: 'asked' }]
       : round.status !== 'feedback' || answeredId === null
         ? []
@@ -242,7 +267,8 @@ export function HistoryRound({
    * о столицах — город: спрашивают одно, отвечают другим, и домен для этого
    * уже носит `expectedId` (заведён игрой «город — регион»).
    */
-  const expectedId = kind === 'capital' ? capital?.cityId : undefined;
+  const expectedId =
+    kind === 'capital' ? capital?.cityId : kind === 'ruler' ? ruler?.id : undefined;
 
   function answer(answeredValueId: string) {
     if (round.status !== 'ready') {
@@ -285,7 +311,13 @@ export function HistoryRound({
           label: cityById(choice.cityId)?.nameRu ?? choice.historicNameRu,
           result: resultOf(choice.cityId),
         }))
-      : choicesByQuestion[round.currentIndex].map((choice) => ({
+      : kind === 'ruler'
+        ? rulerChoicesByQuestion[round.currentIndex].map((choice) => ({
+            id: choice.id,
+            label: choice.nameRu,
+            result: resultOf(choice.id),
+          }))
+        : choicesByQuestion[round.currentIndex].map((choice) => ({
           id: choice.id,
           label: kind === 'who' ? choice.nameRu : spanLabel(choice),
           result: resultOf(choice.id),
@@ -302,12 +334,18 @@ export function HistoryRound({
           ? 'Эту династию стоит повторить'
           : kind === 'capital'
             ? 'Эту столицу стоит повторить'
-            : 'Эту дату стоит повторить'}
+            : kind === 'ruler'
+              ? 'Этого правителя стоит повторить'
+              : 'Эту дату стоит повторить'}
       </p>
       <h1 className="stage-target" data-testid="exercise-target">
         {kind === 'capital' ? (
           <>
             {askedLabel} — {capital?.historicNameRu}
+          </>
+        ) : kind === 'ruler' ? (
+          <>
+            {target.nameRu} — {ruler?.nameRu}
           </>
         ) : (
           <>
@@ -333,7 +371,7 @@ export function HistoryRound({
         <h1 className="stage-target" data-testid="exercise-target">
           {askedYearLabel(askedYear as number)}
         </h1>
-      ) : kind === 'capital' ? (
+      ) : kind === 'capital' || kind === 'ruler' ? (
         /*
          * Уточнение вместо имени там, где столицу переносили: «столица Хань»
          * имеет два верных ответа, «столица Западной Хань» — один.
@@ -394,7 +432,11 @@ export function HistoryRound({
            * регионам.
            */
           onAnswer={
-            kind !== 'capital' && round.status === 'ready' ? answer : undefined
+            kind === 'when' || kind === 'who'
+              ? round.status === 'ready'
+                ? answer
+                : undefined
+              : undefined
           }
           hint={
             round.status === 'feedback' ? (
@@ -403,6 +445,30 @@ export function HistoryRound({
                   Разбор столицы называет оба имени: город в учебнике истории и
                   город на нынешней карте — один и тот же, и в этом весь урок.
                 */}
+                {/*
+                  Разбор правителя. Годы есть не у всех: у Юя их не даёт
+                  предание, у Чэн Тана датировка спорна — и тогда вместо срока
+                  говорится словом, а не ставится прочерк.
+                */}
+                {kind === 'ruler' && ruler !== undefined ? (
+                  <>
+                    {ruler.nameRu} (
+                    <span lang="zh-Hans">{ruler.nameZh}</span>),{' '}
+                    {/*
+                      Точка ставится только если её нет: срок до нашей эры уже
+                      кончается точкой, и вторая давала «210 до н. э..».
+                    */}
+                    {(() => {
+                      const reign =
+                        ruler.from !== undefined && ruler.to !== undefined
+                          ? `правил ${reignLabel(ruler.from, ruler.to)}`
+                          : 'правил по преданию';
+
+                      return reign.endsWith('.') ? reign : `${reign}.`;
+                    })()}{' '}
+                    {ruler.note}
+                  </>
+                ) : null}
                 {kind === 'capital' && capital !== undefined ? (
                   <>
                     Столица {askedLabel} — {capital.historicNameRu} (
@@ -417,6 +483,7 @@ export function HistoryRound({
                   у Тан и Сун они рядом.
                 */}
                 {kind !== 'capital' &&
+                kind !== 'ruler' &&
                 answeredDynasty !== undefined &&
                 answeredDynasty.id !== target.id ? (
                   <>
@@ -429,11 +496,11 @@ export function HistoryRound({
                     {spanLabel(answeredDynasty).endsWith('.') ? '' : '.'}{' '}
                   </>
                 ) : null}
-                {kind === 'capital' ? null : target.note}
+                {kind === 'capital' || kind === 'ruler' ? null : target.note}
               </p>
             ) : (
               <p className="history-hint">
-                {kind === 'capital'
+                {kind === 'capital' || kind === 'ruler'
                   ? 'Полоса на ленте показывает, о какой династии речь.'
                   : 'Нажмите по ленте или выберите срок ниже: длина каждой полосы — настоящий срок династии.'}
               </p>

@@ -104,7 +104,7 @@ export type ModeCard = {
    */
   | {
       readonly kind: 'history';
-      readonly historyKind: 'when' | 'who' | 'capital';
+      readonly historyKind: 'when' | 'who' | 'capital' | 'ruler';
     }
   /** Игра по снимкам коллекций: вопрос — сама фотография. */
   | { readonly kind: 'culture' }
@@ -186,6 +186,16 @@ export const HISTORY_CAPITAL_MODE: ExerciseMode = {
   exerciseType: 'match-pair',
   title: 'История: династия — столица',
   eyebrow: 'Где была столица',
+};
+
+/**
+ * «Династия — правитель». По одному правителю на династию: не «самый великий»,
+ * а тот, кем династия узнаётся в школьном курсе.
+ */
+export const HISTORY_RULER_MODE: ExerciseMode = {
+  exerciseType: 'match-pair',
+  title: 'История: династия — правитель',
+  eyebrow: 'Кто её прославил',
 };
 
 /**
@@ -334,6 +344,17 @@ export const MODE_CARDS: readonly ModeCard[] = [
     summary:
       'Названа династия — выбрать город, откуда она правила. Разбор называет и старое имя, и нынешнее: Чанъань — это Сиань. Где столицу переносили, вопрос называет время: «столица Западной Хань».',
     volume: '7 династий · около 3 минут',
+    groupId: 'humanities',
+  },
+  {
+    id: 'history-ruler',
+    kind: 'history',
+    historyKind: 'ruler',
+    mark: '帝',
+    title: 'Династия — правитель',
+    summary:
+      'Названа династия — выбрать правителя, которым она известна. У Ся и Шан правитель легендарный, и разбор говорит об этом прямо. Троецарствие не спрашивается: у эпохи трёх государств единственного правителя нет.',
+    volume: '11 династий · около 4 минут',
     groupId: 'humanities',
   },
   {
