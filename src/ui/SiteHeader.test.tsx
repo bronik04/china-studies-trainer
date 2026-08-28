@@ -43,30 +43,30 @@ it('на главной ни один пункт не помечен откры�
  * на раздел внутри неё, и герой с единственным главным шагом навигацией не
  * доставался.
  */
-it('название ведёт на главную', () => {
+it('марка ведёт на главную', () => {
   const onNavigate = vi.fn();
   render(<SiteHeader current="atlas" onNavigate={onNavigate} />);
 
-  fireEvent.click(screen.getByRole('button', { name: /^Китай/ }));
+  fireEvent.click(screen.getByRole('button', { name: /^Страноведение/ }));
 
   expect(onNavigate).toHaveBeenCalledWith('home');
 });
 
-it('название говорит, что оно делает, и не теряет видимую подпись', () => {
+it('марка говорит, что она делает, и не теряет видимую подпись', () => {
   render(<SiteHeader current={null} onNavigate={vi.fn()} />);
 
   // WCAG 2.5.3: доступное имя содержит видимую подпись целиком.
   expect(
     screen.getByRole('button', {
-      name: 'Китай 中国 · страноведение — на главную',
+      name: 'Страноведение — на главную',
     }),
   ).toBeInTheDocument();
 });
 
-it('открытая главная помечена на названии, а не на «Режимах»', () => {
+it('открытая главная помечена на марке, а не на «Режимах»', () => {
   render(<SiteHeader current="home" onNavigate={vi.fn()} />);
 
-  expect(screen.getByRole('button', { name: /^Китай/ })).toHaveAttribute(
+  expect(screen.getByRole('button', { name: /^Страноведение/ })).toHaveAttribute(
     'aria-current',
     'page',
   );
@@ -81,8 +81,15 @@ it('навигация названа: на странице она не еди�
   expect(screen.getByRole('navigation', { name: 'Разделы сайта' })).toBeInTheDocument();
 });
 
-it('китайская подпись помечена языком: иначе её наберёт не тот шрифт', () => {
+/*
+ * Печать — знак сайта, а не слово в подписи кнопки: читалка экрана прочла бы
+ * её как «чжун» перед «Страноведение». Язык на ней при этом помечен, иначе
+ * иероглиф наберёт не тот шрифт — у Prata и Golos Text его нет.
+ */
+it('печать помечена языком, но скрыта от читалки экрана', () => {
   const { container } = render(<SiteHeader current={null} onNavigate={vi.fn()} />);
+  const seal = container.querySelector('[lang="zh-Hans"]');
 
-  expect(container.querySelector('[lang="zh-Hans"]')).toHaveTextContent('中国');
+  expect(seal).toHaveTextContent('中');
+  expect(seal).toHaveAttribute('aria-hidden', 'true');
 });

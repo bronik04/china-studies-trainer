@@ -263,15 +263,16 @@ export default function App() {
   }
 
   /**
-   * Выход из режима. Ведёт на секцию «Режимы», а не на верх главной: оттуда
-   * режим и запускали, и возвращать оттуда — значит не заставлять прокручивать
-   * страницу заново после каждого раунда.
+   * На секцию «Режимы». Двумя путями сразу: выход из раунда и главная кнопка
+   * героя. Выход ведёт туда, откуда режим запускали, — иначе после каждого
+   * раунда пришлось бы прокручивать страницу заново; герою нужно то же место,
+   * потому что выбирают режим именно там.
    *
    * Приём тот же, что у перехода из шапки: якорь в `pendingAnchor`, счётчик
    * будит эффект. Своей копии эффекта здесь нет и быть не должно — навигация в
    * приложении одна.
    */
-  function exitToModes() {
+  function goToModes() {
     setScreen('home');
     pendingAnchor.current = 'modes';
     setAnchorRequests((count) => count + 1);
@@ -456,7 +457,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishFillRound}
-          onExit={exitToModes}
+          onExit={goToModes}
         />
       </AppFrame>
     );
@@ -477,7 +478,7 @@ export default function App() {
             )
           }
           onNewRound={() => startFillRound(language)}
-          onExit={exitToModes}
+          onExit={goToModes}
         />
       </AppFrame>
     );
@@ -493,7 +494,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishRound}
-          onExit={exitToModes}
+          onExit={goToModes}
         />
       </AppFrame>
     );
@@ -509,7 +510,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishTargetRound}
-          onExit={exitToModes}
+          onExit={goToModes}
         />
       </AppFrame>
     );
@@ -525,7 +526,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishTargetRound}
-          onExit={exitToModes}
+          onExit={goToModes}
         />
       </AppFrame>
     );
@@ -540,7 +541,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishTargetRound}
-          onExit={exitToModes}
+          onExit={goToModes}
         />
       </AppFrame>
     );
@@ -555,7 +556,7 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={finishTargetRound}
-          onExit={exitToModes}
+          onExit={goToModes}
         />
       </AppFrame>
     );
@@ -701,7 +702,7 @@ export default function App() {
 
             startRound(exerciseTypes[0], language, null);
           }}
-          onExit={exitToModes}
+          onExit={goToModes}
         />
       </AppFrame>
     );
@@ -766,6 +767,16 @@ export default function App() {
           onStartHistoryRound={startHistoryRound}
           onStartPhysicalRound={startPhysicalRound}
           onOpenAtlas={() => setScreen('atlas')}
+          /*
+            Карта героя открывает атлас на нажатой области: выбор ставится до
+            смены экрана, поэтому атлас рисуется уже с карточкой региона, а не
+            моргает приглашением «выберите регион».
+          */
+          onOpenRegion={(regionId) => {
+            setSelectedRegionId(regionId);
+            setScreen('atlas');
+          }}
+          onGoToModes={goToModes}
           onOpenCollections={() => setScreen('collections')}
           onOpenCollection={openCollection}
         />

@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { RoundStopwatch } from './RoundStopwatch';
-import { useFullscreen } from './use-fullscreen';
+import { useFullscreen } from '../../ui/use-fullscreen';
 
 export type RoundStageProps = {
   /** Содержимое плашки: вопрос или показ верного ответа после ошибки. */

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { collections, collectionsInGroup } from '../../content/collections';
-import { MODE_CARDS } from '../exercise/exercise-modes';
+import { MODE_CARDS, MODE_GROUPS } from '../exercise/exercise-modes';
 import { regions } from '../../content/regions';
 import type { Attempt } from '../../domain/round';
 import { HomePage } from './HomePage';
@@ -19,13 +19,31 @@ function renderHome(attempts: readonly Attempt[] = []) {
     onStartHistoryRound: vi.fn(),
     onStartPhysicalRound: vi.fn(),
     onOpenAtlas: vi.fn(),
+    onOpenRegion: vi.fn(),
+    onGoToModes: vi.fn(),
     onOpenCollections: vi.fn(),
     onOpenCollection: vi.fn(),
   };
 
-  render(<HomePage regions={regions} attempts={attempts} {...handlers} />);
+  const { container } = render(
+    <HomePage regions={regions} attempts={attempts} {...handlers} />,
+  );
 
-  return handlers;
+  return { ...handlers, container };
+}
+
+/** Свежая ошибка по региону: из неё считается строка повтора. */
+function mistake(regionId: string): Attempt {
+  return {
+    questionId: `r1-${regionId}`,
+    roundId: 'r1',
+    target: { kind: 'region', id: regionId },
+    exerciseType: 'find-on-map',
+    language: 'ru',
+    isCorrect: false,
+    durationMs: 1000,
+    answeredAt: new Date().toISOString(),
+  };
 }
 
 it('на экране ровно одна главная кнопка', () => {
@@ -38,12 +56,37 @@ it('на экране ровно одна главная кнопка', () => {
   expect(primary).toHaveLength(1);
 });
 
-it('главная кнопка называет следующий шаг и запускает его', () => {
-  const { onStartRound } = renderHome();
+/*
+ * Главный шаг ведёт к выбору, а не запускает раунд сам. Прежде здесь стоял
+ * вычисленный шаг — «Начать: найти на карте» или «Повторить 2 региона»: он
+ * решал за ученика, во что играть, и на первом экране объявлял объём
+ * тренажёра числом ошибок.
+ */
+it('главная кнопка ведёт в раздел режимов, а не запускает раунд сама', () => {
+  const { onGoToModes, onStartRound } = renderHome();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Начать: найти на карте' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Выбрать режим' }));
 
-  expect(onStartRound).toHaveBeenCalledWith('find-on-map', 'ru', null);
+  expect(onGoToModes).toHaveBeenCalled();
+  expect(onStartRound).not.toHaveBeenCalled();
+});
+
+/* Повтор ошибок не пропал вместе с кнопкой героя — он переехал к режимам. */
+it('повтор ошибок стоит в разделе режимов и запускает те же цели', () => {
+  const { onStartRound } = renderHome([mistake('hunan'), mistake('hubei')]);
+
+  fireEvent.click(screen.getByRole('button', { name: /Повторить 2 региона/ }));
+
+  expect(onStartRound).toHaveBeenCalledWith('find-on-map', 'ru', [
+    'hunan',
+    'hubei',
+  ]);
+});
+
+it('без ошибок строки повтора нет вовсе', () => {
+  renderHome();
+
+  expect(screen.queryByRole('button', { name: /Повторить/ })).toBeNull();
 });
 
 it('карточка открытого режима запускает свой раунд', () => {
@@ -104,9 +147,24 @@ it('заполнение карты идёт своим раундом, а не 
 it('ведёт в атлас', () => {
   const { onOpenAtlas } = renderHome();
 
-  fireEvent.click(screen.getByRole('button', { name: /Открыть атлас/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Исследовать карту/ }));
 
   expect(onOpenAtlas).toHaveBeenCalled();
+});
+
+/*
+ * Карта героя — дверь в атлас, а не вторая интерактивная карта: области не
+ * получают фокус и не выбираются здесь. Тридцать четыре остановки табуляции
+ * стояли бы между шапкой и всем остальным на странице.
+ */
+it('нажатие по области карты открывает атлас на ней', () => {
+  const { container, onOpenRegion } = renderHome();
+
+  const area = container.querySelector('[data-region-id="hunan"]');
+  fireEvent.click(area as Element);
+
+  expect(onOpenRegion).toHaveBeenCalledWith('hunan');
+  expect(area).toHaveAttribute('tabindex', '-1');
 });
 
 it('ведёт в раздел коллекций', () => {
@@ -167,6 +225,8 @@ it('раздел режимов принимает фокус: шапка вед
       onStartHistoryRound={vi.fn()}
       onStartPhysicalRound={vi.fn()}
       onOpenAtlas={vi.fn()}
+      onOpenRegion={vi.fn()}
+      onGoToModes={vi.fn()}
       onOpenCollections={vi.fn()}
       onOpenCollection={vi.fn()}
     />,
@@ -184,6 +244,43 @@ it('раздел режимов принимает фокус: шапка вед
 function openCard(title: string | RegExp): void {
   fireEvent.click(screen.getByRole('button', { name: title }));
 }
+
+/*
+ * Одиннадцать равных карточек подряд требовали прочитать одиннадцать абзацев,
+ * чтобы выбрать. Группы — те же справочники, из которых берутся цели.
+ */
+it('игры разложены по предметам, и каждая попала ровно в одну группу', () => {
+  renderHome();
+
+  for (const group of MODE_GROUPS) {
+    expect(
+      screen.getByRole('heading', { level: 3, name: group.title }),
+    ).toBeInTheDocument();
+  }
+
+  const grids = document.querySelectorAll('.mode-group .mode-card-grid');
+  const cards = [...grids].flatMap((grid) => [
+    ...grid.querySelectorAll('.mode-card'),
+  ]);
+
+  expect(grids).toHaveLength(MODE_GROUPS.length);
+  expect(cards).toHaveLength(MODE_CARDS.length);
+});
+
+/*
+ * Описание игры ушло с карточки в окно старта: там ученик уже выбрал игру и
+ * спрашивает, как в ней спрашивают, а не сравнивает одиннадцать абзацев.
+ */
+it('описание игры стоит в окне перед стартом, а не на карточке', () => {
+  renderHome();
+
+  const summary = MODE_CARDS[0].summary;
+  expect(screen.queryByText(summary)).toBeNull();
+
+  openCard(/Найти на карте/);
+
+  expect(within(screen.getByRole('dialog')).getByText(summary)).toBeInTheDocument();
+});
 
 it('спрашивает язык перед стартом, а не запускает раунд сразу', () => {
   const { onStartRound } = renderHome();
@@ -247,7 +344,7 @@ it('показывает обе игры по физической геогра�
   renderHome();
 
   expect(
-    screen.getByRole('button', { name: /Найти на физической карте/ }),
+    screen.getByRole('button', { name: /Найти объект/ }),
   ).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Назвать объект/ })).toBeInTheDocument();
 });

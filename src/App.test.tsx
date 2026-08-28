@@ -63,6 +63,15 @@ async function settle(): Promise<void> {
   });
 }
 
+/*
+ * Раунд начинается карточкой режима и окном перед стартом: в герое кнопки
+ * запуска больше нет — главный шаг ведёт к выбору, а не запускает игру сам.
+ */
+function startFindOnMap(): void {
+  fireEvent.click(screen.getByRole('button', { name: /Найти на карте/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+}
+
 it('открывается главной, а не сразу раундом', () => {
   render(<App />);
 
@@ -84,15 +93,15 @@ it('на главной ровно одна главная кнопка', () => 
 it('ведёт с главной в атлас и обратно', async () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: /Открыть атлас/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Исследовать карту/ }));
   await settle();
   expect(screen.getByTestId('atlas-region-card')).toBeInTheDocument();
 
   /*
-   * Обратно — через название в шапке: собственной кнопки выхода у атласа нет,
-   * и этот путь единственный, каким ученик возвращается на главную.
+   * Обратно — через марку в шапке: собственной кнопки выхода у атласа нет, и
+   * этот путь единственный, каким ученик возвращается на главную.
    */
-  fireEvent.click(screen.getByRole('button', { name: /Китай/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Страноведение/ }));
   expect(
     screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
   ).toBeInTheDocument();
@@ -128,7 +137,7 @@ it('шапка стоит и на экране ответа', async () => {
     screen.getByRole('navigation', { name: 'Разделы сайта' }),
   ).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: /^Начать/ }));
+  startFindOnMap();
   await settle();
 
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
@@ -171,7 +180,7 @@ it('коллекция запускает раунд ровно по своим 
 it('атлас держит выбор региона в состоянии приложения', async () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: /Открыть атлас/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Исследовать карту/ }));
   await settle();
   /*
    * Выбирают на самой карте: списка-дублёра в атласе нет, а область несёт
@@ -187,10 +196,10 @@ it('атлас держит выбор региона в состоянии пр
  * не на верх главной: иначе после каждого раунда приходится прокручивать
  * страницу заново.
  */
-it('главная кнопка запускает раунд и возвращает на секцию «Режимы»', async () => {
+it('карточка режима запускает раунд и возвращает на секцию «Режимы»', async () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: /^Начать/ }));
+  startFindOnMap();
   await settle();
   expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 
@@ -313,8 +322,8 @@ it('все написанные игры открыты сразу, без вс�
     /Назвать регион/,
     /Регион — столица/,
     /Заполнить карту/,
-    /История: династии и даты/,
-    /Культура: узнать по фотографии/,
+    /Династии и даты/,
+    /Узнать по фотографии/,
   ]) {
     expect(screen.getByRole('button', { name })).toBeEnabled();
   }
@@ -323,7 +332,7 @@ it('все написанные игры открыты сразу, без вс�
 it('запускает раунд по физической географии с главной', async () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: /Найти на физической карте/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Найти объект/ }));
   // Точное имя, а не «начинается с»: в герое стоит «Начать: найти на карте».
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();
@@ -335,7 +344,7 @@ it('запускает раунд по физической географии �
 it('набор перед стартом задаёт длину физического раунда', async () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: /Найти на физической карте/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Найти объект/ }));
   fireEvent.click(screen.getByRole('radio', { name: /И озёра/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();
@@ -373,7 +382,7 @@ it('раунд по истории доходит до итога и счита�
   render(<App />);
 
   fireEvent.click(
-    screen.getByRole('button', { name: /История: династии и даты/ }),
+    screen.getByRole('button', { name: /Династии и даты/ }),
   );
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();

@@ -766,3 +766,77 @@ it('река перехватывает нажатие у формы, через
   expect(onSelectFeature).toHaveBeenCalledWith('yellow-river');
 });
 
+/*
+ * Витрина идёт с `usage="answer"` — ни заголовка, ни равнозначного списка ей
+ * не нужно, — но вопроса на ней нет, а выдать можно только ответ. Исключение
+ * из защиты от утечки ответа проверяется здесь: без этого правило можно было
+ * бы упростить обратно, и подписи выносок пропали бы с первого экрана — либо,
+ * наоборот, вернулись бы в раунд «Назвать регион», где они и есть ответ.
+ */
+it('на витрине выноски подписаны: вопроса на ней нет', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+      usage="answer"
+      onOpenRegion={() => {}}
+    />,
+  );
+
+  const labels = [...container.querySelectorAll('.map-callout text')];
+
+  expect(labels).not.toHaveLength(0);
+  for (const label of labels) {
+    expect((label as SVGElement).style.display).toBe('');
+  }
+});
+
+/*
+ * Дверь целиком, а не тридцать четыре кнопки: фокус областям витрины не
+ * даётся, и объявлять их управлением значило бы обещать читалке экрана путь,
+ * которого с клавиатуры нет. В атлас оттуда ведёт соседняя кнопка.
+ */
+it('на витрине области не объявлены кнопками и не берут фокус', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+      usage="answer"
+      onOpenRegion={() => {}}
+    />,
+  );
+
+  const area = container.querySelector('[data-region-id="sichuan"]');
+
+  expect(area).toHaveAttribute('tabindex', '-1');
+  expect(area).not.toHaveAttribute('role');
+  expect(screen.queryByRole('button', { name: 'Сычуань, 四川省' })).toBeNull();
+});
+
+/* Нажатие по области витрины уводит на другую поверхность, а не выбирает. */
+it('витрина отдаёт нажатие переходом, а не выбором', () => {
+  const open = vi.fn();
+  const select = vi.fn();
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={select}
+      onClear={() => {}}
+      interactive={false}
+      usage="answer"
+      onOpenRegion={open}
+    />,
+  );
+
+  fireEvent.click(container.querySelector('[data-region-id="hunan"]') as Element);
+
+  expect(open).toHaveBeenCalledWith('hunan');
+  expect(select).not.toHaveBeenCalled();
+});

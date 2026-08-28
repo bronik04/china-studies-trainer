@@ -69,9 +69,22 @@ it('уменьшение возвращает вид в границы карт�
   expect(viewBoxOf(zoomView(corner, 1))).toBe(viewBoxOf(WHOLE_MAP));
 });
 
-it('пересчитывает пиксели в единицы карты по ширине показа', () => {
-  expect(unitsPerPixel(WHOLE_MAP, MAP_VIEWBOX_WIDTH)).toBeCloseTo(1);
-  expect(unitsPerPixel(zoomView(WHOLE_MAP, 2), MAP_VIEWBOX_WIDTH)).toBeCloseTo(0.5);
+const WHOLE_RECT = { width: MAP_VIEWBOX_WIDTH, height: MAP_VIEWBOX_HEIGHT };
+
+it('пересчитывает пиксели в единицы карты по размеру показа', () => {
+  expect(unitsPerPixel(WHOLE_MAP, WHOLE_RECT)).toBeCloseTo(1);
+  expect(unitsPerPixel(zoomView(WHOLE_MAP, 2), WHOLE_RECT)).toBeCloseTo(0.5);
+});
+
+/*
+ * Рамка атласа больше не держит пропорцию карты: карта вписана в колонку с
+ * полями по бокам. Счёт по одной ширине рамки давал бы ход руки, не
+ * совпадающий с ходом карты, — вдвое медленнее при вдвое более широкой рамке.
+ */
+it('поля рамки не ускоряют карту под рукой', () => {
+  const wide = { width: MAP_VIEWBOX_WIDTH * 2, height: MAP_VIEWBOX_HEIGHT };
+
+  expect(unitsPerPixel(WHOLE_MAP, wide)).toBeCloseTo(1);
 });
 
 it('шаг клавиатуры уменьшается вместе с видимой частью', () => {

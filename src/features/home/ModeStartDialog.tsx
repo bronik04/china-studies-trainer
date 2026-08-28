@@ -3,6 +3,12 @@ import type { QuestionLanguage } from '../../domain/question-language';
 
 export type ModeStartDialogProps = {
   readonly title: string;
+  /**
+   * Чем эта игра отличается от соседней. С карточки описание ушло сюда: там
+   * одиннадцать абзацев подряд стояли между учеником и выбором, а здесь он
+   * уже выбрал игру и спрашивает, как в ней спрашивают.
+   */
+  readonly summary: string;
   /** «34 региона · около 7 минут» — то же, что на карточке. */
   readonly volume: string;
   readonly defaultLanguage: QuestionLanguage;
@@ -40,6 +46,7 @@ const LANGUAGES: readonly (readonly [QuestionLanguage, string])[] = [
  */
 export function ModeStartDialog({
   title,
+  summary,
   volume,
   defaultLanguage,
   setChoice = null,
@@ -80,6 +87,7 @@ export function ModeStartDialog({
     >
       <div className="mode-dialog-body">
         <h2 id="mode-dialog-title">{title}</h2>
+        <p className="mode-dialog-summary">{summary}</p>
         <p className="mode-dialog-volume">{volume}</p>
         <fieldset className="mode-dialog-language">
           <legend>Чем спрашивать</legend>

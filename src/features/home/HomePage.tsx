@@ -25,7 +25,11 @@ import type { QuestionLanguage } from '../../domain/question-language';
 import type { Attempt, ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { SiteFooter } from '../../ui/SiteFooter';
-import { MODE_CARDS, type ModeCard } from '../exercise/exercise-modes';
+import {
+  MODE_CARDS,
+  MODE_GROUPS,
+  type ModeCard,
+} from '../exercise/exercise-modes';
 import { CollectionCard } from './CollectionCard';
 import { ModeStartDialog } from './ModeStartDialog';
 import { nextStep } from './next-step';
@@ -55,6 +59,10 @@ export type HomePageProps = {
     citySet: CitySet,
   ) => void;
   readonly onOpenAtlas: () => void;
+  /** Нажатие по области карты в герое: атлас открывается на этом регионе. */
+  readonly onOpenRegion: (regionId: string) => void;
+  /** Главный шаг героя: раздел «Режимы» на этой же странице. */
+  readonly onGoToModes: () => void;
   readonly onOpenCollections: () => void;
   readonly onOpenCollection: (collectionId: string) => void;
 };
@@ -147,6 +155,8 @@ export function HomePage({
   onStartHistoryRound,
   onStartPhysicalRound,
   onOpenAtlas,
+  onOpenRegion,
+  onGoToModes,
   onOpenCollections,
   onOpenCollection,
 }: HomePageProps) {
@@ -202,18 +212,24 @@ export function HomePage({
             явления. Короткий раунд на 5–15 минут, разбор после ошибки и повтор
             того, что не запомнилось.
           </p>
+          {/*
+            Главный шаг ведёт туда, где выбирают, а не запускает раунд сам.
+            Прежде здесь стоял вычисленный шаг — «Повторить 2 региона»: он
+            отвечает вернувшемуся ученику и молчит новому, а на первом экране
+            «2 региона» читается как объём всего тренажёра. Сам повтор никуда
+            не делся — он стоит над карточками режимов, среди своих.
+          */}
           <div className="landing-hero-actions">
-            <button
-              type="button"
-              className="primary"
-              onClick={() =>
-                onStartRound(step.exerciseType, step.language, step.regionIds)
-              }
-            >
-              {step.label}
+            <button type="button" className="primary" onClick={onGoToModes}>
+              Выбрать режим
             </button>
+            {/*
+              «Исследовать карту», а не «Открыть атлас»: слово называет
+              занятие, а не раздел. Эта же кнопка — путь к карте без
+              указателя, и потому её нельзя убирать вслед за подписью.
+            */}
             <button type="button" className="text" onClick={onOpenAtlas}>
-              Открыть атлас →
+              Исследовать карту →
             </button>
           </div>
           <p className="status-note">
@@ -223,12 +239,17 @@ export function HomePage({
         </div>
         <div className="landing-hero-map">
           {/*
-            Карта в герое только показывает: разглядывают и выбирают регион в
-            атласе, и второй интерактивной карте на этой же странице
-            понадобился бы второй равнозначный список на 34 пункта.
+            Карта в герое — дверь в атлас: наведение называет область, нажатие
+            открывает её карточку. Прежде она была нарисована и не нажималась,
+            то есть не делала ничего.
 
-            Зума у неё поэтому нет. Управление показывает `ChinaMap` только
-            интерактивной карте, и передавать сюда `onZoomChange` больше нечем.
+            Дверь, а не вторая интерактивная карта: области не получают фокус
+            и не выбираются здесь, поэтому второй равнозначный список на 34
+            пункта на этой странице не нужен — с клавиатуры в атлас ведёт
+            кнопка «Исследовать карту» слева.
+
+            Зума у неё нет. Управление показывает `ChinaMap` только тому, кто
+            передал `onZoomChange`, а разглядывают карту в атласе.
           */}
           <ChinaMap
             regions={regions}
@@ -236,10 +257,17 @@ export function HomePage({
             onSelect={() => {}}
             onClear={() => {}}
             interactive={false}
+            usage="answer"
+            onOpenRegion={onOpenRegion}
           />
+          {/*
+            Подпись зовёт, а не оправдывается. Про заливку — «цвет означает тип
+            единицы» — довод для того, кто уже играет, и место ему в атласе,
+            где карту разглядывают.
+          */}
           <p className="caption">
-            Цвет означает тип единицы, а не конкретный регион: по заливке нельзя
-            выучить провинцию и получить преимущество в игре.
+            Нажмите единицу — откроется её карточка в атласе: имя, иероглифы,
+            пиньинь, административный центр и справка с источниками.
           </p>
         </div>
       </section>
@@ -250,51 +278,102 @@ export function HomePage({
         продолжился бы от шапки, а читалка экрана не сказала бы, куда попали.
       */}
       <section className="landing-section raised" id="modes" tabIndex={-1}>
-        <div className="landing-section-head">
-          <h2>Режимы</h2>
-          <p>
-            Карта — только начало. География, история и культура спрашиваются по
-            одним правилам: весь набор в каждом раунде, разбор ошибок на итогах,
-            повтор ошибок за последние 14 дней.
-          </p>
+        <div className="landing-section-head landing-section-head-split">
+          <div>
+            <h2>Режимы</h2>
+            <p>
+              Карта — только начало. География, история и культура спрашиваются
+              по одним правилам: весь набор в каждом раунде, разбор ошибок на
+              итогах, повтор ошибок за последние 14 дней.
+            </p>
+          </div>
+          {/*
+            Повтор ошибок стоит здесь, а не в герое: он отвечает вернувшемуся
+            ученику, а новому сказать нечего — `regionIds` пуст, и строки
+            просто нет. Форма и язык те же, в которых ошибались (`nextStep`).
+          */}
+          {step.regionIds === null ? null : (
+            <button
+              type="button"
+              className="text"
+              onClick={() =>
+                onStartRound(step.exerciseType, step.language, step.regionIds)
+              }
+            >
+              {step.label} →
+            </button>
+          )}
         </div>
-        <ul className="mode-card-grid">
-          {MODE_CARDS.map((card) => {
-            const isPlanned = card.kind === 'planned';
+        {/*
+          Игры разложены по предметам, а не одной сеткой на одиннадцать
+          карточек. Группы — те же справочники, из которых берутся цели:
+          ученик выбирает сначала предмет, а потом форму вопроса. Пока игр
+          было четыре, разница читалась и без этого; на одиннадцати между
+          «Заполнить карту» и «Найти город» не осталось видимой границы, хотя
+          это разные предметы.
 
-            return (
-              <li key={card.id} className="mode-card" data-planned={isPlanned}>
-                <button
-                  type="button"
-                  disabled={isPlanned}
-                  onClick={() => setStartingCard(card)}
-                >
-                  <span className="mode-card-head">
-                    <span lang="zh-Hans" className="mode-card-mark">
-                      {card.mark}
-                    </span>
-                    {/*
-                      Строка справа отвечает, почему карточка не нажимается.
-                      Причина осталась одна — режим ещё не написан: заслужить
-                      игру нельзя, все открыты сразу. У работающих карточек
-                      строки нет: писать «доступно» на том, что и так
-                      нажимается, незачем.
-                    */}
-                    {isPlanned ? (
-                      <span className="mode-card-status">Готовится</span>
-                    ) : null}
-                  </span>
-                  <span className="mode-card-title">{card.title}</span>
-                  <span className="mode-card-summary">{card.summary}</span>
-                  <span className="mode-card-volume">{card.volume}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+          Название группы — заголовок третьего уровня внутри «Режимов», а не
+          абзац покрупнее: порядок уровней на странице должен совпадать с
+          устройством раздела.
+        */}
+        {MODE_GROUPS.map((group) => (
+          <section key={group.id} className="mode-group">
+            <div className="mode-group-head">
+              <h3>{group.title}</h3>
+              <p>{group.note}</p>
+            </div>
+            <ul className="mode-card-grid">
+              {MODE_CARDS.filter((card) => card.groupId === group.id).map(
+                (card) => {
+                  const isPlanned = card.kind === 'planned';
+
+                  return (
+                    <li
+                      key={card.id}
+                      className="mode-card"
+                      data-planned={isPlanned}
+                    >
+                      <button
+                        type="button"
+                        disabled={isPlanned}
+                        onClick={() => setStartingCard(card)}
+                      >
+                        <span className="mode-card-head">
+                          <span lang="zh-Hans" className="mode-card-mark">
+                            {card.mark}
+                          </span>
+                          {/*
+                            Строка справа отвечает, почему карточка не
+                            нажимается. Причина осталась одна — режим ещё не
+                            написан: заслужить игру нельзя, все открыты сразу.
+                            У работающих карточек строки нет: писать
+                            «доступно» на том, что и так нажимается, незачем.
+                          */}
+                          {isPlanned ? (
+                            <span className="mode-card-status">Готовится</span>
+                          ) : null}
+                        </span>
+                        <span className="mode-card-title">{card.title}</span>
+                        {/*
+                          Абзаца с описанием на карточке больше нет: одиннадцать
+                          абзацев подряд — это одиннадцать абзацев, которые
+                          нужно прочитать, чтобы выбрать. Он переехал в окно
+                          перед стартом, где ученик уже решил играть именно в
+                          эту игру.
+                        */}
+                        <span className="mode-card-volume">{card.volume}</span>
+                      </button>
+                    </li>
+                  );
+                },
+              )}
+            </ul>
+          </section>
+        ))}
         {startingCard === null ? null : (
           <ModeStartDialog
             title={startingCard.title}
+            summary={startingCard.summary}
             volume={startingCard.volume}
             defaultLanguage={step.language}
             setChoice={setChoiceFor(startingCard)}
