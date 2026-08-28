@@ -58,6 +58,7 @@ const source = JSON.parse(sourceJson) as {
   rivers: { rivernum: number; parts: [number, number][][] }[];
   landforms: { key: string; nameRu: string; nameZh: string; rings: [number, number][][] }[];
   lakes: { neId: number; rings: [number, number][][] }[];
+  points: { neId: number; at: [number, number] }[];
 };
 
 const OUT = new URL('../src/map/physical-geometry.ts', import.meta.url);
@@ -203,6 +204,33 @@ const lakes = physicalFeatures
 
     return { featureId: feature.id, rings, mark: largestInscribedCircle(rings) };
   });
+
+// --- Крайние точки ----------------------------------------------------------
+
+/*
+ * У вершины и впадины нет контура вовсе: набор отдаёт одну координату, и на
+ * карте они живут знаком — как озеро, у которого контур меньше порога.
+ */
+const pointsById = new Map<number, [number, number]>(
+  source.points.map((item) => [item.neId, item.at]),
+);
+
+const points = physicalFeatures.flatMap((feature) => {
+  if (feature.kind !== 'point') {
+    return [];
+  }
+
+  const at = pointsById.get(feature.neId);
+  if (at === undefined) {
+    throw new Error(
+      `Нет координат у точки ${feature.id}. Запустите npm run extract:physical`,
+    );
+  }
+
+  const [x, y] = projectLonLat(at[0], at[1]);
+
+  return [{ featureId: feature.id, x, y }];
+});
 
 // --- Формы рельефа ----------------------------------------------------------
 
@@ -401,6 +429,25 @@ ${lakes
   .join('\n')}
 ];
 
+export type PointMark = {
+  readonly featureId: string;
+  readonly x: number;
+  readonly y: number;
+};
+
+/**
+ * Знаки крайних точек. Контура у них нет, поэтому здесь только место: цель
+ * нажатия строит вокруг него \`point-marks.ts\`, как у озера.
+ */
+export const POINT_MARKS: readonly PointMark[] = [
+${points
+  .map(
+    (mark) =>
+      `  { featureId: ${quote(mark.featureId)}, x: ${mark.x.toFixed(2)}, y: ${mark.y.toFixed(2)} },`,
+  )
+  .join('\n')}
+];
+
 export const INPUTS_FINGERPRINT = '${fingerprint}';
 
 export const RIVER_LINES: readonly RiverLine[] = [
@@ -413,6 +460,6 @@ ${riverLines
 writeFileSync(OUT, module);
 console.info(
   `Записано: форм ${shapes.length}, рек ${riverLines.length}, ` +
-    `озёр ${lakes.length}, размер ${(module.length / 1024).toFixed(0)} КБ, ` +
+    `озёр ${lakes.length}, крайних точек ${points.length}, размер ${(module.length / 1024).toFixed(0)} КБ, ` +
     `отпечаток входов ${fingerprint}`,
 );

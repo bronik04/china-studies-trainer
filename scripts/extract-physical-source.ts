@@ -154,6 +154,35 @@ if (missingLakes.length > 0) {
   throw new Error(`Не найдены озёра: ${missingLakes.join(', ')}`);
 }
 
+/*
+ * Крайние точки. Набор отдаёт их отдельным слоем точек, и координата у каждой
+ * одна — контура у вершины и впадины нет вовсе.
+ */
+const pointIds = new Set(
+  physicalFeatures.flatMap((feature) =>
+    feature.kind === 'point' ? [feature.neId] : [],
+  ),
+);
+
+const elevationFeatures = await load('ne_10m_geography_regions_elevation_points');
+const points = elevationFeatures
+  .filter(
+    (feature) =>
+      feature.geometry !== null &&
+      pointIds.has(feature.properties.ne_id as number),
+  )
+  .map((feature) => ({
+    neId: feature.properties.ne_id as number,
+    at: round((feature.geometry as Geometry).coordinates as Position),
+  }));
+
+const missingPoints = [...pointIds].filter(
+  (id) => !points.some((item) => item.neId === id),
+);
+if (missingPoints.length > 0) {
+  throw new Error(`Не найдены точки высот: ${missingPoints.join(', ')}`);
+}
+
 const foundNums = new Set(rivers.map((river) => river.rivernum));
 const missingNums = [...riverNums].filter((num) => !foundNums.has(num));
 if (missingNums.length > 0) {
@@ -174,14 +203,15 @@ writeFileSync(
     rivers,
     landforms,
     lakes,
+    points,
   })}\n`,
 );
 
-const points =
+const vertices =
   rivers.reduce((n, river) => n + river.parts.flat().length, 0) +
   landforms.reduce((n, landform) => n + landform.rings.flat().length, 0) +
   lakes.reduce((n, lake) => n + lake.rings.flat().length, 0);
 console.info(
   `Выжимка записана: отрезков рек ${rivers.length}, форм ${landforms.length}, ` +
-    `озёр ${lakes.length}, точек ${points}`,
+    `озёр ${lakes.length}, крайних точек ${points.length}, вершин ${vertices}`,
 );
