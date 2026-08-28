@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { dynasties, spanLabel } from '../../content/dynasties';
 import { createSeededRandom } from '../../domain/random';
@@ -101,6 +101,16 @@ it('после ошибки показывает верный срок и под
 });
 
 /**
+ * Полоса-цель на ленте. Ищется внутри ленты, а не по всему экрану: кнопка
+ * варианта носит ровно то же имя — это и есть два пути к одному ответу.
+ */
+function ribbonButton(label: string): HTMLElement {
+  const timeline = document.querySelector('.dynasty-timeline') as HTMLElement;
+
+  return within(timeline).getByRole('button', { name: label });
+}
+
+/**
  * Полоса династии на ленте.
  */
 function spanOf(dynastyId: string): HTMLElement {
@@ -158,14 +168,50 @@ it('не подписывает ленту до ответа', () => {
   expect(document.querySelector('.history-hint')).not.toBeNull();
 });
 
-/* Лента — не орган управления: отвечают кнопками, и читалке она не нужна. */
-it('лента скрыта от читалки экрана и не принимает фокус', () => {
+/*
+ * Лента стала вторым способом ответить, поэтому от читалки её больше не
+ * прячут. Но полоса называется сроком, а не именем династии: имя и есть ответ,
+ * и назвать его значило бы отдать ответ тому, кто ленты не видит.
+ */
+it('полосы ленты названы сроком, а не именем династии', () => {
   renderRound();
 
-  const timeline = document.querySelector('.dynasty-timeline')!;
+  const target = askedDynasty();
+  const timeline = document.querySelector('.dynasty-timeline') as HTMLElement;
 
-  expect(timeline).toHaveAttribute('aria-hidden', 'true');
-  expect(timeline.querySelector('[tabindex]')).toBeNull();
+  expect(timeline).not.toHaveAttribute('aria-hidden');
+  expect(ribbonButton(spanLabel(target))).toBeInTheDocument();
+  for (const dynasty of dynasties) {
+    expect(
+      within(timeline).queryByRole('button', { name: dynasty.nameRu }),
+    ).toBeNull();
+  }
+});
+
+it('на вопрос можно ответить нажатием по ленте', () => {
+  renderRound();
+
+  const target = askedDynasty();
+  fireEvent.click(ribbonButton(spanLabel(target)));
+
+  expect(spanOf(target.id).dataset.mark).toBe('correct');
+});
+
+/*
+ * Найдено проверкой в браузере: курсор остаётся на полосе и после ответа, и
+ * строка под лентой продолжала показывать «нажмите, чтобы ответить» вместо
+ * разбора.
+ */
+it('после ответа строка под лентой показывает разбор, а не подсказку', () => {
+  renderRound();
+
+  const target = askedDynasty();
+  const band = ribbonButton(spanLabel(target));
+  fireEvent.pointerEnter(band);
+  fireEvent.click(band);
+
+  expect(screen.queryByText(/нажмите, чтобы ответить/)).toBeNull();
+  expect(document.querySelector('.history-note')).not.toBeNull();
 });
 
 it('раунд идёт по всем династиям и заканчивается итогом', () => {

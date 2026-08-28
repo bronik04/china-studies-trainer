@@ -1,5 +1,7 @@
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { spanLabel, TIMELINE_FROM, TIMELINE_TO } from '../../content/dynasties';
 import type { Dynasty } from '../../content/types';
+import { hitAreas, minHitShare } from './timeline-hit';
 
 /**
  * Лента династий: четыре тысячи лет одной полосой.
@@ -16,9 +18,11 @@ import type { Dynasty } from '../../content/types';
  * вдвое выше нормального. В разметке ширина задаётся процентами, а текст
  * остаётся текстом.
  *
- * Лента не орган управления: отвечают кнопками под ней. Поэтому она
- * `aria-hidden` и не принимает ни фокус, ни нажатие — читалке экрана то же
- * самое говорят вопрос и варианты ответа, словами и точнее.
+ * Лента отвечает, когда ей дан `onAnswer`, — и тогда полосы становятся
+ * кнопками, названными сроком, а не именем династии: имя и есть ответ. Без
+ * колбэка она остаётся картинкой: `aria-hidden`, ни фокуса, ни нажатия, —
+ * читалке экрана то же самое говорят вопрос и варианты ответа, словами и
+ * точнее.
  */
 
 /** Доля ширины, ниже которой подпись не помещается. */
@@ -65,6 +69,34 @@ function gapsBetween(
 }
 
 /**
+ * Ширина ленты в пикселях. Нужна одному — порогу целей нажатия: на узком
+ * экране 44 px не помещаются двенадцать раз, и порог обязан это знать.
+ * `ResizeObserver`, а не разовый замер: ленту тянет ширина кадра, и при смене
+ * ширины цели надо развести заново.
+ */
+function useRibbonWidth() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (node === null) {
+      return;
+    }
+
+    const apply = () => setWidth(node.getBoundingClientRect().width);
+
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return [ref, width] as const;
+}
+
+/**
  * Помеченная полоса. Метка несёт исход, а не факт «о ней спрашивали»: прежде
  * лента красила спрошенную киноварью при любом ответе, и верный ответ читался
  * как ошибка (решение владельца продукта, DECISIONS.md, 2026-08-28).
@@ -86,20 +118,63 @@ export type DynastyTimelineProps = {
    * появляется вместе с разбором.
    */
   readonly showsNames: boolean;
+  /**
+   * Ответ нажатием по ленте. Пока его нет, лента — картинка: она ничего не
+   * делает, и читалке экрана говорить о ней нечего.
+   */
+  readonly onAnswer?: (dynastyId: string) => void;
+  /** Строка под лентой. Наведение на полосу подменяет её сроком. */
+  readonly hint?: ReactNode;
 };
 
 export function DynastyTimeline({
   dynasties,
   marks = [],
   showsNames,
+  onAnswer,
+  hint,
 }: DynastyTimelineProps) {
   const span = TIMELINE_TO - TIMELINE_FROM;
   const shareOf = (year: number) => (year - TIMELINE_FROM) / span;
   const markOf = (dynastyId: string) =>
     marks.find((mark) => mark.dynastyId === dynastyId)?.kind;
 
+  const [ribbonRef, ribbonWidth] = useRibbonWidth();
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const answers = onAnswer !== undefined;
+
+  /*
+   * Цели есть, как только лента отвечает, — и до первого измерения тоже: без
+   * ширины их нельзя расширить, но нельзя и не показать. Пока ширина
+   * неизвестна (нулевая до первого кадра), порог нулевой и цель совпадает с
+   * полосой; после замера цели расширяются и разъезжаются.
+   */
+  const hits = !answers
+    ? []
+    : hitAreas(
+        dynasties.map((dynasty) => ({
+          id: dynasty.id,
+          left: shareOf(dynasty.from),
+          width: shareOf(dynasty.to) - shareOf(dynasty.from),
+        })),
+        ribbonWidth === 0 ? 0 : minHitShare(ribbonWidth, dynasties.length),
+      );
+
+  /*
+   * Наведение живёт только пока лента отвечает. Иначе после ответа строка
+   * разбора оставалась бы подменённой сроком: курсор со сданной полосы никуда
+   * не делся, а цели под ним уже нет.
+   */
+  const hovered = answers
+    ? dynasties.find((dynasty) => dynasty.id === hoveredId)
+    : undefined;
+
   return (
-    <div className="dynasty-timeline" aria-hidden="true">
+    <div
+      className="dynasty-timeline"
+      ref={ribbonRef}
+      aria-hidden={answers ? undefined : true}
+    >
       <div className="timeline-scale">
         {TICKS.map((year) => (
           <span
@@ -151,11 +226,45 @@ export function DynastyTimeline({
               key={dynasty.id}
               className="timeline-span"
               data-dynasty-id={dynasty.id}
-              data-mark={markOf(dynasty.id)}
+              data-mark={
+                markOf(dynasty.id) ??
+                (hovered?.id === dynasty.id ? 'hover' : undefined)
+              }
               style={{ left: percent(left), width: percent(width) }}
             />
           );
         })}
+
+        {/*
+          Слой целей нажатия поверх полос. Полоса нарисована честно, по годам,
+          а нажимают её пальцем: у Цинь она 3.6 px на ленте в 1024. Цель имеет
+          своё положение и своё имя — срок, — и потому она кнопка, а полоса
+          остаётся рисунком.
+        */}
+        {answers ? (
+          <div className="timeline-hits">
+            {hits.map((hit) => {
+              const dynasty = dynasties.find((item) => item.id === hit.id)!;
+
+              return (
+                <button
+                  key={hit.id}
+                  type="button"
+                  className="timeline-hit"
+                  data-hit-dynasty-id={hit.id}
+                  style={{ left: percent(hit.left), width: percent(hit.width) }}
+                  onPointerEnter={() => setHoveredId(hit.id)}
+                  onPointerLeave={() => setHoveredId(null)}
+                  onFocus={() => setHoveredId(hit.id)}
+                  onBlur={() => setHoveredId(null)}
+                  onClick={() => onAnswer?.(hit.id)}
+                >
+                  <span className="visually-hidden">{spanLabel(dynasty)}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       <div className="timeline-names">
@@ -192,6 +301,22 @@ export function DynastyTimeline({
           );
         })}
       </div>
+
+      {/*
+        Строка под лентой. Наведение и фокус подменяют её сроком полосы: на
+        самой полосе подпись не помещается — у Цинь она четырнадцать лет.
+      */}
+      {hint === undefined && hovered === undefined ? null : (
+        <div className="timeline-hint">
+          {hovered === undefined ? (
+            hint
+          ) : (
+            <p className="history-hint">
+              {spanLabel(hovered)} · нажмите, чтобы ответить
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

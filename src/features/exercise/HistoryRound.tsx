@@ -254,27 +254,37 @@ export function HistoryRound({
           dynasties={allDynasties}
           marks={marks}
           showsNames={round.status === 'feedback'}
+          /*
+           * Лента отвечает, пока вопрос открыт. Кнопки вариантов остаются: два
+           * пути к одному ответу, как карта и «ответить из списка» в играх по
+           * регионам.
+           */
+          onAnswer={round.status === 'ready' ? answer : undefined}
+          hint={
+            round.status === 'feedback' ? (
+              <p className="history-note">
+                {/*
+                  Выбранную по ошибке называет строка разбора, а не подпись на
+                  ленте: две выделенные подписи рядом налезают друг на друга, а
+                  у Тан и Сун они рядом.
+                */}
+                {answeredDynasty !== undefined &&
+                answeredDynasty.id !== target.id ? (
+                  <>
+                    Вы показали {answeredDynasty.nameRu} —{' '}
+                    {spanLabel(answeredDynasty)}.{' '}
+                  </>
+                ) : null}
+                {target.note}
+              </p>
+            ) : (
+              <p className="history-hint">
+                Нажмите по ленте или выберите срок ниже: длина каждой полосы —
+                настоящий срок династии.
+              </p>
+            )
+          }
         />
-        {round.status === 'feedback' ? (
-          <p className="history-note">
-            {/*
-              Выбранную по ошибке называет строка разбора, а не подпись на
-              ленте: две выделенные подписи рядом налезают друг на друга, а у
-              Тан и Сун они рядом.
-            */}
-            {answeredDynasty !== undefined && answeredDynasty.id !== target.id ? (
-              <>
-                Вы показали {answeredDynasty.nameRu} — {spanLabel(answeredDynasty)}.{' '}
-              </>
-            ) : null}
-            {target.note}
-          </p>
-        ) : (
-          <p className="history-hint">
-            Полоса показывает четыре тысячи лет: длина каждой династии — её
-            настоящий срок.
-          </p>
-        )}
       </div>
     </RoundStage>
   );

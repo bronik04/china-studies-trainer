@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
-import { expect, it } from 'vitest';
-import { dynasties } from '../../content/dynasties';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { expect, it, vi } from 'vitest';
+import { dynasties, spanLabel } from '../../content/dynasties';
 import { DynastyTimeline } from './DynastyTimeline';
 
 /**
@@ -61,4 +61,46 @@ it('без меток лента молчит и скрыта от читалк�
   expect(container.querySelector('[data-mark]')).toBeNull();
   expect(screen.queryByText('Тан')).toBeNull();
   expect(container.firstElementChild?.getAttribute('aria-hidden')).toBe('true');
+});
+
+/*
+ * Полоса называется сроком, а не именем: имя династии и есть ответ, и назвать
+ * его читалке экрана значило бы отдать ответ тому, кто не видит ленты. Тот же
+ * довод, что у скрытых подписей городов и выносок Макао.
+ */
+it('полоса названа сроком, а не именем династии', () => {
+  render(
+    <DynastyTimeline
+      dynasties={dynasties}
+      showsNames={false}
+      onAnswer={vi.fn()}
+    />,
+  );
+
+  const tang = dynasties.find((dynasty) => dynasty.id === 'tang')!;
+
+  expect(screen.getByRole('button', { name: spanLabel(tang) })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Тан/ })).toBeNull();
+});
+
+it('нажатие по полосе отвечает', () => {
+  const onAnswer = vi.fn();
+  render(
+    <DynastyTimeline
+      dynasties={dynasties}
+      showsNames={false}
+      onAnswer={onAnswer}
+    />,
+  );
+
+  const tang = dynasties.find((dynasty) => dynasty.id === 'tang')!;
+  fireEvent.click(screen.getByRole('button', { name: spanLabel(tang) }));
+
+  expect(onAnswer).toHaveBeenCalledWith('tang');
+});
+
+it('без колбэка полос-кнопок нет', () => {
+  render(<DynastyTimeline dynasties={dynasties} showsNames={false} />);
+
+  expect(screen.queryAllByRole('button')).toHaveLength(0);
 });
