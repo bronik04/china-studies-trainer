@@ -358,7 +358,7 @@ it('набор перед стартом задаёт длину физичес�
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();
 
-  expect(screen.getByText(/Вопрос 1 из 32/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
 });
 
 /** В заполнении по-русски спрошенный регион назван в плашке `fill-target`. */

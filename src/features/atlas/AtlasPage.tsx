@@ -329,7 +329,7 @@ export function AtlasPage({
                     <dd>
                       {physicalFeatures.length}{' '}
                       {featuresWord(physicalFeatures.length)}: реки, формы
-                      рельефа и озёра; заливка означает высоту
+                      рельефа, озёра и крайние точки; заливка означает высоту
                     </dd>
                   </div>
                 </dl>

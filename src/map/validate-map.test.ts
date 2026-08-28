@@ -3,7 +3,12 @@ import { physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
 import type { PhysicalFeature } from '../content/types';
 import { parseLandRings } from './land-rings';
-import { LAKE_SHAPES, RELIEF_SHAPES, RIVER_LINES } from './physical-geometry';
+import {
+  LAKE_SHAPES,
+  POINT_MARKS,
+  RELIEF_SHAPES,
+  RIVER_LINES,
+} from './physical-geometry';
 import {
   containsPoint,
   distanceToBoundary,
@@ -203,6 +208,9 @@ function validateRealPhysicalGeometry(): void {
           ],
         ),
       ),
+      pointMarks: new Map(
+        POINT_MARKS.map((mark) => [mark.featureId, [mark.x, mark.y] as Point]),
+      ),
       landRings: parseLandRings(mapMarkup),
     },
     {
@@ -224,6 +232,7 @@ function physicalGeometry(
     lakes: new Map(),
     lakeMarks: new Map(),
     shapeLabels: new Map(),
+    pointMarks: new Map(),
     landRings: [],
     ...overrides,
   };
@@ -449,6 +458,43 @@ describe('validatePhysicalGeometry', () => {
         shapes,
       ),
     ).toThrow(/цели воды/);
+  });
+
+  /*
+   * Знак крайней точки — всё, что у неё есть: контура нет вовсе. Знак посреди
+   * чужой страны означал бы, что ученик целится мимо Китая.
+   */
+  it('ловит знак крайней точки вне суши', () => {
+    const peak: PhysicalFeature = {
+      id: 'lonely-peak',
+      kind: 'point',
+      nameRu: 'Одинокая',
+      nameZh: '孤峰',
+      pinyin: 'Gū Fēng',
+      point: 'peak',
+      neId: 1,
+      regionIds: ['qinghai'],
+      facts: [],
+      sourceIds: ['natural-earth-elevation-points-5.1.2'],
+    };
+
+    expect(() =>
+      validatePhysicalGeometry(
+        [peak],
+        physicalGeometry({
+          pointMarks: new Map([['lonely-peak', [50, 50] as Point]]),
+          landRings: [
+            [
+              [200, 200],
+              [300, 200],
+              [300, 300],
+              [200, 300],
+            ],
+          ],
+        }),
+        shapes,
+      ),
+    ).toThrow(/вне суши/);
   });
 
   it('принимает настоящую геометрию', () => {
