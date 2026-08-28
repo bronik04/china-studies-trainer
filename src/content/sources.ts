@@ -1435,6 +1435,7 @@ export const sources = [
     covers: [
       'срок правления династии Ся',
       'предание об основателе Юе',
+      'предание о том, что Юй сделал власть наследственной',
     ],
   },
   {
@@ -1483,6 +1484,8 @@ export const sources = [
     covers: [
       'срок правления династии Хань',
       'её влияние на последующие династии',
+      'столица Западной Хань — Чанъань (нынешний Сиань)',
+      'перенос столицы Восточной Хань в Лоян',
     ],
   },
   {
@@ -1520,6 +1523,8 @@ export const sources = [
     covers: [
       'срок правления династии Тан',
       'расцвет управления и искусства',
+      'столица Чанъань (нынешний Сиань)',
+      'Тай-цзун как второй император',
     ],
   },
   {
@@ -1532,6 +1537,8 @@ export const sources = [
     covers: [
       'срок правления династии Сун',
       'деление на Северную и Южную Сун с 1127 года',
+      'столица Северной Сун — Бяньцзин (нынешний Кайфэн)',
+      'столица Южной Сун — Линьань (нынешний Ханчжоу)',
     ],
   },
   {
@@ -1544,6 +1551,8 @@ export const sources = [
     covers: [
       'переименование державы в Юань в 1271 году и свержение в 1368-м',
       'покорение юга в 1279 году, перенос столицы в Пекин',
+      'столица Даду — нынешний Пекин',
+      'годы правления Хубилая (1260–1294)',
     ],
   },
   {
@@ -1556,6 +1565,7 @@ export const sources = [
     covers: [
       'срок правления династии Мин',
       'Чжу Юаньчжан как основатель',
+      'Пекин как столица династии',
     ],
   },
   {
@@ -1568,6 +1578,112 @@ export const sources = [
     covers: [
       'срок правления династии Цин',
       'маньчжурское происхождение династии',
+      'занятие Пекина в 1644 году и столица там же',
+      'годы правления Канси (1661–1722)',
+    ],
+  },
+  /*
+   * Правители и перенос столицы Мин. Статьи о самих династиях сроков правления
+   * почти нигде не называют, а сочинять их нельзя: у каждой строки справочника
+   * источник, который её подтверждает.
+   */
+  {
+    id: 'britannica-beijing',
+    title: 'Beijing',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/place/Beijing',
+    accessedAt: '2026-08-28',
+    covers: [
+      'Нанкин как столица первых пяти десятилетий Мин',
+      'перенос столицы на север третьим императором Мин',
+    ],
+  },
+  {
+    id: 'britannica-shang-founder',
+    title: 'Tang (founder of the Shang dynasty)',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/biography/Tang-Chinese-emperor',
+    accessedAt: '2026-08-28',
+    covers: [
+      'Чэн Тан как основатель Шан',
+      'спорность датировки его правления',
+    ],
+  },
+  {
+    id: 'britannica-wuwang',
+    title: 'Wuwang',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/biography/Wuwang',
+    accessedAt: '2026-08-28',
+    covers: ['годы правления У-вана (1046–1043 до н. э.)'],
+  },
+  {
+    id: 'britannica-shihuangdi',
+    title: 'Qin Shi Huang',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/biography/Shihuangdi',
+    accessedAt: '2026-08-28',
+    covers: ['годы правления Цинь Шихуанди (221–210 до н. э.)'],
+  },
+  {
+    id: 'britannica-wudi',
+    title: 'Wudi',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/biography/Wudi-emperor-of-Han-dynasty',
+    accessedAt: '2026-08-28',
+    covers: [
+      'годы правления У-ди (141–87 до н. э.)',
+      'превращение конфуцианства в государственное учение',
+    ],
+  },
+  {
+    id: 'britannica-yangdi',
+    title: 'Yangdi',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/biography/Yangdi',
+    accessedAt: '2026-08-28',
+    covers: [
+      'годы правления Ян-ди (604–618)',
+      'строительство Великого канала при нём',
+    ],
+  },
+  {
+    id: 'britannica-taizong',
+    title: 'Taizong',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/biography/Taizong-emperor-of-Tang-dynasty',
+    accessedAt: '2026-08-28',
+    covers: ['годы правления Тай-цзуна (626–649)'],
+  },
+  {
+    id: 'britannica-song-taizu',
+    title: 'Taizu',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/biography/Taizu-emperor-of-Song-dynasty',
+    accessedAt: '2026-08-28',
+    covers: [
+      'годы правления Тай-цзу (960–976)',
+      'основание династии Сун',
+    ],
+  },
+  {
+    id: 'britannica-hongwu',
+    title: 'Hongwu',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/biography/Hongwu',
+    accessedAt: '2026-08-28',
+    covers: [
+      'годы правления Чжу Юаньчжана под девизом Хунъу (1368–1398)',
+      'его происхождение из бедной крестьянской семьи',
     ],
   },
 ] as const satisfies readonly Source[];

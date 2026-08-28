@@ -110,7 +110,12 @@ function useRibbonWidth() {
  */
 export type TimelineMark = {
   readonly dynastyId: string;
-  readonly kind: 'correct' | 'wrong';
+  /**
+   * `correct` и `wrong` — исход ответа. `asked` — «вот эта династия»: её
+   * показывают в играх, где спрашивают не о времени (столица, правитель), и
+   * подпись там не утечка — ответом служит город или человек.
+   */
+  readonly kind: 'correct' | 'wrong' | 'asked';
 };
 
 export type DynastyTimelineProps = {
@@ -283,13 +288,21 @@ export function DynastyTimeline({
            * по ошибке называет строка разбора: две выделенные подписи рядом
            * налезали бы друг на друга, а у Тан и Сун они рядом.
            */
-          const isAnswer = markOf(dynasty.id) === 'correct';
+          const mark = markOf(dynasty.id);
+          const isAnswer = mark === 'correct';
+          /* Спрошенная подписана и тогда, когда лента в целом молчит. */
+          const isAsked = mark === 'asked';
+
+          if (!showsNames && !isAsked) {
+            return null;
+          }
+
           /*
-           * Имя ставится там, где помещается, — либо у верной династии, где бы
-           * она ни была. У Цинь полоса в четырнадцать лет: подпись под ней
-           * налезла бы на соседей, и вместо ленты вышла бы каша.
+           * Имя ставится там, где помещается, — либо у помеченной династии,
+           * где бы она ни была. У Цинь полоса в четырнадцать лет: подпись под
+           * ней налезла бы на соседей, и вместо ленты вышла бы каша.
            */
-          if (!showsNames || (!isAnswer && width < LABEL_MIN_SHARE)) {
+          if (!isAnswer && !isAsked && width < LABEL_MIN_SHARE) {
             return null;
           }
 
@@ -304,7 +317,7 @@ export function DynastyTimeline({
             <span
               key={dynasty.id}
               className="timeline-name"
-              data-mark={isAnswer ? 'correct' : undefined}
+              data-mark={isAnswer || isAsked ? mark : undefined}
               data-edge={
                 centre < EDGE_SHARE
                   ? 'start'

@@ -344,6 +344,24 @@ it('карточка года запускает игру «кто правил�
   expect(onStartHistoryRound).toHaveBeenCalledWith('ru', undefined, 'who');
 });
 
+it('карточка столиц запускает игру о столицах', () => {
+  const { onStartHistoryRound } = renderHome();
+
+  openCard(/Династия — столица/);
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(onStartHistoryRound).toHaveBeenCalledWith('ru', undefined, 'capital');
+});
+
+it('карточка правителей запускает игру о правителях', () => {
+  const { onStartHistoryRound } = renderHome();
+
+  openCard(/Династия — правитель/);
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(onStartHistoryRound).toHaveBeenCalledWith('ru', undefined, 'ruler');
+});
+
 it('«Отмена» закрывает окно и ничего не запускает', () => {
   const { onStartRound } = renderHome();
 

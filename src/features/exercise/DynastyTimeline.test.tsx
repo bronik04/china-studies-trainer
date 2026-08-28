@@ -122,3 +122,22 @@ it('крайняя подпись прижата к краю, а не центр
 
   expect(name.dataset.edge).toBe('start');
 });
+
+/*
+ * В играх о столицах и правителях лента не отвечает, а показывает место во
+ * времени. Подпись здесь не утечка: спрашивают город или человека, а не срок.
+ */
+it('спрошенная полоса обведена и подписана, но не залита исходом', () => {
+  render(
+    <DynastyTimeline
+      dynasties={dynasties}
+      marks={[{ dynastyId: 'tang', kind: 'asked' }]}
+      showsNames={false}
+    />,
+  );
+
+  expect(spanOf('tang').dataset.mark).toBe('asked');
+  expect(screen.getByText('Тан')).toBeInTheDocument();
+  /* Остальные молчат: подписана только спрошенная. */
+  expect(screen.queryByText('Сун')).toBeNull();
+});

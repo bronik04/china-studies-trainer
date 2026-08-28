@@ -178,6 +178,15 @@ export function askedYearLabel(year: number): string {
   return year < 0 ? `${-year} до н. э.` : String(year);
 }
 
+/** «626–649» и «221–210 до н. э.»: срок правления одной строкой. */
+export function reignLabel(from: number, to: number): string {
+  if (from < 0 && to < 0) {
+    return `${-from}–${-to} до н. э.`;
+  }
+
+  return `${askedYearLabel(from)}–${askedYearLabel(to)}`;
+}
+
 export function dynastyById(id: string): Dynasty | undefined {
   return dynasties.find((dynasty) => dynasty.id === id);
 }

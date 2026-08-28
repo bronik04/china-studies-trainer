@@ -3,6 +3,9 @@ import { expect, it, vi } from 'vitest';
 import { dynasties, spanLabel } from '../../content/dynasties';
 import { createSeededRandom } from '../../domain/random';
 import { buildDynastyChoices } from '../../domain/dynasty-choices';
+import { cityById } from '../../content/cities';
+import { capitalOfDynasty } from '../../content/dynasty-capitals';
+import { rulerOfDynasty, rulers } from '../../content/rulers';
 import { answerableYears } from '../../domain/dynasty-years';
 import { HistoryRound } from './HistoryRound';
 import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
@@ -40,6 +43,56 @@ function renderYearRound(seed = 5) {
   );
 
   return { onFinish, onExit };
+}
+
+function renderCapitalRound(seed = 5) {
+  const onFinish = vi.fn();
+  const onExit = vi.fn();
+
+  render(
+    <HistoryRound
+      kind="capital"
+      language="ru"
+      roundId="round-1"
+      seed={seed}
+      onFinish={onFinish}
+      onExit={onExit}
+    />,
+  );
+
+  return { onFinish, onExit };
+}
+
+function renderRulerRound(seed = 5) {
+  const onFinish = vi.fn();
+  const onExit = vi.fn();
+
+  render(
+    <HistoryRound
+      kind="ruler"
+      language="ru"
+      roundId="round-1"
+      seed={seed}
+      onFinish={onFinish}
+      onExit={onExit}
+    />,
+  );
+
+  return { onFinish, onExit };
+}
+
+/** Династия, о столице которой спрашивают: вопрос называет уточнение. */
+function askedCapitalDynasty() {
+  const asked = screen.getByTestId('exercise-target').textContent ?? '';
+
+  return dynasties.find((dynasty) => {
+    const capital = capitalOfDynasty(dynasty.id);
+
+    return (
+      capital !== undefined &&
+      asked.includes(capital.qualifier ?? dynasty.nameRu)
+    );
+  })!;
 }
 
 /**
@@ -344,4 +397,161 @@ it('на год отвечают и нажатием по ленте', () => {
   fireEvent.click(ribbonButton(spanLabel(target)));
 
   expect(spanOf(target.id).dataset.mark).toBe('correct');
+});
+
+it('спрашивает столицу династии и предлагает четыре города', () => {
+  renderCapitalRound();
+
+  const dynasty = askedCapitalDynasty();
+
+  expect(capitalOfDynasty(dynasty.id)).toBeDefined();
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+/* Уточнение произносится вопросом: у «столицы Хань» два верных ответа. */
+it('вопрос называет время, когда столица менялась', () => {
+  renderCapitalRound();
+
+  const dynasty = askedCapitalDynasty();
+  const capital = capitalOfDynasty(dynasty.id)!;
+  const asked = screen.getByTestId('exercise-target').textContent ?? '';
+
+  if (capital.qualifier !== undefined) {
+    expect(asked).toContain(capital.qualifier);
+  }
+});
+
+it('верным считается город, а цель раунда остаётся династией', () => {
+  const { onFinish } = renderCapitalRound();
+
+  const dynasty = askedCapitalDynasty();
+  const capital = capitalOfDynasty(dynasty.id)!;
+  const city = cityById(capital.cityId)!;
+
+  const option = screen
+    .getAllByTestId('choice-option')
+    .find((item) => item.textContent?.includes(city.nameRu))!;
+  fireEvent.click(option);
+
+  expect(option).toHaveAttribute('data-result', 'correct');
+  expect(onFinish).not.toHaveBeenCalled();
+});
+
+/* Лента здесь не отвечает: спрашивают город, нажимать по времени нечего. */
+it('в игре о столицах лента не принимает нажатие, но называет династию', () => {
+  renderCapitalRound();
+
+  const dynasty = askedCapitalDynasty();
+  const timeline = document.querySelector('.dynasty-timeline') as HTMLElement;
+
+  expect(within(timeline).queryAllByRole('button')).toHaveLength(0);
+  expect(spanOf(dynasty.id).dataset.mark).toBe('asked');
+});
+
+/* В игру идут только те династии, чья столица есть в каталоге городов. */
+it('спрашиваются семь династий, а не двенадцать', () => {
+  renderCapitalRound();
+
+  expect(screen.getByText(/Вопрос 1 из 7/)).toBeInTheDocument();
+});
+
+/*
+ * Найдено проверкой в браузере: подсказка звала нажимать по ленте и там, где
+ * лента не отвечает, а ответом служит город.
+ */
+it('в игре о столицах подсказка не зовёт нажимать по ленте', () => {
+  renderCapitalRound();
+
+  expect(screen.queryByText(/Нажмите по ленте/)).toBeNull();
+  expect(document.querySelector('.history-hint')).not.toBeNull();
+});
+
+it('спрашивает правителя династии и предлагает четыре имени', () => {
+  renderRulerRound();
+
+  const dynasty = askedDynasty();
+
+  expect(rulerOfDynasty(dynasty.id)).toBeDefined();
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+/* Троецарствие исключено: у эпохи трёх государств правителя не назвать. */
+it('спрашиваются одиннадцать династий, Троецарствия среди них нет', () => {
+  renderRulerRound();
+
+  expect(screen.getByText(/Вопрос 1 из 11/)).toBeInTheDocument();
+});
+
+it('верным считается правитель, а не династия', () => {
+  renderRulerRound();
+
+  const dynasty = askedDynasty();
+  const ruler = rulerOfDynasty(dynasty.id)!;
+  const option = screen
+    .getAllByTestId('choice-option')
+    .find((item) => item.textContent?.includes(ruler.nameRu))!;
+
+  fireEvent.click(option);
+
+  expect(option).toHaveAttribute('data-result', 'correct');
+});
+
+/* Легендарность произносится словом, а не молчит. */
+it('у правителя без годов разбор говорит о предании', () => {
+  const legendary = rulers.find(
+    (ruler) => ruler.legendary === true && ruler.from === undefined,
+  )!;
+  const dynasty = dynasties.find((item) => item.id === legendary.dynastyId)!;
+
+  render(
+    <HistoryRound
+      kind="ruler"
+      dynasties={[dynasty]}
+      language="ru"
+      roundId="round-2"
+      seed={1}
+      onFinish={vi.fn()}
+      onExit={vi.fn()}
+    />,
+  );
+
+  const wrong = screen
+    .getAllByTestId('choice-option')
+    .find((item) => !item.textContent?.includes(legendary.nameRu))!;
+  fireEvent.click(wrong);
+
+  expect(document.querySelector('.history-note')!.textContent).toMatch(
+    /по преданию/i,
+  );
+});
+
+/*
+ * Та же ошибка набора, что нашлась в игре по годам: срок до нашей эры уже
+ * кончается точкой, и приписанная вторая давала «210 до н. э..».
+ */
+it('в разборе правителя не двоится точка после срока до нашей эры', () => {
+  const qin = dynasties.find((dynasty) => dynasty.id === 'qin')!;
+
+  render(
+    <HistoryRound
+      kind="ruler"
+      dynasties={[qin]}
+      language="ru"
+      roundId="round-3"
+      seed={2}
+      onFinish={vi.fn()}
+      onExit={vi.fn()}
+    />,
+  );
+
+  const ruler = rulerOfDynasty('qin')!;
+  fireEvent.click(
+    screen
+      .getAllByTestId('choice-option')
+      .find((item) => !item.textContent?.includes(ruler.nameRu))!,
+  );
+
+  expect(document.querySelector('.history-note')!.textContent).not.toMatch(
+    /\.\./,
+  );
 });
