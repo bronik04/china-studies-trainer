@@ -178,8 +178,16 @@ export function DynastyTimeline({
    * разбора оставалась бы подменённой сроком: курсор со сданной полосы никуда
    * не делся, а цели под ним уже нет.
    */
+  /*
+   * Занятая полоса из наведения выпадает: её кнопка выключена, а выключенная
+   * не шлёт `pointerleave` — иначе `hoveredId` застревал бы на ней навсегда, и
+   * строка под лентой продолжала бы показывать её срок (ревью 2026-08-28).
+   */
   const hovered = answers
-    ? dynasties.find((dynasty) => dynasty.id === hoveredId)
+    ? dynasties.find(
+        (dynasty) =>
+          dynasty.id === hoveredId && markOf(dynasty.id) !== 'taken',
+      )
     : undefined;
 
   return (

@@ -35,7 +35,12 @@ export type OrderRound = {
   readonly currentCircle: number;
   /** Имена круга, которые ещё не поставлены. */
   readonly pending: readonly string[];
-  readonly usedAttempts: number;
+  /**
+   * Потраченные попытки по каждому имени круга. Не одно число на раунд:
+   * имён в круге четыре, ученик волен переключаться между ними, и общий
+   * счётчик переносил бы ошибки с одного имени на другое.
+   */
+  readonly attemptsByName: Readonly<Record<string, number>>;
   readonly outcomes: Readonly<Record<string, PlacementOutcome>>;
   readonly attempts: readonly Attempt[];
 };
@@ -78,7 +83,7 @@ export function createOrderRound(
     circles,
     currentCircle: 0,
     pending: circles[0],
-    usedAttempts: 0,
+    attemptsByName: {},
     outcomes: {},
     attempts: [],
   };
@@ -116,24 +121,26 @@ export function placeName(
   }
 
   const isCorrect = input.nameId === input.bandId;
-  const isLastAttempt = round.usedAttempts >= MAX_ATTEMPTS_PER_NAME - 1;
+  const used = round.attemptsByName[input.nameId] ?? 0;
+  const isLastAttempt = used >= MAX_ATTEMPTS_PER_NAME - 1;
 
   /*
    * Промах, пока попытки есть: имя возвращается в набор, попытка списывается,
    * а полоса не трогается — её ещё займут.
    */
   if (!isCorrect && !isLastAttempt) {
-    const attemptsLeft = (MAX_ATTEMPTS_PER_NAME -
-      round.usedAttempts -
-      1) as 1 | 2;
+    const attemptsLeft = (MAX_ATTEMPTS_PER_NAME - used - 1) as 1 | 2;
 
     return {
-      round: { ...round, usedAttempts: round.usedAttempts + 1 },
+      round: {
+        ...round,
+        attemptsByName: { ...round.attemptsByName, [input.nameId]: used + 1 },
+      },
       move: { kind: 'retry', attemptsLeft },
     };
   }
 
-  const outcome = isCorrect ? outcomeFor(round.usedAttempts) : 'failed';
+  const outcome = isCorrect ? outcomeFor(used) : 'failed';
   const attempt: Attempt = {
     questionId: `${round.roundId}-${input.nameId}`,
     roundId: round.roundId,
@@ -156,7 +163,7 @@ export function placeName(
       pending: circleDone
         ? (round.circles[round.currentCircle + 1] ?? [])
         : pending,
-      usedAttempts: 0,
+      attemptsByName: { ...round.attemptsByName, [input.nameId]: used },
       outcomes: { ...round.outcomes, [input.nameId]: outcome },
       attempts: [...round.attempts, attempt],
     },

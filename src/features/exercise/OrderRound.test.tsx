@@ -128,3 +128,39 @@ it('короткий пул укладывается в один неполны�
   expect(document.querySelectorAll('.order-tile')).toHaveLength(2);
   expect(screen.getByText(/Круг 1 из 1/)).toBeInTheDocument();
 });
+
+/*
+ * Ревью 2026-08-28: разбор уходил в `hint` ленты, а лента подменяет `hint`
+ * сроком наведённой полосы — курсор после нажатия остаётся ровно на ней, и
+ * сообщение «Не это место» так и не показывалось.
+ */
+it('сообщение об ошибке видно, даже когда курсор остался на полосе', () => {
+  renderRound();
+
+  const name = pendingNames()[0];
+  const dynasty = dynasties.find((item) => item.nameRu === name)!;
+  const wrong = dynasties.find((item) => item.id !== dynasty.id)!;
+
+  fireEvent.click(tile(name));
+  const target = band(wrong.id);
+  fireEvent.pointerEnter(target);
+  fireEvent.click(target);
+
+  expect(screen.getByText(/Осталось попыток: 2/)).toBeInTheDocument();
+});
+
+/* Разбор прошлого хода не должен висеть над новым именем. */
+it('смена имени стирает разбор прошлого хода', () => {
+  renderRound();
+
+  const [first, second] = pendingNames();
+  const dynasty = dynasties.find((item) => item.nameRu === first)!;
+  const wrong = dynasties.find((item) => item.id !== dynasty.id)!;
+
+  fireEvent.click(tile(first));
+  fireEvent.click(band(wrong.id));
+  fireEvent.click(tile(second));
+
+  expect(screen.queryByText(/Осталось попыток/)).toBeNull();
+  expect(screen.getByText(`Где на ленте ${second}?`)).toBeInTheDocument();
+});

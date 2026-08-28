@@ -102,9 +102,18 @@ export function OrderRound({
     }
   }
 
-  const attemptsLeft = MAX_ATTEMPTS_PER_NAME - round.usedAttempts;
+  const attemptsLeft =
+    MAX_ATTEMPTS_PER_NAME -
+    (selectedId === null ? 0 : (round.attemptsByName[selectedId] ?? 0));
 
-  const hint =
+  /*
+   * Исход хода стоит своей строкой, а не уходит в `hint` ленты: ленту `hint`
+   * подменяет сроком наведённой полосы, а курсор после нажатия остаётся ровно
+   * на ней — сообщение «Не это место» так и не показалось бы (ревью
+   * 2026-08-28). Лента же продолжает подсказывать срок под курсором: это
+   * разные сведения, и им нужны разные строки.
+   */
+  const status =
     move?.kind === 'retry' ? (
       <p className="history-hint">
         Не это место. Осталось попыток: {move.attemptsLeft}.
@@ -152,9 +161,14 @@ export function OrderRound({
                  * нельзя было бы отменить, не поставив его куда-нибудь.
                  */
                 aria-pressed={selectedId === dynastyId}
-                onClick={() =>
-                  setSelectedId(selectedId === dynastyId ? null : dynastyId)
-                }
+                onClick={() => {
+                  setSelectedId(selectedId === dynastyId ? null : dynastyId);
+                  /*
+                   * Разбор прошлого хода стирается: он говорил о другом имени,
+                   * и оставленный на экране счётчик попыток врал бы про новое.
+                   */
+                  setMove(null);
+                }}
               >
                 {nameOf(dynastyId)}
               </button>
@@ -170,8 +184,8 @@ export function OrderRound({
           marks={marks}
           showsNames={false}
           onAnswer={place}
-          hint={hint}
         />
+        {status}
         {/*
           Исход хода словами: на ленте он виден заливкой и подписью, а тому,
           кто ленты не видит, об этом надо сказать.

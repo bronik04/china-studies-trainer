@@ -66,7 +66,7 @@ it('ошибка возвращает имя в набор', () => {
 
   expect(move).toEqual({ kind: 'retry', attemptsLeft: 2 });
   expect(next.pending).toContain(nameId);
-  expect(next.usedAttempts).toBe(1);
+  expect(next.attemptsByName[nameId]).toBe(1);
   expect(next.attempts).toHaveLength(0);
 });
 
@@ -152,4 +152,55 @@ it('постановка имени не из круга — ошибка', () =
       answeredAt: AT,
     }),
   ).toThrow(/не в этом круге/);
+});
+
+/*
+ * Ревью 2026-08-28: счётчик попыток жил на раунде, а имён в круге четыре, и
+ * ученик волен переключаться между ними. Ошибка по одному имени укорачивала
+ * запас другому — и верный ответ по нему записывался как «со второй».
+ */
+it('попытки считаются на имя, а не на раунд', () => {
+  let round = newRound();
+  const [first, second] = round.pending;
+  const wrongBand = dynasties.find((dynasty) => dynasty.id !== first)!.id;
+
+  ({ round } = placeName(round, {
+    nameId: first,
+    bandId: wrongBand,
+    durationMs: 100,
+    answeredAt: AT,
+  }));
+
+  const { round: next, move } = placeName(round, {
+    nameId: second,
+    bandId: second === wrongBand ? first : wrongBand,
+    durationMs: 100,
+    answeredAt: AT,
+  });
+
+  expect(move).toEqual({ kind: 'retry', attemptsLeft: 2 });
+  expect(next.attemptsByName[first]).toBe(1);
+  expect(next.attemptsByName[second]).toBe(1);
+});
+
+it('верный ответ по нетронутому имени остаётся освоенным', () => {
+  let round = newRound();
+  const [first, second] = round.pending;
+  const wrongBand = dynasties.find((dynasty) => dynasty.id !== first)!.id;
+
+  ({ round } = placeName(round, {
+    nameId: first,
+    bandId: wrongBand,
+    durationMs: 100,
+    answeredAt: AT,
+  }));
+  const { round: next } = placeName(round, {
+    nameId: second,
+    bandId: second,
+    durationMs: 100,
+    answeredAt: AT,
+  });
+
+  expect(next.outcomes[second]).toBe('first-try');
+  expect(next.attempts[0].isCorrect).toBe(true);
 });
