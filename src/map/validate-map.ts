@@ -1,4 +1,6 @@
 import type { PhysicalFeature } from '../content/types';
+import { TARGET_DIAMETER_UNITS } from './city-hit-targets';
+import { distanceToPolylines } from './polyline';
 import { REGION_PALETTE } from './region-palette';
 import {
   containsPoint,
@@ -268,6 +270,37 @@ export type PhysicalShapes = {
   readonly mapAreaOf: (regionId: string) => string | undefined;
 };
 
+/**
+ * Ширина цели воды в единицах карты: половина той же ленты в 24 px, которой
+ * меряют цель города. То же число держит `river-hit.ts`; здесь оно взято из
+ * общего источника, чтобы проверка и карта не разошлись.
+ */
+const WATER_HIT_RADIUS_UNITS = TARGET_DIAMETER_UNITS / 2;
+
+/** Ближайшая к точке река или знак озера — то, что побеждает форму. */
+function nearestWater(
+  geometry: PhysicalGeometry,
+  point: Point,
+): { readonly id: string; readonly distance: number } | null {
+  let nearest: { id: string; distance: number } | null = null;
+
+  const consider = (id: string, distance: number) => {
+    if (nearest === null || distance < nearest.distance) {
+      nearest = { id, distance };
+    }
+  };
+
+  for (const [id, parts] of geometry.rivers) {
+    consider(id, distanceToPolylines(point[0], point[1], parts));
+  }
+
+  for (const [id, mark] of geometry.lakeMarks) {
+    consider(id, Math.hypot(point[0] - mark[0], point[1] - mark[1]));
+  }
+
+  return nearest;
+}
+
 export type PhysicalReport = {
   /** Доля свободных точек по каждой реке: её видно в логе сборки. */
   readonly freeShare: ReadonlyMap<string, number>;
@@ -421,10 +454,11 @@ export function validatePhysicalGeometry(
          * впадины принадлежит Такла-Макану, и мерить одну лишь впадину значило
          * бы засчитать место, куда нажать нельзя.
          */
+        const area = polygonArea(rings);
         const nested = askedLandforms.filter(
           (other) =>
             other.id !== feature.id &&
-            other.area < polygonArea(rings) &&
+            other.area < area &&
             other.rings.flat().every(([x, y]) => containsPoint(rings, x, y)),
         );
         const radius = Math.min(
@@ -438,6 +472,21 @@ export function validatePhysicalGeometry(
           errors.push(
             `У подписи формы ${feature.id} свободно ${freePx.toFixed(1)} px, ` +
               `нужно ${MIN_TARGET_PX}`,
+          );
+        }
+
+        /*
+         * Вода проверяется здесь же: река и знак озера побеждают форму, и
+         * подпись, попавшая в их цель, досталась бы не своей. Порог — тот же,
+         * которым целится карта, а не запас генератора: проверка испытывает
+         * правило, а не привычки того, кто его исполняет.
+         */
+        const water = nearestWater(geometry, label);
+        if (water !== null && water.distance <= WATER_HIT_RADIUS_UNITS) {
+          errors.push(
+            `Подпись формы ${feature.id} в цели воды (${water.id}): ` +
+              `${water.distance.toFixed(1)} единицы при пороге ` +
+              `${WATER_HIT_RADIUS_UNITS.toFixed(1)}`,
           );
         }
       }

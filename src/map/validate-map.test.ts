@@ -421,6 +421,36 @@ describe('validatePhysicalGeometry', () => {
     ).toThrow(/свободно/);
   });
 
+  /*
+   * Ревью 2026-08-28: генератор обходил подписью воду, а проверка — нет, и
+   * подпись на реке прошла бы сборку. Река побеждает форму, и нажатие в такую
+   * подпись досталось бы реке.
+   */
+  it('ловит подпись, попавшую в цель реки', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [plateau],
+        physicalGeometry({
+          landforms: new Map([['square-plateau', square]]),
+          shapeLabels: new Map([['square-plateau', [50, 50] as Point]]),
+          landRings: [square[0]],
+          rivers: new Map([
+            [
+              'square-river',
+              [
+                [
+                  [50, 0],
+                  [50, 100],
+                ] as Point[],
+              ],
+            ],
+          ]),
+        }),
+        shapes,
+      ),
+    ).toThrow(/цели воды/);
+  });
+
   it('принимает настоящую геометрию', () => {
     // Тот же вызов, что делает сборка: он и есть настоящая проверка.
     expect(() => validateRealPhysicalGeometry()).not.toThrow();
