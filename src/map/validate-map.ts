@@ -257,6 +257,9 @@ export type PhysicalGeometry = {
   readonly shapeLabels: ReadonlyMap<string, Point>;
   /** Знак крайней точки: у неё нет контура, и место — это всё, что есть. */
   readonly pointMarks: ReadonlyMap<string, Point>;
+  readonly marine: ReadonlyMap<string, Point[][]>;
+  /** Точка подписи морской цели: её ставит генератор, проверка её испытывает. */
+  readonly marineLabels: ReadonlyMap<string, Point>;
   /** Кольца суши: подпись обязана стоять внутри Китая. */
   readonly landRings: readonly Point[][];
   /**
@@ -303,6 +306,17 @@ function nearestWater(
   return nearest;
 }
 
+/**
+ * Допуск рамки в единицах карты.
+ *
+ * Пути записаны относительными смещениями с двумя знаками, и разбор
+ * накапливает округление: у обрезанного точно по краю листа контура —
+ * например, у Южно-Китайского моря — последняя вершина выходит за рамку на
+ * тысячные доли единицы. Проверка стоит не ради них, а ради геометрии,
+ * промахнувшейся на сотни единиц, и сотая доля ей не мешает.
+ */
+const FRAME_TOLERANCE_UNITS = 0.05;
+
 export type PhysicalReport = {
   /** Доля свободных точек по каждой реке: её видно в логе сборки. */
   readonly freeShare: ReadonlyMap<string, number>;
@@ -344,35 +358,6 @@ export function validatePhysicalGeometry(
       return geometry.rivers.get(feature.id);
     }
 
-    /*
-     * Знак крайней точки обязан стоять на суше Китая — цель строится вокруг
-     * него, и знак посреди чужой страны означал бы, что ученик целится мимо.
-     * Допуск тот же, что у городов на кромке: Джомолунгма стоит ровно на
-     * границе с Непалом, и генерализованный контур карты кладёт её вершину на
-     * 0,3 единицы наружу. Двигать знак ради контура значило бы учить неверному.
-     *
-     * Порог 24 px к самой точке не применяется: размера у неё нет вовсе, цель
-     * задаёт знак (`point-marks.ts`).
-     */
-    if (feature.kind === 'point') {
-      const mark = geometry.pointMarks.get(feature.id);
-      if (mark === undefined) {
-        errors.push(`Нет знака у крайней точки ${feature.id}`);
-      } else {
-        const land = geometry.landRings as Point[][];
-        const inside =
-          containsPoint(land, mark[0], mark[1]) ||
-          distanceToBoundary(land, mark[0], mark[1]) <= CITY_BOUNDARY_TOLERANCE;
-
-        if (!inside) {
-          errors.push(
-            `Знак крайней точки ${feature.id} вне суши Китая: ` +
-              `${mark[0].toFixed(1)}, ${mark[1].toFixed(1)}`,
-          );
-        }
-      }
-    }
-
     if (feature.kind === 'lake') {
       return geometry.lakes.get(feature.id);
     }
@@ -386,6 +371,10 @@ export function validatePhysicalGeometry(
       const mark = geometry.pointMarks.get(feature.id);
 
       return mark === undefined ? undefined : [[mark]];
+    }
+
+    if (feature.kind === 'marine') {
+      return geometry.marine.get(feature.id);
     }
 
     return geometry.landforms.get(feature.id);
@@ -403,7 +392,12 @@ export function validatePhysicalGeometry(
     const points = rings.flat();
 
     for (const [x, y] of points) {
-      if (x < frame.minX || x > frame.maxX || y < frame.minY || y > frame.maxY) {
+      if (
+        x < frame.minX - FRAME_TOLERANCE_UNITS ||
+        x > frame.maxX + FRAME_TOLERANCE_UNITS ||
+        y < frame.minY - FRAME_TOLERANCE_UNITS ||
+        y > frame.maxY + FRAME_TOLERANCE_UNITS
+      ) {
         errors.push(
           `Точка за рамкой карты у цели ${feature.id}: ${x.toFixed(1)}, ${y.toFixed(1)}`,
         );
@@ -454,6 +448,74 @@ export function validatePhysicalGeometry(
      * самому контуру при этом не применяется — ему не отвечает ни одно озеро
      * Китая, и требовать этого значило бы выкинуть их все разом.
      */
+    /*
+     * Знак крайней точки обязан стоять на суше Китая — цель строится вокруг
+     * него, и знак посреди чужой страны означал бы, что ученик целится мимо.
+     * Допуск тот же, что у городов на кромке: Джомолунгма стоит ровно на
+     * границе с Непалом, и генерализованный контур карты кладёт её вершину на
+     * 0,3 единицы наружу. Двигать знак ради контура значило бы учить неверному.
+     *
+     * Порог 24 px к самой точке не применяется: размера у неё нет вовсе, цель
+     * задаёт знак (`point-marks.ts`).
+     */
+    if (feature.kind === 'point') {
+      const mark = geometry.pointMarks.get(feature.id);
+      if (mark === undefined) {
+        errors.push(`Нет знака у крайней точки ${feature.id}`);
+      } else {
+        const land = geometry.landRings as Point[][];
+        const inside =
+          containsPoint(land, mark[0], mark[1]) ||
+          distanceToBoundary(land, mark[0], mark[1]) <= CITY_BOUNDARY_TOLERANCE;
+
+        if (!inside) {
+          errors.push(
+            `Знак крайней точки ${feature.id} вне суши Китая: ` +
+              `${mark[0].toFixed(1)}, ${mark[1].toFixed(1)}`,
+          );
+        }
+      }
+    }
+
+    /*
+     * Подпись морской цели — зеркало правила формы: она обязана стоять внутри
+     * контура, **не на суше** (иначе нажатие в неё достанется форме или
+     * области) и не в цели воды — реки и знаки озёр побеждают море так же, как
+     * побеждают форму.
+     */
+    if (feature.kind === 'marine') {
+      const label = geometry.marineLabels.get(feature.id);
+      if (label === undefined) {
+        errors.push(`Нет подписи у морской цели ${feature.id}`);
+      } else if (!containsPoint(rings, label[0], label[1])) {
+        errors.push(`Подпись морской цели ${feature.id} вне её контура`);
+      } else if (
+        containsPoint(geometry.landRings as Point[][], label[0], label[1])
+      ) {
+        errors.push(`Подпись морской цели ${feature.id} стоит на суше`);
+      } else {
+        const freePx = unitsToPixels(
+          distanceToBoundary(rings, label[0], label[1]) * 2,
+          REFERENCE_MAP_WIDTH,
+        );
+        if (freePx < MIN_TARGET_PX) {
+          errors.push(
+            `У подписи морской цели ${feature.id} свободно ${freePx.toFixed(1)} px, ` +
+              `нужно ${MIN_TARGET_PX}`,
+          );
+        }
+
+        const water = nearestWater(geometry, label);
+        if (water !== null && water.distance <= WATER_HIT_RADIUS_UNITS) {
+          errors.push(
+            `Подпись морской цели ${feature.id} в цели воды (${water.id}): ` +
+              `${water.distance.toFixed(1)} единицы при пороге ` +
+              `${WATER_HIT_RADIUS_UNITS.toFixed(1)}`,
+          );
+        }
+      }
+    }
+
     if (feature.kind === 'lake') {
       const mark = geometry.lakeMarks.get(feature.id);
       if (mark === undefined) {
