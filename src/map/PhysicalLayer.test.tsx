@@ -76,6 +76,16 @@ describe('PhysicalLayer', () => {
     ).not.toBeNull();
   });
 
+  /*
+   * Джомолунгма стоит на границе, и генерализованный контур кладёт её наружу:
+   * под маской суши знак пропал бы у той самой цели, ради которой род заведён.
+   */
+  it('знаки крайних точек рисуются без маски суши', () => {
+    const { container } = renderLayer();
+
+    expect(container.querySelector('.points')?.getAttribute('mask')).toBeNull();
+  });
+
   it('крайние точки названы читалке экрана', () => {
     const { container } = renderLayer({ onSelect: () => {} });
 

@@ -66,6 +66,15 @@
 - Оригинал: 2800×1867
 - Ширины в репозитории: 1200, 640
 
+## feature-everest
+
+- Файл: Everest North Face toward Base Camp Tibet Luca Galuzzi 2006 edit 1.jpg
+- Автор: Luca Galuzzi (Lucag)
+- Лицензия: CC BY-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
+- Страница: https://commons.wikimedia.org/wiki/File:Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006_edit_1.jpg
+- Оригинал: 2000×1333
+- Ширины в репозитории: 1200, 640
+
 ## feature-gobi
 
 - Файл: Sandduenen in der Gobi.jpg
@@ -308,6 +317,15 @@
 - Страница: https://commons.wikimedia.org/wiki/File:Tibet,_a_walk_into_no_where.JPG
 - Оригинал: 3648×2736
 - Ширины в репозитории: 1200, 640
+
+## feature-turpan-depression
+
+- Файл: Aydingkol1.jpg
+- Автор: Gruschke
+- Лицензия: Public domain
+- Страница: https://commons.wikimedia.org/wiki/File:Aydingkol1.jpg
+- Оригинал: 740×484
+- Ширины в репозитории: 740, 640
 
 ## feature-yangtze
 

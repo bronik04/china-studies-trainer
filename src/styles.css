@@ -1424,8 +1424,15 @@ button.text:hover:enabled {
   stroke-width: 1.6;
 }
 
+/*
+ * Круг цели задаёт размер, по которому карта считает попадание, и остановку
+ * Tab. Указателя у него нет по той же причине, что у формы и знака озера: цель
+ * под курсором решает карта одним правилом, а узел, принявший событие,
+ * перехватил бы его раньше расчёта.
+ */
 .china-map .physical-layer .point-hit {
   fill: transparent;
+  pointer-events: none;
 }
 
 .china-map .physical-layer .point-hit:focus {
