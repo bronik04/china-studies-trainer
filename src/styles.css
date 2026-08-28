@@ -3215,6 +3215,19 @@ button.chip[aria-pressed='true'] {
   z-index: 1;
 }
 
+/*
+ * Занятая полоса: заливка нефритом, как у верного ответа, но обводка тоньше —
+ * исход уже показан, и повторять его в полную силу незачем.
+ */
+.timeline-span[data-mark='taken'] {
+  background: var(--timeline-span-correct);
+  box-shadow: 0 0 0 1px var(--timeline-span-outline);
+}
+
+.timeline-hit:disabled {
+  cursor: default;
+}
+
 /* Наведение и фокус: полоса светлеет, обводка киноварью. */
 .timeline-span[data-mark='hover'] {
   background: var(--surface-paper-bright);
@@ -3309,7 +3322,8 @@ button.chip[aria-pressed='true'] {
 }
 
 .timeline-name[data-mark='correct'],
-.timeline-name[data-mark='asked'] {
+.timeline-name[data-mark='asked'],
+.timeline-name[data-mark='taken'] {
   background: var(--surface-paper);
   border-radius: var(--radius-sm);
   color: var(--text-on-paper);

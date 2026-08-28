@@ -141,3 +141,27 @@ it('спрошенная полоса обведена и подписана, н
   /* Остальные молчат: подписана только спрошенная. */
   expect(screen.queryByText('Сун')).toBeNull();
 });
+
+/*
+ * В расстановке поставленное имя занимает свою полосу: она подписана и больше
+ * не принимает нажатия — целиться в закрытое место незачем.
+ */
+it('занятая полоса подписана и не нажимается', () => {
+  const onAnswer = vi.fn();
+  render(
+    <DynastyTimeline
+      dynasties={dynasties}
+      marks={[{ dynastyId: 'tang', kind: 'taken' }]}
+      showsNames={false}
+      onAnswer={onAnswer}
+    />,
+  );
+
+  expect(spanOf('tang').dataset.mark).toBe('taken');
+  expect(screen.getByText('Тан')).toBeInTheDocument();
+
+  const tang = dynasties.find((dynasty) => dynasty.id === 'tang')!;
+  fireEvent.click(screen.getByRole('button', { name: spanLabel(tang) }));
+
+  expect(onAnswer).not.toHaveBeenCalled();
+});

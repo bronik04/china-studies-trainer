@@ -113,9 +113,10 @@ export type TimelineMark = {
   /**
    * `correct` и `wrong` — исход ответа. `asked` — «вот эта династия»: её
    * показывают в играх, где спрашивают не о времени (столица, правитель), и
-   * подпись там не утечка — ответом служит город или человек.
+   * подпись там не утечка — ответом служит город или человек. `taken` — полоса
+   * занята уже поставленным именем: она подписана и нажатий не принимает.
    */
-  readonly kind: 'correct' | 'wrong' | 'asked';
+  readonly kind: 'correct' | 'wrong' | 'asked' | 'taken';
 };
 
 export type DynastyTimelineProps = {
@@ -264,6 +265,12 @@ export function DynastyTimeline({
                   type="button"
                   className="timeline-hit"
                   data-hit-dynasty-id={hit.id}
+                  /*
+                   * Занятая полоса выключена, а не просто молчит: выключенная
+                   * кнопка сама выпадает из обхода клавиатурой, и читалка
+                   * экрана называет её недоступной.
+                   */
+                  disabled={markOf(hit.id) === 'taken'}
                   style={{ left: percent(hit.left), width: percent(hit.width) }}
                   onPointerEnter={() => setHoveredId(hit.id)}
                   onPointerLeave={() => setHoveredId(null)}
@@ -290,8 +297,11 @@ export function DynastyTimeline({
            */
           const mark = markOf(dynasty.id);
           const isAnswer = mark === 'correct';
-          /* Спрошенная подписана и тогда, когда лента в целом молчит. */
-          const isAsked = mark === 'asked';
+          /*
+           * Спрошенная и занятая подписаны и тогда, когда лента в целом
+           * молчит: первая называет, о ком речь, вторая — что место закрыто.
+           */
+          const isAsked = mark === 'asked' || mark === 'taken';
 
           if (!showsNames && !isAsked) {
             return null;
