@@ -3206,6 +3206,15 @@ button.chip[aria-pressed='true'] {
   z-index: 1;
 }
 
+/*
+ * Спрошенная полоса: обводка без заливки. Заливка означала бы исход, а исхода
+ * ещё нет — вопрос открыт.
+ */
+.timeline-span[data-mark='asked'] {
+  box-shadow: 0 0 0 2px var(--timeline-span-outline);
+  z-index: 1;
+}
+
 /* Наведение и фокус: полоса светлеет, обводка киноварью. */
 .timeline-span[data-mark='hover'] {
   background: var(--surface-paper-bright);
@@ -3299,7 +3308,8 @@ button.chip[aria-pressed='true'] {
   transform: translateX(-100%);
 }
 
-.timeline-name[data-mark='correct'] {
+.timeline-name[data-mark='correct'],
+.timeline-name[data-mark='asked'] {
   background: var(--surface-paper);
   border-radius: var(--radius-sm);
   color: var(--text-on-paper);
