@@ -64,10 +64,23 @@ function gapsBetween(
   return gaps;
 }
 
+/**
+ * Помеченная полоса. Метка несёт исход, а не факт «о ней спрашивали»: прежде
+ * лента красила спрошенную киноварью при любом ответе, и верный ответ читался
+ * как ошибка (решение владельца продукта, DECISIONS.md, 2026-08-28).
+ */
+export type TimelineMark = {
+  readonly dynastyId: string;
+  readonly kind: 'correct' | 'wrong';
+};
+
 export type DynastyTimelineProps = {
   readonly dynasties: readonly Dynasty[];
-  /** Спрошенная династия: подсвечена и подписана всегда. */
-  readonly highlightedId: string | null;
+  /**
+   * Верный ответ — одна метка. Ошибка — две: верная полоса и выбранная, и
+   * расстояние между ними показывает величину промаха.
+   */
+  readonly marks?: readonly TimelineMark[];
   /**
    * Показывать ли имена. В вопросе лента молчит — иначе она и есть ответ; имя
    * появляется вместе с разбором.
@@ -77,11 +90,13 @@ export type DynastyTimelineProps = {
 
 export function DynastyTimeline({
   dynasties,
-  highlightedId,
+  marks = [],
   showsNames,
 }: DynastyTimelineProps) {
   const span = TIMELINE_TO - TIMELINE_FROM;
   const shareOf = (year: number) => (year - TIMELINE_FROM) / span;
+  const markOf = (dynastyId: string) =>
+    marks.find((mark) => mark.dynastyId === dynastyId)?.kind;
 
   return (
     <div className="dynasty-timeline" aria-hidden="true">
@@ -130,13 +145,13 @@ export function DynastyTimeline({
         {dynasties.map((dynasty) => {
           const left = shareOf(dynasty.from);
           const width = shareOf(dynasty.to) - left;
-          const highlighted = dynasty.id === highlightedId;
 
           return (
             <div
               key={dynasty.id}
               className="timeline-span"
-              data-highlighted={highlighted}
+              data-dynasty-id={dynasty.id}
+              data-mark={markOf(dynasty.id)}
               style={{ left: percent(left), width: percent(width) }}
             />
           );
@@ -147,13 +162,18 @@ export function DynastyTimeline({
         {dynasties.map((dynasty) => {
           const left = shareOf(dynasty.from);
           const width = shareOf(dynasty.to) - left;
-          const highlighted = dynasty.id === highlightedId;
           /*
-           * Имя ставится там, где помещается, — либо у спрошенной династии,
-           * где бы она ни была. У Цинь полоса в четырнадцать лет: подпись под
-           * ней налезла бы на соседей, и вместо ленты вышла бы каша.
+           * Выделенная подпись со сроком — только у верной полосы. Выбранную
+           * по ошибке называет строка разбора: две выделенные подписи рядом
+           * налезали бы друг на друга, а у Тан и Сун они рядом.
            */
-          if (!showsNames || (!highlighted && width < LABEL_MIN_SHARE)) {
+          const isAnswer = markOf(dynasty.id) === 'correct';
+          /*
+           * Имя ставится там, где помещается, — либо у верной династии, где бы
+           * она ни была. У Цинь полоса в четырнадцать лет: подпись под ней
+           * налезла бы на соседей, и вместо ленты вышла бы каша.
+           */
+          if (!showsNames || (!isAnswer && width < LABEL_MIN_SHARE)) {
             return null;
           }
 
@@ -161,11 +181,11 @@ export function DynastyTimeline({
             <span
               key={dynasty.id}
               className="timeline-name"
-              data-highlighted={highlighted}
+              data-mark={isAnswer ? 'correct' : undefined}
               style={{ left: percent(left + width / 2) }}
             >
               {dynasty.nameRu}
-              {highlighted ? (
+              {isAnswer ? (
                 <span className="timeline-name-years">{spanLabel(dynasty)}</span>
               ) : null}
             </span>

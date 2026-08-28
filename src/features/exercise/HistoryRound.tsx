@@ -18,7 +18,7 @@ import {
   type Attempt,
   type Round,
 } from '../../domain/round';
-import { DynastyTimeline } from './DynastyTimeline';
+import { DynastyTimeline, type TimelineMark } from './DynastyTimeline';
 import { HISTORY_MODE } from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
@@ -118,6 +118,26 @@ export function HistoryRound({
   ) as Dynasty;
   const lastAttempt = round.attempts[round.attempts.length - 1];
   const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
+
+  /*
+   * Метки ленты. При верном ответе одна — верная полоса; при ошибке две:
+   * верная и выбранная. Расстояние между ними и есть величина промаха, и
+   * увидеть его на ленте важнее, чем прочитать «неверно». Прежде полоса
+   * красилась киноварью при любом ответе, и верный ответ читался как ошибка.
+   */
+  const marks: readonly TimelineMark[] =
+    round.status !== 'feedback' || answeredId === null
+      ? []
+      : answeredId === target.id
+        ? [{ dynastyId: target.id, kind: 'correct' }]
+        : [
+            { dynastyId: target.id, kind: 'correct' },
+            { dynastyId: answeredId, kind: 'wrong' },
+          ];
+
+  const answeredDynasty = allDynasties.find(
+    (dynasty) => dynasty.id === answeredId,
+  );
 
   function goNext(from: Round) {
     const next = goToNextQuestion(from);
@@ -232,11 +252,23 @@ export function HistoryRound({
         */}
         <DynastyTimeline
           dynasties={allDynasties}
-          highlightedId={round.status === 'feedback' ? target.id : null}
+          marks={marks}
           showsNames={round.status === 'feedback'}
         />
         {round.status === 'feedback' ? (
-          <p className="history-note">{target.note}</p>
+          <p className="history-note">
+            {/*
+              Выбранную по ошибке называет строка разбора, а не подпись на
+              ленте: две выделенные подписи рядом налезают друг на друга, а у
+              Тан и Сун они рядом.
+            */}
+            {answeredDynasty !== undefined && answeredDynasty.id !== target.id ? (
+              <>
+                Вы показали {answeredDynasty.nameRu} — {spanLabel(answeredDynasty)}.{' '}
+              </>
+            ) : null}
+            {target.note}
+          </p>
         ) : (
           <p className="history-hint">
             Полоса показывает четыре тысячи лет: длина каждой династии — её

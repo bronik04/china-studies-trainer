@@ -100,6 +100,56 @@ it('после ошибки показывает верный срок и под
   expect(document.querySelector('.history-note')).not.toBeNull();
 });
 
+/**
+ * Полоса династии на ленте.
+ */
+function spanOf(dynastyId: string): HTMLElement {
+  const span = document.querySelector(`[data-dynasty-id='${dynastyId}']`);
+  if (span === null) {
+    throw new Error(`На ленте нет полосы ${dynastyId}`);
+  }
+
+  return span as HTMLElement;
+}
+
+/*
+ * Прежде лента красила спрошенную полосу киноварью при любом ответе, и верный
+ * ответ читался как ошибка. Теперь метка несёт исход.
+ */
+it('верный ответ помечает полосу верной, а не ошибочной', () => {
+  renderRound();
+
+  const target = askedDynasty();
+  fireEvent.click(choiceWith(spanLabel(target)));
+
+  expect(spanOf(target.id).dataset.mark).toBe('correct');
+});
+
+/*
+ * При ошибке помечены обе полосы: расстояние между ними и есть величина
+ * промаха, и увидеть её важнее, чем прочитать «неверно».
+ */
+it('ошибка помечает и выбранную полосу, и верную', () => {
+  renderRound();
+
+  const target = askedDynasty();
+  const wrongOption = screen
+    .getAllByTestId('choice-option')
+    .find((option) => !option.textContent?.includes(spanLabel(target)))!;
+  fireEvent.click(wrongOption);
+
+  /*
+   * Поиск внутри ленты, а не по всему экрану: тем же признаком помечены следы
+   * раунда — там `correct`, `wrong` и `ahead` значат то же самое.
+   */
+  const marks = [
+    ...document.querySelectorAll('.dynasty-timeline [data-mark]'),
+  ].map((node) => (node as HTMLElement).dataset.mark);
+
+  expect(marks).toContain('correct');
+  expect(marks).toContain('wrong');
+});
+
 /* Лента молчит, пока вопрос открыт: подписанная, она и есть ответ. */
 it('не подписывает ленту до ответа', () => {
   renderRound();

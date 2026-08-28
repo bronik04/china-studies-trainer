@@ -176,7 +176,8 @@ describe('границы и поверхности', () => {
    */
   it('полосы ленты династий видны на бумаге', () => {
     expectAtLeast('--timeline-span', '--surface-paper', GRAPHIC_CONTRAST);
-    expectAtLeast('--timeline-span-current', '--surface-paper', GRAPHIC_CONTRAST);
+    expectAtLeast('--timeline-span-correct', '--surface-paper', GRAPHIC_CONTRAST);
+    expectAtLeast('--timeline-span-wrong', '--surface-paper', GRAPHIC_CONTRAST);
   });
 
   /*
@@ -190,12 +191,21 @@ describe('границы и поверхности', () => {
   });
 
   /*
-   * Спрошенная полоса не должна опознаваться одним цветом: киноварь и
-   * тушь-500 различаются между собой всего на 1.08. Различает их обводка —
-   * она обязана быть видна и на самой полосе, и на соседних.
+   * Помеченная полоса не должна опознаваться одним цветом: заливки исхода и
+   * сама лента различаются между собой слабо. Различает их обводка — она
+   * обязана быть видна и на обеих заливках исхода, и на соседних полосах.
    */
-  it('обводка спрошенной полосы видна на обеих заливках', () => {
-    expectAtLeast('--timeline-span-outline', '--timeline-span-current', GRAPHIC_CONTRAST);
+  it('обводка помеченной полосы видна на обеих заливках исхода', () => {
+    expectAtLeast(
+      '--timeline-span-outline',
+      '--timeline-span-correct',
+      GRAPHIC_CONTRAST,
+    );
+    expectAtLeast(
+      '--timeline-span-outline',
+      '--timeline-span-wrong',
+      GRAPHIC_CONTRAST,
+    );
     expectAtLeast('--timeline-span-outline', '--timeline-span', GRAPHIC_CONTRAST);
   });
 

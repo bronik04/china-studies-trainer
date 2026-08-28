@@ -3185,13 +3185,24 @@ button.chip[aria-pressed='true'] {
 }
 
 /*
- * Обводка, а не только цвет: киноварь и сланец на бумаге стоят близко, и
- * рядом друг с другом их не различить. Тот же довод, что у выделения объекта
- * на физической карте.
+ * Обводка, а не только цвет: заливки исхода и сама лента на бумаге стоят
+ * близко, и рядом друг с другом их не различить. Тот же довод, что у
+ * выделения объекта на физической карте.
  */
-.timeline-span[data-highlighted='true'] {
-  background: var(--timeline-span-current);
+.timeline-span[data-mark='correct'] {
+  background: var(--timeline-span-correct);
   box-shadow: 0 0 0 2px var(--timeline-span-outline);
+  z-index: 1;
+}
+
+/*
+ * Ошибочная — пунктиром: исход не передаётся одним цветом, и штрих здесь тот
+ * же, что у ошибочной кнопки варианта.
+ */
+.timeline-span[data-mark='wrong'] {
+  background: var(--timeline-span-wrong);
+  outline: 2px dashed var(--timeline-span-outline);
+  outline-offset: -1px;
   z-index: 1;
 }
 
@@ -3234,7 +3245,7 @@ button.chip[aria-pressed='true'] {
  * Прятать соседей пришлось бы измерением ширины текста, а бумага под подписью
  * решает то же самое разметкой.
  */
-.timeline-name[data-highlighted='true'] {
+.timeline-name[data-mark='correct'] {
   background: var(--surface-paper);
   border-radius: var(--radius-sm);
   color: var(--text-on-paper);
