@@ -121,6 +121,13 @@ type ChinaMapProps = {
    */
   readonly mapInset?: ReactNode;
   /**
+   * Ещё одна кнопка в столбике управления масштабом. Пока такая одна —
+   * разворот атласа на весь кадр: она принадлежит поверхности, а не карте,
+   * но стоять должна там же, где зум, — два бумажных островка в одном углу
+   * листа читались бы как две разные группы управления одним и тем же.
+   */
+  readonly mapControlsExtra?: ReactNode;
+  /**
    * Нажатие по области ведёт на другую поверхность, а не выбирает регион
    * здесь. Витрина в герое: карта — дверь в атлас.
    *
@@ -218,6 +225,7 @@ export function ChinaMap({
   showsPhysicalLabels = true,
   featureOutcomes = NO_FEATURE_OUTCOMES,
   mapInset,
+  mapControlsExtra,
   onOpenRegion,
 }: ChinaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -490,7 +498,10 @@ export function ChinaMap({
       event.currentTarget.setPointerCapture(event.pointerId);
     }
 
-    const scale = unitsPerPixel(view, event.currentTarget.clientWidth);
+    const scale = unitsPerPixel(view, {
+      width: event.currentTarget.clientWidth,
+      height: event.currentTarget.clientHeight,
+    });
     const dx = event.clientX - from.x;
     const dy = event.clientY - from.y;
 
@@ -769,7 +780,9 @@ export function ChinaMap({
           областями, но увеличивать и двигать её нужно как раз там.
         */}
         {onZoomChange ? (
-          <MapControls zoom={zoom} onZoomChange={onZoomChange} />
+          <MapControls zoom={zoom} onZoomChange={onZoomChange}>
+            {mapControlsExtra}
+          </MapControls>
         ) : null}
         {/*
           Врезка — последней: она объясняет то, что уже нарисовано, и лежит

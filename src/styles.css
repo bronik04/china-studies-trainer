@@ -310,6 +310,17 @@ p {
   padding-block-start: var(--s-4);
 }
 
+/*
+ * Подсказка про Esc: только в полноэкранном виде и только словом. Кнопка
+ * возврата стоит на листе, а клавиша — путь для тех, кто и так держит руки на
+ * клавиатуре.
+ */
+.atlas-escape-hint {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: 0;
+}
+
 .atlas-footer .map-attribution {
   color: var(--text-on-ground-muted);
   font-size: var(--t-size-caption);
@@ -324,11 +335,23 @@ p {
  * подвал. Карта забирает остаток первой.
  */
 @media (min-width: 1024px) {
+  /*
+   * Поле вокруг оболочки уже, чем на узком экране: карта здесь упирается в
+   * высоту кадра, а не в ширину колонки, и каждые 16 px поля — это 24 px
+   * самой карты. Прежние 32 px сверху и снизу стоили карте 48 px высоты.
+   */
   .atlas-shell {
     display: grid;
     flex: 1;
     grid-template-rows: minmax(0, 1fr) auto;
     min-block-size: 0;
+    padding-block: var(--s-4);
+  }
+
+  /* По той же причине подвал прижат ближе к карте. */
+  .atlas-footer {
+    margin-block-start: var(--s-3);
+    padding-block-start: var(--s-3);
   }
 
   .atlas-layout {
@@ -350,13 +373,12 @@ p {
   }
 
   /*
-   * Две строки: переключатель вида и карта. Третьей, под легенду ступеней,
-   * больше нет — шкала переехала на лист карты, и карта забрала себе её
-   * высоту.
+   * Одна строка: карта. Переключатель вида и шкала ступеней лежат на самом
+   * листе, и своих строк им больше не нужно.
    */
   .atlas-map {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     margin-block-start: 0;
     min-block-size: 0;
   }
@@ -367,20 +389,133 @@ p {
   }
 
   /*
-   * Пропорция живёт на рамке, а не на карте: рамка — система координат для
-   * зума, и будь она шире карты, кнопки уезжали бы с бумаги на доску.
+   * Лист занимает колонку целиком, а не держит пропорцию карты. Прежде рамка
+   * сжималась до пропорции и центрировалась, оставляя по 111 px пустоты с
+   * каждой стороны, — а вся плавающая обвязка (зум, переключатель, шкала)
+   * стоит по углам рамки и уезжала вместе с ней в эту пустоту.
+   *
+   * Карту это не растягивает: `preserveAspectRatio` вписывает её целиком, а
+   * остаток рамки достаётся морю — лист и есть море. Ход руки при
+   * перетаскивании считается по обеим сторонам рамки (`unitsPerPixel`),
+   * поэтому поля его не искажают.
    */
   .atlas-map .china-map-frame {
-    aspect-ratio: var(--map-aspect);
     block-size: 100%;
-    inline-size: auto;
-    margin-inline: auto;
-    max-inline-size: 100%;
+    inline-size: 100%;
   }
 
   .atlas-map .china-map,
   .atlas-map .china-map svg {
     block-size: 100%;
+  }
+}
+
+/*
+ * Управление масштабом в атласе стоит справа: слева на листе теперь
+ * переключатель вида, а два бумажных островка в одном углу читались бы как
+ * одна группа. На остальных поверхностях зум остаётся слева — там угол
+ * свободен, и трогать их эта правка не должна.
+ */
+.atlas-map .map-controls {
+  inset-inline: auto var(--s-3);
+}
+
+/*
+ * Атлас во весь кадр. Своим слоем поверх страницы: шапка закреплена и лежит
+ * ниже (z-index 2), поэтому слой перекрывает и её.
+ *
+ * Подвал остаётся: в нём указание источников карты, а лицензия CC BY требует
+ * их видимости — прятать его ради лишних 76 px нельзя.
+ */
+.atlas-shell[data-expanded='true'] {
+  background: var(--surface-ground);
+  inline-size: auto;
+  inset: 0;
+  padding: var(--s-3) var(--s-4) 0;
+  position: fixed;
+  z-index: 5;
+}
+
+@media (min-width: 1024px) {
+  /* Во весь кадр — значит одна колонка: карта. Карточка всплывает над ней. */
+  .atlas-shell[data-expanded='true'] .atlas-layout {
+    grid-template-columns: minmax(0, 1fr);
+    position: relative;
+  }
+
+  /*
+   * Карточка всплывает справа, над морем: слева она накрыла бы Синьцзян,
+   * Тибет и Цинхай — четверть страны и цели игры.
+   *
+   * Тёмной, а не бумажной: цвета текста на поднятой поверхности уже проверены
+   * контрастом, а перекрасить её в бумагу значило бы переопределить их все —
+   * заголовок, справку, источники, ссылки на коллекции.
+   */
+  .atlas-shell[data-expanded='true'] .atlas-panel {
+    background: var(--surface-raised);
+    border: var(--border-hair) solid var(--line-on-ground);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-float);
+    inline-size: 320px;
+    inset-block-start: var(--s-4);
+    /*
+     * Столбик управления масштабом остаётся видимым: карточка встаёт левее
+     * него, а не поверх. Иначе развернувший карту терял бы и зум, и саму
+     * кнопку возврата.
+     */
+    inset-inline-end: calc(var(--s-3) * 2 + var(--target-min));
+    max-block-size: calc(100% - var(--s-4) * 2);
+    padding: var(--s-4);
+    position: absolute;
+    z-index: 1;
+  }
+
+  /* Закрыть карточку: та же бумага и тот же размер цели, что у кнопок зума. */
+  .atlas-shell[data-expanded='true'] .atlas-panel-close {
+    align-items: center;
+    align-self: flex-end;
+    background: none;
+    border: var(--border-hair) solid var(--line-on-ground);
+    border-radius: var(--radius-sm);
+    color: var(--text-on-ground);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    min-block-size: 32px;
+    min-inline-size: 32px;
+    padding: 0;
+  }
+
+  .atlas-shell[data-expanded='true'] .atlas-panel-close:hover {
+    border-color: var(--line-on-ground-strong);
+    color: var(--text-on-ground-strong);
+  }
+
+  .atlas-panel-close svg {
+    block-size: 16px;
+    fill: none;
+    inline-size: 16px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-width: 1.5;
+  }
+
+  /*
+   * Пустая карточка в полноэкранном виде не показывается вовсе: приглашение
+   * «выберите регион» закрывало бы ту самую карту, ради которой вид и
+   * разворачивали.
+   */
+  .atlas-shell[data-expanded='true'] .atlas-panel[data-empty='true'] {
+    display: none;
+  }
+
+  /*
+   * Шкала высот уходит в левый нижний угол: правый занят всплывшей карточкой.
+   * Угол свободен по той же мере, что и правый, — на целом виде под плашкой
+   * там нет суши.
+   */
+  .atlas-shell[data-expanded='true'] .relief-scale {
+    inset-inline: var(--s-3) auto;
   }
 }
 
@@ -2496,40 +2631,43 @@ button.chip[aria-pressed='true'] {
  * сейчас показан, видно по отметке, а не по догадке.
  */
 /*
- * Переключатель вида набран словами, без рамок: на экране один герой — карта,
- * и рамка вокруг двух слов спорила бы с её листом. Выбранный вид отмечен так
- * же, как текущий раздел в шапке сайта, — киноварной чертой снизу: приём на
- * странице уже есть, и учить ему второй раз не нужно.
+ * Переключатель вида — плашка на самом листе, рядом с управлением масштабом.
+ * Прежде он стоял полосой над картой и оказывался в пустоте: колонка под
+ * карту 1004 px, лист 781, и переключатель, прижатый к левому краю колонки,
+ * стоял в 111 px слева от листа и в 84 px над ним.
  *
- * Черта, а не только цвет: состояние читается и без различения оттенков.
+ * Раз он лёг на карту, он и набран по-карточному: бумага, волосяная рамка —
+ * те же, что у кнопок масштаба и шкалы высот. Выбранный вид залит тушью, а не
+ * подчёркнут: подчёркивание на бумаге спорило бы с границами областей.
+ *
  * Радиокнопки на месте, спрятан лишь их кружок, — с клавиатуры группа
- * работает стрелками, как любая другая.
+ * работает стрелками, как любая другая. Цель нажатия у каждой — 44 px, как у
+ * кнопок масштаба: в кнопку радио размером с букву на телефоне не попасть
+ * (WCAG 2.5.8).
  */
 .atlas-map-kind {
-  border: 0;
-  margin: 0 0 var(--s-3);
-  padding: 0;
-}
-
-.atlas-map-kind legend {
-  color: var(--text-on-ground-muted);
-  font-size: var(--t-size-caption);
-  padding: 0 0 var(--s-2);
-}
-
-.atlas-map-kind-switch {
+  background: var(--surface-paper-bright);
+  border: var(--border-hair) solid var(--line-on-paper);
+  border-radius: var(--radius-sm);
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-5);
+  gap: var(--s-1);
+  inset-block-start: var(--s-3);
+  inset-inline-start: var(--s-3);
+  margin: 0;
+  padding: var(--s-1);
+  position: absolute;
 }
 
 .atlas-map-kind label {
   align-items: center;
-  border-block-end: var(--border-solid) solid transparent;
-  color: var(--text-on-ground-muted);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-paper-muted);
   cursor: pointer;
   display: flex;
-  min-height: var(--target-min);
+  font-size: var(--t-size-caption);
+  min-height: calc(var(--target-min) - var(--s-2));
+  padding-inline: var(--s-3);
+  white-space: nowrap;
 }
 
 .atlas-map-kind input {
@@ -2540,16 +2678,16 @@ button.chip[aria-pressed='true'] {
 }
 
 .atlas-map-kind label:has(input:checked) {
-  border-block-end-color: var(--accent-on-ground);
-  color: var(--text-on-ground-strong);
+  background: var(--text-on-paper);
+  color: var(--surface-paper-bright);
 }
 
 .atlas-map-kind label:hover:not(:has(input:checked)) {
-  color: var(--text-on-ground);
+  color: var(--text-on-paper);
 }
 
 .atlas-map-kind label:has(input:focus-visible) {
-  outline: var(--border-focus) solid var(--focus-on-ground);
+  outline: var(--border-focus) solid var(--focus-on-paper);
   outline-offset: 2px;
 }
 
@@ -2562,9 +2700,8 @@ button.chip[aria-pressed='true'] {
  * Южно-Китайское море. В нижнем левом под ней оказывались Гималаи, в верхнем
  * правом — Маньчжурия; управление масштабом занимает верхний левый.
  *
- * На листе, а не полосой под картой: карта внутри своей колонки центрирована
- * по пропорции, и шкала под ней получалась вдвое шире самой карты — 844 px
- * против 426 px.
+ * На листе, а не полосой под картой: полосой она получалась вдвое шире самой
+ * карты — 844 px против 426 px.
  *
  * Плашка бумажного тона с волосяной рамкой — та же, что у кнопок масштаба:
  * пара «тушь на бумаге» уже проверена тестом контраста.

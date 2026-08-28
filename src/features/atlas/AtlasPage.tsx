@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { otherCollectionsOfRegion } from '../../content/collections';
 import { REGION_KIND_LABELS } from '../../content/regions';
 import {
@@ -71,6 +71,14 @@ export function AtlasPage({
    */
   const [mapKind, setMapKind] = useState<MapKind>('political');
   /*
+   * Атлас во весь кадр. Своим слоем поверх страницы, а не родным
+   * `requestFullscreen`: выход по Esc, возврат фокуса и скрытие шапки всё
+   * равно пришлось бы написать самим, а родного полноэкранного режима в jsdom
+   * нет — проверять было бы нечем.
+   */
+  const [isExpanded, setExpanded] = useState(false);
+  const expandRef = useRef<HTMLButtonElement>(null);
+  /*
    * Выбранный объект физической географии. Живёт рядом с видом карты и вместе
    * с ним сбрасывается: на политической карте рек нет, и оставленный выбор
    * пережил бы то, что его породило.
@@ -86,6 +94,52 @@ export function AtlasPage({
     mapKind === 'physical' && selectedFeatureId !== null
       ? physicalFeatures.find((feature) => feature.id === selectedFeatureId)
       : undefined;
+
+  const hasSelection = selected !== undefined || selectedFeature !== undefined;
+
+  /*
+   * Esc в полноэкранном виде отменяет последнее: сначала снимает выбор, и
+   * только на пустой карте сворачивает вид. Иначе одно нажатие делало бы два
+   * дела сразу — карта и так снимает выбор по Esc, когда фокус на ней, и
+   * ученик, закрывавший карточку, вылетал бы из полноэкранного вида заодно.
+   *
+   * Слушатель на документе, а не на листе: рука может быть где угодно, а
+   * фокус — на карточке или в управлении масштабом.
+   */
+  useEffect(() => {
+    if (!isExpanded) {
+      return;
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Escape') {
+        return;
+      }
+
+      if (hasSelection) {
+        clearSelection();
+
+        return;
+      }
+
+      setExpanded(false);
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => document.removeEventListener('keydown', onKeyDown);
+    /*
+     * Без списка зависимостей намеренно: слушателю нужен свежий ответ на
+     * вопрос «есть ли что снимать», а он меняется с каждым выбором. Подписка
+     * стоит один `addEventListener` на отрисовку — дешевле, чем ref-костыль
+     * ради того же самого.
+     */
+  });
+
+  function clearSelection() {
+    setSelectedFeatureId(null);
+    onClear();
+  }
 
   /*
    * Регион и объект — два ответа на один вопрос карточки, поэтому выбор
@@ -107,9 +161,8 @@ export function AtlasPage({
    * словом в карточке слева, а ступень рельефа назвать негде — форма не
    * выбирается и карточки у неё нет.
    *
-   * Стоит она на листе карты, а не полосой под ним: карта внутри своей
-   * колонки центрирована по пропорции, и шкала под ней получалась вдвое шире
-   * самой карты — 844 px против 426 px.
+   * Стоит она на листе карты, а не полосой под ним: полосой она получалась
+   * вдвое шире самой карты — 844 px против 426 px.
    */
   const reliefScale =
     mapKind === 'physical' ? (
@@ -151,8 +204,65 @@ export function AtlasPage({
       </figure>
     ) : undefined;
 
+  /*
+   * Переключатель вида стоит на листе, а не полосой над ним. Полосой он
+   * оказывался в пустоте: колонка под карту — 1004 px, лист — 781, и
+   * переключатель, прижатый к левому краю колонки, стоял в 111 px слева от
+   * листа и в 84 px над ним. Управление картой должно лежать на карте.
+   *
+   * Подпись группы скрыта от глаза, но не от читалки экрана: два слова
+   * рядом с зумом и так читаются видами карты, а группе нужно имя.
+   */
+  const mapOverlay = (
+    <>
+      <fieldset className="atlas-map-kind">
+        <legend className="visually-hidden">Вид карты</legend>
+        {MAP_KINDS.map(([value, label]) => (
+          <label key={value}>
+            <input
+              type="radio"
+              name="atlas-map-kind"
+              value={value}
+              checked={mapKind === value}
+              onChange={() => {
+                setMapKind(value);
+                setSelectedFeatureId(null);
+              }}
+            />
+            <span>{label}</span>
+          </label>
+        ))}
+      </fieldset>
+      {reliefScale}
+    </>
+  );
+
+  /*
+   * Разворот на весь кадр. Кнопка-переключатель: `aria-pressed` говорит
+   * состояние, а имя — что произойдёт. Стрелки, а не уголки: уголки уже
+   * заняты «сбросить вид», и два одинаковых знака в одном столбике означали
+   * бы разное.
+   */
+  const expandButton = (
+    <button
+      type="button"
+      ref={expandRef}
+      aria-pressed={isExpanded}
+      aria-label={isExpanded ? 'Свернуть карту' : 'Развернуть карту на весь экран'}
+      onClick={() => setExpanded((expanded) => !expanded)}
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        {isExpanded ? (
+          <path d="M13 7H9V3M9 7l4-4M3 9h4v4M7 9l-4 4" />
+        ) : (
+          <path d="M9 3h4v4M13 3l-4 4M7 13H3v-4M3 13l4-4" />
+        )}
+      </svg>
+    </button>
+  );
+
   return (
-    <main className="atlas-shell">
+    <main className="atlas-shell" data-expanded={isExpanded}>
       <div className="atlas-layout">
         {/*
           Колонка прокручивается сама (см. `.atlas-panel` в styles.css), а
@@ -165,7 +275,30 @@ export function AtlasPage({
           role="region"
           aria-label="Карточка атласа"
           tabIndex={0}
+          /*
+            Пусто ли в карточке. Нужно полноэкранному виду: там панель
+            всплывает поверх карты, и приглашение «выберите регион» закрывало
+            бы ту самую карту, ради которой вид и разворачивали.
+          */
+          data-empty={!hasSelection}
         >
+          {/*
+            Закрыть карточку. Только в полноэкранном виде и только когда есть
+            что закрывать: в обычном карточка стоит своей колонкой и ничего не
+            загораживает, а закрывать колонку незачем.
+          */}
+          {isExpanded && hasSelection ? (
+            <button
+              type="button"
+              className="atlas-panel-close"
+              aria-label="Закрыть карточку"
+              onClick={clearSelection}
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M4 4l8 8M12 4l-8 8" />
+              </svg>
+            </button>
+          ) : null}
           <div className="atlas-region-card" data-testid="atlas-region-card">
             {selectedFeature ? (
               <>
@@ -269,31 +402,6 @@ export function AtlasPage({
           О выбранном регионе рассказывает карточка слева.
         */}
         <div className="atlas-map">
-          <fieldset className="atlas-map-kind">
-            <legend>Вид карты</legend>
-            {/*
-              Обёртка нужна разметке: `legend` в гибком контейнере становится
-              его первой строкой, и два слова без неё не поставить в ряд под
-              подписью группы.
-            */}
-            <div className="atlas-map-kind-switch">
-              {MAP_KINDS.map(([value, label]) => (
-                <label key={value}>
-                  <input
-                    type="radio"
-                    name="atlas-map-kind"
-                    value={value}
-                    checked={mapKind === value}
-                    onChange={() => {
-                      setMapKind(value);
-                      setSelectedFeatureId(null);
-                    }}
-                  />
-                  <span>{label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
           <ChinaMap
             regions={regions}
             selectedRegionId={selectedRegionId}
@@ -311,7 +419,8 @@ export function AtlasPage({
             showsCities={mapKind === 'political'}
             selectedFeatureId={selectedFeatureId}
             onSelectFeature={selectFeature}
-            mapInset={reliefScale}
+            mapInset={mapOverlay}
+            mapControlsExtra={expandButton}
           />
         </div>
       </div>
@@ -325,6 +434,13 @@ export function AtlasPage({
         <button type="button" className="primary" onClick={onTrain}>
           Тренировать
         </button>
+        {/*
+          Подсказка про Esc стоит в подвале, а не плашкой на карте: на карте
+          она заняла бы угол, а углов на листе всего четыре и все заняты.
+        */}
+        {isExpanded ? (
+          <p className="atlas-escape-hint">Esc — выйти из полноэкранного вида</p>
+        ) : null}
         <MapAttribution />
       </footer>
     </main>

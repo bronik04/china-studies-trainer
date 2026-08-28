@@ -18,13 +18,14 @@ beforeAll(async () => {
 function renderAtlas(selectedRegionId: string | null = null) {
   const onSelect = vi.fn();
   const onTrain = vi.fn();
+  const onClear = vi.fn();
 
   const { container } = render(
     <AtlasPage
       regions={regions}
       selectedRegionId={selectedRegionId}
       onSelect={onSelect}
-      onClear={() => {}}
+      onClear={onClear}
       zoom={1}
       onZoomChange={() => {}}
       onTrain={onTrain}
@@ -32,7 +33,14 @@ function renderAtlas(selectedRegionId: string | null = null) {
     />,
   );
 
-  return { container, onSelect, onTrain };
+  return { container, onSelect, onTrain, onClear };
+}
+
+/** Кнопка разворота: имя у неё меняется вместе с состоянием. */
+function expandButton(): HTMLElement {
+  return screen.getByRole('button', {
+    name: /Развернуть карту на весь экран|Свернуть карту/,
+  });
 }
 
 it('без выбора приглашает выбрать регион, а не отчитывается о пустоте', () => {
@@ -283,4 +291,88 @@ it('не показывает коллекции у физического об�
   fireEvent.keyDown(screen.getByLabelText(/Хуанхэ/), { key: 'Enter' });
 
   expect(container.querySelector('.atlas-collections')).toBeNull();
+});
+
+/*
+ * Переключатель вида стоял полосой над картой и оказывался в пустоте: колонка
+ * под карту 1004 px, лист 781, и он стоял в 111 px слева от листа и в 84 px
+ * над ним. Управление картой лежит на карте.
+ */
+it('переключатель вида лежит на самом листе, а не полосой над ним', () => {
+  const { container } = renderAtlas();
+
+  const frame = container.querySelector('.china-map-frame');
+  const kind = container.querySelector('.atlas-map-kind');
+
+  expect(kind).not.toBeNull();
+  expect(frame?.contains(kind as Node)).toBe(true);
+});
+
+it('разворачивает атлас на весь кадр и сворачивает обратно', () => {
+  const { container } = renderAtlas();
+  const shell = container.querySelector('.atlas-shell');
+
+  expect(shell).toHaveAttribute('data-expanded', 'false');
+
+  fireEvent.click(expandButton());
+  expect(shell).toHaveAttribute('data-expanded', 'true');
+  expect(expandButton()).toHaveAttribute('aria-pressed', 'true');
+
+  fireEvent.click(expandButton());
+  expect(shell).toHaveAttribute('data-expanded', 'false');
+});
+
+/*
+ * Esc делает одно дело за нажатие. Карта и сама снимает выбор по Esc, когда
+ * фокус на ней, и ученик, закрывавший карточку, вылетал бы из полноэкранного
+ * вида заодно.
+ */
+it('Esc сначала снимает выбор и только на пустой карте сворачивает вид', () => {
+  const { container, onClear } = renderAtlas('hunan');
+  const shell = container.querySelector('.atlas-shell');
+
+  fireEvent.click(expandButton());
+  fireEvent.keyDown(document, { key: 'Escape' });
+
+  expect(onClear).toHaveBeenCalled();
+  expect(shell).toHaveAttribute('data-expanded', 'true');
+});
+
+it('Esc на пустой карте сворачивает полноэкранный вид', () => {
+  const { container } = renderAtlas();
+  const shell = container.querySelector('.atlas-shell');
+
+  fireEvent.click(expandButton());
+  fireEvent.keyDown(document, { key: 'Escape' });
+
+  expect(shell).toHaveAttribute('data-expanded', 'false');
+});
+
+/*
+ * В полноэкранном виде карточка всплывает поверх карты, и закрыть её нужно
+ * чем-то видимым. В обычном она стоит своей колонкой и ничего не загораживает.
+ */
+it('кнопка закрытия карточки есть только в полноэкранном виде', () => {
+  const { onClear } = renderAtlas('hunan');
+
+  expect(screen.queryByRole('button', { name: 'Закрыть карточку' })).toBeNull();
+
+  fireEvent.click(expandButton());
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть карточку' }));
+
+  /* Сам выбор держит `App`: карточка исчезнет, когда он его снимет. */
+  expect(onClear).toHaveBeenCalled();
+});
+
+/*
+ * Приглашение «выберите регион» закрывало бы ту самую карту, ради которой вид
+ * и разворачивали: признак пустоты снимает панель со всплывшего слоя.
+ */
+it('пустая карточка помечена: в полноэкранном виде её не показывают', () => {
+  const { container } = renderAtlas();
+
+  expect(container.querySelector('.atlas-panel')).toHaveAttribute(
+    'data-empty',
+    'true',
+  );
 });

@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 /*
  * Ступени увеличения. Верхние две добавлены ради озёр: контур Цинхая, самого
  * большого озера страны, на целом виде занимает 12,8 px, а на прежнем пределе
@@ -16,9 +18,16 @@ export type MapZoom = (typeof zoomLevels)[number];
 type MapControlsProps = {
   readonly zoom: MapZoom;
   readonly onZoomChange: (zoom: MapZoom) => void;
+  /**
+   * Ещё одна кнопка в том же столбике. Пока такая одна — разворот атласа на
+   * весь кадр; она принадлежит атласу, а не карте, и потому приходит снаружи.
+   * Стоять ей всё равно здесь: два бумажных островка в одном углу листа
+   * читались бы как две разные группы управления одним и тем же.
+   */
+  readonly children?: ReactNode;
 };
 
-export function MapControls({ zoom, onZoomChange }: MapControlsProps) {
+export function MapControls({ zoom, onZoomChange, children }: MapControlsProps) {
   const zoomIndex = zoomLevels.indexOf(zoom);
   const canZoomOut = zoomIndex > 0;
   const canZoomIn = zoomIndex < zoomLevels.length - 1;
@@ -71,6 +80,7 @@ export function MapControls({ zoom, onZoomChange }: MapControlsProps) {
           <path d="M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3" />
         </svg>
       </button>
+      {children}
     </div>
   );
 }

@@ -86,10 +86,24 @@ export function zoomView(view: MapView, zoom: number): MapView {
 /**
  * Сколько единиц карты приходится на пиксель экрана. Нужно, чтобы карта под
  * курсором ехала ровно за ним, а не быстрее или медленнее.
+ *
+ * Считается по обеим сторонам рамки, а не по одной ширине. Пока рамка держала
+ * пропорцию карты, ширины хватало; в атласе рамка теперь занимает колонку
+ * целиком, карта вписана в неё с полями по бокам, и счёт по ширине рамки
+ * давал бы ход руки, не совпадающий с ходом карты. Правило вписывания то же,
+ * что у `pointAtClient`, — `xMidYMid meet`.
  */
-export function unitsPerPixel(view: MapView, mapWidthPx: number): number {
-  return FULL.width / view.zoom / mapWidthPx;
+export function unitsPerPixel(view: MapView, rect: MapFitRect): number {
+  const { zoom } = clampView(view);
+
+  return 1 / Math.min(rect.width / (FULL.width / zoom), rect.height / (FULL.height / zoom));
 }
+
+/** Рамка показа: только те стороны, по которым карту вписывают. */
+export type MapFitRect = {
+  readonly width: number;
+  readonly height: number;
+};
 
 /** Шаг клавиатуры — десятая часть видимого, как у прокрутки строкой. */
 export function keyboardStep(view: MapView): number {
@@ -114,9 +128,9 @@ export type ScreenRect = {
  * должно.
  *
  * Поля учитываются: `preserveAspectRatio` по умолчанию (`xMidYMid meet`)
- * вписывает карту целиком и делит остаток рамки поровну. Рамка атласа держит
- * пропорцию карты, полей там нет, но полагаться на это нельзя — на другой
- * поверхности рамка может оказаться любой.
+ * вписывает карту целиком и делит остаток рамки поровну. В атласе рамка
+ * занимает колонку целиком и полей по бокам там как раз хватает; на других
+ * поверхностях она может оказаться любой.
  */
 export function pointAtClient(
   view: MapView,
