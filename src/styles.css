@@ -1015,6 +1015,7 @@ button.text:hover:enabled {
  */
 .china-map [data-region-id]:focus,
 .china-map .city-hit:focus,
+.china-map .landmark-hit:focus,
 .china-map .cluster-hit:focus,
 .china-map .physical-layer .relief-shape:focus,
 .china-map .physical-layer .river-line:focus,
@@ -1184,6 +1185,64 @@ button.text:hover:enabled {
 
 .china-map .cluster-anchor {
   fill: var(--accent);
+}
+
+/*
+ * Звезда достопримечательности.
+ *
+ * Форма, а не цвет: цвет на этой карте занят заливкой региона и ступенью
+ * рельефа, и различать им род объекта нельзя. Звезда отличается от кружка
+ * города даже там, где оба знака оказались бы рядом, — хотя в раундах по
+ * достопримечательностям карта чистая и городов на ней нет.
+ */
+.china-map .landmark-mark {
+  fill: var(--map-label);
+  stroke: var(--map-sea);
+  stroke-width: 1;
+}
+
+.china-map .landmark[data-selected='true'] .landmark-mark {
+  fill: var(--accent);
+  stroke: var(--surface-paper-bright);
+  stroke-width: 2;
+}
+
+.china-map .landmark-hit {
+  fill: transparent;
+}
+
+.china-map .landmark-layer[data-interactive='true'] .landmark-hit {
+  cursor: pointer;
+}
+
+/*
+ * Подпись видна у одного объекта за раз — при наведении, фокусе и выборе.
+ * Обводка тоном бумаги отделяет её от заливки региона: подпись ложится на
+ * любой из четырёх тонов карты.
+ */
+.china-map .landmark-label {
+  fill: var(--map-label);
+  font-family: var(--t-family-text);
+  font-size: var(--map-label-size);
+  font-weight: var(--t-weight-bold);
+  opacity: 0;
+  paint-order: stroke;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 3;
+}
+
+.china-map .landmark:hover .landmark-label,
+.china-map .landmark:focus-within .landmark-label,
+.china-map .landmark[data-selected='true'] .landmark-label {
+  opacity: 1;
+}
+
+/*
+ * Там, где спрашивают о самой звезде, подписи не рисуются вовсе: подпись
+ * подсвеченного объекта — готовый ответ.
+ */
+.china-map .landmark-layer[data-labels='false'] .landmark-label {
+  display: none;
 }
 
 /*
