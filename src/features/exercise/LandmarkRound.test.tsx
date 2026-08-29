@@ -69,7 +69,7 @@ it('не считает попыткой нажатие по грозди', () =
 
   const before = screen.getByText(/Вопрос 1 из/);
   fireEvent.click(
-    screen.getByRole('button', { name: /Гроздь из 3 достопримечательностей/ }),
+    screen.getByRole('button', { name: /Гроздь из 3 достопримечательностей: Запретный город/ }),
   );
 
   expect(before).toBeInTheDocument();

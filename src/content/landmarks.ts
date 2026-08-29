@@ -710,6 +710,63 @@ export const landmarks: readonly Landmark[] = [
     ],
     ['unesco-hoh-xil-1540'],
   ),
+  landmark(
+    'shanghai-tower',
+    'shanghai',
+    'modern',
+    'Шанхайская башня',
+    '上海中心大厦',
+    'Shànghǎi Zhōngxīn Dàshà',
+    121.501,
+    31.2355,
+    [
+      {
+        title: 'Третья в мире',
+        body:
+          'Башня достроена в 2015 году; её высота — 632 метра, обитаемых этажей 128. В мировом списке самых высоких зданий она третья, после Бурдж-Халифы и Мердека 118.',
+        sourceIds: ['britannica-tallest-buildings'],
+      },
+    ],
+    ['britannica-tallest-buildings'],
+  ),
+  landmark(
+    'three-gorges-dam',
+    'hubei',
+    'modern',
+    'Плотина «Три ущелья»',
+    '三峡大坝',
+    'Sānxiá Dàbà',
+    111.00367,
+    30.82386,
+    [
+      {
+        title: 'Крупнейшая стройка страны',
+        body:
+          'Плотина стоит на Янцзы чуть западнее города Ичан. Строительство начали в 1994 году — тогда это была крупнейшая инженерная работа Китая, — а к завершению в 2006-м плотина стала самым большим сооружением такого рода в мире.',
+        sourceIds: ['britannica-three-gorges-dam'],
+      },
+    ],
+    ['britannica-three-gorges-dam'],
+  ),
+  landmark(
+    'hzm-bridge',
+    'guangdong',
+    'modern',
+    'Мост Гонконг — Чжухай — Макао',
+    '港珠澳大桥',
+    'Gǎng-Zhū-Ào Dàqiáo',
+    113.775,
+    22.2824,
+    [
+      {
+        title: 'Пятьдесят пять километров над морем',
+        body:
+          'Открыт в октябре 2018 года. Самый длинный морской мост в мире: 55 километров через дельту Чжуцзяна, соединяющие Гонконг, Макао и гуандунский Чжухай. Ради судоходства часть перехода уведена в подводный туннель.',
+        sourceIds: ['britannica-bridge-us-designs'],
+      },
+    ],
+    ['britannica-bridge-us-designs'],
+  ),
 ];
 
 const landmarkIndex = new Map(landmarks.map((one) => [one.id, one]));

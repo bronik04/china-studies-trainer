@@ -2141,6 +2141,39 @@ export const sources = [
       'охрана пути миграции тибетской антилопы',
     ],
   },
+  {
+    id: 'britannica-three-gorges-dam',
+    title: 'Three Gorges Dam',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/Three-Gorges-Dam',
+    accessedAt: '2026-08-28',
+    covers: [
+      'год начала строительства плотины и год её завершения',
+      'её положение относительно Ичана',
+    ],
+  },
+  {
+    id: 'britannica-bridge-us-designs',
+    title: 'Bridge — U.S. designs',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/technology/bridge-engineering/U-S-designs',
+    accessedAt: '2026-08-28',
+    covers: [
+      'год открытия моста Гонконг — Чжухай — Макао, его длина и что он соединяет',
+      'подводный участок перехода',
+    ],
+  },
+  {
+    id: 'britannica-tallest-buildings',
+    title: 'Tallest buildings in the world',
+    organization: 'Encyclopaedia Britannica',
+    shortLabel: 'Britannica',
+    url: 'https://www.britannica.com/topic/tallest-buildings-in-the-world-2226971',
+    accessedAt: '2026-08-28',
+    covers: ['высота, год постройки и место Шанхайской башни в мировом списке'],
+  },
 ] as const satisfies readonly Source[];
 
 const sourceIndex = new Map<string, Source>(

@@ -158,12 +158,37 @@ const landmarkPlacement = validateLandmarkPlacement(
   },
 );
 
-if (landmarkPlacement.onBoundary.length > 0) {
+/*
+ * Звезда за контуром — законное состояние ровно для одного объекта: мост
+ * Гонконг — Чжухай — Макао идёт над устьем Чжуцзяна, и суши под ним нет.
+ * Двигать его на берег значило бы учить неверному.
+ *
+ * Список закреплён по той же причине, что у городов: новая звезда на кромке
+ * попала бы в тот же лог и прошла незамеченной, а она могла оказаться там
+ * из-за ошибки в координатах.
+ */
+const EXPECTED_LANDMARKS_ON_BOUNDARY = ['hzm-bridge'];
+
+const landmarksOnBoundary = [...landmarkPlacement.onBoundary].sort();
+const unexpectedLandmarks = landmarksOnBoundary.filter(
+  (id) => !EXPECTED_LANDMARKS_ON_BOUNDARY.includes(id),
+);
+const goneLandmarks = EXPECTED_LANDMARKS_ON_BOUNDARY.filter(
+  (id) => !landmarksOnBoundary.includes(id),
+);
+
+if (unexpectedLandmarks.length > 0) {
   throw new Error(
-    'Достопримечательности на кромке контура: ' +
-      `${landmarkPlacement.onBoundary.join(', ')}. Проверьте координаты по ` +
-      'источнику: у звёзд, в отличие от приморских городов, законных причин ' +
-      'выходить за контур пока не было.',
+    `Новые достопримечательности на кромке контура: ${unexpectedLandmarks.join(', ')}. ` +
+      'Проверьте координаты по источнику; если объект и правда стоит над водой ' +
+      'или на самой границе, добавьте его в EXPECTED_LANDMARKS_ON_BOUNDARY.',
+  );
+}
+
+if (goneLandmarks.length > 0) {
+  throw new Error(
+    `Достопримечательности ушли с кромки контура: ${goneLandmarks.join(', ')}. ` +
+      'Список EXPECTED_LANDMARKS_ON_BOUNDARY устарел — уберите их из него.',
   );
 }
 
@@ -191,7 +216,10 @@ const lenses = validateLensRadii([
 ]);
 
 console.info(
-  `Проверено достопримечательностей: ${landmarks.length}. Самая широкая лупа: ` +
+  `Проверено достопримечательностей: ${landmarks.length}. На кромке контура: ` +
+    `${landmarksOnBoundary.length}` +
+    (landmarksOnBoundary.length > 0 ? ` (${landmarksOnBoundary.join(', ')})` : '') +
+    '. Самая широкая лупа: ' +
     lenses
       .map(
         (lens) =>

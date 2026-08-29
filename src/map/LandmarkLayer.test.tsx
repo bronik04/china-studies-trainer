@@ -41,7 +41,7 @@ it('собирает пекинские объекты в гроздь', () => {
   renderLayer({ onSelect: () => {} });
 
   expect(
-    screen.getByRole('button', { name: /Гроздь из 3 достопримечательностей/ }),
+    screen.getByRole('button', { name: /Гроздь из 3 достопримечательностей: Запретный город/ }),
   ).toBeInTheDocument();
 });
 
@@ -50,7 +50,7 @@ it('раскрывает гроздь и отдаёт нажатие объек�
   renderLayer({ onSelect: select });
 
   fireEvent.click(
-    screen.getByRole('button', { name: /Гроздь из 3 достопримечательностей/ }),
+    screen.getByRole('button', { name: /Гроздь из 3 достопримечательностей: Запретный город/ }),
   );
   fireEvent.click(screen.getByRole('button', { name: 'Храм Неба, 天坛' }));
 
