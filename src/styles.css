@@ -1015,6 +1015,7 @@ button.text:hover:enabled {
  */
 .china-map [data-region-id]:focus,
 .china-map .city-hit:focus,
+.china-map .cluster-hit:focus,
 .china-map .physical-layer .relief-shape:focus,
 .china-map .physical-layer .river-line:focus,
 .china-map .physical-layer .lake-hit:focus {
@@ -1122,6 +1123,74 @@ button.text:hover:enabled {
 
 .china-map .city-layer[data-interactive='true'] .city-hit {
   cursor: pointer;
+}
+
+/*
+ * Гроздь и лупа.
+ *
+ * Свёрнутая гроздь — знак своего слоя и киноварный кружок с числом; раскрытая
+ * — круг тоном яркой бумаги поверх карты и киноварный якорь на настоящем
+ * месте. Якорь не украшение: он единственный говорит, что лупа — врезка, а не
+ * утверждение о месте, и без него уехавший внутрь неё знак читался бы как
+ * переехавший объект.
+ *
+ * Кольцо браузера снято выше, вместе с городами и областями, поэтому фокус
+ * показывает сама гроздь — обводкой кружка с числом.
+ */
+.china-map .map-cluster [role='button'] {
+  cursor: pointer;
+}
+
+.china-map .cluster-hit {
+  fill: transparent;
+}
+
+.china-map .cluster-badge {
+  fill: var(--accent);
+  stroke: var(--surface-paper-bright);
+  stroke-width: 0.8;
+}
+
+.china-map .cluster-count {
+  fill: var(--map-outcome-ink);
+  font-family: var(--t-family-text);
+  font-size: calc(var(--map-label-size) * 0.55);
+  font-weight: var(--t-weight-bold);
+}
+
+.china-map .map-cluster:focus-within .cluster-badge {
+  stroke: var(--focus-on-paper);
+  stroke-width: 1.6;
+}
+
+/*
+ * Длительность берётся из токенов: там же она обнуляется при
+ * `prefers-reduced-motion`, и второго правила для этого не нужно.
+ */
+@keyframes cluster-lens-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.china-map .cluster-lens {
+  animation: cluster-lens-in var(--duration-quick) ease-out;
+  fill: var(--surface-paper-bright);
+  fill-opacity: 0.93;
+  stroke: var(--map-coast);
+  stroke-width: 0.8;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.china-map .cluster-anchor {
+  fill: var(--accent);
 }
 
 /*
