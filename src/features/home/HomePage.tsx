@@ -6,6 +6,11 @@ import {
   type PhysicalSet,
 } from '../../content/physical-features';
 import {
+  LANDMARK_SETS,
+  landmarksUpTo,
+  type LandmarkSet,
+} from '../../content/landmark-sets';
+import {
   CULTURE_SETS,
   cultureCollectionsUpTo,
   type CultureSet,
@@ -13,6 +18,7 @@ import {
 import {
   citiesWord,
   featuresWord,
+  landmarksWord,
   photosWord,
 } from '../../content/region-count';
 import {
@@ -62,6 +68,11 @@ export type HomePageProps = {
     language: QuestionLanguage,
     citySet: CitySet,
   ) => void;
+  readonly onStartLandmarkRound: (
+    exerciseType: ExerciseType,
+    language: QuestionLanguage,
+    set: LandmarkSet,
+  ) => void;
   readonly onOpenAtlas: () => void;
   /** Нажатие по области карты в герое: атлас открывается на этом регионе. */
   readonly onOpenRegion: (regionId: string) => void;
@@ -99,6 +110,13 @@ const CITY_SETS: readonly (readonly [CitySet, string])[] = [
 /** Порядок наборов задаётся здесь: у объекта `CULTURE_SETS` его нет. */
 const CULTURE_SET_ORDER: readonly CultureSet[] = ['culture', 'nature', 'all'];
 
+/** Порядок наборов достопримечательностей: у `LANDMARK_SETS` его нет. */
+const LANDMARK_SET_ORDER: readonly LandmarkSet[] = [
+  'monuments',
+  'nature',
+  'all',
+];
+
 const PHYSICAL_SETS: readonly (readonly [PhysicalSet, string])[] = [
   ['base', 'Реки и формы'],
   ['ranges', 'И хребты'],
@@ -133,6 +151,21 @@ function setChoiceFor(card: ModeCard) {
     };
   }
 
+  if (card.kind === 'landmark') {
+    return {
+      legend: 'Что спрашивать',
+      value: 'monuments',
+      options: LANDMARK_SET_ORDER.map((value) => {
+        const count = landmarksUpTo(value).length;
+
+        return [
+          value,
+          `${LANDMARK_SETS[value]} — ${count} ${landmarksWord(count)}`,
+        ] as const;
+      }),
+    };
+  }
+
   if (card.kind === 'physical') {
     return {
       legend: 'Какие объекты',
@@ -154,6 +187,7 @@ export function HomePage({
   onStartRound,
   onStartFillRound,
   onStartCityRound,
+  onStartLandmarkRound,
   onStartCultureRound,
   onStartHistoryRound,
   onStartPhysicalRound,
@@ -182,6 +216,8 @@ export function HomePage({
       onStartFillRound(language);
     } else if (card.kind === 'city') {
       onStartCityRound(card.exerciseType, language, set as CitySet);
+    } else if (card.kind === 'landmark') {
+      onStartLandmarkRound(card.exerciseType, language, set as LandmarkSet);
     } else if (card.kind === 'physical') {
       onStartPhysicalRound(card.exerciseType, language, set as PhysicalSet);
     } else if (card.kind === 'history') {
