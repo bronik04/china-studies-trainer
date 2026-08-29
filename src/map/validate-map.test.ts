@@ -26,8 +26,11 @@ import {
   REFERENCE_MAP_WIDTH,
   unitsToPixels,
 } from './target-size';
+import { MAX_LENS_RADIUS_UNITS } from './cluster';
 import {
   validateCityPlacement,
+  validateLandmarkPlacement,
+  validateLensRadii,
   validateMapAreaIds,
   validatePhysicalGeometry,
   validateRegionPalette,
@@ -118,7 +121,7 @@ const square: PlacementShapes = {
 it('принимает город внутри своего региона', () => {
   expect(
     validateCityPlacement(
-      [{ cityId: 'centre', regionId: 'square', x: 50, y: 50 }],
+      [{ id: 'centre', regionId: 'square', x: 50, y: 50 }],
       square,
     ).onBoundary,
   ).toEqual([]);
@@ -126,7 +129,7 @@ it('принимает город внутри своего региона', () 
 
 it('прощает кромку и называет города, оказавшиеся на ней', () => {
   const report = validateCityPlacement(
-    [{ cityId: 'coast', regionId: 'square', x: 101, y: 50 }],
+    [{ id: 'coast', regionId: 'square', x: 101, y: 50 }],
     square,
   );
 
@@ -136,7 +139,7 @@ it('прощает кромку и называет города, оказавш
 it('не прощает город, уехавший от своего региона дальше допуска', () => {
   expect(() =>
     validateCityPlacement(
-      [{ cityId: 'lost', regionId: 'square', x: 400, y: 50 }],
+      [{ id: 'lost', regionId: 'square', x: 400, y: 50 }],
       square,
     ),
   ).toThrow(/Город lost вне региона square/);
@@ -155,7 +158,7 @@ it('называет регион, в который город попал на 
   };
 
   expect(() =>
-    validateCityPlacement([{ cityId: 'lost', regionId: 'far', x: 50, y: 50 }], two),
+    validateCityPlacement([{ id: 'lost', regionId: 'far', x: 50, y: 50 }], two),
   ).toThrow(/точка лежит в square/);
 });
 
@@ -623,4 +626,53 @@ it('знак озера стоит внутри своего контура, а 
       `${shape.featureId}: знак вне контура`,
     ).toBe(true);
   }
+});
+
+/*
+ * Достопримечательности проверяются той же геометрией, что и города, но
+ * сообщение обязано называть их своим именем: «Город Запретный город вне
+ * региона» сбивало бы с толку ровно там, где нужно быстро понять, что не так.
+ */
+it('называет достопримечательность своим словом', () => {
+  expect(() =>
+    validateLandmarkPlacement(
+      [{ id: 'lost', regionId: 'square', x: 400, y: 50 }],
+      square,
+    ),
+  ).toThrow(/Достопримечательность lost вне региона square/);
+});
+
+it('пропускает грозди, укладывающиеся в предел лупы', () => {
+  const widest = validateLensRadii([
+    {
+      layer: 'проба',
+      points: [
+        { id: 'a', x: 0, y: 0 },
+        { id: 'b', x: 3, y: 0 },
+      ],
+    },
+  ]);
+
+  expect(widest).toHaveLength(1);
+  expect(widest[0].radius).toBeLessThan(MAX_LENS_RADIUS_UNITS);
+});
+
+/*
+ * Цепочка из четырёх: ближайшая пара в половину единицы задаёт коэффициент 35,
+ * и крайний объект улетает за предел. Ради такого случая проверка и стоит.
+ */
+it('ловит лупу шире предела', () => {
+  expect(() =>
+    validateLensRadii([
+      {
+        layer: 'проба',
+        points: [
+          { id: 'a', x: 0, y: 0 },
+          { id: 'b', x: 0, y: 0.5 },
+          { id: 'c', x: 0, y: 15 },
+          { id: 'd', x: 0, y: 30 },
+        ],
+      },
+    ]),
+  ).toThrow(/Лупа грозди cluster:a в слое «проба»/);
 });

@@ -26,8 +26,12 @@ import {
   parseMapPath,
   type Point,
 } from '../src/map/svg-path';
+import { MAX_LENS_RADIUS_UNITS } from '../src/map/cluster';
+import { landmarks } from '../src/content/landmarks';
 import {
   validateCityPlacement,
+  validateLandmarkPlacement,
+  validateLensRadii,
   validateMapAreaIds,
   validatePhysicalGeometry,
   validateRegionPalette,
@@ -85,7 +89,7 @@ const placement = validateCityPlacement(
   cities.map((city) => {
     const [x, y] = projectLonLat(city.lon, city.lat);
 
-    return { cityId: city.id, regionId: city.regionId, x, y };
+    return { id: city.id, regionId: city.regionId, x, y };
   }),
   {
     contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),
@@ -131,6 +135,70 @@ if (gone.length > 0) {
 console.info(
   `Проверено городов: ${cities.length}. На кромке контура: ${onBoundary.length}` +
     (onBoundary.length > 0 ? ` (${onBoundary.join(', ')})` : ''),
+);
+
+/*
+ * Достопримечательности проверяются той же геометрией и тем же допуском, что и
+ * города: звезда обязана лежать в контуре своего региона. Кромки у них пока
+ * нет ни у одной — ближе всех городище Ваньду, полторы единицы внутрь, — и
+ * список ожидаемых на кромке поэтому пуст.
+ */
+const landmarkPlacement = validateLandmarkPlacement(
+  landmarks.map((one) => {
+    const [x, y] = projectLonLat(one.lon, one.lat);
+
+    return { id: one.id, regionId: one.regionId, x, y };
+  }),
+  {
+    contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),
+    distanceToBoundary: (mapAreaId, x, y) =>
+      distanceToBoundary(ringsOf(mapAreaId), x, y),
+    mapAreaOf: (regionId) => mapAreaOf.get(regionId),
+    mapAreaIds: [...rings.keys()],
+  },
+);
+
+if (landmarkPlacement.onBoundary.length > 0) {
+  throw new Error(
+    'Достопримечательности на кромке контура: ' +
+      `${landmarkPlacement.onBoundary.join(', ')}. Проверьте координаты по ` +
+      'источнику: у звёзд, в отличие от приморских городов, законных причин ' +
+      'выходить за контур пока не было.',
+  );
+}
+
+/*
+ * Лупа не должна разрастаться незаметно: коэффициент считается по ближайшей
+ * паре, и один объект, придвинутый вплотную к соседу, растаскивает всю гроздь.
+ */
+const lenses = validateLensRadii([
+  {
+    layer: 'города',
+    points: cities.map((city) => {
+      const [x, y] = projectLonLat(city.lon, city.lat);
+
+      return { id: city.id, x, y };
+    }),
+  },
+  {
+    layer: 'достопримечательности',
+    points: landmarks.map((one) => {
+      const [x, y] = projectLonLat(one.lon, one.lat);
+
+      return { id: one.id, x, y };
+    }),
+  },
+]);
+
+console.info(
+  `Проверено достопримечательностей: ${landmarks.length}. Самая широкая лупа: ` +
+    lenses
+      .map(
+        (lens) =>
+          `${lens.layer} — ${lens.id} ${lens.radius.toFixed(1)} единиц`,
+      )
+      .join('; ') +
+    ` при пределе ${MAX_LENS_RADIUS_UNITS}`,
 );
 
 /*
