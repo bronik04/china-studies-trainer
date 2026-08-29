@@ -305,7 +305,7 @@ const cultureCollections = [
  * права геометрия, в тексте — география, и переписывать ради текста
  * проверяемый список нельзя.
  */
-type FeatureCollectionExtras = {
+type CollectionExtras = {
   readonly lead?: string;
   readonly notes?: readonly string[];
   readonly regionIds?: readonly string[];
@@ -315,7 +315,7 @@ type FeatureCollectionExtras = {
 };
 
 const FEATURE_COLLECTION_EXTRAS: Readonly<
-  Record<string, FeatureCollectionExtras>
+  Record<string, CollectionExtras>
 > = {
   /*
    * Досталось от рукописной страницы «Такла-Макан», которая жила рядом с этой
@@ -712,7 +712,7 @@ function featureCollection(feature: PhysicalFeature): Collection {
  * предмет — одна страница».
  */
 const LANDMARK_COLLECTION_EXTRAS: Readonly<
-  Record<string, FeatureCollectionExtras>
+  Record<string, CollectionExtras>
 > = {
   'terracotta-army': {
     lead:
@@ -765,6 +765,256 @@ const LANDMARK_COLLECTION_EXTRAS: Readonly<
   },
 };
 
+/**
+ * Снимок достопримечательности. Подписи написаны по описаниям файлов на
+ * Викискладе — по тому же правилу, что у физических объектов: подпись к
+ * снимку, которого не видел, учит вернее всего неверному.
+ *
+ * Файлы выбраны не поиском наугад: у каждого объекта взят заглавный снимок из
+ * Викиданных (свойство P18), а где он оказался мелким для крупного кадра —
+ * замена из категории того же объекта.
+ */
+const LANDMARK_PHOTOS: Readonly<Record<string, CollectionPhoto>> = {
+  'forbidden-city': {
+    id: 'landmark-forbidden-city',
+    subject: 'главный зал дворца',
+    captionRu: 'Зал высшей гармонии',
+    captionZh: '太和殿',
+    place: 'Пекин',
+  },
+  'temple-of-heaven': {
+    id: 'landmark-temple-of-heaven',
+    subject: 'зал моления',
+    captionRu: 'Зал моления о богатом урожае',
+    captionZh: '祈年殿',
+    place: 'Пекин',
+  },
+  'summer-palace': {
+    id: 'landmark-summer-palace',
+    subject: 'гора над озером',
+    captionRu: 'Гора Долголетия в Летнем дворце',
+    captionZh: '万寿山',
+    place: 'Пекин',
+  },
+  chengde: {
+    id: 'landmark-chengde',
+    subject: 'парк резиденции',
+    captionRu: 'Горная резиденция в Чэндэ',
+    place: 'Чэндэ, Хэбэй',
+  },
+  'mukden-palace': {
+    id: 'landmark-mukden-palace',
+    subject: 'дворец с высоты',
+    captionRu: 'Мукденский дворец с высоты птичьего полёта',
+    place: 'Шэньян, Ляонин',
+  },
+  koguryo: {
+    id: 'landmark-koguryo',
+    subject: 'стена горной крепости',
+    captionRu: 'Стена горной крепости Ваньду',
+    place: 'Цзиань, Гирин',
+  },
+  xanadu: {
+    id: 'landmark-xanadu',
+    subject: 'развалины города',
+    captionRu: 'Развалины Шанду, летней столицы Хубилая',
+    place: 'Внутренняя Монголия',
+  },
+  yungang: {
+    id: 'landmark-yungang',
+    subject: 'изваяния в пещере',
+    captionRu: 'Гроты Юньган в Датуне',
+    captionZh: '云冈石窟',
+    place: 'Датун, Шаньси',
+  },
+  pingyao: {
+    id: 'landmark-pingyao',
+    subject: 'улица старого города',
+    captionRu: 'Старый город Пинъяо',
+    place: 'Пинъяо, Шаньси',
+  },
+  'western-xia-tombs': {
+    id: 'landmark-western-xia-tombs',
+    subject: 'курган гробницы',
+    captionRu: 'Третья гробница Западной Ся под Иньчуанем',
+    place: 'Иньчуань, Нинся',
+  },
+  mogao: {
+    id: 'landmark-mogao',
+    subject: 'обрыв с пещерами',
+    captionRu: 'Пещеры Могао в Дуньхуане',
+    captionZh: '莫高窟',
+    place: 'Дуньхуан, Ганьсу',
+  },
+  gaochang: {
+    id: 'landmark-gaochang',
+    subject: 'развалины храма',
+    captionRu: 'Юго-западный буддийский храм городища Гаочан',
+    place: 'Турфан, Синьцзян',
+  },
+  potala: {
+    id: 'landmark-potala',
+    subject: 'дворец на горе',
+    captionRu: 'Потала со склона горы Чагпори',
+    captionZh: '布达拉宫',
+    place: 'Лхаса, Тибет',
+  },
+  longmen: {
+    id: 'landmark-longmen',
+    subject: 'изваяния в скале',
+    captionRu: 'Пещеры Лунмэнь над рекой И',
+    captionZh: '龙门石窟',
+    place: 'Лоян, Хэнань',
+  },
+  shaolin: {
+    id: 'landmark-shaolin',
+    subject: 'постройки монастыря',
+    captionRu: 'Шаолиньский монастырь',
+    captionZh: '少林寺',
+    place: 'Дэнфэн, Хэнань',
+  },
+  'qufu-confucius': {
+    id: 'landmark-qufu-confucius',
+    subject: 'главный зал храма',
+    captionRu: 'Зал Дачэн в храме Конфуция',
+    captionZh: '大成殿',
+    place: 'Цюйфу, Шаньдун',
+  },
+  'suzhou-gardens': {
+    id: 'landmark-suzhou-gardens',
+    subject: 'камни и вода сада',
+    captionRu: 'Сад Львиная роща в Сучжоу',
+    captionZh: '狮子林',
+    place: 'Сучжоу, Цзянсу',
+  },
+  'west-lake': {
+    id: 'landmark-west-lake',
+    subject: 'пагода над озером',
+    captionRu: 'Пагода Лэйфэн над Западным озером',
+    captionZh: '雷峰塔',
+    place: 'Ханчжоу, Чжэцзян',
+  },
+  'fujian-tulou': {
+    id: 'landmark-fujian-tulou',
+    subject: 'группа земляных домов',
+    captionRu: 'Группа тулоу Тяньлокэн',
+    captionZh: '田螺坑土楼群',
+    place: 'Фуцзянь',
+  },
+  'macao-historic-centre': {
+    id: 'landmark-macao-historic-centre',
+    subject: 'фасад собора',
+    captionRu: 'Руины собора Святого Павла',
+    captionZh: '大三巴牌坊',
+    place: 'Макао',
+  },
+  dazu: {
+    id: 'landmark-dazu',
+    subject: 'наскальные рельефы',
+    captionRu: 'Наскальные рельефы Дацзу',
+    captionZh: '大足石刻',
+    place: 'Чунцин',
+  },
+  dujiangyan: {
+    id: 'landmark-dujiangyan',
+    subject: 'водораздел системы',
+    captionRu: 'Дуцзянъянь на Миньцзяне',
+    captionZh: '都江堰',
+    place: 'Дуцзянъянь, Сычуань',
+  },
+  'leshan-buddha': {
+    id: 'landmark-leshan-buddha',
+    subject: 'статуя в скале',
+    captionRu: 'Лэшаньский Будда',
+    captionZh: '乐山大佛',
+    place: 'Лэшань, Сычуань',
+  },
+  lijiang: {
+    id: 'landmark-lijiang',
+    subject: 'крыши старого города',
+    captionRu: 'Старый город Лицзян',
+    captionZh: '丽江古城',
+    place: 'Лицзян, Юньнань',
+  },
+  taishan: {
+    id: 'landmark-taishan',
+    subject: 'вершина горы',
+    captionRu: 'Пик Жигуань на Тайшане',
+    captionZh: '日观峰',
+    place: 'Тайань, Шаньдун',
+  },
+  huangshan: {
+    id: 'landmark-huangshan',
+    subject: 'гранитные пики',
+    captionRu: 'Пики Хуаншаня',
+    captionZh: '黄山',
+    place: 'Аньхой',
+  },
+  lushan: {
+    id: 'landmark-lushan',
+    subject: 'рассвет в горах',
+    captionRu: 'Рассвет на Лушане',
+    captionZh: '庐山',
+    place: 'Цзянси',
+  },
+  wulingyuan: {
+    id: 'landmark-wulingyuan',
+    subject: 'песчаниковые столбы',
+    captionRu: 'Кварцитовые столбы Хуаншичжая',
+    captionZh: '武陵源',
+    place: 'Чжанцзяцзе, Хунань',
+  },
+  'guilin-karst': {
+    id: 'landmark-guilin-karst',
+    subject: 'карстовые пики над рекой',
+    captionRu: 'Река Ли у Яншо',
+    captionZh: '漓江',
+    place: 'Гуйлинь, Гуанси',
+  },
+  fanjingshan: {
+    id: 'landmark-fanjingshan',
+    subject: 'скала над лесом',
+    captionRu: 'Фаньцзиншань',
+    captionZh: '梵净山',
+    place: 'Гуйчжоу',
+  },
+  jiuzhaigou: {
+    id: 'landmark-jiuzhaigou',
+    subject: 'водопад',
+    captionRu: 'Водопад Нуожилан в Цзючжайгоу',
+    captionZh: '诺日朗瀑布',
+    place: 'Сычуань',
+  },
+  'hoh-xil': {
+    id: 'landmark-hoh-xil',
+    subject: 'высокогорная степь',
+    captionRu: 'Кукушили в августе',
+    captionZh: '可可西里',
+    place: 'Цинхай',
+  },
+  'shanghai-tower': {
+    id: 'landmark-shanghai-tower',
+    subject: 'три башни Луцзяцзуя',
+    captionRu: 'Шанхайская башня рядом с Цзиньмао и Всемирным финансовым центром',
+    captionZh: '上海中心大厦',
+    place: 'Шанхай',
+  },
+  'three-gorges-dam': {
+    id: 'landmark-three-gorges-dam',
+    subject: 'плотина на реке',
+    captionRu: 'Плотина «Три ущелья» на Янцзы',
+    captionZh: '三峡大坝',
+    place: 'Ичан, Хубэй',
+  },
+  'hzm-bridge': {
+    id: 'landmark-hzm-bridge',
+    subject: 'мост над водой',
+    captionRu: 'Западный участок моста Гонконг — Чжухай — Макао',
+    captionZh: '港珠澳大桥',
+    place: 'Дельта Чжуцзяна',
+  },
+};
+
 /** Слово рода на странице: «памятник», «природное место», «сооружение». */
 const LANDMARK_KIND_WORDS: Readonly<Record<LandmarkKind, string>> = {
   monument: 'памятник',
@@ -787,7 +1037,7 @@ function landmarkCollection(landmark: Landmark): Collection {
     lead: extras.lead ?? '',
     regionIds: extras.regionIds ?? [landmark.regionId],
     notes: extras.notes ?? [],
-    photos: extras.photos ?? [],
+    photos: extras.photos ?? photosOf(LANDMARK_PHOTOS[landmark.id]),
     sourceIds: [
       ...new Set([
         ...(extras.sourceIds ?? []),
