@@ -43,6 +43,7 @@ export type ModeGroupId =
   | 'regions'
   | 'cities'
   | 'physical'
+  | 'landmarks'
   | 'history'
   | 'culture';
 
@@ -62,6 +63,11 @@ export const MODE_GROUPS: readonly {
     id: 'physical',
     title: 'Физическая карта',
     note: 'реки, формы рельефа и озёра',
+  },
+  {
+    id: 'landmarks',
+    title: 'Достопримечательности',
+    note: 'набор выбирается перед стартом',
   },
   {
     id: 'history',
@@ -108,6 +114,12 @@ export type ModeCard = {
   | { readonly kind: 'city'; readonly exerciseType: ExerciseType }
   /** Игра по физической географии: цели берутся из справочника объектов. */
   | { readonly kind: 'physical'; readonly exerciseType: 'find-on-map' | 'name-target' }
+  /**
+   * Игра по достопримечательностям: цели берутся из третьего справочника.
+   * Формы вопроса те же три, что у городов, — у достопримечательности есть и
+   * место на карте, и регион, с которым её связывают.
+   */
+  | { readonly kind: 'landmark'; readonly exerciseType: ExerciseType }
   /**
    * Игра по династиям: цели берутся из ленты, а карта в ней не участвует.
    * `historyKind` называет, что спрашивают: срок названной династии или
@@ -162,6 +174,28 @@ export const PHYSICAL_MODES: Readonly<
     exerciseType: 'name-target',
     title: 'Назвать объект',
     eyebrow: 'Какой объект подсвечен',
+  },
+};
+
+/**
+ * Три игры по достопримечательностям. Формы те же, что у городов, и потому те
+ * же `exerciseType`; различают их вид карточки и экран `LandmarkRound`.
+ */
+export const LANDMARK_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
+  'find-on-map': {
+    exerciseType: 'find-on-map',
+    title: 'Найти достопримечательность',
+    eyebrow: 'Найдите на карте',
+  },
+  'name-target': {
+    exerciseType: 'name-target',
+    title: 'Назвать достопримечательность',
+    eyebrow: 'Что здесь отмечено',
+  },
+  'match-pair': {
+    exerciseType: 'match-pair',
+    title: 'Достопримечательность — регион',
+    eyebrow: 'В каком регионе она стоит',
   },
 };
 
@@ -325,6 +359,39 @@ export const MODE_CARDS: readonly ModeCard[] = [
     groupId: 'physical',
   },
   {
+    id: 'find-landmark',
+    kind: 'landmark',
+    exerciseType: 'find-on-map',
+    mark: '胜',
+    title: 'Найти достопримечательность',
+    summary:
+      'Вопрос называет объект — ответ нажимается по звезде на карте или выбирается из списка. Карта чистая: ни городов, ни рек, иначе они спорят со звёздами.',
+    volume: 'Набор выбирается перед стартом · около 8 минут',
+    groupId: 'landmarks',
+  },
+  {
+    id: 'name-landmark',
+    kind: 'landmark',
+    exerciseType: 'name-target',
+    mark: '塔',
+    title: 'Назвать достопримечательность',
+    summary:
+      'Одна звезда подсвечена, четыре названия на выбор. Отвлекают объекты того же рода: памятник памятниками, гора горами.',
+    volume: 'Набор выбирается перед стартом · около 7 минут',
+    groupId: 'landmarks',
+  },
+  {
+    id: 'landmark-region',
+    kind: 'landmark',
+    exerciseType: 'match-pair',
+    mark: '迹',
+    title: 'Достопримечательность — регион',
+    summary:
+      'Назван объект — нажать регион, где он стоит. Звёзды на карте скрыты, иначе они и есть ответ.',
+    volume: 'Набор выбирается перед стартом · около 7 минут',
+    groupId: 'landmarks',
+  },
+  {
     id: 'history',
     kind: 'history',
     historyKind: 'when',
@@ -385,8 +452,8 @@ export const MODE_CARDS: readonly ModeCard[] = [
     mark: '文',
     title: 'Узнать по фотографии',
     summary:
-      'Показан снимок — выбрать, что на нём, из четырёх названий. Отвлекают названия того же рода: памятник памятниками, гора горами, иначе ответ читался бы по виду кадра.',
-    volume: 'Набор выбирается перед стартом · около 5 минут',
+      'Показан снимок — выбрать, что на нём, из четырёх названий. Отвлекают названия того же рода: памятник памятниками, достопримечательность достопримечательностями, гора горами, иначе ответ читался бы по виду кадра.',
+    volume: 'Набор выбирается перед стартом · от 8 минут',
     groupId: 'culture',
   },
 ];

@@ -91,7 +91,7 @@ it('сохраняет вводку и заметки там, где их нап
 
   expect(yunnan?.lead).toContain('Юньнань — горная');
   expect(yunnan?.notes).toHaveLength(4);
-  expect(yunnan?.relatedIds).toContain('yuanyang-terraces');
+  expect(yunnan?.relatedIds).toContain('landmark-hani-terraces');
 });
 
 /*
@@ -103,7 +103,7 @@ it('«что ещё» не предлагает коллекцию о самом
   const ids = otherCollectionsOfRegion('yunnan').map(({ id }) => id);
 
   expect(ids).not.toContain('region-yunnan');
-  expect(ids).toContain('yuanyang-terraces');
+  expect(ids).toContain('landmark-hani-terraces');
   expect(collectionsOfRegion('yunnan').map(({ id }) => id)).toContain(
     'region-yunnan',
   );
@@ -184,5 +184,59 @@ it('у каждого снимка есть автор и лицензия', () 
     expect(credit.author.trim().length, id).toBeGreaterThan(0);
     expect(credit.license, id).toMatch(/^(CC0|CC BY|Public domain)/i);
     expect(credit.widths.length, id).toBeGreaterThan(0);
+  }
+});
+
+/*
+ * Дефект 2026-08-28: страниц о Такла-Макане было две — написанная руками и
+ * порождённая из объекта физической карты. Обе со снимком, обе в наборе
+ * «И регионы»: ученик мог получить два вопроса об одной пустыне за раунд.
+ * Дефект появился, когда пустыня стала объектом физической карты, и ни одна
+ * проверка его не поймала.
+ */
+it('рукописная страница не повторяет порождённую', () => {
+  /*
+   * Дефект 2026-08-28: страниц о Такла-Макане было две — рукописная и
+   * порождённая из объекта физической карты. Обе со снимком, обе в наборе
+   * «И регионы»: ученик мог получить два вопроса об одной пустыне за раунд.
+   *
+   * Сверяются оба имени: у того двойника иероглифы разошлись (塔克拉玛干 против
+   * 塔克拉玛干沙漠), и проверка по ним одна его бы не увидела, а русское имя
+   * совпадало точь-в-точь.
+   *
+   * Совпадение имён у двух порождённых страниц законно и не проверяется: река
+   * Хэйлунцзян и провинция Хэйлунцзян — разные предметы, как озеро Цинхай и
+   * провинция Цинхай.
+   */
+  const derived = collections.filter(
+    (collection) =>
+      collection.aboutRegionId !== undefined ||
+      collection.aboutFeatureId !== undefined ||
+      collection.aboutLandmarkId !== undefined,
+  );
+  const handwritten = collections.filter(
+    (collection) => !derived.includes(collection),
+  );
+
+  const doubled = handwritten.flatMap((one) =>
+    derived
+      .filter(
+        (other) => other.nameRu === one.nameRu || other.nameZh === one.nameZh,
+      )
+      .map((other) => `${one.id} повторяет ${other.id}`),
+  );
+
+  expect(doubled).toEqual([]);
+});
+
+it('у страницы один предмет', () => {
+  for (const collection of collections) {
+    const about = [
+      collection.aboutRegionId,
+      collection.aboutFeatureId,
+      collection.aboutLandmarkId,
+    ].filter((one) => one !== undefined);
+
+    expect(about.length, collection.id).toBeLessThan(2);
   }
 });

@@ -1,5 +1,13 @@
 import type { PhysicalFeature } from '../content/types';
-import { TARGET_DIAMETER_UNITS } from './city-hit-targets';
+import {
+  overlappingTargets,
+  TARGET_DIAMETER_UNITS,
+} from './city-hit-targets';
+import {
+  clusterPlaceables,
+  MAX_LENS_RADIUS_UNITS,
+  type Placeable,
+} from './cluster';
 import { distanceToPolylines } from './polyline';
 import { REGION_PALETTE } from './region-palette';
 import {
@@ -158,8 +166,9 @@ export function validateMapAreaIds(
  */
 export const CITY_BOUNDARY_TOLERANCE = 3;
 
-export type CityPlacement = {
-  readonly cityId: string;
+export type Placement = {
+  /** Идентификатор цели: города или достопримечательности. */
+  readonly id: string;
   readonly regionId: string;
   readonly x: number;
   readonly y: number;
@@ -174,18 +183,23 @@ export type PlacementShapes = {
 };
 
 export type PlacementReport = {
-  /** Города вне контура, но в пределах допуска: их видно в логе сборки. */
+  /** Цели вне контура, но в пределах допуска: их видно в логе сборки. */
   readonly onBoundary: readonly string[];
 };
 
 /**
- * Точка города должна лежать в контуре своего региона. Проверка ловит три
- * разные ошибки сразу: опечатку в координатах, неверную привязку к региону и
+ * Точка цели должна лежать в контуре своего региона. Проверка ловит три разные
+ * ошибки сразу: опечатку в координатах, неверную привязку к региону и
  * расхождение проекции.
+ *
+ * Существительное приходит снаружи, потому что одна и та же проверка стоит на
+ * двух каталогах: сообщение «Город X вне региона» о Запретном городе сбивало
+ * бы с толку ровно там, где нужно быстро понять, что не так.
  */
-export function validateCityPlacement(
-  placements: readonly CityPlacement[],
+function validatePlacement(
+  placements: readonly Placement[],
   shapes: PlacementShapes,
+  noun: string,
 ): PlacementReport {
   const errors: string[] = [];
   const onBoundary: string[] = [];
@@ -203,7 +217,7 @@ export function validateCityPlacement(
 
     const distance = shapes.distanceToBoundary(mapAreaId, placement.x, placement.y);
     if (distance <= CITY_BOUNDARY_TOLERANCE) {
-      onBoundary.push(placement.cityId);
+      onBoundary.push(placement.id);
       continue;
     }
 
@@ -212,7 +226,7 @@ export function validateCityPlacement(
     );
 
     errors.push(
-      `Город ${placement.cityId} вне региона ${placement.regionId}: ` +
+      `${noun} ${placement.id} вне региона ${placement.regionId}: ` +
         `до края ${distance.toFixed(1)} единиц при допуске ${CITY_BOUNDARY_TOLERANCE}` +
         (inside.length > 0 ? `; точка лежит в ${inside.join(', ')}` : ''),
     );
@@ -223,6 +237,101 @@ export function validateCityPlacement(
   }
 
   return { onBoundary };
+}
+
+export function validateCityPlacement(
+  placements: readonly Placement[],
+  shapes: PlacementShapes,
+): PlacementReport {
+  return validatePlacement(placements, shapes, 'Город');
+}
+
+export function validateLandmarkPlacement(
+  placements: readonly Placement[],
+  shapes: PlacementShapes,
+): PlacementReport {
+  return validatePlacement(placements, shapes, 'Достопримечательность');
+}
+
+/**
+ * Радиус лупы каждой грозди — в пределах `MAX_LENS_RADIUS_UNITS`.
+ *
+ * Лупа шириной в десятую часть карты означает не оформительскую мелочь, а то,
+ * что каталог просит другого решения: коэффициент считается по ближайшей паре,
+ * и один объект, придвинутый вплотную к соседу, растаскивает всю гроздь.
+ * Тихого запасного пути нет намеренно — принимать такое решение должен
+ * человек.
+ *
+ * Возвращает самую широкую лупу каждого слоя: её видно в логе сборки, и рост
+ * заметен раньше, чем упрётся в предел.
+ */
+export function validateLensRadii(
+  layers: readonly {
+    readonly layer: string;
+    readonly points: readonly Placeable[];
+  }[],
+): readonly { readonly layer: string; readonly id: string; readonly radius: number }[] {
+  const errors: string[] = [];
+  const widest: { layer: string; id: string; radius: number }[] = [];
+
+  for (const { layer, points } of layers) {
+    const { singles, clusters } = clusterPlaceables(points);
+
+    /*
+     * Свёрнутая гроздь — такая же цель, как одиночка, и накрывать соседнюю она
+     * не должна: знак грозди стоит в её середине, а середина ничем не связана
+     * с расстоянием до чужих точек. Меряется тем же правилом, что и цели
+     * городов, — `overlappingTargets`.
+     */
+    const targets = [
+      ...singles.map((single) => ({
+        id: single.id,
+        x: single.x,
+        y: single.y,
+        hitX: single.x,
+        hitY: single.y,
+        radius: TARGET_DIAMETER_UNITS / 2,
+      })),
+      ...clusters.map((cluster) => ({
+        id: cluster.id,
+        x: cluster.x,
+        y: cluster.y,
+        hitX: cluster.x,
+        hitY: cluster.y,
+        radius: TARGET_DIAMETER_UNITS / 2,
+      })),
+    ];
+
+    for (const [one, other] of overlappingTargets(targets)) {
+      errors.push(`Цели ${one} и ${other} в слое «${layer}» накрывают друг друга`);
+    }
+
+    for (const cluster of clusters) {
+      if (cluster.radius > MAX_LENS_RADIUS_UNITS) {
+        errors.push(
+          `Лупа грозди ${cluster.id} в слое «${layer}» — ${cluster.radius.toFixed(1)} ` +
+            `единиц при пределе ${MAX_LENS_RADIUS_UNITS}. Объекты: ` +
+            cluster.members.map((member) => member.id).join(', '),
+        );
+      }
+    }
+
+    const largest = clusters.reduce<(typeof clusters)[number] | undefined>(
+      (best, cluster) =>
+        best === undefined || cluster.radius > best.radius ? cluster : best,
+      undefined,
+    );
+
+    if (largest !== undefined) {
+      widest.push({ layer, id: largest.id, radius: largest.radius });
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'));
+  }
+
+  return widest;
 }
 
 /**

@@ -16,6 +16,7 @@ function renderHome(attempts: readonly Attempt[] = []) {
     onStartRound: vi.fn(),
     onStartFillRound: vi.fn(),
     onStartCityRound: vi.fn(),
+    onStartLandmarkRound: vi.fn(),
     onStartCultureRound: vi.fn(),
     onStartHistoryRound: vi.fn(),
     onStartPhysicalRound: vi.fn(),
@@ -176,10 +177,15 @@ it('ведёт в раздел коллекций', () => {
   expect(onOpenCollections).toHaveBeenCalled();
 });
 
+/*
+ * Три, а не четыре: терракотовая армия переехала в справочник
+ * достопримечательностей и вместе с ним в группу «География» — она объект на
+ * карте, а не явление (2026-08-28).
+ */
 it('витрина коллекций фильтруется по группе', () => {
   const { onOpenCollection } = renderHome();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Культура и история 4' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Культура и история 3' }));
 
   expect(
     screen.getByRole('button', { name: /Праздник весны/ }),
@@ -222,6 +228,7 @@ it('раздел режимов принимает фокус: шапка вед
       onStartRound={vi.fn()}
       onStartFillRound={vi.fn()}
       onStartCityRound={vi.fn()}
+      onStartLandmarkRound={vi.fn()}
       onStartCultureRound={vi.fn()}
       onStartHistoryRound={vi.fn()}
       onStartPhysicalRound={vi.fn()}
@@ -250,14 +257,16 @@ function openCard(title: string | RegExp): void {
  * Одиннадцать равных карточек подряд требовали прочитать одиннадцать абзацев,
  * чтобы выбрать. Группы — те же справочники, из которых берутся цели.
  */
-it('игры разложены по пяти предметам, и каждая попала ровно в одну группу', () => {
+it('игры разложены по шести предметам, и каждая попала ровно в одну группу', () => {
   renderHome();
 
   /*
-   * Пять полок, а не четыре: «История и культура» стояли вместе, пока у
-   * каждой было по одной игре; теперь у истории их пять.
+   * Шесть полок. «История и культура» стояли вместе, пока у каждой было по
+   * одной игре; у истории их стало пять, и полки разделились. Шестую дали
+   * достопримечательности (2026-08-28): это третий справочник целей, а не
+   * ещё один взгляд на города.
    */
-  expect(MODE_GROUPS).toHaveLength(5);
+  expect(MODE_GROUPS).toHaveLength(6);
   expect(
     screen.getByRole('heading', { level: 3, name: 'История' }),
   ).toBeInTheDocument();

@@ -1015,6 +1015,8 @@ button.text:hover:enabled {
  */
 .china-map [data-region-id]:focus,
 .china-map .city-hit:focus,
+.china-map .landmark-hit:focus,
+.china-map .cluster-hit:focus,
 .china-map .physical-layer .relief-shape:focus,
 .china-map .physical-layer .river-line:focus,
 .china-map .physical-layer .lake-hit:focus {
@@ -1109,19 +1111,146 @@ button.text:hover:enabled {
   stroke-width: 1.4;
 }
 
-/* Поводок от знака к отошедшей цели: иначе нажатие срабатывает «мимо города». */
-.china-map .city-leader {
-  stroke: var(--map-label);
-  stroke-dasharray: 2 2;
-  stroke-width: 0.7;
-}
-
 .china-map .city-hit {
   fill: transparent;
 }
 
 .china-map .city-layer[data-interactive='true'] .city-hit {
   cursor: pointer;
+}
+
+/*
+ * Гроздь и лупа.
+ *
+ * Свёрнутая гроздь — знак своего слоя и киноварный кружок с числом; раскрытая
+ * — круг тоном яркой бумаги поверх карты и киноварный якорь на настоящем
+ * месте. Якорь не украшение: он единственный говорит, что лупа — врезка, а не
+ * утверждение о месте, и без него уехавший внутрь неё знак читался бы как
+ * переехавший объект.
+ *
+ * Кольцо браузера снято выше, вместе с городами и областями, поэтому фокус
+ * показывает сама гроздь — обводкой кружка с числом.
+ */
+.china-map .map-cluster [role='button'] {
+  cursor: pointer;
+}
+
+.china-map .cluster-hit {
+  fill: transparent;
+}
+
+.china-map .cluster-badge {
+  fill: var(--accent);
+  stroke: var(--surface-paper-bright);
+  stroke-width: 0.8;
+}
+
+.china-map .cluster-count {
+  fill: var(--map-outcome-ink);
+  font-family: var(--t-family-text);
+  font-size: calc(var(--map-label-size) * 0.55);
+  font-weight: var(--t-weight-bold);
+}
+
+.china-map .map-cluster:focus-within .cluster-badge {
+  stroke: var(--focus-on-paper);
+  stroke-width: 1.6;
+}
+
+/*
+ * Длительность берётся из токенов: там же она обнуляется при
+ * `prefers-reduced-motion`, и второго правила для этого не нужно.
+ */
+@keyframes cluster-lens-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/*
+ * Круг лупы и якорь нажатий не ловят. Лупа накрывает соседние цели — под
+ * пекинской лежат Чэндэ, Шанду и Юньган, — и, перехватывая нажатие, она
+ * запирала бы ученика с мышью: закрыть её он мог бы только с клавиатуры.
+ * Знаки внутри лупы рисуются после неё и остаются нажимаемыми.
+ */
+.china-map .cluster-lens {
+  animation: cluster-lens-in var(--duration-quick) ease-out;
+  fill: var(--surface-paper-bright);
+  fill-opacity: 0.93;
+  pointer-events: none;
+  stroke: var(--map-coast);
+  stroke-width: 0.8;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.china-map .cluster-anchor {
+  fill: var(--accent);
+  pointer-events: none;
+}
+
+/*
+ * Звезда достопримечательности.
+ *
+ * Форма, а не цвет: цвет на этой карте занят заливкой региона и ступенью
+ * рельефа, и различать им род объекта нельзя. Звезда отличается от кружка
+ * города даже там, где оба знака оказались бы рядом, — хотя в раундах по
+ * достопримечательностям карта чистая и городов на ней нет.
+ */
+.china-map .landmark-mark {
+  fill: var(--map-label);
+  stroke: var(--map-sea);
+  stroke-width: 1;
+}
+
+.china-map .landmark[data-selected='true'] .landmark-mark {
+  fill: var(--accent);
+  stroke: var(--surface-paper-bright);
+  stroke-width: 2;
+}
+
+.china-map .landmark-hit {
+  fill: transparent;
+}
+
+.china-map .landmark-layer[data-interactive='true'] .landmark-hit {
+  cursor: pointer;
+}
+
+/*
+ * Подпись видна у одного объекта за раз — при наведении, фокусе и выборе.
+ * Обводка тоном бумаги отделяет её от заливки региона: подпись ложится на
+ * любой из четырёх тонов карты.
+ */
+.china-map .landmark-label {
+  fill: var(--map-label);
+  font-family: var(--t-family-text);
+  font-size: var(--map-label-size);
+  font-weight: var(--t-weight-bold);
+  opacity: 0;
+  paint-order: stroke;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 3;
+}
+
+.china-map .landmark:hover .landmark-label,
+.china-map .landmark:focus-within .landmark-label,
+.china-map .landmark[data-selected='true'] .landmark-label {
+  opacity: 1;
+}
+
+/*
+ * Там, где спрашивают о самой звезде, подписи не рисуются вовсе: подпись
+ * подсвеченного объекта — готовый ответ.
+ */
+.china-map .landmark-layer[data-labels='false'] .landmark-label {
+  display: none;
 }
 
 /*

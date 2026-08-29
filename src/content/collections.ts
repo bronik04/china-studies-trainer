@@ -1,4 +1,9 @@
 import {
+  landmarks,
+  type Landmark,
+  type LandmarkKind,
+} from './landmarks';
+import {
   physicalFeatures,
   physicalKindLabel,
 } from './physical-features';
@@ -81,6 +86,13 @@ export type Collection = {
    * у `aboutRegionId`, и вместе с ним не ставится: у страницы один предмет.
    */
   readonly aboutFeatureId?: string;
+  /**
+   * Достопримечательность, о которой коллекция. Третье поле того же рода, и с
+   * двумя предыдущими оно тоже не сочетается: предмет у страницы один. Это не
+   * формальность — из-за двух страниц об одной пустыне ученик мог получить два
+   * вопроса об одном предмете за раунд (дефект 2026-08-28).
+   */
+  readonly aboutLandmarkId?: string;
   readonly nameRu: string;
   readonly nameZh: string;
   readonly pinyin: string;
@@ -178,70 +190,7 @@ const geographyCollections = [
       'britannica-great-wall-ming',
       'stats-china-great-wall-length-2012',
     ],
-    relatedIds: ['silk-road', 'region-shaanxi', 'terracotta-army'],
-  },
-  {
-    id: 'yuanyang-terraces',
-    groupId: 'geography',
-    nameRu: 'Террасы Юаньян',
-    nameZh: '元阳梯田',
-    pinyin: 'Yuányáng tītián',
-    kind: 'ландшафт',
-    lead:
-      'Каскад рисовых террас на южных склонах гор Айлаошань (哀牢山, Āiláo Shān) в уезде Юаньян ' +
-      'на юге Юньнани — ирригационная система, которую народ хани (哈尼族, Hānízú) создаёт на ' +
-      'протяжении более 1300 лет. Вода стекает с горных лесов по сети каналов к чекам над рекой ' +
-      'Хунхэ (红河, Hónghé); в 2013 году ЮНЕСКО включила ландшафт в список Всемирного наследия ' +
-      'под названием «Культурный ландшафт рисовых террас Хунхэ-Хани».',
-    regionIds: ['yunnan'],
-    notes: [
-      'Народ хани создаёт систему рисовых террас и каналов на склонах Айлаошань уже более 1300 лет; воду с горных лесов к чекам разводят четыре магистральных канала и 392 отвода общей протяжённостью 445,83 км.',
-      'В 2013 году ЮНЕСКО включила ландшафт в список Всемирного наследия: охраняемая территория — 16603 га, буферная зона — ещё 29501 га.',
-      'На террасах ведут комплексное хозяйство: рисовые чеки совмещают с разведением буйволов, уток, рыбы и угря, а основной культурой служит красный рис.',
-      '82 деревни стоят между лесом на вершинах и террасами; традиционные дома хани возводят с высокой соломенной крышей характерной формы, которую называют «грибной».',
-    ],
-    photos: [
-      {
-        id: 'yuanyang-sunrise',
-        subject: 'террасы на рассвете',
-        captionRu: 'Рисовые террасы хани на рассвете',
-        captionZh: '元阳梯田',
-        place: 'Юаньян, Юньнань',
-      },
-    ],
-    sourceIds: ['unesco-honghe-hani-1111'],
-    relatedIds: ['region-yunnan'],
-  },
-  {
-    id: 'taklamakan',
-    groupId: 'geography',
-    nameRu: 'Такла-Макан',
-    nameZh: '塔克拉玛干',
-    pinyin: 'Tǎkèlāmǎgān',
-    kind: 'пустыня',
-    lead:
-      'Такла-Макан — одна из крупнейших песчаных пустынь мира: она занимает Таримскую котловину ' +
-      'в Синьцзян-Уйгурском автономном районе между хребтами Тянь-Шань, Куньлунь и Памир. Вдоль ' +
-      'её северной и западной окраин проходил Великий шёлковый путь, соединявший Китай со Средней ' +
-      'Азией и Европой.',
-    regionIds: ['xinjiang'],
-    notes: [
-      'Площадь пустыни — около 320 тыс. км², она вытянута на 960 км с запада на восток; это одна из крупнейших песчаных (не каменистых) пустынь мира.',
-      'Поверхность покрывают эоловые песчаные гряды высотой от 30 до 150 м, а самые высокие пирамидальные дюны поднимаются на 200–300 м.',
-      'Осадков здесь выпадает от 10 до 38 мм в год; реки, стекающие с гор Куньлунь (昆仑山, Kūnlún Shān), углубляются в пески на 100–200 км и высыхают, не достигая центра пустыни.',
-      'В конце XIX века шведский исследователь Свен Гедин, а затем британский археолог Аурель Стейн нашли в песках занесённые пустыней буддийские города первого тысячелетия н. э.',
-    ],
-    photos: [
-      {
-        id: 'taklamakan-dunes',
-        subject: 'песчаные гряды пустыни',
-        captionRu: 'Песчаные гряды Такла-Макана',
-        captionZh: '塔克拉玛干沙漠',
-        place: 'Синьцзян',
-      },
-    ],
-    sourceIds: ['britannica-takla-makan'],
-    relatedIds: ['silk-road'],
+    relatedIds: ['silk-road', 'region-shaanxi', 'landmark-terracotta-army'],
   },] as const satisfies readonly Collection[];
 
 const cultureCollections = [
@@ -311,38 +260,6 @@ const cultureCollections = [
     relatedIds: [],
   },
   {
-    id: 'terracotta-army',
-    groupId: 'culture',
-    nameRu: 'Терракотовая армия',
-    nameZh: '兵马俑',
-    pinyin: 'Bīngmǎyǒng',
-    kind: 'памятник',
-    lead:
-      'Терракотовая армия (兵马俑, Bīngmǎyǒng) — часть погребального комплекса первого императора ' +
-      'объединённого Китая Цинь Шихуана (秦始皇, Qín Shǐhuáng) у города Сиань в провинции Шэньси. ' +
-      'Планировка комплекса повторяет план тогдашней столицы империи Цинь — города Сяньян (咸阳, ' +
-      'Xiányáng): императорский дворец обнесён стенами, а те — ещё одной. Сегодня это крупнейший ' +
-      'археологический памятник такого рода в Китае и объект Всемирного наследия ЮНЕСКО.',
-    regionIds: ['shaanxi'],
-    notes: [
-      'Мавзолей начали строить в 246 году до н. э., когда на престол царства Цинь взошёл будущий Цинь Шихуан; по свидетельству историка Сыма Цяня (司马迁, Sīmǎ Qiān), работы не останавливались до самой смерти императора в 210 году до н. э.',
-      'Курган над гробницей и сегодня возвышается на 51,3 м; вместе с почти 200 сопровождающими ямами и другими постройками — более 600 объектов — комплекс занимает охраняемую территорию 56,25 км².',
-      'Кроме главной ямы, рядом раскопаны ещё три: во второй нашли свыше 1300 фигур пехотинцев, колесниц и конницы, в третьей — 68 фигур, вероятно, командного состава, а четвёртая оказалась пустой.',
-      'Каждую фигуру собирали из отдельно обожжённых частей, но лицо ей давали неповторимое — одинаковых воинов среди них нет; рядом лежало настоящее бронзовое оружие — мечи, копья, наконечники стрел, отлитые из необычного тринадцатикомпонентного сплава, который не потускнел до сих пор.',
-    ],
-    photos: [
-      {
-        id: 'terracotta-pit-1',
-        subject: 'первый раскоп с шеренгами воинов',
-        captionRu: 'Первый раскоп: шеренги воинов',
-        captionZh: '兵马俑一号坑',
-        place: 'Сиань, Шэньси',
-      },
-    ],
-    sourceIds: ['unesco-qin-mausoleum-441', 'britannica-terracotta-army'],
-    relatedIds: ['region-shaanxi', 'great-wall'],
-  },
-  {
     id: 'silk-road',
     groupId: 'culture',
     nameRu: 'Шёлковый путь',
@@ -374,7 +291,7 @@ const cultureCollections = [
       },
     ],
     sourceIds: ['britannica-silk-road', 'unesco-silk-roads-changan-tianshan-1442'],
-    relatedIds: ['great-wall', 'taklamakan'],
+    relatedIds: ['great-wall', 'feature-taklamakan'],
   },] as const satisfies readonly Collection[];
 
 /**
@@ -388,7 +305,7 @@ const cultureCollections = [
  * права геометрия, в тексте — география, и переписывать ради текста
  * проверяемый список нельзя.
  */
-type FeatureCollectionExtras = {
+type CollectionExtras = {
   readonly lead?: string;
   readonly notes?: readonly string[];
   readonly regionIds?: readonly string[];
@@ -398,8 +315,47 @@ type FeatureCollectionExtras = {
 };
 
 const FEATURE_COLLECTION_EXTRAS: Readonly<
-  Record<string, FeatureCollectionExtras>
+  Record<string, CollectionExtras>
 > = {
+  /*
+   * Досталось от рукописной страницы «Такла-Макан», которая жила рядом с этой
+   * порождённой до 2026-08-28: две страницы об одной пустыне попадали в один
+   * набор вопросов. Содержание перенесено целиком, страница осталась одна.
+   */
+  taklamakan: {
+    lead:
+      'Такла-Макан — одна из крупнейших песчаных пустынь мира: она занимает Таримскую котловину ' +
+      'в Синьцзян-Уйгурском автономном районе между хребтами Тянь-Шань, Куньлунь и Памир. Вдоль ' +
+      'её северной и западной окраин проходил Великий шёлковый путь, соединявший Китай со Средней ' +
+      'Азией и Европой.',
+    notes: [
+      'Площадь пустыни — около 320 тыс. км², она вытянута на 960 км с запада на восток; это одна из крупнейших песчаных (не каменистых) пустынь мира.',
+      'Поверхность покрывают эоловые песчаные гряды высотой от 30 до 150 м, а самые высокие пирамидальные дюны поднимаются на 200–300 м.',
+      'Осадков здесь выпадает от 10 до 38 мм в год; реки, стекающие с гор Куньлунь (昆仑山, Kūnlún Shān), углубляются в пески на 100–200 км и высыхают, не достигая центра пустыни.',
+      'В конце XIX века шведский исследователь Свен Гедин, а затем британский археолог Аурель Стейн нашли в песках занесённые пустыней буддийские города первого тысячелетия н. э.',
+    ],
+    /*
+     * Снимка два: у рукописной страницы и у порождённой были разные кадры, и
+     * при слиянии оба остались — файлы уже скачаны, лицензии записаны.
+     */
+    photos: [
+      {
+        id: 'taklamakan-dunes',
+        subject: 'песчаные гряды пустыни',
+        captionRu: 'Песчаные гряды Такла-Макана',
+        captionZh: '塔克拉玛干沙漠',
+        place: 'Синьцзян',
+      },
+      {
+        id: 'feature-taklamakan',
+        subject: 'дюны',
+        captionRu: 'Дюны Такла-Макана с высоты',
+        place: 'Синьцзян',
+      },
+    ],
+    sourceIds: ['britannica-takla-makan'],
+    relatedIds: ['silk-road'],
+  },
   'yellow-river': {
     /*
      * Вводка укоротилась: исток, устье, девять регионов и наносы ушли в
@@ -746,6 +702,354 @@ function featureCollection(feature: PhysicalFeature): Collection {
 }
 
 /**
+ * Дописанное вручную к коллекции достопримечательности. Устроено как дописки
+ * физических объектов: имя, иероглифы, пиньинь, род и факты с источниками
+ * берутся из справочника и здесь не повторяются.
+ *
+ * Двум записям содержание досталось от рукописных страниц, живших до
+ * 2026-08-28 отдельно от каталога: «Терракотовая армия» и «Террасы Юаньян».
+ * После переезда объект и страница у них общие — это и есть правило «один
+ * предмет — одна страница».
+ */
+const LANDMARK_COLLECTION_EXTRAS: Readonly<
+  Record<string, CollectionExtras>
+> = {
+  'terracotta-army': {
+    lead:
+      'Терракотовая армия (兵马俑, Bīngmǎyǒng) — часть погребального комплекса первого императора ' +
+      'объединённого Китая Цинь Шихуана (秦始皇, Qín Shǐhuáng) у города Сиань в провинции Шэньси. ' +
+      'Планировка комплекса повторяет план тогдашней столицы империи Цинь — города Сяньян (咸阳, ' +
+      'Xiányáng): императорский дворец обнесён стенами, а те — ещё одной. Сегодня это крупнейший ' +
+      'археологический памятник такого рода в Китае и объект Всемирного наследия ЮНЕСКО.',
+    notes: [
+      'Мавзолей начали строить в 246 году до н. э., когда на престол царства Цинь взошёл будущий Цинь Шихуан; по свидетельству историка Сыма Цяня (司马迁, Sīmǎ Qiān), работы не останавливались до самой смерти императора в 210 году до н. э.',
+      'Курган над гробницей и сегодня возвышается на 51,3 м; вместе с почти 200 сопровождающими ямами и другими постройками — более 600 объектов — комплекс занимает охраняемую территорию 56,25 км².',
+      'Кроме главной ямы, рядом раскопаны ещё три: во второй нашли свыше 1300 фигур пехотинцев, колесниц и конницы, в третьей — 68 фигур, вероятно, командного состава, а четвёртая оказалась пустой.',
+      'Каждую фигуру собирали из отдельно обожжённых частей, но лицо ей давали неповторимое — одинаковых воинов среди них нет; рядом лежало настоящее бронзовое оружие — мечи, копья, наконечники стрел, отлитые из необычного тринадцатикомпонентного сплава, который не потускнел до сих пор.',
+    ],
+    photos: [
+      {
+        id: 'terracotta-pit-1',
+        subject: 'первый раскоп с шеренгами воинов',
+        captionRu: 'Первый раскоп: шеренги воинов',
+        captionZh: '兵马俑一号坑',
+        place: 'Сиань, Шэньси',
+      },
+    ],
+    sourceIds: ['britannica-terracotta-army'],
+    relatedIds: ['region-shaanxi', 'great-wall'],
+  },
+  'hani-terraces': {
+    lead:
+      'Каскад рисовых террас на южных склонах гор Айлаошань (哀牢山, Āiláo Shān) в уезде Юаньян ' +
+      'на юге Юньнани — ирригационная система, которую народ хани (哈尼族, Hānízú) создаёт на ' +
+      'протяжении более 1300 лет. Вода стекает с горных лесов по сети каналов к чекам над рекой ' +
+      'Хунхэ (红河, Hónghé); в 2013 году ЮНЕСКО включила ландшафт в список Всемирного наследия ' +
+      'под названием «Культурный ландшафт рисовых террас Хунхэ-Хани».',
+    notes: [
+      'Народ хани создаёт систему рисовых террас и каналов на склонах Айлаошань уже более 1300 лет; воду с горных лесов к чекам разводят четыре магистральных канала и 392 отвода общей протяжённостью 445,83 км.',
+      'В 2013 году ЮНЕСКО включила ландшафт в список Всемирного наследия: охраняемая территория — 16603 га, буферная зона — ещё 29501 га.',
+      'На террасах ведут комплексное хозяйство: рисовые чеки совмещают с разведением буйволов, уток, рыбы и угря, а основной культурой служит красный рис.',
+    ],
+    photos: [
+      {
+        id: 'yuanyang-sunrise',
+        subject: 'террасы на рассвете',
+        captionRu: 'Рисовые террасы хани на рассвете',
+        captionZh: '元阳梯田',
+        place: 'Юаньян, Юньнань',
+      },
+    ],
+    sourceIds: ['unesco-honghe-hani-1111'],
+    relatedIds: ['region-yunnan'],
+  },
+};
+
+/**
+ * Снимок достопримечательности. Подписи написаны по описаниям файлов на
+ * Викискладе — по тому же правилу, что у физических объектов: подпись к
+ * снимку, которого не видел, учит вернее всего неверному.
+ *
+ * Файлы выбраны не поиском наугад: у каждого объекта взят заглавный снимок из
+ * Викиданных (свойство P18), а где он оказался мелким для крупного кадра —
+ * замена из категории того же объекта.
+ */
+const LANDMARK_PHOTOS: Readonly<Record<string, CollectionPhoto>> = {
+  'forbidden-city': {
+    id: 'landmark-forbidden-city',
+    subject: 'главный зал дворца',
+    captionRu: 'Зал высшей гармонии',
+    captionZh: '太和殿',
+    place: 'Пекин',
+  },
+  'temple-of-heaven': {
+    id: 'landmark-temple-of-heaven',
+    subject: 'зал моления',
+    captionRu: 'Зал моления о богатом урожае',
+    captionZh: '祈年殿',
+    place: 'Пекин',
+  },
+  'summer-palace': {
+    id: 'landmark-summer-palace',
+    subject: 'гора над озером',
+    captionRu: 'Гора Долголетия в Летнем дворце',
+    captionZh: '万寿山',
+    place: 'Пекин',
+  },
+  chengde: {
+    id: 'landmark-chengde',
+    subject: 'парк резиденции',
+    captionRu: 'Горная резиденция в Чэндэ',
+    place: 'Чэндэ, Хэбэй',
+  },
+  'mukden-palace': {
+    id: 'landmark-mukden-palace',
+    subject: 'дворец с высоты',
+    captionRu: 'Мукденский дворец с высоты птичьего полёта',
+    place: 'Шэньян, Ляонин',
+  },
+  koguryo: {
+    id: 'landmark-koguryo',
+    subject: 'стена горной крепости',
+    captionRu: 'Стена горной крепости Ваньду',
+    place: 'Цзиань, Гирин',
+  },
+  xanadu: {
+    id: 'landmark-xanadu',
+    subject: 'развалины города',
+    captionRu: 'Развалины Шанду, летней столицы Хубилая',
+    place: 'Внутренняя Монголия',
+  },
+  yungang: {
+    id: 'landmark-yungang',
+    subject: 'изваяния в пещере',
+    captionRu: 'Гроты Юньган в Датуне',
+    captionZh: '云冈石窟',
+    place: 'Датун, Шаньси',
+  },
+  pingyao: {
+    id: 'landmark-pingyao',
+    subject: 'улица старого города',
+    captionRu: 'Старый город Пинъяо',
+    place: 'Пинъяо, Шаньси',
+  },
+  'western-xia-tombs': {
+    id: 'landmark-western-xia-tombs',
+    subject: 'курган гробницы',
+    captionRu: 'Третья гробница Западной Ся под Иньчуанем',
+    place: 'Иньчуань, Нинся',
+  },
+  mogao: {
+    id: 'landmark-mogao',
+    subject: 'обрыв с пещерами',
+    captionRu: 'Пещеры Могао в Дуньхуане',
+    captionZh: '莫高窟',
+    place: 'Дуньхуан, Ганьсу',
+  },
+  gaochang: {
+    id: 'landmark-gaochang',
+    subject: 'развалины храма',
+    captionRu: 'Юго-западный буддийский храм городища Гаочан',
+    place: 'Турфан, Синьцзян',
+  },
+  potala: {
+    id: 'landmark-potala',
+    subject: 'дворец на горе',
+    captionRu: 'Потала со склона горы Чагпори',
+    captionZh: '布达拉宫',
+    place: 'Лхаса, Тибет',
+  },
+  longmen: {
+    id: 'landmark-longmen',
+    subject: 'изваяния в скале',
+    captionRu: 'Пещеры Лунмэнь над рекой И',
+    captionZh: '龙门石窟',
+    place: 'Лоян, Хэнань',
+  },
+  shaolin: {
+    id: 'landmark-shaolin',
+    subject: 'постройки монастыря',
+    captionRu: 'Шаолиньский монастырь',
+    captionZh: '少林寺',
+    place: 'Дэнфэн, Хэнань',
+  },
+  'qufu-confucius': {
+    id: 'landmark-qufu-confucius',
+    subject: 'главный зал храма',
+    captionRu: 'Зал Дачэн в храме Конфуция',
+    captionZh: '大成殿',
+    place: 'Цюйфу, Шаньдун',
+  },
+  'suzhou-gardens': {
+    id: 'landmark-suzhou-gardens',
+    subject: 'камни и вода сада',
+    captionRu: 'Сад Львиная роща в Сучжоу',
+    captionZh: '狮子林',
+    place: 'Сучжоу, Цзянсу',
+  },
+  'west-lake': {
+    id: 'landmark-west-lake',
+    subject: 'пагода над озером',
+    captionRu: 'Пагода Лэйфэн над Западным озером',
+    captionZh: '雷峰塔',
+    place: 'Ханчжоу, Чжэцзян',
+  },
+  'fujian-tulou': {
+    id: 'landmark-fujian-tulou',
+    subject: 'группа земляных домов',
+    captionRu: 'Группа тулоу Тяньлокэн',
+    captionZh: '田螺坑土楼群',
+    place: 'Фуцзянь',
+  },
+  'macao-historic-centre': {
+    id: 'landmark-macao-historic-centre',
+    subject: 'фасад собора',
+    captionRu: 'Руины собора Святого Павла',
+    captionZh: '大三巴牌坊',
+    place: 'Макао',
+  },
+  dazu: {
+    id: 'landmark-dazu',
+    subject: 'наскальные рельефы',
+    captionRu: 'Наскальные рельефы Дацзу',
+    captionZh: '大足石刻',
+    place: 'Чунцин',
+  },
+  dujiangyan: {
+    id: 'landmark-dujiangyan',
+    subject: 'водораздел системы',
+    captionRu: 'Дуцзянъянь на Миньцзяне',
+    captionZh: '都江堰',
+    place: 'Дуцзянъянь, Сычуань',
+  },
+  'leshan-buddha': {
+    id: 'landmark-leshan-buddha',
+    subject: 'статуя в скале',
+    captionRu: 'Лэшаньский Будда',
+    captionZh: '乐山大佛',
+    place: 'Лэшань, Сычуань',
+  },
+  lijiang: {
+    id: 'landmark-lijiang',
+    subject: 'крыши старого города',
+    captionRu: 'Старый город Лицзян',
+    captionZh: '丽江古城',
+    place: 'Лицзян, Юньнань',
+  },
+  taishan: {
+    id: 'landmark-taishan',
+    subject: 'вершина горы',
+    captionRu: 'Пик Жигуань на Тайшане',
+    captionZh: '日观峰',
+    place: 'Тайань, Шаньдун',
+  },
+  huangshan: {
+    id: 'landmark-huangshan',
+    subject: 'гранитные пики',
+    captionRu: 'Пики Хуаншаня',
+    captionZh: '黄山',
+    place: 'Аньхой',
+  },
+  lushan: {
+    id: 'landmark-lushan',
+    subject: 'рассвет в горах',
+    captionRu: 'Рассвет на Лушане',
+    captionZh: '庐山',
+    place: 'Цзянси',
+  },
+  wulingyuan: {
+    id: 'landmark-wulingyuan',
+    subject: 'песчаниковые столбы',
+    captionRu: 'Кварцитовые столбы Хуаншичжая',
+    captionZh: '武陵源',
+    place: 'Чжанцзяцзе, Хунань',
+  },
+  'guilin-karst': {
+    id: 'landmark-guilin-karst',
+    subject: 'карстовые пики над рекой',
+    captionRu: 'Река Ли у Яншо',
+    captionZh: '漓江',
+    place: 'Гуйлинь, Гуанси',
+  },
+  fanjingshan: {
+    id: 'landmark-fanjingshan',
+    subject: 'скала над лесом',
+    captionRu: 'Фаньцзиншань',
+    captionZh: '梵净山',
+    place: 'Гуйчжоу',
+  },
+  jiuzhaigou: {
+    id: 'landmark-jiuzhaigou',
+    subject: 'водопад',
+    captionRu: 'Водопад Нуожилан в Цзючжайгоу',
+    captionZh: '诺日朗瀑布',
+    place: 'Сычуань',
+  },
+  'hoh-xil': {
+    id: 'landmark-hoh-xil',
+    subject: 'высокогорная степь',
+    captionRu: 'Кукушили в августе',
+    captionZh: '可可西里',
+    place: 'Цинхай',
+  },
+  'shanghai-tower': {
+    id: 'landmark-shanghai-tower',
+    subject: 'три башни Луцзяцзуя',
+    captionRu: 'Шанхайская башня рядом с Цзиньмао и Всемирным финансовым центром',
+    captionZh: '上海中心大厦',
+    place: 'Шанхай',
+  },
+  'three-gorges-dam': {
+    id: 'landmark-three-gorges-dam',
+    subject: 'плотина на реке',
+    captionRu: 'Плотина «Три ущелья» на Янцзы',
+    captionZh: '三峡大坝',
+    place: 'Ичан, Хубэй',
+  },
+  'hzm-bridge': {
+    id: 'landmark-hzm-bridge',
+    subject: 'мост над водой',
+    captionRu: 'Западный участок моста Гонконг — Чжухай — Макао',
+    captionZh: '港珠澳大桥',
+    place: 'Дельта Чжуцзяна',
+  },
+};
+
+/** Слово рода на странице: «памятник», «природное место», «сооружение». */
+const LANDMARK_KIND_WORDS: Readonly<Record<LandmarkKind, string>> = {
+  monument: 'памятник',
+  nature: 'природное место',
+  modern: 'сооружение',
+};
+
+function landmarkCollection(landmark: Landmark): Collection {
+  const extras = LANDMARK_COLLECTION_EXTRAS[landmark.id] ?? {};
+  const factSourceIds = landmark.facts.flatMap((fact) => fact.sourceIds);
+
+  return {
+    id: `landmark-${landmark.id}`,
+    groupId: 'geography',
+    aboutLandmarkId: landmark.id,
+    nameRu: landmark.nameRu,
+    nameZh: landmark.nameZh,
+    pinyin: landmark.pinyin,
+    kind: LANDMARK_KIND_WORDS[landmark.kind],
+    lead: extras.lead ?? '',
+    regionIds: extras.regionIds ?? [landmark.regionId],
+    notes: extras.notes ?? [],
+    photos: extras.photos ?? photosOf(LANDMARK_PHOTOS[landmark.id]),
+    sourceIds: [
+      ...new Set([
+        ...(extras.sourceIds ?? []),
+        ...factSourceIds,
+        ...landmark.sourceIds,
+      ]),
+    ],
+    relatedIds: extras.relatedIds ?? [],
+  };
+}
+
+/**
  * Дописанное вручную к коллекции региона: вводка, заметки «что стоит знать»,
  * источники этих заметок и соседние коллекции. Всё остальное — имя,
  * иероглифы, пиньинь, род, справка с источниками, города — берётся из
@@ -778,7 +1082,7 @@ const REGION_COLLECTION_EXTRAS: Readonly<
       'Вокруг старого города Сианя стоит хорошо сохранившаяся городская стена (西安城墙, Xī’ān Chéngqiáng), а внутри неё — построенные при династии Мин Барабанная (鼓楼, Gǔlóu) и Колокольная (钟楼, Zhōnglóu) башни.',
     ],
     sourceIds: ['britannica-shaanxi', 'britannica-xian'],
-    relatedIds: ['terracotta-army', 'great-wall'],
+    relatedIds: ['landmark-terracotta-army', 'great-wall'],
   },
   yunnan: {
     lead:
@@ -793,7 +1097,7 @@ const REGION_COLLECTION_EXTRAS: Readonly<
       'Несмотря на субтропические широты, восточное плато Юньнани отличается на редкость ровным климатом: в Куньмине средняя температура держится около 22 °C летом и 9 °C зимой, а вегетационный период длится до 10 месяцев в году.',
     ],
     sourceIds: ['britannica-yunnan', 'unesco-lijiang-811', 'unesco-south-china-karst-1248'],
-    relatedIds: ['yuanyang-terraces'],
+    relatedIds: ['landmark-hani-terraces'],
   },
   guangdong: {
     lead:
@@ -928,6 +1232,7 @@ function regionCollection(region: Region): Collection {
 export const collections: readonly Collection[] = [
   ...geographyCollections,
   ...physicalFeatures.map(featureCollection),
+  ...landmarks.map(landmarkCollection),
   ...regions.map(regionCollection),
   ...cultureCollections,
 ];

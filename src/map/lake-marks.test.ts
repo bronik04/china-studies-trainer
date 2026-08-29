@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { clusterPlaceables } from './cluster';
 import { lakeMarks } from './lake-marks';
 import { LAKE_SHAPES } from './physical-geometry';
 import { MIN_TARGET_PX, REFERENCE_MAP_WIDTH, unitsToPixels } from './target-size';
@@ -40,4 +41,17 @@ describe('lakeMarks', () => {
     // карты нужно, чтобы их набрать. Правило то же, что у городов.
     expect(lakeMarks(2)[0].radius).toBeLessThan(lakeMarks(1)[0].radius);
   });
+});
+
+/*
+ * Разведение целей осталось здесь намеренно: шесть озёр друг с другом не
+ * спорят, и гроздь им не нужна. Проверка стоит на случай, когда каталог
+ * пополнят и озёра вдруг окажутся рядом.
+ */
+it('гроздей не образует', () => {
+  expect(
+    clusterPlaceables(
+      lakeMarks(1).map((mark) => ({ id: mark.featureId, x: mark.x, y: mark.y })),
+    ).clusters,
+  ).toEqual([]);
 });

@@ -24,6 +24,7 @@ import {
   citiesWord,
   dynastiesWord,
   featuresWord,
+  landmarksWord,
   photosWord,
 } from './content/region-count';
 import type {
@@ -50,6 +51,7 @@ import {
   CityRound,
   CultureRound,
   HistoryRound,
+  LandmarkRound,
   CollectionPage,
   CollectionsPage,
   ExerciseRound,
@@ -60,6 +62,8 @@ import {
   prefetchScreens,
   RoundResultsPage,
 } from './screens';
+import type { Landmark } from './content/landmarks';
+import { landmarksUpTo, type LandmarkSet } from './content/landmark-sets';
 import { ChinaMap } from './map/ChinaMap';
 import type { MapZoom } from './map/MapControls';
 import { SiteHeader, type SiteSection } from './ui/SiteHeader';
@@ -74,6 +78,7 @@ type Screen =
   | 'exercise'
   | 'city-exercise'
   | 'physical-exercise'
+  | 'landmark-exercise'
   | 'history-exercise'
   | 'culture-exercise'
   | 'results'
@@ -150,6 +155,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
   const [roundPool, setRoundPool] = useState<readonly Region[]>(regions);
   const [cityPool, setCityPool] = useState<readonly City[]>([]);
+  const [landmarkPool, setLandmarkPool] = useState<readonly Landmark[]>([]);
   /*
    * Двенадцать целей всегда; сужается пул только «Повторить ошибки». Набор
    * перед стартом не выбирается: реки и формы спрашиваются вперемешку одним
@@ -348,6 +354,28 @@ export default function App() {
     setScreen('city-exercise');
   }
 
+  function startLandmarkRound(
+    exerciseType: ExerciseType,
+    nextLanguage: QuestionLanguage,
+    set: LandmarkSet,
+  ) {
+    startLandmarkPool(exerciseType, nextLanguage, landmarksUpTo(set));
+  }
+
+  /** Запуск по готовому пулу: тем же путём работает «Повторить ошибки». */
+  function startLandmarkPool(
+    exerciseType: ExerciseType,
+    nextLanguage: QuestionLanguage,
+    pool: readonly Landmark[],
+  ) {
+    setLandmarkPool(pool);
+    setExerciseTypes([exerciseType]);
+    setLanguage(nextLanguage);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('landmark-exercise');
+  }
+
   function startPhysicalRound(
     exerciseType: 'find-on-map' | 'name-target',
     nextLanguage: QuestionLanguage,
@@ -529,6 +557,22 @@ export default function App() {
     );
   }
 
+  if (screen === 'landmark-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <LandmarkRound
+          landmarks={landmarkPool}
+          exerciseType={exerciseTypes[0]}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishTargetRound}
+          onExit={goToModes}
+        />
+      </AppFrame>
+    );
+  }
+
   if (screen === 'physical-exercise') {
     return (
       <AppFrame fillsFrame current={null} onNavigate={navigate}>
@@ -609,6 +653,7 @@ export default function App() {
     const isPhysicalRound = roundKind === 'physical';
     const isHistoryRound = roundKind === 'history';
     const isCultureRound = roundKind === 'collection';
+    const isLandmarkRound = roundKind === 'landmark';
     /*
      * Набор повтора — ошибки этого раунда, те же, что показаны списком
      * (решение владельца от 2026-08-25). Отдельного источника у кнопки нет:
@@ -625,6 +670,9 @@ export default function App() {
     const repeatCollections = culturePool.filter((collection) =>
       repeatIds.includes(collection.id),
     );
+    const repeatLandmarks = landmarkPool.filter((one) =>
+      repeatIds.includes(one.id),
+    );
 
     /*
      * Карта итога есть у раундов по регионам. У раунда по городам исход по
@@ -633,7 +681,11 @@ export default function App() {
      * хуже отсутствующей.
      */
     const roundMap =
-      isCityRound || isPhysicalRound || isHistoryRound || isCultureRound
+      isCityRound ||
+      isPhysicalRound ||
+      isHistoryRound ||
+      isCultureRound ||
+      isLandmarkRound
         ? undefined
         : (
         <ChinaMap
@@ -661,7 +713,9 @@ export default function App() {
                   ? historyPool
                   : isCultureRound
                     ? culturePool
-                    : regions
+                    : isLandmarkRound
+                      ? landmarkPool
+                      : regions
           }
           countWord={
             isCityRound
@@ -672,7 +726,9 @@ export default function App() {
                   ? dynastiesWord
                   : isCultureRound
                     ? photosWord
-                    : undefined
+                    : isLandmarkRound
+                      ? landmarksWord
+                      : undefined
           }
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
@@ -683,6 +739,11 @@ export default function App() {
               setScreen('city-exercise');
               setRoundId(newRoundId());
               setSeed(Math.floor(Math.random() * 2 ** 31));
+              return;
+            }
+
+            if (isLandmarkRound) {
+              startLandmarkPool(exerciseTypes[0], language, repeatLandmarks);
               return;
             }
 
@@ -800,6 +861,7 @@ export default function App() {
           onStartCultureRound={startCultureRound}
           onStartHistoryRound={startHistoryRound}
           onStartPhysicalRound={startPhysicalRound}
+          onStartLandmarkRound={startLandmarkRound}
           onOpenAtlas={() => setScreen('atlas')}
           /*
             Карта героя открывает атлас на нажатой области: выбор ставится до

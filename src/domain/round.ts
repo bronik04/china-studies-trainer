@@ -20,7 +20,8 @@ export type TargetKind =
   | 'city'
   | 'physical'
   | 'history'
-  | 'collection';
+  | 'collection'
+  | 'landmark';
 
 export type Target = {
   readonly kind: TargetKind;
@@ -45,6 +46,10 @@ export function historyTarget(id: string): Target {
 
 export function collectionTarget(id: string): Target {
   return { kind: 'collection', id };
+}
+
+export function landmarkTarget(id: string): Target {
+  return { kind: 'landmark', id };
 }
 
 /** Ключ для группировки: `Map` не умеет сравнивать объекты по значению. */

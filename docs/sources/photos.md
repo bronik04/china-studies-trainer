@@ -408,6 +408,321 @@
 - Оригинал: 1762×1095
 - Ширины в репозитории: 1200, 640
 
+## landmark-chengde
+
+- Файл: Chengde Mountain Resort 1.jpg
+- Автор: takwing.kwong
+- Лицензия: CC BY-SA 2.0 (https://creativecommons.org/licenses/by-sa/2.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Chengde_Mountain_Resort_1.jpg
+- Оригинал: 2592×1944
+- Ширины в репозитории: 1200, 640
+
+## landmark-dazu
+
+- Файл: 大足石刻.JPG
+- Автор: Gisling
+- Лицензия: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)
+- Страница: https://commons.wikimedia.org/wiki/File:%E5%A4%A7%E8%B6%B3%E7%9F%B3%E5%88%BB.JPG
+- Оригинал: 2353×1558
+- Ширины в репозитории: 1200, 640
+
+## landmark-dujiangyan
+
+- Файл: Dujiang Weir.jpg
+- Автор: 星星
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Dujiang_Weir.jpg
+- Оригинал: 9288×3914
+- Ширины в репозитории: 1200, 640
+
+## landmark-fanjingshan
+
+- Файл: Fanjingshan-new.jpg
+- Автор: sizzhot0
+- Лицензия: CC0 (http://creativecommons.org/publicdomain/zero/1.0/deed.en)
+- Страница: https://commons.wikimedia.org/wiki/File:Fanjingshan-new.jpg
+- Оригинал: 5184×3456
+- Ширины в репозитории: 1200, 640
+
+## landmark-forbidden-city
+
+- Файл: Hall of Supreme Harmony (20241127120000).jpg
+- Автор: N509FZ
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Hall_of_Supreme_Harmony_(20241127120000).jpg
+- Оригинал: 7190×4793
+- Ширины в репозитории: 1200, 640
+
+## landmark-fujian-tulou
+
+- Файл: Tianluokeng Tulou cluster DSC5272 ff (16175023576).jpg
+- Автор: Motohiro Sunouchi
+- Лицензия: CC BY 2.0 (https://creativecommons.org/licenses/by/2.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Tianluokeng_Tulou_cluster_DSC5272_ff_(16175023576).jpg
+- Оригинал: 7360×4912
+- Ширины в репозитории: 1200, 640
+
+## landmark-gaochang
+
+- Файл: 2015-09-17-102307 - Ruinenstätte Gaochang (Kocho) Südwestlicher grosser Buddhatempel.jpg
+- Автор: Zossolino
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:2015-09-17-102307_-_Ruinenst%C3%A4tte_Gaochang_(Kocho)_S%C3%BCdwestlicher_grosser_Buddhatempel.jpg
+- Оригинал: 5472×3648
+- Ширины в репозитории: 1200, 640
+
+## landmark-guilin-karst
+
+- Файл: Yangshuo-Li-River-2019-Luka-Peternel.jpg
+- Автор: Luka Peternel
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Yangshuo-Li-River-2019-Luka-Peternel.jpg
+- Оригинал: 5472×3648
+- Ширины в репозитории: 1200, 640
+
+## landmark-hoh-xil
+
+- Файл: Hoh Xil.jpg
+- Автор: 始见 (Archived)
+- Лицензия: CC BY 2.5 cn (https://creativecommons.org/licenses/by/2.5/cn/deed.en)
+- Страница: https://commons.wikimedia.org/wiki/File:Hoh_Xil.jpg
+- Оригинал: 1019×679
+- Ширины в репозитории: 1019, 640
+
+## landmark-huangshan
+
+- Файл: 20230903 Huang Shan.jpg
+- Автор: Yumeto
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:20230903_Huang_Shan.jpg
+- Оригинал: 4096×3072
+- Ширины в репозитории: 1200, 640
+
+## landmark-hzm-bridge
+
+- Файл: West section of Hong Kong-Zhuhai-Macau Bridge (20180902174105).jpg
+- Автор: N509FZ
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:West_section_of_Hong_Kong-Zhuhai-Macau_Bridge_(20180902174105).jpg
+- Оригинал: 4465×2905
+- Ширины в репозитории: 1200, 640
+
+## landmark-jiuzhaigou
+
+- Файл: 1 nuorilang jiuzhaigou 2023.jpg
+- Автор: Chensiyuan
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:1_nuorilang_jiuzhaigou_2023.jpg
+- Оригинал: 10734×8448
+- Ширины в репозитории: 1200, 640
+
+## landmark-koguryo
+
+- Файл: Hwando Mountain Fortress 9.jpg
+- Автор: EditQ
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Hwando_Mountain_Fortress_9.jpg
+- Оригинал: 4000×3000
+- Ширины в репозитории: 1200, 640
+
+## landmark-leshan-buddha
+
+- Файл: Leshan Giant Buddha (1).jpg
+- Автор: xiquinhosilva
+- Лицензия: CC BY 2.0 (https://creativecommons.org/licenses/by/2.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Leshan_Giant_Buddha_(1).jpg
+- Оригинал: 3000×2000
+- Ширины в репозитории: 1200, 640
+
+## landmark-lijiang
+
+- Файл: 1 lijiang old town 2012a.jpg
+- Автор: chensiyuan
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:1_lijiang_old_town_2012a.jpg
+- Оригинал: 7360×4912
+- Ширины в репозитории: 1200, 640
+
+## landmark-longmen
+
+- Файл: Longmen Grottoes 3.jpg
+- Автор: Rialfver Original uploader was Rialfver at nl.wikipedia
+- Лицензия: CC BY-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
+- Страница: https://commons.wikimedia.org/wiki/File:Longmen_Grottoes_3.jpg
+- Оригинал: 2272×1704
+- Ширины в репозитории: 1200, 640
+
+## landmark-lushan
+
+- Файл: 庐山日出.JPG
+- Автор: No machine-readable author provided. Chenyun~commonswiki assumed (based on copyright claims).
+- Лицензия: CC BY-SA 2.5 (https://creativecommons.org/licenses/by-sa/2.5)
+- Страница: https://commons.wikimedia.org/wiki/File:%E5%BA%90%E5%B1%B1%E6%97%A5%E5%87%BA.JPG
+- Оригинал: 1600×1200
+- Ширины в репозитории: 1200, 640
+
+## landmark-macao-historic-centre
+
+- Файл: Cathedral of Saint Paul in Macau, 2023 (04).jpg
+- Автор: Bahnfrend
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Cathedral_of_Saint_Paul_in_Macau,_2023_(04).jpg
+- Оригинал: 2329×2329
+- Ширины в репозитории: 1200, 640
+
+## landmark-mogao
+
+- Файл: Dunhuang Mogao Ku 2013.12.31 12-30-18.jpg
+- Автор: Zhangzhugang
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Dunhuang_Mogao_Ku_2013.12.31_12-30-18.jpg
+- Оригинал: 5472×3648
+- Ширины в репозитории: 1200, 640
+
+## landmark-mukden-palace
+
+- Файл: Mukden Palace drone view 5 (cropped & rotated).jpg
+- Автор: Techyan
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Mukden_Palace_drone_view_5_(cropped_%26_rotated).jpg
+- Оригинал: 2915×1351
+- Ширины в репозитории: 1200, 640
+
+## landmark-pingyao
+
+- Файл: Pingyao 40.JPG
+- Автор: Nicor
+- Лицензия: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Pingyao_40.JPG
+- Оригинал: 3488×2616
+- Ширины в репозитории: 1200, 640
+
+## landmark-potala
+
+- Файл: Potala.jpg
+- Автор: Ondřej Žváček
+- Лицензия: CC BY 2.5 (https://creativecommons.org/licenses/by/2.5)
+- Страница: https://commons.wikimedia.org/wiki/File:Potala.jpg
+- Оригинал: 2592×1728
+- Ширины в репозитории: 1200, 640
+
+## landmark-qufu-confucius
+
+- Файл: 20230612 Dacheng Dian, Qufu Kongmiao.jpg
+- Автор: Yumeto
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:20230612_Dacheng_Dian,_Qufu_Kongmiao.jpg
+- Оригинал: 5632×4224
+- Ширины в репозитории: 1200, 640
+
+## landmark-shanghai-tower
+
+- Файл: Three sisters. Shanghai Tower, Jin Mao Tower, and Shanghai World Finance Center (18657792480).jpg
+- Автор: shutterstuman
+- Лицензия: CC BY 2.0 (https://creativecommons.org/licenses/by/2.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Three_sisters._Shanghai_Tower,_Jin_Mao_Tower,_and_Shanghai_World_Finance_Center_(18657792480).jpg
+- Оригинал: 3264×4928
+- Ширины в репозитории: 1200, 640
+
+## landmark-shaolin
+
+- Файл: 20250528 Shaolin Si.jpg
+- Автор: Yumeto
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:20250528_Shaolin_Si.jpg
+- Оригинал: 4096×3072
+- Ширины в репозитории: 1200, 640
+
+## landmark-summer-palace
+
+- Файл: Longevity Hill of the Summer Palace.jpg
+- Автор: xiquinhosilva
+- Лицензия: CC BY 2.0 (https://creativecommons.org/licenses/by/2.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Longevity_Hill_of_the_Summer_Palace.jpg
+- Оригинал: 2560×1702
+- Ширины в репозитории: 1200, 640
+
+## landmark-suzhou-gardens
+
+- Файл: 20090905 Suzhou Lion Grove Garden 4520.jpg
+- Автор: Jakub Hałun
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:20090905_Suzhou_Lion_Grove_Garden_4520.jpg
+- Оригинал: 3008×2000
+- Ширины в репозитории: 1200, 640
+
+## landmark-taishan
+
+- Файл: 20230611 Riguan Feng.jpg
+- Автор: Yumeto
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:20230611_Riguan_Feng.jpg
+- Оригинал: 5632×4224
+- Ширины в репозитории: 1200, 640
+
+## landmark-temple-of-heaven
+
+- Файл: Temple of Heaven 20160323 01.jpg
+- Автор: Shujianyang
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Temple_of_Heaven_20160323_01.jpg
+- Оригинал: 2400×1597
+- Ширины в репозитории: 1200, 640
+
+## landmark-three-gorges-dam
+
+- Файл: ThreeGorgesDam-China2009.jpg
+- Автор: Source file: Le Grand Portage Derivative work: Rehman
+- Лицензия: CC BY 2.0 (https://creativecommons.org/licenses/by/2.0)
+- Страница: https://commons.wikimedia.org/wiki/File:ThreeGorgesDam-China2009.jpg
+- Оригинал: 2847×1768
+- Ширины в репозитории: 1200, 640
+
+## landmark-west-lake
+
+- Файл: West Lake - Hangzhou, China.jpg
+- Автор: Louisa Salazar
+- Лицензия: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)
+- Страница: https://commons.wikimedia.org/wiki/File:West_Lake_-_Hangzhou,_China.jpg
+- Оригинал: 3504×2336
+- Ширины в репозитории: 1200, 640
+
+## landmark-western-xia-tombs
+
+- Файл: XiXia Tomb 3 F.jpg
+- Автор: BabelStone
+- Лицензия: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)
+- Страница: https://commons.wikimedia.org/wiki/File:XiXia_Tomb_3_F.jpg
+- Оригинал: 4896×3672
+- Ширины в репозитории: 1200, 640
+
+## landmark-wulingyuan
+
+- Файл: 1 zhangjiajie huangshizhai wulingyuan panorama 2012.jpg
+- Автор: chensiyuan
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:1_zhangjiajie_huangshizhai_wulingyuan_panorama_2012.jpg
+- Оригинал: 13206×6676
+- Ширины в репозитории: 1200, 640
+
+## landmark-xanadu
+
+- Файл: Xanadu (54565367991).jpg
+- Автор: xiquinhosilva
+- Лицензия: CC BY 2.0 (https://creativecommons.org/licenses/by/2.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Xanadu_(54565367991).jpg
+- Оригинал: 2560×1707
+- Ширины в репозитории: 1200, 640
+
+## landmark-yungang
+
+- Файл: Yungang11 2010.JPG
+- Автор: Marcin Białek
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:Yungang11_2010.JPG
+- Оригинал: 2877×2000
+- Ширины в репозитории: 1200, 640
+
 ## mutianyu
 
 - Файл: Mutianyu Great Wall (6222519140).jpg

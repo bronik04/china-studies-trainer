@@ -418,13 +418,22 @@ export function validateCollections(
         `Коллекция ${collection.id}: регион ${collection.aboutRegionId} не в её списке`,
       );
     }
-    /* У страницы один предмет: либо регион, либо объект, либо ни того ни другого. */
-    if (
-      collection.aboutRegionId !== undefined &&
-      collection.aboutFeatureId !== undefined
-    ) {
+    /*
+     * У страницы один предмет: регион, объект физической карты,
+     * достопримечательность — или ни один из трёх, и тогда страница написана
+     * руками. Двух предметов сразу не бывает: из-за двух страниц об одной
+     * пустыне ученик мог получить два вопроса об одном предмете за раунд
+     * (дефект 2026-08-28).
+     */
+    const subjects = [
+      collection.aboutRegionId,
+      collection.aboutFeatureId,
+      collection.aboutLandmarkId,
+    ].filter((one) => one !== undefined);
+
+    if (subjects.length > 1) {
       errors.push(
-        `Коллекция ${collection.id}: и регион, и объект как предмет страницы`,
+        `Коллекция ${collection.id}: у страницы больше одного предмета`,
       );
     }
 
@@ -434,9 +443,7 @@ export function validateCollections(
      * ещё три заметки значило бы требовать написать то же самое дважды.
      * Дописанные сверх справки — по общему правилу: три-четыре или ни одной.
      */
-    const written =
-      collection.aboutRegionId === undefined &&
-      collection.aboutFeatureId === undefined;
+    const written = subjects.length === 0;
     if (written && collection.lead.trim().length === 0) {
       errors.push(`Коллекция ${collection.id}: пустая вводка`);
     }

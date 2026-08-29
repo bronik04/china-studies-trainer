@@ -87,3 +87,54 @@ it('рисует знак города заметным на уменьшенн�
 
   expect(Number(mark?.getAttribute('r'))).toBeGreaterThanOrEqual(3.2);
 });
+
+/*
+ * Дельта Янцзы — самая тесная часть каталога: между Шанхаем и Сучжоу пять
+ * единиц карты при цели в семнадцать. Прежде цели разъезжались по кольцам и
+ * связывались поводками; теперь города собираются в гроздь.
+ */
+it('собирает тесные города в гроздь вместо поводков', () => {
+  const { container } = renderMap({ onSelectCity: () => {} });
+
+  expect(container.querySelector('.city-leader')).toBeNull();
+  expect(container.querySelectorAll('.map-cluster').length).toBeGreaterThan(0);
+});
+
+/*
+ * Слой, который только показывает, — атлас — гроздей не собирает: раскрыть их
+ * там нечем, и дюжина городов дельты Янцзы и Жемчужной просто исчезла бы за
+ * числом. Гроздь существует, чтобы разводить цели; там, где целей нет,
+ * разводить нечего.
+ */
+it('в слое без нажатия показывает каждый город на своём месте', () => {
+  const { container } = renderMap();
+
+  expect(container.querySelector('.map-cluster')).toBeNull();
+  expect(container.querySelectorAll('.city-mark')).toHaveLength(
+    cityPointsOfRegions(regions.map((region) => region.id)).length,
+  );
+});
+
+it('раскрывает гроздь и отдаёт нажатие городу внутри', () => {
+  const select = vi.fn();
+  renderMap({ onSelectCity: select });
+
+  fireEvent.click(screen.getByRole('button', { name: /Гроздь из 4 городов: Ханчжоу/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Шанхай, 上海' }));
+
+  expect(select).toHaveBeenCalledWith('shanghai');
+});
+
+/*
+ * В «назвать город» слой не отвечает на нажатие, и раскрыть гроздь руками
+ * нельзя. Спрошенный город внутри неё обязан быть виден сам — иначе вопроса
+ * на карте просто нет.
+ */
+it('раскрывает гроздь со спрошенным городом сама', () => {
+  const { container } = renderMap({ selectedCityId: 'suzhou' });
+
+  const open = container.querySelector('.map-cluster[data-open="true"]');
+
+  expect(open).not.toBeNull();
+  expect(open?.querySelector('.city[data-city-id="suzhou"]')).not.toBeNull();
+});

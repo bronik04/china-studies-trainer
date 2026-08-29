@@ -26,8 +26,12 @@ import {
   parseMapPath,
   type Point,
 } from '../src/map/svg-path';
+import { MAX_LENS_RADIUS_UNITS } from '../src/map/cluster';
+import { landmarks } from '../src/content/landmarks';
 import {
   validateCityPlacement,
+  validateLandmarkPlacement,
+  validateLensRadii,
   validateMapAreaIds,
   validatePhysicalGeometry,
   validateRegionPalette,
@@ -85,7 +89,7 @@ const placement = validateCityPlacement(
   cities.map((city) => {
     const [x, y] = projectLonLat(city.lon, city.lat);
 
-    return { cityId: city.id, regionId: city.regionId, x, y };
+    return { id: city.id, regionId: city.regionId, x, y };
   }),
   {
     contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),
@@ -131,6 +135,98 @@ if (gone.length > 0) {
 console.info(
   `Проверено городов: ${cities.length}. На кромке контура: ${onBoundary.length}` +
     (onBoundary.length > 0 ? ` (${onBoundary.join(', ')})` : ''),
+);
+
+/*
+ * Достопримечательности проверяются той же геометрией и тем же допуском, что и
+ * города: звезда обязана лежать в контуре своего региона. Внутри контура все,
+ * кроме одной: мост Гонконг — Чжухай — Макао идёт над устьем, и суши под ним
+ * нет. Ближе всех к краю изнутри — городище Ваньду, полторы единицы.
+ */
+const landmarkPlacement = validateLandmarkPlacement(
+  landmarks.map((one) => {
+    const [x, y] = projectLonLat(one.lon, one.lat);
+
+    return { id: one.id, regionId: one.regionId, x, y };
+  }),
+  {
+    contains: (mapAreaId, x, y) => containsPoint(ringsOf(mapAreaId), x, y),
+    distanceToBoundary: (mapAreaId, x, y) =>
+      distanceToBoundary(ringsOf(mapAreaId), x, y),
+    mapAreaOf: (regionId) => mapAreaOf.get(regionId),
+    mapAreaIds: [...rings.keys()],
+  },
+);
+
+/*
+ * Звезда за контуром — законное состояние ровно для одного объекта: мост
+ * Гонконг — Чжухай — Макао идёт над устьем Чжуцзяна, и суши под ним нет.
+ * Двигать его на берег значило бы учить неверному.
+ *
+ * Список закреплён по той же причине, что у городов: новая звезда на кромке
+ * попала бы в тот же лог и прошла незамеченной, а она могла оказаться там
+ * из-за ошибки в координатах.
+ */
+const EXPECTED_LANDMARKS_ON_BOUNDARY = ['hzm-bridge'];
+
+const landmarksOnBoundary = [...landmarkPlacement.onBoundary].sort();
+const unexpectedLandmarks = landmarksOnBoundary.filter(
+  (id) => !EXPECTED_LANDMARKS_ON_BOUNDARY.includes(id),
+);
+const goneLandmarks = EXPECTED_LANDMARKS_ON_BOUNDARY.filter(
+  (id) => !landmarksOnBoundary.includes(id),
+);
+
+if (unexpectedLandmarks.length > 0) {
+  throw new Error(
+    `Новые достопримечательности на кромке контура: ${unexpectedLandmarks.join(', ')}. ` +
+      'Проверьте координаты по источнику; если объект и правда стоит над водой ' +
+      'или на самой границе, добавьте его в EXPECTED_LANDMARKS_ON_BOUNDARY.',
+  );
+}
+
+if (goneLandmarks.length > 0) {
+  throw new Error(
+    `Достопримечательности ушли с кромки контура: ${goneLandmarks.join(', ')}. ` +
+      'Список EXPECTED_LANDMARKS_ON_BOUNDARY устарел — уберите их из него.',
+  );
+}
+
+/*
+ * Лупа не должна разрастаться незаметно: коэффициент считается по ближайшей
+ * паре, и один объект, придвинутый вплотную к соседу, растаскивает всю гроздь.
+ */
+const lenses = validateLensRadii([
+  {
+    layer: 'города',
+    points: cities.map((city) => {
+      const [x, y] = projectLonLat(city.lon, city.lat);
+
+      return { id: city.id, x, y };
+    }),
+  },
+  {
+    layer: 'достопримечательности',
+    points: landmarks.map((one) => {
+      const [x, y] = projectLonLat(one.lon, one.lat);
+
+      return { id: one.id, x, y };
+    }),
+  },
+]);
+
+console.info(
+  `Проверено достопримечательностей: ${landmarks.length}. На кромке контура: ` +
+    `${landmarksOnBoundary.length}` +
+    (landmarksOnBoundary.length > 0 ? ` (${landmarksOnBoundary.join(', ')})` : '') +
+    '. Самая широкая лупа: ' +
+    lenses
+      .map(
+        (lens) =>
+          `${lens.layer} — ${lens.id} ${lens.radius.toFixed(1)} единиц`,
+      )
+      .join('; ') +
+    ` при пределе ${MAX_LENS_RADIUS_UNITS}`,
 );
 
 /*

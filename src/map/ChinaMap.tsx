@@ -10,6 +10,7 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
 import { CityLayer } from './CityLayer';
+import { LandmarkLayer } from './LandmarkLayer';
 import type { FeatureOutcome } from './PhysicalLayer';
 import { cityPointsOfRegions } from './city-points';
 import {
@@ -104,6 +105,15 @@ type ChinaMapProps = {
   readonly selectedCityId?: string | null;
   readonly onSelectCity?: (cityId: string) => void;
   readonly showsCityLabels?: boolean;
+  /**
+   * Показывать ли достопримечательности. По умолчанию — нет: в атласе 38
+   * новых остановок Tab, где звезда ничего не делает, стоили бы дороже, чем
+   * дают, — тот же довод, что и у городов.
+   */
+  readonly showsLandmarks?: boolean;
+  readonly selectedLandmarkId?: string | null;
+  readonly onSelectLandmark?: (landmarkId: string) => void;
+  readonly showsLandmarkLabels?: boolean;
   /** Выбранный объект физической географии — река или форма рельефа. */
   readonly selectedFeatureId?: string | null;
   readonly onSelectFeature?: (featureId: string) => void;
@@ -213,6 +223,10 @@ export function ChinaMap({
   selectedCityId = null,
   onSelectCity,
   showsCityLabels = true,
+  showsLandmarks = false,
+  selectedLandmarkId = null,
+  onSelectLandmark,
+  showsLandmarkLabels = true,
   selectedFeatureId = null,
   onSelectFeature,
   showsPhysicalLabels = true,
@@ -742,6 +756,17 @@ export function ChinaMap({
                 selectedCityId={selectedCityId}
                 onSelect={onSelectCity}
                 showsLabels={showsCityLabels}
+                zoom={view.zoom}
+              />,
+              citySvg,
+            )
+          : null}
+        {showsLandmarks && citySvg !== null
+          ? createPortal(
+              <LandmarkLayer
+                selectedLandmarkId={selectedLandmarkId}
+                onSelect={onSelectLandmark}
+                showsLabels={showsLandmarkLabels}
                 zoom={view.zoom}
               />,
               citySvg,

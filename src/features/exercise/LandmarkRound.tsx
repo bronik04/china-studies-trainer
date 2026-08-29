@@ -1,0 +1,274 @@
+import { useMemo, useState } from 'react';
+import type { Landmark } from '../../content/landmarks';
+import { regions } from '../../content/regions';
+import { buildLandmarkChoices } from '../../domain/landmark-choices';
+import {
+  labelOf,
+  langOf,
+  type QuestionLanguage,
+} from '../../domain/question-language';
+import { createSeededRandom } from '../../domain/random';
+import {
+  answerQuestion,
+  createRound,
+  currentQuestion,
+  goToNextQuestion,
+  isRoundFinished,
+  landmarkTarget,
+  type Attempt,
+  type ExerciseType,
+  type Round,
+} from '../../domain/round';
+import { ChinaMap } from '../../map/ChinaMap';
+import type { MapZoom } from '../../map/MapControls';
+import { answerStatesFor } from './answer-states';
+import { LANDMARK_MODES } from './exercise-modes';
+import { LandmarkAnswerList } from './LandmarkAnswerList';
+import { RoundProgressTrail } from './RoundProgressTrail';
+import { RoundStage } from './RoundStage';
+import { StageChoices, type StageChoice } from './StageChoices';
+import { useAutoAdvance } from './use-auto-advance';
+
+/* Часы раунда живут в модуле, а не в теле компонента: см. `CityRound`. */
+function startClock(): number {
+  return performance.now();
+}
+
+function elapsedSince(start: number): number {
+  return Math.round(startClock() - start);
+}
+
+export type LandmarkRoundProps = {
+  readonly landmarks: readonly Landmark[];
+  readonly exerciseType: ExerciseType;
+  readonly language: QuestionLanguage;
+  readonly roundId: string;
+  readonly seed: number;
+  readonly onFinish: (attempts: readonly Attempt[]) => void;
+  readonly onExit: () => void;
+};
+
+/**
+ * Три игры по достопримечательностям одним экраном.
+ *
+ * Устроен как `CityRound` и отдельно от него по той же причине, по какой тот
+ * отделён от `ExerciseRound`: у достопримечательности свой каталог, свои
+ * отвлекающие и своя карта. Карта здесь чистая — ни городов, ни физического
+ * слоя: решение владельца продукта от 2026-08-28. Река или точка города рядом
+ * со звездой не помогают её найти, а спорят с ней.
+ *
+ * | Игра | Вопрос | Ответ |
+ * | --- | --- | --- |
+ * | `find-on-map` | имя объекта | нажатие по звезде |
+ * | `name-target` | подсвеченная звезда | одно из четырёх имён |
+ * | `match-pair` | имя объекта | нажатие по области региона |
+ */
+export function LandmarkRound({
+  landmarks,
+  exerciseType,
+  language,
+  roundId,
+  seed,
+  onFinish,
+  onExit,
+}: LandmarkRoundProps) {
+  const [round, setRound] = useState<Round>(() =>
+    createRound(
+      landmarks.map((one) => landmarkTarget(one.id)),
+      {
+        roundId,
+        exerciseTypes: [exerciseType],
+        language,
+        random: createSeededRandom(seed),
+      },
+    ),
+  );
+  const [zoom, setZoom] = useState<MapZoom>(1);
+  const [answeredId, setAnsweredId] = useState<string | null>(null);
+  const [askedAt, setAskedAt] = useState(startClock);
+  const [startedAt] = useState(startClock);
+  const { schedule } = useAutoAdvance();
+
+  const choicesByQuestion = useMemo(() => {
+    const random = createSeededRandom(seed + 1);
+
+    return round.questions.map((question) =>
+      buildLandmarkChoices(landmarks, question.target.id, random),
+    );
+  }, [landmarks, round.questions, seed]);
+
+  const question = currentQuestion(round);
+  const target = landmarks.find((one) => one.id === question.target.id)!;
+  const mode = LANDMARK_MODES[exerciseType];
+  const lastAttempt = round.attempts[round.attempts.length - 1];
+
+  const answersWithRegion = exerciseType === 'match-pair';
+  const showsChoices = exerciseType === 'name-target';
+  const regionOfTarget = regions.find(
+    (region) => region.id === target.regionId,
+  )!;
+
+  const answerStates = useMemo(
+    () =>
+      answersWithRegion && answeredId !== null
+        ? answerStatesFor(regions, target.regionId, answeredId)
+        : {},
+    [answersWithRegion, answeredId, target.regionId],
+  );
+
+  function goNext(from: Round) {
+    const next = goToNextQuestion(from);
+    if (isRoundFinished(next)) {
+      onFinish(next.attempts);
+      return;
+    }
+
+    setRound(next);
+    setAnsweredId(null);
+    setAskedAt(startClock());
+  }
+
+  function answer(id: string) {
+    if (round.status !== 'ready') {
+      return;
+    }
+
+    setAnsweredId(id);
+    const answered = answerQuestion(round, {
+      answeredId: id,
+      expectedId: answersWithRegion ? target.regionId : undefined,
+      durationMs: elapsedSince(askedAt),
+      answeredAt: new Date().toISOString(),
+    });
+    setRound(answered);
+
+    const isCorrect = answered.attempts[answered.attempts.length - 1].isCorrect;
+    schedule(isCorrect, () => goNext(answered));
+  }
+
+  function handleRegionSelect(regionId: string) {
+    if (answersWithRegion) {
+      answer(regionId);
+    }
+  }
+
+  function handleLandmarkSelect(landmarkId: string) {
+    answer(landmarkId);
+  }
+
+  const showsAnswer =
+    round.status === 'feedback' && lastAttempt?.isCorrect === false;
+
+  const stageChoices: readonly StageChoice[] = showsChoices
+    ? choicesByQuestion[round.currentIndex].map((choice) => ({
+        id: choice.id,
+        label: labelOf(choice, question.language),
+        lang: langOf(question.language),
+        result:
+          answeredId === null
+            ? undefined
+            : choice.id === target.id
+              ? 'correct'
+              : choice.id === answeredId
+                ? 'incorrect'
+                : undefined,
+      }))
+    : [];
+
+  const prompt = showsAnswer ? (
+    <>
+      <p className="eyebrow">Это стоит повторить</p>
+      <h1 className="stage-target" data-testid="exercise-target">
+        {answersWithRegion ? (
+          <>
+            {target.nameRu} <span lang="zh-Hans">{target.nameZh}</span> —{' '}
+            {regionOfTarget.nameRu}{' '}
+            <span lang="zh-Hans">{regionOfTarget.nameZh}</span>
+          </>
+        ) : (
+          <>
+            Это {target.nameRu} <span lang="zh-Hans">{target.nameZh}</span>
+          </>
+        )}
+      </h1>
+    </>
+  ) : (
+    <>
+      <p className="eyebrow">{mode.eyebrow}</p>
+      <h1
+        className="stage-target"
+        data-testid="exercise-target"
+        lang={showsChoices ? undefined : langOf(question.language)}
+      >
+        {showsChoices
+          ? 'Отмеченный объект'
+          : labelOf(target, question.language)}
+      </h1>
+    </>
+  );
+
+  return (
+    <RoundStage
+      prompt={prompt}
+      promptState={showsAnswer ? 'answer' : 'question'}
+      startedAt={startedAt}
+      progress={
+        <>
+          <p className="exercise-progress">
+            Вопрос {round.currentIndex + 1} из {round.questions.length}
+          </p>
+          <RoundProgressTrail
+            total={round.questions.length}
+            attempts={round.attempts}
+          />
+        </>
+      }
+      choices={
+        showsChoices ? (
+          <StageChoices
+            choices={stageChoices}
+            disabled={round.status !== 'ready'}
+            onChoose={answer}
+          />
+        ) : undefined
+      }
+      answerList={
+        exerciseType === 'find-on-map' ? (
+          <LandmarkAnswerList
+            landmarks={landmarks}
+            language={question.language}
+            answeredId={answeredId}
+            targetId={target.id}
+            disabled={round.status !== 'ready'}
+            onSelect={handleLandmarkSelect}
+          />
+        ) : undefined
+      }
+      onExit={onExit}
+    >
+      {/*
+        В «достопримечательность — регион» звёзды скрыты вовсе: подсвеченная
+        звезда в области — готовый ответ. В остальных двух играх звёзды есть,
+        но без подписей: в «назвать» подпись назвала бы объект, в «найти» —
+        выдала бы его наведением курсора.
+      */}
+      <ChinaMap
+        regions={regions}
+        selectedRegionId={answersWithRegion ? answeredId : null}
+        onSelect={handleRegionSelect}
+        onClear={() => {}}
+        answerStates={answerStates}
+        interactive={answersWithRegion}
+        zoom={zoom}
+        onZoomChange={setZoom}
+        usage="answer"
+        showsLandmarks={!answersWithRegion}
+        selectedLandmarkId={showsChoices ? target.id : answeredId}
+        showsLandmarkLabels={false}
+        onSelectLandmark={
+          exerciseType === 'find-on-map' ? handleLandmarkSelect : undefined
+        }
+      />
+    </RoundStage>
+  );
+}

@@ -5,6 +5,7 @@ import {
   isDraft,
   type Collection,
 } from '../../content/collections';
+import { landmarkById } from '../../content/landmarks';
 import { physicalFeatureById } from '../../content/physical-features';
 import { regionsWord } from '../../content/region-count';
 import type { Region } from '../../content/types';
@@ -61,6 +62,15 @@ export function CollectionPage({
     collection.aboutFeatureId === undefined
       ? undefined
       : physicalFeatureById(collection.aboutFeatureId);
+  const aboutLandmark =
+    collection.aboutLandmarkId === undefined
+      ? undefined
+      : landmarkById(collection.aboutLandmarkId);
+  /*
+   * У объекта и у достопримечательности справка — это их факты, и приходят они
+   * из одного справочника на обе поверхности: карточку и эту страницу.
+   */
+  const catalogFacts = aboutFeature?.facts ?? aboutLandmark?.facts ?? [];
   /*
    * Справка из справочника стоит на странице и говорит за неё. У региона она
    * есть всегда — центр и города написаны, даже когда фактов нет; у объекта
@@ -74,9 +84,7 @@ export function CollectionPage({
    * ней.
    */
   const [hero, ...gallery] = collection.photos;
-  const referenceShown =
-    aboutRegion !== undefined ||
-    (aboutFeature !== undefined && aboutFeature.facts.length > 0);
+  const referenceShown = aboutRegion !== undefined || catalogFacts.length > 0;
 
   return (
     <main className="site-main">
@@ -144,8 +152,8 @@ export function CollectionPage({
 
           {aboutRegion !== undefined ? (
             <RegionReference region={aboutRegion} />
-          ) : aboutFeature !== undefined && aboutFeature.facts.length > 0 ? (
-            <CardFacts facts={aboutFeature.facts} />
+          ) : catalogFacts.length > 0 ? (
+            <CardFacts facts={catalogFacts} />
           ) : hero === undefined ? (
             <PhotoSlot subject={collection.nameRu} height="hero" />
           ) : null}

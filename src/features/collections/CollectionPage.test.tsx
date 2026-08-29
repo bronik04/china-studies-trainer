@@ -196,7 +196,7 @@ it('не повторяет имя региона вторым заголовк�
  * нет — место под него.
  */
 it('не подменяет коллекцию о месте справкой региона', () => {
-  renderPage('yuanyang-terraces');
+  renderPage('landmark-hani-terraces');
 
   expect(screen.queryByText(/Административный центр/)).not.toBeInTheDocument();
   expect(
@@ -308,4 +308,19 @@ it('снимок на странице описан словами, снимок
       image.getAttribute('src') ?? '',
     ).toBe(!inCard);
   }
+});
+
+/*
+ * У достопримечательности справка — это её факты, как у объекта физической
+ * карты: они пишутся один раз в справочнике и попадают и в раунд, и сюда.
+ * Без этого страница честно, но зря сообщала, что описание ещё не написано.
+ */
+it('показывает справку достопримечательности из справочника', () => {
+  renderPage('landmark-potala');
+
+  expect(screen.getByText('Дворец на Красной горе')).toBeInTheDocument();
+  expect(screen.getByText(/Зимняя резиденция далай-лам/)).toBeInTheDocument();
+  expect(
+    screen.queryByText(/Описание ещё не написано/),
+  ).not.toBeInTheDocument();
 });
