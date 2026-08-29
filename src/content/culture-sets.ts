@@ -7,7 +7,8 @@ import { collections, type Collection } from './collections';
  * у городов и физической географии. Ученик выбирает, докуда, а не какой один.
  *
  * Порядок не случаен. Первый набор — то, ради чего режим и заявлен карточкой:
- * памятник, праздник, ремесло. Дальше идёт природа, дальше регионы: снимок
+ * памятник, праздник, ремесло. Достопримечательности идут в нём же: это ровно
+ * те памятники, о которых говорит карточка. Дальше идёт природа, дальше регионы: снимок
  * провинции узнаётся труднее всего, потому что провинция — не предмет, а
  * место, и на кадре от неё видна одна подробность.
  */
@@ -34,12 +35,22 @@ const CULTURE = withPhoto(
     (collection) =>
       collection.groupId === 'culture' ||
       (collection.groupId === 'geography' &&
-        collection.aboutFeatureId === undefined),
+        collection.aboutFeatureId === undefined &&
+        collection.aboutLandmarkId === undefined),
   ),
 );
 
 const NATURE = withPhoto(
   collections.filter((collection) => collection.aboutFeatureId !== undefined),
+);
+
+/**
+ * Достопримечательности — свой род отвлекающих. Памятник не спутать с рекой по
+ * виду кадра, и без отдельного рода вопрос о Потале решался бы тем, что три
+ * варианта из четырёх — реки.
+ */
+const LANDMARKS = withPhoto(
+  collections.filter((collection) => collection.aboutLandmarkId !== undefined),
 );
 
 const REGIONS = withPhoto(
@@ -50,10 +61,12 @@ export function cultureCollectionsUpTo(
   set: CultureSet,
 ): readonly Collection[] {
   if (set === 'culture') {
-    return CULTURE;
+    return [...CULTURE, ...LANDMARKS];
   }
 
-  return set === 'nature' ? [...CULTURE, ...NATURE] : [...CULTURE, ...NATURE, ...REGIONS];
+  return set === 'nature'
+    ? [...CULTURE, ...LANDMARKS, ...NATURE]
+    : [...CULTURE, ...LANDMARKS, ...NATURE, ...REGIONS];
 }
 
 /**
@@ -66,6 +79,10 @@ export function cultureCollectionsUpTo(
 export function sameKindAs(collection: Collection): readonly Collection[] {
   if (collection.aboutRegionId !== undefined) {
     return REGIONS;
+  }
+
+  if (collection.aboutLandmarkId !== undefined) {
+    return LANDMARKS;
   }
 
   return collection.aboutFeatureId !== undefined ? NATURE : CULTURE;

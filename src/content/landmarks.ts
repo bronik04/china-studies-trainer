@@ -268,10 +268,10 @@ export const landmarks: readonly Landmark[] = [
         title: 'Тысяча лет росписи',
         body:
           'Первую пещеру вырубили в 366 году. Сохранились 492 пещеры: около 45 тысяч квадратных метров росписей и более двух тысяч раскрашенных скульптур.',
-        sourceIds: ['unesco-mogao-440'],
+        sourceIds: ['unesco-mogao-caves-440'],
       },
     ],
-    ['unesco-mogao-440'],
+    ['unesco-mogao-caves-440'],
   ),
   landmark(
     'gaochang',
@@ -534,10 +534,10 @@ export const landmarks: readonly Landmark[] = [
         title: 'Восемьдесят две деревни между лесом и водой',
         body:
           'Хани живут в 82 деревнях между горными лесами и террасами, в тростниковых домах-«грибах». На залитых водой ступенях вместе с красным рисом разводят буйволов, уток, рыбу и угрей.',
-        sourceIds: ['unesco-hani-terraces-1111'],
+        sourceIds: ['unesco-honghe-hani-1111'],
       },
     ],
-    ['unesco-hani-terraces-1111'],
+    ['unesco-honghe-hani-1111'],
   ),
   landmark(
     'lijiang',

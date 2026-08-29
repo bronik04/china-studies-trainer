@@ -196,7 +196,7 @@ it('не повторяет имя региона вторым заголовк�
  * нет — место под него.
  */
 it('не подменяет коллекцию о месте справкой региона', () => {
-  renderPage('yuanyang-terraces');
+  renderPage('landmark-hani-terraces');
 
   expect(screen.queryByText(/Административный центр/)).not.toBeInTheDocument();
   expect(

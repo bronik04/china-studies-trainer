@@ -97,8 +97,13 @@ export const sources = [
     organization: 'Encyclopaedia Britannica',
     shortLabel: 'Britannica',
     url: 'https://www.britannica.com/place/Beijing',
-    accessedAt: '2026-08-19',
-    covers: ['физическая география Пекина', 'история Пекина как столицы'],
+    accessedAt: '2026-08-28',
+    covers: [
+      'физическая география Пекина',
+      'история Пекина как столицы',
+      'Нанкин как столица первых пяти десятилетий Мин',
+      'перенос столицы на север третьим императором Мин',
+    ],
   },
   {
     id: 'bre-municipality-status',
@@ -470,8 +475,11 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/1113',
-    accessedAt: '2026-08-19',
-    covers: ['год включения тулоу в список Всемирного наследия ЮНЕСКО'],
+    accessedAt: '2026-08-28',
+    covers: [
+      'год включения тулоу в список Всемирного наследия ЮНЕСКО',
+      'число тулоу, века их постройки и вместимость каждого дома',
+    ],
   },
   {
     id: 'britannica-fujian-economy',
@@ -551,8 +559,11 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/640',
-    accessedAt: '2026-08-19',
-    covers: ['год включения заповедника Улинъюань в список Всемирного наследия ЮНЕСКО'],
+    accessedAt: '2026-08-28',
+    covers: [
+      'год включения заповедника Улинъюань в список Всемирного наследия ЮНЕСКО',
+      'площадь Улинъюаня, число и высота его столбов, пещеры и природные мосты',
+    ],
   },
   {
     id: 'britannica-guangdong',
@@ -592,10 +603,12 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/1248',
-    accessedAt: '2026-08-19',
+    accessedAt: '2026-08-28',
     covers: [
       'год включения карста Гуйлиня в список Всемирного наследия ЮНЕСКО',
       'каменный лес Шилинь в Юньнани как часть объекта',
+      'состав объекта из семи карстовых участков, включая гуйлиньский',
+      'общая площадь и виды карстового рельефа',
     ],
   },
   {
@@ -658,8 +671,12 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/1110',
-    accessedAt: '2026-08-19',
-    covers: ['год включения исторического центра Макао в список Всемирного наследия ЮНЕСКО'],
+    accessedAt: '2026-08-28',
+    covers: [
+      'год включения исторического центра Макао в список Всемирного наследия ЮНЕСКО',
+      'сроки португальского управления Макао и год возвращения',
+      'состав охраняемого центра и старейший в Китае маяк',
+    ],
   },
   {
     id: 'britannica-taiwan',
@@ -712,8 +729,11 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/912',
-    accessedAt: '2026-08-19',
-    covers: ['год включения рельефов Дацзу в список Всемирного наследия ЮНЕСКО'],
+    accessedAt: '2026-08-28',
+    covers: [
+      'год включения рельефов Дацзу в список Всемирного наследия ЮНЕСКО',
+      'века создания рельефов Дацзу и соединённые в них учения',
+    ],
   },
   {
     id: 'bre-earthquake',
@@ -826,10 +846,11 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/707',
-    accessedAt: '2026-08-19',
+    accessedAt: '2026-08-28',
     covers: [
       'год включения дворца Потала в список Всемирного наследия ЮНЕСКО',
       'храм Джоканг как расширение объекта в 2000 году',
+      'назначение и высота Поталы, состав Белого и Красного дворцов',
     ],
   },
   {
@@ -862,11 +883,13 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/441',
-    accessedAt: '2026-08-19',
+    accessedAt: '2026-08-28',
     covers: [
       'год включения гробницы Цинь Шихуанди в список Всемирного наследия ЮНЕСКО',
       'начало строительства мавзолея в 246 году до н. э. и свидетельство Сыма Цяня о работах до смерти императора в 210 году до н. э.',
       'высота кургана и площадь охраняемой территории комплекса',
+      'год начала строительства гробницы и год находки глиняного войска',
+      'положение гробницы относительно Сианя',
     ],
   },
   {
@@ -884,8 +907,11 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/440',
-    accessedAt: '2026-08-19',
-    covers: ['год включения пещер Могао в список Всемирного наследия ЮНЕСКО'],
+    accessedAt: '2026-08-28',
+    covers: [
+      'год включения пещер Могао в список Всемирного наследия ЮНЕСКО',
+      'год первой пещеры Могао, число пещер, площадь росписей и число скульптур',
+    ],
   },
   {
     id: 'britannica-koko-nor',
@@ -973,8 +999,12 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/1111',
-    accessedAt: '2026-08-19',
-    covers: ['площадь и год включения террас Юаньян (Хунхэ-Хани) в список Всемирного наследия ЮНЕСКО', 'ирригационная система и хозяйство народа хани'],
+    accessedAt: '2026-08-28',
+    covers: [
+      'площадь и год включения террас Юаньян (Хунхэ-Хани) в список Всемирного наследия ЮНЕСКО',
+      'ирригационная система и хозяйство народа хани',
+      'число деревень хани, их дома и хозяйство террас',
+    ],
   },
   {
     id: 'britannica-yellow-river',
@@ -1147,10 +1177,11 @@ export const sources = [
     organization: 'UNESCO World Heritage Centre',
     shortLabel: 'ЮНЕСКО',
     url: 'https://whc.unesco.org/en/list/811',
-    accessedAt: '2026-08-20',
+    accessedAt: '2026-08-28',
     covers: [
       'год включения старого города Лицзян в список Всемирного наследия ЮНЕСКО',
       'роль Лицзяна на пересечении Шёлкового пути и Чайно-конной дороги',
+      'облик старого города Лицзяна и его древняя система водоснабжения',
     ],
   },
   {
@@ -1735,18 +1766,6 @@ export const sources = [
    * источник, который её подтверждает.
    */
   {
-    id: 'britannica-beijing',
-    title: 'Beijing',
-    organization: 'Encyclopaedia Britannica',
-    shortLabel: 'Britannica',
-    url: 'https://www.britannica.com/place/Beijing',
-    accessedAt: '2026-08-28',
-    covers: [
-      'Нанкин как столица первых пяти десятилетий Мин',
-      'перенос столицы на север третьим императором Мин',
-    ],
-  },
-  {
     id: 'britannica-shang-founder',
     title: 'Tang (founder of the Shang dynasty)',
     organization: 'Encyclopaedia Britannica',
@@ -1932,24 +1951,6 @@ export const sources = [
     ],
   },
   {
-    id: 'unesco-mogao-440',
-    title: 'Mogao Caves',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/440',
-    accessedAt: '2026-08-28',
-    covers: ['год первой пещеры Могао, число пещер, площадь росписей и число скульптур'],
-  },
-  {
-    id: 'unesco-potala-707',
-    title: 'Historic Ensemble of the Potala Palace, Lhasa',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/707',
-    accessedAt: '2026-08-28',
-    covers: ['назначение и высота Поталы, состав Белого и Красного дворцов'],
-  },
-  {
     id: 'britannica-turfan',
     title: 'Turfan',
     organization: 'Encyclopaedia Britannica',
@@ -1957,18 +1958,6 @@ export const sources = [
     url: 'https://www.britannica.com/place/Turfan',
     accessedAt: '2026-08-28',
     covers: ['год появления государства Гаочан и год, когда танские походы сокрушили его'],
-  },
-  {
-    id: 'unesco-qin-mausoleum-441',
-    title: 'Mausoleum of the First Qin Emperor',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/441',
-    accessedAt: '2026-08-28',
-    covers: [
-      'год начала строительства гробницы и год находки глиняного войска',
-      'положение гробницы относительно Сианя',
-    ],
   },
   {
     id: 'unesco-longmen-1003',
@@ -2004,36 +1993,6 @@ export const sources = [
     ],
   },
   {
-    id: 'unesco-fujian-tulou-1113',
-    title: 'Fujian Tulou',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/1113',
-    accessedAt: '2026-08-28',
-    covers: ['число тулоу, века их постройки и вместимость каждого дома'],
-  },
-  {
-    id: 'unesco-macao-1110',
-    title: 'Historic Centre of Macao',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/1110',
-    accessedAt: '2026-08-28',
-    covers: [
-      'сроки португальского управления Макао и год возвращения',
-      'состав охраняемого центра и старейший в Китае маяк',
-    ],
-  },
-  {
-    id: 'unesco-dazu-912',
-    title: 'Dazu Rock Carvings',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/912',
-    accessedAt: '2026-08-28',
-    covers: ['века создания рельефов Дацзу и соединённые в них учения'],
-  },
-  {
     id: 'unesco-dujiangyan-1001',
     title: 'Mount Qingcheng and the Dujiangyan Irrigation System',
     organization: 'UNESCO World Heritage Centre',
@@ -2052,24 +2011,6 @@ export const sources = [
     covers: ['век создания и высота Лэшаньского Будды'],
   },
   {
-    id: 'unesco-hani-terraces-1111',
-    title: 'Cultural Landscape of Honghe Hani Rice Terraces',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/1111',
-    accessedAt: '2026-08-28',
-    covers: ['число деревень хани, их дома и хозяйство террас'],
-  },
-  {
-    id: 'unesco-lijiang-811',
-    title: 'Old Town of Lijiang',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/811',
-    accessedAt: '2026-08-28',
-    covers: ['облик старого города Лицзяна и его древняя система водоснабжения'],
-  },
-  {
     id: 'unesco-taishan-437',
     title: 'Mount Taishan',
     organization: 'UNESCO World Heritage Centre',
@@ -2086,27 +2027,6 @@ export const sources = [
     url: 'https://whc.unesco.org/en/list/778',
     accessedAt: '2026-08-28',
     covers: ['соседство буддийских, даосских и конфуцианских памятников на Лушане'],
-  },
-  {
-    id: 'unesco-wulingyuan-640',
-    title: 'Wulingyuan Scenic and Historic Interest Area',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/640',
-    accessedAt: '2026-08-28',
-    covers: ['площадь Улинъюаня, число и высота его столбов, пещеры и природные мосты'],
-  },
-  {
-    id: 'unesco-south-china-karst-1248',
-    title: 'South China Karst',
-    organization: 'UNESCO World Heritage Centre',
-    shortLabel: 'ЮНЕСКО',
-    url: 'https://whc.unesco.org/en/list/1248',
-    accessedAt: '2026-08-28',
-    covers: [
-      'состав объекта из семи карстовых участков, включая гуйлиньский',
-      'общая площадь и виды карстового рельефа',
-    ],
   },
   {
     id: 'unesco-fanjingshan-1559',

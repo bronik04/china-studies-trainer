@@ -15,7 +15,7 @@ function byId(id: string) {
 }
 
 it('один регион называется по имени, а не числом', () => {
-  expect(collectionScope(byId('taklamakan'), regions)).toBe(
+  expect(collectionScope(byId('feature-taklamakan'), regions)).toBe(
     'Синьцзян-Уйгурский автономный район',
   );
 });

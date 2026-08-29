@@ -177,10 +177,15 @@ it('ведёт в раздел коллекций', () => {
   expect(onOpenCollections).toHaveBeenCalled();
 });
 
+/*
+ * Три, а не четыре: терракотовая армия переехала в справочник
+ * достопримечательностей и вместе с ним в группу «География» — она объект на
+ * карте, а не явление (2026-08-28).
+ */
 it('витрина коллекций фильтруется по группе', () => {
   const { onOpenCollection } = renderHome();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Культура и история 4' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Культура и история 3' }));
 
   expect(
     screen.getByRole('button', { name: /Праздник весны/ }),
