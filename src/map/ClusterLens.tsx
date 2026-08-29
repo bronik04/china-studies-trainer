@@ -30,9 +30,14 @@ export type ClusterLensProps = {
   readonly children: ReactNode;
 };
 
-/** Кружок с числом отходит от знака вверх-вправо. */
-const BADGE_OFFSET = 5;
-const BADGE_RADIUS = 3.6;
+/**
+ * Кружок с числом отходит от знака вверх-вправо.
+ *
+ * Радиус 5 единиц — не оформительский выбор: при опорной ширине карты единица
+ * равна пикселю, и кружок в 3,6 давал 7 px, в которых цифру не прочесть.
+ */
+const BADGE_OFFSET = 5.5;
+const BADGE_RADIUS = 5;
 
 export function ClusterLens({
   cluster,

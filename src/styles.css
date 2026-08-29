@@ -1110,13 +1110,6 @@ button.text:hover:enabled {
   stroke-width: 1.4;
 }
 
-/* Поводок от знака к отошедшей цели: иначе нажатие срабатывает «мимо города». */
-.china-map .city-leader {
-  stroke: var(--map-label);
-  stroke-dasharray: 2 2;
-  stroke-width: 0.7;
-}
-
 .china-map .city-hit {
   fill: transparent;
 }
