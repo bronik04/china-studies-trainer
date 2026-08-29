@@ -94,10 +94,25 @@ it('рисует знак города заметным на уменьшенн�
  * связывались поводками; теперь города собираются в гроздь.
  */
 it('собирает тесные города в гроздь вместо поводков', () => {
-  const { container } = renderMap();
+  const { container } = renderMap({ onSelectCity: () => {} });
 
   expect(container.querySelector('.city-leader')).toBeNull();
   expect(container.querySelectorAll('.map-cluster').length).toBeGreaterThan(0);
+});
+
+/*
+ * Слой, который только показывает, — атлас — гроздей не собирает: раскрыть их
+ * там нечем, и дюжина городов дельты Янцзы и Жемчужной просто исчезла бы за
+ * числом. Гроздь существует, чтобы разводить цели; там, где целей нет,
+ * разводить нечего.
+ */
+it('в слое без нажатия показывает каждый город на своём месте', () => {
+  const { container } = renderMap();
+
+  expect(container.querySelector('.map-cluster')).toBeNull();
+  expect(container.querySelectorAll('.city-mark')).toHaveLength(
+    cityPointsOfRegions(regions.map((region) => region.id)).length,
+  );
 });
 
 it('раскрывает гроздь и отдаёт нажатие городу внутри', () => {

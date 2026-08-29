@@ -70,13 +70,27 @@ export function CityLayer({
   showsLabels = true,
   zoom = 1,
 }: CityLayerProps) {
+  /*
+   * Гроздь нужна там, где есть что разделять: цель нажатия или подсвеченный
+   * ответ. Слой, который только показывает, — атлас — собирать знаки в число
+   * не должен: раскрыть такую гроздь нечем, и половина городов просто
+   * исчезла бы с карты.
+   */
+  const separates = onSelect !== undefined || selectedCityId !== null;
+
   const layout = useMemo(
-    () =>
-      clusterPlaceables(
-        points.map((point) => ({ id: point.city.id, x: point.x, y: point.y })),
-        TARGET_DIAMETER_UNITS / zoom,
-      ),
-    [points, zoom],
+    () => {
+      const placeables = points.map((point) => ({
+        id: point.city.id,
+        x: point.x,
+        y: point.y,
+      }));
+
+      return separates
+        ? clusterPlaceables(placeables, TARGET_DIAMETER_UNITS / zoom)
+        : { singles: placeables, clusters: [] };
+    },
+    [points, separates, zoom],
   );
 
   const cityById = useMemo(
@@ -94,9 +108,12 @@ export function CityLayer({
       cluster.members.some((member) => member.id === selectedCityId),
     )?.id ?? null;
 
-  const [openClusterId, setOpenClusterId] = useState<string | null>(
-    askedClusterId,
-  );
+  /*
+   * Что раскрыто. `null` — ученик ничего не трогал, и раскрыта гроздь со
+   * спрошенной целью; пустая строка — он закрыл её сам; иначе — та, которую он
+   * раскрыл. Так раскрытой всегда остаётся ровно одна.
+   */
+  const [openClusterId, setOpenClusterId] = useState<string | null>(null);
   const [lastAsked, setLastAsked] = useState<string | null>(askedClusterId);
 
   /*
@@ -105,7 +122,7 @@ export function CityLayer({
    */
   if (askedClusterId !== lastAsked) {
     setLastAsked(askedClusterId);
-    setOpenClusterId(askedClusterId);
+    setOpenClusterId(null);
   }
 
   function cityMark(cityId: string, x: number, y: number, inLens: boolean) {
@@ -199,7 +216,12 @@ export function CityLayer({
           <ClusterLens
             key={cluster.id}
             cluster={cluster}
-            open={openClusterId === cluster.id}
+            open={
+              openClusterId === null
+                ? cluster.id === askedClusterId
+                : openClusterId === cluster.id
+            }
+            movesFocus={openClusterId === cluster.id}
             hitRadius={TARGET_DIAMETER_UNITS / zoom / 2}
             label={
               onSelect
@@ -216,7 +238,7 @@ export function CityLayer({
               />
             }
             onOpen={() => setOpenClusterId(cluster.id)}
-            onClose={() => setOpenClusterId(null)}
+            onClose={() => setOpenClusterId('')}
           >
             {cluster.members.map((member) =>
               cityMark(member.id, member.lensX, member.lensY, true),

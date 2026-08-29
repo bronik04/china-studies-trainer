@@ -18,8 +18,14 @@ const cluster: MapCluster = {
 
 const LABEL = 'Гроздь из двух городов: a, b';
 
-function Harness({ label }: { readonly label?: string }) {
-  const [open, setOpen] = useState(false);
+function Harness({
+  label,
+  autoOpen = false,
+}: {
+  readonly label?: string;
+  readonly autoOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(autoOpen);
 
   return (
     <svg>
@@ -28,6 +34,7 @@ function Harness({ label }: { readonly label?: string }) {
         open={open}
         label={label}
         hitRadius={8.64}
+        movesFocus={!autoOpen}
         mark={
           <circle className="test-mark" cx={cluster.x} cy={cluster.y} r={3} />
         }
@@ -104,4 +111,15 @@ it('не отвечает и не берёт фокус без подписи', 
 
   expect(hit.getAttribute('tabindex')).toBe('-1');
   expect(hit.getAttribute('aria-hidden')).toBe('true');
+});
+
+/*
+ * Гроздь со спрошенной целью раскрывается сама — и фокус при этом не трогает:
+ * иначе он уезжал бы с четырёх вариантов ответа на карту при каждом новом
+ * вопросе.
+ */
+it('раскрытая сама не уводит фокус', () => {
+  render(<Harness autoOpen />);
+
+  expect(document.body).toHaveFocus();
 });

@@ -1173,10 +1173,17 @@ button.text:hover:enabled {
   }
 }
 
+/*
+ * Круг лупы и якорь нажатий не ловят. Лупа накрывает соседние цели — под
+ * пекинской лежат Чэндэ, Шанду и Юньган, — и, перехватывая нажатие, она
+ * запирала бы ученика с мышью: закрыть её он мог бы только с клавиатуры.
+ * Знаки внутри лупы рисуются после неё и остаются нажимаемыми.
+ */
 .china-map .cluster-lens {
   animation: cluster-lens-in var(--duration-quick) ease-out;
   fill: var(--surface-paper-bright);
   fill-opacity: 0.93;
+  pointer-events: none;
   stroke: var(--map-coast);
   stroke-width: 0.8;
   transform-box: fill-box;
@@ -1185,6 +1192,7 @@ button.text:hover:enabled {
 
 .china-map .cluster-anchor {
   fill: var(--accent);
+  pointer-events: none;
 }
 
 /*

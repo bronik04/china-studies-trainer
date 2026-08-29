@@ -20,11 +20,3 @@ export const LANDMARK_POINTS: readonly LandmarkPoint[] = landmarks.map(
     return { landmark, x, y };
   },
 );
-
-export function landmarkPointsOf(
-  ids: readonly string[],
-): readonly LandmarkPoint[] {
-  const wanted = new Set(ids);
-
-  return LANDMARK_POINTS.filter((point) => wanted.has(point.landmark.id));
-}

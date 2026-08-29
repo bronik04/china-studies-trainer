@@ -22,6 +22,12 @@ export type ClusterLensProps = {
    * другого, а WCAG 2.2 (2.5.8) требует 24 px независимо от вида карты.
    */
   readonly hitRadius: number;
+  /**
+   * Уводить ли фокус внутрь при раскрытии. Истина — только когда гроздь
+   * раскрыл сам ученик: гроздь со спрошенной целью открывается сама, и красть
+   * фокус у списка ответов она не должна.
+   */
+  readonly movesFocus: boolean;
   /** Знак свёрнутой грозди — рисуется в её середине. */
   readonly mark: ReactNode;
   readonly onOpen?: () => void;
@@ -44,6 +50,7 @@ export function ClusterLens({
   open,
   label,
   hitRadius,
+  movesFocus,
   mark,
   onOpen,
   onClose,
@@ -60,7 +67,18 @@ export function ClusterLens({
 
   useEffect(() => {
     if (open) {
-      group.current?.querySelector<SVGElement>('[data-cluster-member]')?.focus();
+      if (movesFocus) {
+        group.current
+          ?.querySelector<SVGElement>('[data-cluster-member]')
+          ?.focus();
+      }
+
+      /*
+       * Пока гроздь раскрыта, обещание вернуть фокус не действует: иначе Esc,
+       * который родитель не послушал, оставил бы его висеть и увёл бы фокус на
+       * карту при следующем закрытии — уже по другой причине.
+       */
+      returnsFocus.current = false;
 
       return;
     }
@@ -69,7 +87,7 @@ export function ClusterLens({
       returnsFocus.current = false;
       hit.current?.focus();
     }
-  }, [open]);
+  }, [movesFocus, open]);
 
   if (!open) {
     return (

@@ -1,5 +1,8 @@
 import type { PhysicalFeature } from '../content/types';
-import { TARGET_DIAMETER_UNITS } from './city-hit-targets';
+import {
+  overlappingTargets,
+  TARGET_DIAMETER_UNITS,
+} from './city-hit-targets';
 import {
   clusterPlaceables,
   MAX_LENS_RADIUS_UNITS,
@@ -272,7 +275,36 @@ export function validateLensRadii(
   const widest: { layer: string; id: string; radius: number }[] = [];
 
   for (const { layer, points } of layers) {
-    const { clusters } = clusterPlaceables(points);
+    const { singles, clusters } = clusterPlaceables(points);
+
+    /*
+     * Свёрнутая гроздь — такая же цель, как одиночка, и накрывать соседнюю она
+     * не должна: знак грозди стоит в её середине, а середина ничем не связана
+     * с расстоянием до чужих точек. Меряется тем же правилом, что и цели
+     * городов, — `overlappingTargets`.
+     */
+    const targets = [
+      ...singles.map((single) => ({
+        id: single.id,
+        x: single.x,
+        y: single.y,
+        hitX: single.x,
+        hitY: single.y,
+        radius: TARGET_DIAMETER_UNITS / 2,
+      })),
+      ...clusters.map((cluster) => ({
+        id: cluster.id,
+        x: cluster.x,
+        y: cluster.y,
+        hitX: cluster.x,
+        hitY: cluster.y,
+        radius: TARGET_DIAMETER_UNITS / 2,
+      })),
+    ];
+
+    for (const [one, other] of overlappingTargets(targets)) {
+      errors.push(`Цели ${one} и ${other} в слое «${layer}» накрывают друг друга`);
+    }
 
     for (const cluster of clusters) {
       if (cluster.radius > MAX_LENS_RADIUS_UNITS) {
