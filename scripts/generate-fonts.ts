@@ -1,31 +1,74 @@
 /**
- * Подмножества шрифтов. Google Fonts принимает параметр `text=` и возвращает
- * файл ровно по запрошенным знакам — это снимает и 20-мегабайтный исходник,
- * и инструмент нарезки.
+ * Подмножества шрифтов. Файл скачивается с Google Fonts, а режется на месте —
+ * `pyftsubset` из fonttools.
  *
- * Скачивается два файла одного подмножества: woff2 для приложения и ttf для
- * проверки. Формат выбирается заголовком `User-Agent`.
+ * Раньше нарезку делал сам Google по параметру `text=`, и инструмент был не
+ * нужен. С 2026-08-29 для китайских шрифтов это перестало работать: запрос на
+ * два иероглифа возвращает весь шрифт — 6,15 МБ в woff2 и 14,8 МБ в ttf,
+ * — а `unicode-range` в ответе по-прежнему повторяет запрошенное. Сборка
+ * этого не замечала: `validate:fonts` проверяет покрытие, а полный шрифт
+ * покрывает всё, и в репозиторий уехал шрифт на 30 928 знаков вместо 477.
  *
- * Проверять обязательно: `unicode-range` в ответе Google повторяет
- * запрошенное, а не отвечает, что вошло. Контрольный запрос трёх знаков
- * `中国А` у Prata возвращает «покрыто всё», хотя иероглифов в Prata нет.
+ * Отсюда правило: что вошло в файл, решаем мы, а не отвечающая сторона.
+ * Ответ Google остаётся источником — лицензия и происхождение те же, — но
+ * подмножество вырезается локально и проверяется по вырезанному.
+ *
+ * Нужен `pyftsubset` с поддержкой woff2. Ставится один раз:
+ * `pipx install fonttools && pipx inject fonttools brotli`.
  *
  * Сеть нужна только здесь и только когда меняется контент.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { groupGlyphs, readSourceText } from './font-inventory';
 import { EXCEPTIONS, FONTS } from './font-manifest';
 import { codePointsInTtf } from './ttf-cmap';
 
+/* Заголовок современного браузера: под него Google отдаёт woff2. */
 const WOFF2_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36';
-/** Android 4.3 не знает woff2, и Google отдаёт ему то же подмножество в ttf. */
-const TTF_UA =
-  'Mozilla/5.0 (Linux; U; Android 4.3; en-us) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30';
 
 const FONTS_DIR = resolve(process.cwd(), 'src/assets/fonts');
 const COVERAGE = resolve(process.cwd(), 'scripts/font-coverage.json');
+
+/**
+ * Режет скачанный файл по списку знаков. Формат задаётся `flavor`: woff2 идёт
+ * приложению, ttf — проверке покрытия, и оба вырезаны из одного источника,
+ * поэтому разойтись не могут.
+ */
+function subset(source: Buffer, text: string, flavor: 'woff2' | 'ttf'): Buffer {
+  const stem = join(tmpdir(), `font-${process.pid}-${flavor}`);
+  const input = `${stem}.in`;
+  const output = `${stem}.out`;
+
+  writeFileSync(input, source);
+
+  try {
+    execFileSync(
+      'pyftsubset',
+      [
+        input,
+        `--text=${text}`,
+        ...(flavor === 'woff2' ? ['--flavor=woff2'] : []),
+        `--output-file=${output}`,
+      ],
+      { stdio: ['ignore', 'ignore', 'inherit'] },
+    );
+
+    return readFileSync(output);
+  } catch (error) {
+    throw new Error(
+      'Не удалось нарезать шрифт. Нужен pyftsubset с поддержкой woff2: ' +
+        '`pipx install fonttools && pipx inject fonttools brotli`',
+      { cause: error },
+    );
+  } finally {
+    rmSync(input, { force: true });
+    rmSync(output, { force: true });
+  }
+}
 
 async function fetchSubset(
   family: string,
@@ -66,8 +109,18 @@ let totalBytes = 0;
 for (const font of FONTS) {
   const text = font.requires.map((group) => groups[group]).join('');
 
-  const ttf = await fetchSubset(font.family, font.weight, text, TTF_UA);
-  const covered = codePointsInTtf(ttf);
+  /*
+   * Скачивается один файл на шрифт — тот, что отдаёт Google. Для латиницы это
+   * уже подмножество, для китайского — весь шрифт; и то и другое режется
+   * дальше одинаково.
+   */
+  const source = Buffer.from(
+    await fetchSubset(font.family, font.weight, text, WOFF2_UA),
+  );
+  const ttf = subset(source, text, 'ttf');
+  const covered = codePointsInTtf(
+    ttf.buffer.slice(ttf.byteOffset, ttf.byteOffset + ttf.byteLength) as ArrayBuffer,
+  );
   const missing = [...text].filter((char) => {
     const code = char.codePointAt(0)!;
 
@@ -81,8 +134,8 @@ for (const font of FONTS) {
     );
   }
 
-  const woff2 = await fetchSubset(font.family, font.weight, text, WOFF2_UA);
-  writeFileSync(resolve(FONTS_DIR, font.file), Buffer.from(woff2));
+  const woff2 = subset(source, text, 'woff2');
+  writeFileSync(resolve(FONTS_DIR, font.file), woff2);
 
   coverage[font.file] = [...covered].sort((left, right) => left - right);
   totalBytes += woff2.byteLength;

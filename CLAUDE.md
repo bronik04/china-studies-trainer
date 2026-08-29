@@ -27,12 +27,14 @@ npm run build                    # три валидатора → tsc -b → vi
 | `npm run generate:palette` | перезаписывает `src/map/region-palette.ts` целиком по геометрии SVG; сторожится отпечатком контуров |
 | `npm run generate:callouts` | правит `public/maps/china-provinces.svg` на месте — выноски для Макао и Гонконга |
 | `npm run generate:hit-targets` | правит тот же SVG — невидимые цели нажатия для регионов мельче порога WCAG |
-| `npm run generate:fonts` | пересобирает подмножества шрифтов в `src/assets/fonts` и `scripts/font-coverage.json` |
+| `npm run generate:fonts` | пересобирает подмножества шрифтов в `src/assets/fonts` и `scripts/font-coverage.json`; нужен `pyftsubset` с woff2 (`pipx install fonttools && pipx inject fonttools brotli`) |
 | `npm run extract:physical` | перезаписывает `scripts/data/physical-source.json` — выжимку из Natural Earth; нужна сеть, в сборку не входит |
 | `npm run fetch:photos` | скачивает снимки коллекций с Викисклада в `public/photos`, переписывает `src/content/photo-credits.ts` и `docs/sources/photos.md`; нужна сеть, в сборку не входит |
 | `npm run generate:physical` | перезаписывает `src/map/physical-geometry.ts` целиком по выжимке Natural Earth |
 
 Оба SVG-генератора идемпотентны, их блоки ограничены комментариями-метками. Перед правкой любого файла в `src/map/` или самого SVG прочитайте шапку файла: сгенерированные помечены явно.
+
+**Шрифты режутся у нас, а не на стороне Google.** Раньше подмножество приходило по параметру `text=`; с 2026-08-29 для китайских шрифтов это перестало работать — запрос на два иероглифа возвращает весь шрифт (6,15 МБ), а `unicode-range` в ответе по-прежнему повторяет запрошенное. Проверка покрытия такой подмены не видит: полный шрифт покрывает всё. Поэтому `generate:fonts` скачивает то, что отдают, и режет сам через `pyftsubset`, а покрытие считает по вырезанному.
 
 **Новый иероглиф в контенте ломает сборку.** Шрифты подмножествованы; `validate:fonts` сравнивает знаки, встречающиеся в `src`, с покрытием подмножеств. Добавили регион с незнакомым иероглифом — запустите `npm run generate:fonts`, иначе сборка падает (это лучше, чем квадратик в браузере).
 

@@ -15,7 +15,7 @@
  * В сборку не входит: нужна сеть. Запуск — `npm run fetch:photos`.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -27,9 +27,25 @@ const OUTPUT_DIR = 'public/photos';
 const CREDITS_FILE = 'src/content/photo-credits.ts';
 const SOURCES_FILE = 'docs/sources/photos.md';
 
-/** Крупный кадр и карточка. Замер: 1200 px при q72 — около 110 КБ. */
+/**
+ * Крупный кадр и карточка. Крупный нужен именно таким: в «Узнать по
+ * фотографии» снимок идёт во всю ширину (`sizes="100vw"`), и обрезать его
+ * значило бы мылить сам вопрос.
+ */
 const WIDTHS = [1200, 640] as const;
-const QUALITY = 72;
+
+/**
+ * Качество и потолок веса.
+ *
+ * Средний снимок при q68 весит около сотни килобайт, и трогать его незачем.
+ * Но детальные кадры — листва, кладка, толпа — при том же качестве доходят до
+ * трёхсот с лишним, а весь каталог лежит в репозитории. Поэтому качество
+ * понижается только там, где вес вышел за потолок, и только до пола: лучше
+ * кадр помягче, чем страница в треть мегабайта.
+ */
+const QUALITY = 68;
+const QUALITY_FLOOR = 50;
+const SIZE_CAP_BYTES: Readonly<Record<number, number>> = { 1200: 200_000, 640: 70_000 };
 
 type Manifest = { readonly photos: Readonly<Record<string, string>> };
 
@@ -185,17 +201,32 @@ for (const [id, title] of entries) {
   const widths = [...new Set(WIDTHS.map((width) => Math.min(width, image.width)))];
 
   for (const width of widths) {
-    execFileSync('cwebp', [
-      '-quiet',
-      '-resize',
-      String(width),
-      '0',
-      '-q',
-      String(QUALITY),
-      original,
-      '-o',
-      join(OUTPUT_DIR, `${id}-${width}.webp`),
-    ]);
+    const target = join(OUTPUT_DIR, `${id}-${width}.webp`);
+    const cap = SIZE_CAP_BYTES[width] ?? Infinity;
+
+    /*
+     * Качество понижается шагами, пока кадр не уложится в потолок. Шаг в пять
+     * единиц: мельче — незаметно на весе, крупнее — заметно на глаз.
+     */
+    for (let quality = QUALITY; ; quality -= 5) {
+      execFileSync('cwebp', [
+        '-quiet',
+        '-m',
+        '6',
+        '-resize',
+        String(width),
+        '0',
+        '-q',
+        String(quality),
+        original,
+        '-o',
+        target,
+      ]);
+
+      if (statSync(target).size <= cap || quality <= QUALITY_FLOOR) {
+        break;
+      }
+    }
   }
 
   credits.push({
@@ -264,7 +295,8 @@ const sourcesFile = `# Снимки коллекций
 Все снимки — под свободными лицензиями; генератор роняет прогон, если лицензия
 не начинается с CC0, CC BY или Public domain, а также если у файла есть
 оговорка об использовании. Каждый снимок сведён в два WebP — 1200 px и 640 px,
-качество ${QUALITY} — и лежит в \`public/photos\`. Оригиналы в репозиторий не
+качество ${QUALITY} с понижением до ${QUALITY_FLOOR} на тяжёлых кадрах — и лежит
+в \`public/photos\`. Оригиналы в репозиторий не
 кладутся.
 
 Показ обязывает назвать автора и лицензию: подпись под кадром берёт их из
