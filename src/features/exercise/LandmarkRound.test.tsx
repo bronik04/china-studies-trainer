@@ -23,15 +23,32 @@ function askedName(): string {
   return screen.getByTestId('exercise-target').textContent as string;
 }
 
+/*
+ * Ответ по звезде: если объект попал в гроздь, её сначала раскрывают. Так же
+ * отвечает и ученик — прямой цели у скучившихся объектов нет, пока лупа
+ * закрыта.
+ */
+function answerOnMap(name: string) {
+  const own = new RegExp(`^${name},`);
+
+  if (screen.queryByRole('button', { name: own }) === null) {
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: new RegExp(`Гроздь из .* ${name}`),
+      }),
+    );
+  }
+
+  fireEvent.click(screen.getByRole('button', { name: own }));
+}
+
 it('засчитывает верную звезду и идёт к следующему вопросу', () => {
   vi.useFakeTimers();
   try {
     renderRound();
 
     const asked = askedName();
-    fireEvent.click(
-      screen.getByRole('button', { name: new RegExp(`^${asked},`) }),
-    );
+    answerOnMap(asked);
     act(() => {
       vi.advanceTimersByTime(CORRECT_PAUSE_MS);
     });
