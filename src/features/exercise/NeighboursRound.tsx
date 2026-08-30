@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Region } from '../../content/types';
 import {
   createNeighboursRound,
@@ -22,7 +22,14 @@ import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { RoundStage } from './RoundStage';
 
 export type NeighboursRoundProps = {
+  /** Чем отвечают: полный справочник. Из него берутся карта и список. */
   readonly regions: readonly Region[];
+  /**
+   * Кого спрашивают. Не то же, что `regions`: повтор ошибок сужает вопросы до
+   * ошибочных регионов, но отвечать по-прежнему нужно любым — сосед Хунани
+   * может не входить в набор повтора. Не задан — спрашиваются все.
+   */
+  readonly askedPool?: readonly Region[];
   readonly language: QuestionLanguage;
   readonly roundId: string;
   readonly seed: number;
@@ -39,6 +46,7 @@ export type NeighboursRoundProps = {
  */
 export function NeighboursRound({
   regions,
+  askedPool = regions,
   language,
   roundId,
   seed,
@@ -46,7 +54,7 @@ export function NeighboursRound({
   onExit,
 }: NeighboursRoundProps) {
   const [round, setRound] = useState<Round>(() =>
-    createNeighboursRound(regions, {
+    createNeighboursRound(askedPool, {
       roundId,
       language,
       random: createSeededRandom(seed),
@@ -102,23 +110,34 @@ export function NeighboursRound({
   /*
    * До ответа на карте видны только отметки: цвет здесь — ответ, и показывать
    * исход каждого нажатия значило бы дать перебрать соседей наугад.
+   *
+   * Значение запоминается: `neighbourStates` входит в зависимости эффекта,
+   * который расставляет атрибуты всем областям карты, и новый объект на каждом
+   * рендере гонял бы этот обход на каждом тике секундомера в оболочке.
    */
-  const neighbourStates: Record<string, NeighbourState> = {};
-  if (verdict === null) {
-    for (const id of round.marked) {
-      neighbourStates[id] = 'marked';
+  const neighbourStates = useMemo(() => {
+    const states: Record<string, NeighbourState> = {};
+
+    if (verdict === null) {
+      for (const id of round.marked) {
+        states[id] = 'marked';
+      }
+
+      return states;
     }
-  } else {
+
     for (const id of verdict.found) {
-      neighbourStates[id] = 'found';
+      states[id] = 'found';
     }
     for (const id of verdict.missed) {
-      neighbourStates[id] = 'missed';
+      states[id] = 'missed';
     }
     for (const id of verdict.extra) {
-      neighbourStates[id] = 'extra';
+      states[id] = 'extra';
     }
-  }
+
+    return states;
+  }, [round.marked, verdict]);
 
   function handleSelect(regionId: string) {
     /*

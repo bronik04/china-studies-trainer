@@ -171,3 +171,29 @@ it('держит обе отметки, поставленные в одном �
 
   expect(list().getAllByRole('button', { name: /отмечен$/ })).toHaveLength(2);
 });
+
+it('в раунде повтора отвечать можно любым регионом, а не только спрошенными', () => {
+  const pool = regions.filter((region) =>
+    ['hubei', 'hunan', 'gansu'].includes(region.id),
+  );
+
+  render(
+    <NeighboursRound
+      regions={regions}
+      askedPool={pool}
+      language="ru"
+      roundId="r1"
+      seed={1}
+      onFinish={() => {}}
+      onExit={() => {}}
+    />,
+  );
+
+  openAnswerList();
+
+  /* Спрашивают троих, а соседи у них по всей стране: список обязан быть полным. */
+  expect(list().getAllByRole('button')).toHaveLength(regions.length);
+  expect(pool.map((region) => region.nameRu)).toContain(
+    screen.getByTestId('neighbours-target').textContent,
+  );
+});

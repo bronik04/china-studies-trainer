@@ -11,7 +11,7 @@
  * Запуск: npx tsx scripts/generate-region-neighbours.ts
  */
 import { readFileSync, writeFileSync } from 'node:fs';
-import { parseMapPath, type Point } from '../src/map/svg-path';
+import { boundingBox, parseMapPath, type Point } from '../src/map/svg-path';
 import { paletteInputsFingerprint, regionContours } from './palette-fingerprint';
 
 const MAP_FILE = 'public/maps/china-provinces.svg';
@@ -27,13 +27,35 @@ export const TOUCH_EPSILON = 0.5;
 export type NeighbourShape = {
   readonly id: string;
   readonly points: readonly Point[];
+  /** Габарит контура. Нужен, чтобы не сравнивать точки заведомо далёких пар. */
+  readonly box: ReturnType<typeof boundingBox>;
 };
 
 export function shapesFrom(svg: string): readonly NeighbourShape[] {
-  return regionContours(svg).map((contour) => ({
-    id: contour.id,
-    points: parseMapPath(contour.d).flat(),
-  }));
+  return regionContours(svg).map((contour) => {
+    const rings = parseMapPath(contour.d);
+
+    return { id: contour.id, points: rings.flat(), box: boundingBox(rings) };
+  });
+}
+
+/**
+ * Габариты дальше порога — контуры и подавно: сравнивать их точки незачем.
+ * Отсев дешёвый, а перебор точек квадратичен, и на 561 паре регионов почти все
+ * пары отсеиваются здесь. Проверка карты гоняет тот же расчёт на каждой
+ * сборке, поэтому цена не теоретическая.
+ */
+function boxesApart(
+  a: NeighbourShape,
+  b: NeighbourShape,
+  epsilon: number,
+): boolean {
+  return (
+    a.box.minX - b.box.maxX > epsilon ||
+    b.box.minX - a.box.maxX > epsilon ||
+    a.box.minY - b.box.maxY > epsilon ||
+    b.box.minY - a.box.maxY > epsilon
+  );
 }
 
 function touches(
@@ -63,6 +85,10 @@ export function neighboursOf(
 
   for (let i = 0; i < shapes.length; i += 1) {
     for (let j = i + 1; j < shapes.length; j += 1) {
+      if (boxesApart(shapes[i], shapes[j], epsilon)) {
+        continue;
+      }
+
       if (touches(shapes[i].points, shapes[j].points, epsilon)) {
         graph[shapes[i].id].push(shapes[j].id);
         graph[shapes[j].id].push(shapes[i].id);

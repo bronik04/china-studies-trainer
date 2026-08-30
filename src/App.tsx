@@ -530,7 +530,8 @@ export default function App() {
     return (
       <AppFrame fillsFrame current={null} onNavigate={navigate}>
         <NeighboursRound
-          regions={neighboursPool}
+          regions={regions}
+          askedPool={neighboursPool}
           language={language}
           roundId={roundId}
           seed={seed}
