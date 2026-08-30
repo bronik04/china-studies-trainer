@@ -192,6 +192,8 @@ export default function App() {
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 31));
   const [lastAttempts, setLastAttempts] = useState<readonly Attempt[]>([]);
   const [fillRound, setFillRound] = useState<FillRound | null>(null);
+  const [neighboursPool, setNeighboursPool] =
+    useState<readonly Region[]>(regions);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
   const [collectionId, setCollectionId] = useState<string | null>(null);
@@ -454,12 +456,23 @@ export default function App() {
   /**
    * Игра «соседи»: отдельный экран и свой движок, как у заполнения карты.
    * Поэтому запуск свой, а не ветка в `startRound`.
+   *
+   * Пул нужен повтору ошибок: он спрашивает те же регионы той же игрой, а не
+   * подсовывает «найти на карте» — форма вопроса там другая.
    */
-  function startNeighboursRound(nextLanguage: QuestionLanguage) {
+  function startNeighboursPool(
+    nextLanguage: QuestionLanguage,
+    pool: readonly Region[],
+  ) {
     setLanguage(nextLanguage);
+    setNeighboursPool(pool);
     setRoundId(newRoundId());
     setSeed(Math.floor(Math.random() * 2 ** 31));
     setScreen('neighbours-exercise');
+  }
+
+  function startNeighboursRound(nextLanguage: QuestionLanguage) {
+    startNeighboursPool(nextLanguage, regions);
   }
 
   function startFillRound(nextLanguage: QuestionLanguage) {
@@ -517,7 +530,7 @@ export default function App() {
     return (
       <AppFrame fillsFrame current={null} onNavigate={navigate}>
         <NeighboursRound
-          regions={regions}
+          regions={neighboursPool}
           language={language}
           roundId={roundId}
           seed={seed}
@@ -693,6 +706,7 @@ export default function App() {
     const isHistoryRound = roundKind === 'history';
     const isCultureRound = roundKind === 'collection';
     const isLandmarkRound = roundKind === 'landmark';
+    const isNeighboursRound = roundKind === 'neighbours';
     /*
      * Набор повтора — ошибки этого раунда, те же, что показаны списком
      * (решение владельца от 2026-08-25). Отдельного источника у кнопки нет:
@@ -805,6 +819,14 @@ export default function App() {
               return;
             }
 
+            if (isNeighboursRound) {
+              startNeighboursPool(
+                language,
+                regions.filter((region) => repeatIds.includes(region.id)),
+              );
+              return;
+            }
+
             startRound(exerciseTypes[0], language, repeatIds);
           }}
           onNewRound={() => {
@@ -831,6 +853,11 @@ export default function App() {
 
             if (isCultureRound) {
               startCulturePool(language, culturePool);
+              return;
+            }
+
+            if (isNeighboursRound) {
+              startNeighboursRound(language);
               return;
             }
 
