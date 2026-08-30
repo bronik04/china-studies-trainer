@@ -15,6 +15,7 @@ function renderHome(attempts: readonly Attempt[] = []) {
   const handlers = {
     onStartRound: vi.fn(),
     onStartFillRound: vi.fn(),
+    onStartNeighboursRound: vi.fn(),
     onStartCityRound: vi.fn(),
     onStartLandmarkRound: vi.fn(),
     onStartCultureRound: vi.fn(),
@@ -227,6 +228,7 @@ it('раздел режимов принимает фокус: шапка вед
       attempts={[]}
       onStartRound={vi.fn()}
       onStartFillRound={vi.fn()}
+      onStartNeighboursRound={vi.fn()}
       onStartCityRound={vi.fn()}
       onStartLandmarkRound={vi.fn()}
       onStartCultureRound={vi.fn()}
@@ -438,4 +440,12 @@ it('показывает обе игры по физической геогра�
     screen.getByRole('button', { name: /Найти объект/ }),
   ).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Назвать объект/ })).toBeInTheDocument();
+});
+
+it('запускает игру про соседей с главной', () => {
+  const { onStartNeighboursRound } = renderHome();
+  fireEvent.click(screen.getByRole('button', { name: /Соседи региона/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(onStartNeighboursRound).toHaveBeenCalledWith('ru');
 });

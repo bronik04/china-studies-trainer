@@ -49,6 +49,7 @@ export type HomePageProps = {
     regionIds: readonly string[] | null,
   ) => void;
   readonly onStartFillRound: (language: QuestionLanguage) => void;
+  readonly onStartNeighboursRound: (language: QuestionLanguage) => void;
   readonly onStartCultureRound: (
     language: QuestionLanguage,
     set: CultureSet,
@@ -186,6 +187,7 @@ export function HomePage({
   attempts,
   onStartRound,
   onStartFillRound,
+  onStartNeighboursRound,
   onStartCityRound,
   onStartLandmarkRound,
   onStartCultureRound,
@@ -214,6 +216,8 @@ export function HomePage({
       onStartRound(card.exerciseType, language, null);
     } else if (card.kind === 'fill') {
       onStartFillRound(language);
+    } else if (card.kind === 'neighbours') {
+      onStartNeighboursRound(language);
     } else if (card.kind === 'city') {
       onStartCityRound(card.exerciseType, language, set as CitySet);
     } else if (card.kind === 'landmark') {

@@ -1,6 +1,10 @@
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
-import { OUTCOME_LABELS } from './outcome-labels';
+import {
+  NEIGHBOUR_LABELS,
+  OUTCOME_LABELS,
+  type NeighbourState,
+} from './outcome-labels';
 import {
   isRegionClosed,
   isRegionSelectable,
@@ -9,6 +13,7 @@ import {
 
 const NO_ANSWER_STATES: Readonly<Record<string, AnswerState>> = {};
 const NO_OUTCOMES: Readonly<Record<string, RegionOutcome>> = {};
+const NO_NEIGHBOUR_STATES: Readonly<Record<string, NeighbourState>> = {};
 
 export type RegionAnswerListProps = {
   readonly regions: readonly Region[];
@@ -16,6 +21,12 @@ export type RegionAnswerListProps = {
   readonly onSelect: (regionId: string) => void;
   readonly answerStates?: Readonly<Record<string, AnswerState>>;
   readonly outcomes?: Readonly<Record<string, RegionOutcome>>;
+  /**
+   * Состояния игры «соседи»: до ответа отметка, после — исход разбора. Живут
+   * отдельно от `outcomes`: там исход одного спрошенного региона, здесь —
+   * множества.
+   */
+  readonly neighbourStates?: Readonly<Record<string, NeighbourState>>;
   readonly interactive?: boolean;
   readonly paused?: boolean;
 };
@@ -36,6 +47,7 @@ export function RegionAnswerList({
   onSelect,
   answerStates = NO_ANSWER_STATES,
   outcomes = NO_OUTCOMES,
+  neighbourStates = NO_NEIGHBOUR_STATES,
   interactive = true,
   paused = false,
 }: RegionAnswerListProps) {
@@ -45,14 +57,18 @@ export function RegionAnswerList({
     <ul className="map-alternative" aria-label="Список регионов карты">
       {regions.map((region) => {
         const outcome = outcomes[region.id];
+        const neighbourState = neighbourStates[region.id];
 
         return (
           <li key={region.id}>
             <button
               type="button"
-              aria-pressed={region.id === selectedRegionId}
+              aria-pressed={
+                neighbourState === 'marked' || region.id === selectedRegionId
+              }
               aria-disabled={paused ? true : undefined}
               data-outcome={outcome}
+              data-neighbour-state={neighbourState}
               disabled={isRegionClosed(rules, region.id)}
               onClick={() => {
                 if (isRegionSelectable(rules, region.id)) {
@@ -62,6 +78,7 @@ export function RegionAnswerList({
             >
               {region.nameRu} <span lang="zh-Hans">({region.nameZh})</span>
               {outcome ? ` — ${OUTCOME_LABELS[outcome]}` : null}
+              {neighbourState ? ` — ${NEIGHBOUR_LABELS[neighbourState]}` : null}
             </button>
           </li>
         );

@@ -21,7 +21,8 @@ export type TargetKind =
   | 'physical'
   | 'history'
   | 'collection'
-  | 'landmark';
+  | 'landmark'
+  | 'neighbours';
 
 export type Target = {
   readonly kind: TargetKind;
@@ -30,6 +31,16 @@ export type Target = {
 
 export function regionTarget(id: string): Target {
   return { kind: 'region', id };
+}
+
+/**
+ * Цель игры «соседи»: спрошенный регион. Отдельный вид, а не `region`, — «не
+ * знает соседей Хубэя» не то же, что «не знает, где Хубэй», и ошибка в одной
+ * игре не должна снимать освоенность, заработанную в другой. Тот же довод, по
+ * которому город отделён от региона.
+ */
+export function neighboursTarget(id: string): Target {
+  return { kind: 'neighbours', id };
 }
 
 export function cityTarget(id: string): Target {

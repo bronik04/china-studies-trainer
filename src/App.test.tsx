@@ -451,3 +451,40 @@ it('итог заполнения ведёт в раунд по ошибочны
 
   expect(screen.getByText(/Вопрос 1 из 1/)).toBeInTheDocument();
 }, 20_000);
+
+it('запускает игру про соседей и спрашивает тридцать регионов', async () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /Соседи региона/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+  await settle();
+
+  expect(screen.getByText(/Вопрос 1 из 30/)).toBeInTheDocument();
+  expect(screen.getByText('Нажмите всех соседей')).toBeInTheDocument();
+});
+
+it('итог игры про соседей ведёт в неё же, а не в «найти на карте»', async () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /Соседи региона/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+  await settle();
+
+  vi.useFakeTimers();
+  try {
+    /* Тридцать пустых ответов: каждый — ошибка, разбор держится и гаснет сам. */
+    for (let index = 0; index < 30; index += 1) {
+      fireEvent.click(screen.getByRole('button', { name: 'Готово' }));
+      act(() => {
+        vi.advanceTimersByTime(WRONG_PAUSE_MS);
+      });
+    }
+  } finally {
+    vi.useRealTimers();
+  }
+  await settle();
+
+  fireEvent.click(screen.getByRole('button', { name: /Повторить ошибки/ }));
+  await settle();
+
+  expect(screen.getByText('Нажмите всех соседей')).toBeInTheDocument();
+}, 20_000);
