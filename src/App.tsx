@@ -57,6 +57,7 @@ import {
   ExerciseRound,
   FillMapResultsPage,
   FillMapRound,
+  NeighboursRound,
   OrderRound,
   PhysicalRound,
   prefetchScreens,
@@ -85,6 +86,7 @@ type Screen =
   | 'results'
   | 'fill'
   | 'fill-results'
+  | 'neighbours-exercise'
   | 'order-exercise';
 
 /**
@@ -449,6 +451,17 @@ export default function App() {
     setScreen('culture-exercise');
   }
 
+  /**
+   * Игра «соседи»: отдельный экран и свой движок, как у заполнения карты.
+   * Поэтому запуск свой, а не ветка в `startRound`.
+   */
+  function startNeighboursRound(nextLanguage: QuestionLanguage) {
+    setLanguage(nextLanguage);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('neighbours-exercise');
+  }
+
   function startFillRound(nextLanguage: QuestionLanguage) {
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
@@ -498,6 +511,21 @@ export default function App() {
     commitAttempts(attempts);
     setLastAttempts(attempts);
     setScreen('results');
+  }
+
+  if (screen === 'neighbours-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <NeighboursRound
+          regions={regions}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={(round) => finishRound(round.attempts)}
+          onExit={goToModes}
+        />
+      </AppFrame>
+    );
   }
 
   if (screen === 'fill') {
@@ -868,6 +896,7 @@ export default function App() {
           attempts={progress.attempts}
           onStartRound={startRound}
           onStartFillRound={startFillRound}
+          onStartNeighboursRound={startNeighboursRound}
           onStartCityRound={startCityRound}
           onStartCultureRound={startCultureRound}
           onStartHistoryRound={startHistoryRound}
