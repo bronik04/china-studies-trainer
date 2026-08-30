@@ -22,6 +22,7 @@ import {
 import { dynasties } from './content/dynasties';
 import {
   citiesWord,
+  countriesWord,
   dynastiesWord,
   featuresWord,
   landmarksWord,
@@ -755,6 +756,7 @@ export default function App() {
     const isCultureRound = roundKind === 'collection';
     const isLandmarkRound = roundKind === 'landmark';
     const isNeighboursRound = roundKind === 'neighbours';
+    const isCountryRound = roundKind === 'country';
     /*
      * Набор повтора — ошибки этого раунда, те же, что показаны списком
      * (решение владельца от 2026-08-25). Отдельного источника у кнопки нет:
@@ -774,6 +776,9 @@ export default function App() {
     const repeatLandmarks = landmarkPool.filter((one) =>
       repeatIds.includes(one.id),
     );
+    const repeatCountries = countryPool.filter((one) =>
+      repeatIds.includes(one.id),
+    );
 
     /*
      * Карта итога есть у раундов по регионам. У раунда по городам исход по
@@ -786,7 +791,8 @@ export default function App() {
       isPhysicalRound ||
       isHistoryRound ||
       isCultureRound ||
-      isLandmarkRound
+      isLandmarkRound ||
+      isCountryRound
         ? undefined
         : (
         <ChinaMap
@@ -816,7 +822,9 @@ export default function App() {
                     ? culturePool
                     : isLandmarkRound
                       ? landmarkPool
-                      : regions
+                      : isCountryRound
+                        ? countryPool
+                        : regions
           }
           countWord={
             isCityRound
@@ -829,7 +837,9 @@ export default function App() {
                     ? photosWord
                     : isLandmarkRound
                       ? landmarksWord
-                      : undefined
+                      : isCountryRound
+                        ? countriesWord
+                        : undefined
           }
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
@@ -875,6 +885,11 @@ export default function App() {
               return;
             }
 
+            if (isCountryRound) {
+              startCountryPool(countryExerciseType, language, repeatCountries);
+              return;
+            }
+
             startRound(exerciseTypes[0], language, repeatIds);
           }}
           onNewRound={() => {
@@ -906,6 +921,11 @@ export default function App() {
 
             if (isNeighboursRound) {
               startNeighboursRound(language);
+              return;
+            }
+
+            if (isCountryRound) {
+              startCountryRound(countryExerciseType, language);
               return;
             }
 

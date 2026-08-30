@@ -488,3 +488,34 @@ it('итог игры про соседей ведёт в неё же, а не �
 
   expect(screen.getByText('Нажмите всех соседей')).toBeInTheDocument();
 }, 20_000);
+
+it('итог игры про страны считает страны, а не регионы', async () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /Найти страну/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+  await settle();
+
+  /* Список ответов живёт в панели оболочки: её нужно открыть. */
+  fireEvent.click(screen.getByRole('button', { name: 'Ответить из списка' }));
+
+  vi.useFakeTimers();
+  try {
+    /* Четырнадцать ответов подряд, какие попались: важен итог, а не счёт. */
+    for (let index = 0; index < 14; index += 1) {
+      const list = screen.getByRole('list', { name: 'Список стран' });
+      const buttons = within(list).getAllByRole('button');
+      fireEvent.click(buttons[index % buttons.length]);
+      act(() => {
+        vi.advanceTimersByTime(WRONG_PAUSE_MS);
+      });
+    }
+  } finally {
+    vi.useRealTimers();
+  }
+  await settle();
+
+  expect(screen.getByText(/Итог раунда/)).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: /Повторить ошибки: \d+ стран/ }),
+  ).toBeInTheDocument();
+}, 20_000);

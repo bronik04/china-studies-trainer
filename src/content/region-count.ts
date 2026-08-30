@@ -37,6 +37,22 @@ export function citiesWord(count: number): string {
   return last >= 2 && last <= 4 ? 'города' : 'городов';
 }
 
+/** 1 страна, 2–4 страны, 5+ стран. */
+export function countriesWord(count: number): string {
+  const teens = count % 100;
+  const last = count % 10;
+
+  if (teens >= 11 && teens <= 14) {
+    return 'стран';
+  }
+
+  if (last === 1) {
+    return 'страна';
+  }
+
+  return last >= 2 && last <= 4 ? 'страны' : 'стран';
+}
+
 /** 1 достопримечательность, 2–4 достопримечательности, 5+ достопримечательностей. */
 export function landmarksWord(count: number): string {
   const teens = count % 100;
