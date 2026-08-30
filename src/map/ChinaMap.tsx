@@ -10,6 +10,7 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
 import { CityLayer } from './CityLayer';
+import { CountryLayer } from './CountryLayer';
 import { LandmarkLayer } from './LandmarkLayer';
 import type { FeatureOutcome } from './PhysicalLayer';
 import { cityPointsOfRegions } from './city-points';
@@ -148,6 +149,15 @@ type ChinaMapProps = {
    * поводками только спорят с гроздью городов дельты. На физической карте
    * выноски скрыты всегда: там маркер типа региона ничего не означает.
    */
+  /**
+   * Слой сопредельных государств. Включается только в играх по странам: на всех
+   * прочих поверхностях за границей Китая пусто, и так и должно остаться.
+   */
+  readonly showsCountries?: boolean;
+  readonly selectedCountryId?: string | null;
+  readonly onSelectCountry?: (countryId: string) => void;
+  readonly showsCountryLabels?: boolean;
+  readonly countryStates?: Readonly<Record<string, AnswerState>>;
   readonly showsCallouts?: boolean;
   /**
    * Показывать ли подписи выносок. Не задано — правило утечки: подписи
@@ -256,6 +266,11 @@ export function ChinaMap({
   questionKey,
   answerStates = NO_ANSWER_STATES,
   neighbourStates = NO_NEIGHBOUR_STATES,
+  showsCountries = false,
+  selectedCountryId = null,
+  onSelectCountry,
+  showsCountryLabels = true,
+  countryStates = NO_ANSWER_STATES,
   interactive = true,
   variant = 'reference',
   usage = 'browse',
@@ -929,6 +944,17 @@ export function ChinaMap({
                 showsLabels={showsCityLabels}
                 zoom={view.zoom}
                 onZoomToCluster={onZoomChange ? zoomToCluster : undefined}
+              />,
+              citySvg,
+            )
+          : null}
+        {showsCountries && citySvg !== null && onSelectCountry !== undefined
+          ? createPortal(
+              <CountryLayer
+                selectedCountryId={selectedCountryId}
+                onSelect={onSelectCountry}
+                showsLabels={showsCountryLabels}
+                answerStates={countryStates}
               />,
               citySvg,
             )

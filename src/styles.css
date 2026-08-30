@@ -937,6 +937,65 @@ button.text:hover:enabled {
   fill: url('#map-hatch-failed');
 }
 
+/* --- Сопредельные государства ---------------------------------------------- */
+
+/*
+ * Страны за границей Китая. Заливка нейтральная: это фон вопроса, а не ответ,
+ * — и по тому же доводу, по которому игровая карта начинается серой.
+ *
+ * Выбранная страна берёт тот же киноварный тон, что и выбранный регион: язык
+ * выбора на карте должен остаться один, иначе ученику придётся держать в
+ * голове два.
+ */
+.china-map .country {
+  cursor: pointer;
+  fill: var(--map-locked);
+  stroke: var(--map-border);
+  stroke-width: var(--map-border-width);
+}
+
+.china-map .country[data-selected='true'] {
+  fill: var(--map-selected);
+}
+
+.china-map .country[data-answer-state='correct'] {
+  fill: var(--map-first-try);
+}
+
+.china-map .country[data-answer-state='incorrect'] {
+  fill: url('#map-hatch-incorrect');
+}
+
+.china-map .country[data-answer-state='disabled'] {
+  cursor: not-allowed;
+}
+
+/*
+ * Спорный участок закрыт штриховкой поверх заливки: он не перекрашивает
+ * страну, а показывает, что здесь спор. Нажатие проходит сквозь него к стране
+ * под ним — участок не цель ответа.
+ */
+.china-map .country-disputed {
+  fill: url('#map-hatch-second-try');
+  pointer-events: none;
+}
+
+/* Подписи спорных участков — текст для читалки экрана, а не для глаза. */
+.china-map .country-disputed-note {
+  overflow: hidden;
+  height: 1px;
+  width: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.china-map .country-label {
+  fill: var(--text-on-ground-muted);
+  font-size: var(--map-label-size);
+  paint-order: stroke;
+  pointer-events: none;
+}
+
 /*
  * Соседи. Игра начинается серой по тому же доводу, что и заполнение карты:
  * цвет — это ответ, и до ответа его быть не должно.
