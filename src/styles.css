@@ -938,6 +938,38 @@ button.text:hover:enabled {
 }
 
 /*
+ * Соседи. Игра начинается серой по тому же доводу, что и заполнение карты:
+ * цвет — это ответ, и до ответа его быть не должно.
+ *
+ * Отмеченная область показана тем же киноварным тоном, каким выбранная область
+ * показана везде в приложении: ученик уже знает этот знак по атласу, и заводить
+ * ради одной игры второй язык выбора незачем. Исход приходит на её место после
+ * «Готово» и различается узором, а не только цветом: сплошная заливка у
+ * найденного, редкая штриховка у пропущенного, частая у лишнего — та же
+ * тройка каналов, что у исходов заполнения.
+ */
+.china-map[data-map-variant='neighbours'] [data-region-id] {
+  fill: var(--map-unplayed);
+  transition: fill var(--duration-instant) var(--ease-out);
+}
+
+.china-map[data-map-variant='neighbours'] [data-neighbour-state='marked'] {
+  fill: var(--map-selected);
+}
+
+.china-map[data-map-variant='neighbours'] [data-neighbour-state='found'] {
+  fill: var(--map-first-try);
+}
+
+.china-map[data-map-variant='neighbours'] [data-neighbour-state='missed'] {
+  fill: url('#map-hatch-second-try');
+}
+
+.china-map[data-map-variant='neighbours'] [data-neighbour-state='extra'] {
+  fill: url('#map-hatch-failed');
+}
+
+/*
  * Карта освоенности только показывает: области не выбираются, курсор обычный.
  * Второй канал у каждого состояния свой — сплошная заливка, штриховка, пустой
  * тон, — и та же тройка названа словами в легенде под картой.
