@@ -901,13 +901,6 @@ const LANDMARK_PHOTOS: Readonly<Record<string, CollectionPhoto>> = {
     captionZh: '田螺坑土楼群',
     place: 'Фуцзянь',
   },
-  'macao-historic-centre': {
-    id: 'landmark-macao-historic-centre',
-    subject: 'фасад собора',
-    captionRu: 'Руины собора Святого Павла',
-    captionZh: '大三巴牌坊',
-    place: 'Макао',
-  },
   dazu: {
     id: 'landmark-dazu',
     subject: 'наскальные рельефы',

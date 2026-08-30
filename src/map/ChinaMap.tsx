@@ -53,6 +53,16 @@ type ChinaMapProps = {
   readonly onClear: () => void;
   readonly zoom?: MapZoom;
   readonly onZoomChange?: (zoom: MapZoom) => void;
+  /**
+   * Какой вопрос идёт сейчас. Приближение к грозди живёт ровно один вопрос:
+   * со сменой ключа карта возвращается к той ступени и середине, которые
+   * ученик выбрал сам, — иначе следующий вопрос о другом конце страны
+   * начинался бы с пятикратного увеличения дельты Чжуцзяна.
+   *
+   * Ключ, а не сам вопрос: карте всё равно, что спрашивают, ей важно лишь,
+   * что спрашивают уже другое.
+   */
+  readonly questionKey?: string;
   readonly answerStates?: Readonly<Record<string, AnswerState>>;
   /** Ложь — карта только показывает: области не выбираются и не получают фокус. */
   readonly interactive?: boolean;
@@ -229,6 +239,7 @@ export function ChinaMap({
   onClear,
   zoom = 1,
   onZoomChange,
+  questionKey,
   answerStates = NO_ANSWER_STATES,
   interactive = true,
   variant = 'reference',
@@ -284,7 +295,33 @@ export function ChinaMap({
     x: WHOLE_MAP.centerX,
     y: WHOLE_MAP.centerY,
   });
-  const view = clampView({ zoom, centerX: center.x, centerY: center.y });
+  /*
+   * Заход в гроздь: временное приближение, живущее ровно один вопрос.
+   *
+   * Собственный вид ученика — `zoom` и `center` — при этом не трогается, и
+   * возврат к нему не требует ни отдельного действия, ни памяти о прежней
+   * ступени: со сменой `questionKey` заход просто перестаёт быть нынешним, и
+   * карта снова считается по своему виду. Поэтому проверка «нынешний ли» —
+   * вычисление на отрисовке, а не эффект: эффект родителя запускается после
+   * эффектов слоя, и приближение к новой грозди успело бы уехать вместе со
+   * старым заходом.
+   */
+  const [trip, setTrip] = useState<{
+    readonly key: string | undefined;
+    readonly zoom: MapZoom;
+    readonly centerX: number;
+    readonly centerY: number;
+  } | null>(null);
+  const activeTrip = trip !== null && trip.key === questionKey ? trip : null;
+  const view = clampView(
+    activeTrip === null
+      ? { zoom, centerX: center.x, centerY: center.y }
+      : {
+          zoom: activeTrip.zoom,
+          centerX: activeTrip.centerX,
+          centerY: activeTrip.centerY,
+        },
+  );
   /*
    * Тянут ли карту прямо сейчас. В ссылке, а не в состоянии: значение читается
    * и пишется в обработчиках указателя между кадрами, и перерисовка на каждое
@@ -531,6 +568,9 @@ export function ChinaMap({
    * на диаметр цели. Ступени и середина — знание карты, поэтому считается
    * здесь, а слой лишь просит.
    *
+   * Это заход, а не смена вида: собственная ступень ученика остаётся прежней и
+   * вернётся сама со следующим вопросом.
+   *
    * `validate:map` следит, чтобы самой тесной паре каталога хватало последней
    * ступени, — запасной ветки «не разошлись» не существует по построению.
    */
@@ -540,8 +580,75 @@ export function ChinaMap({
       ZOOM_LEVELS.find((one) => one >= needed - 1e-9) ??
       ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
 
-    setCenter({ x: cluster.x, y: cluster.y });
-    onZoomChange?.(level);
+    setTrip({
+      key: questionKey,
+      zoom: level,
+      centerX: cluster.x,
+      centerY: cluster.y,
+    });
+  }
+
+  /**
+   * Ступень, по которой работают кнопки масштаба: та, что видна, а не та, что
+   * пришла свойством. Во время захода в гроздь это разные вещи.
+   */
+  const shownZoom: MapZoom = activeTrip?.zoom ?? zoom;
+
+  /**
+   * Ученик взял вид в свои руки: то, что он видит сейчас, становится его
+   * собственным видом, а заход в гроздь на этом кончается. Иначе «плюс» посреди
+   * захода отсчитывал бы от целой карты и швырял бы ученика обратно.
+   */
+  function changeZoom(next: MapZoom) {
+    if (activeTrip !== null) {
+      setCenter({ x: view.centerX, y: view.centerY });
+      setTrip(null);
+    }
+
+    onZoomChange?.(next);
+  }
+
+  /**
+   * Сдвинуть вид на столько-то единиц карты. Во время захода едет он, а не
+   * собственный вид ученика: тот обязан дождаться его целым.
+   */
+  function panBy(dx: number, dy: number) {
+    if (activeTrip !== null) {
+      setTrip((previous) => {
+        if (previous === null) {
+          return previous;
+        }
+
+        const moved = panView(
+          {
+            zoom: previous.zoom,
+            centerX: previous.centerX,
+            centerY: previous.centerY,
+          },
+          dx,
+          dy,
+        );
+
+        return { ...previous, centerX: moved.centerX, centerY: moved.centerY };
+      });
+
+      return;
+    }
+
+    /*
+     * Считается от предыдущего значения, а не от вида этой отрисовки: между
+     * кадрами приходит несколько событий указателя, и все они читали бы одну и
+     * ту же середину — быстрый рывок терял бы почти весь путь.
+     */
+    setCenter((previous) => {
+      const moved = panView(
+        { zoom, centerX: previous.x, centerY: previous.y },
+        dx,
+        dy,
+      );
+
+      return { x: moved.centerX, y: moved.centerY };
+    });
   }
 
   function beginDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -593,21 +700,8 @@ export function ChinaMap({
 
     drag.current = { x: event.clientX, y: event.clientY, moved: true };
 
-    /*
-     * Тянут за карту, поэтому вид едет навстречу движению руки. Считается от
-     * предыдущего значения, а не от вида этой отрисовки: между кадрами
-     * приходит несколько событий указателя, и все они читали бы одну и ту же
-     * середину — быстрый рывок терял бы почти весь путь.
-     */
-    setCenter((previous) => {
-      const moved = panView(
-        { zoom, centerX: previous.x, centerY: previous.y },
-        -dx * scale,
-        -dy * scale,
-      );
-
-      return { x: moved.centerX, y: moved.centerY };
-    });
+    /* Тянут за карту, поэтому вид едет навстречу движению руки. */
+    panBy(-dx * scale, -dy * scale);
   }
 
   function endDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -796,15 +890,7 @@ export function ChinaMap({
             if (step !== undefined && canPan) {
               event.preventDefault();
               const units = keyboardStep(view);
-              setCenter((previous) => {
-                const moved = panView(
-                  { zoom, centerX: previous.x, centerY: previous.y },
-                  step[0] * units,
-                  step[1] * units,
-                );
-
-                return { x: moved.centerX, y: moved.centerY };
-              });
+              panBy(step[0] * units, step[1] * units);
             }
           }}
           dangerouslySetInnerHTML={MAP_HTML}
@@ -878,7 +964,7 @@ export function ChinaMap({
           областями, но увеличивать и двигать её нужно как раз там.
         */}
         {onZoomChange ? (
-          <MapControls zoom={zoom} onZoomChange={onZoomChange} />
+          <MapControls zoom={shownZoom} onZoomChange={changeZoom} />
         ) : null}
         {/*
           Врезка — последней: она объясняет то, что уже нарисовано, и лежит

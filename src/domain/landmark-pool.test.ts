@@ -4,16 +4,13 @@ import { regions } from '../content/regions';
 import { regionAnswerableLandmarks } from './landmark-pool';
 
 /*
- * «Исторический центр Макао» отвечает сам за себя: имя объекта называет его
- * регион, и вопрос «в каком он регионе» ничего не проверяет.
+ * «Шанхайская башня» отвечает сама за себя: имя объекта называет его регион, и
+ * вопрос «в каком он регионе» ничего не проверяет.
  */
 it('исключает объекты, называющие свой регион именем', () => {
   const pool = regionAnswerableLandmarks(landmarks, regions);
-  const ids = pool.map((one) => one.id);
 
-  expect(ids).not.toContain('macao-historic-centre');
-  expect(ids).not.toContain('fujian-tulou');
-  expect(ids).not.toContain('shanghai-tower');
+  expect(pool.map((one) => one.id)).not.toContain('shanghai-tower');
 });
 
 /*
@@ -26,9 +23,20 @@ it('оставляет объекты, называющие чужие реги�
   expect(pool.map((one) => one.id)).toContain('hzm-bridge');
 });
 
+/*
+ * Тулоу переименованы ради этой игры (решение владельца от 2026-08-30): под
+ * прежним именем «Фуцзяньские тулоу» объект выпадал из неё, под нынешним
+ * коротким — спрашивается наравне со всеми.
+ */
+it('оставляет тулоу: короткое имя региона не называет', () => {
+  const pool = regionAnswerableLandmarks(landmarks, regions);
+
+  expect(pool.map((one) => one.id)).toContain('fujian-tulou');
+});
+
 it('не трогает объекты с нейтральными именами', () => {
   const pool = regionAnswerableLandmarks(landmarks, regions);
 
   expect(pool.map((one) => one.id)).toContain('forbidden-city');
-  expect(pool.length).toBe(landmarks.length - 3);
+  expect(pool.length).toBe(landmarks.length - 1);
 });

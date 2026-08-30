@@ -562,15 +562,6 @@
 - Оригинал: 1600×1200
 - Ширины в репозитории: 1200, 640
 
-## landmark-macao-historic-centre
-
-- Файл: Cathedral of Saint Paul in Macau, 2023 (04).jpg
-- Автор: Bahnfrend
-- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
-- Страница: https://commons.wikimedia.org/wiki/File:Cathedral_of_Saint_Paul_in_Macau,_2023_(04).jpg
-- Оригинал: 2329×2329
-- Ширины в репозитории: 1200, 640
-
 ## landmark-mogao
 
 - Файл: Dunhuang Mogao Ku 2013.12.31 12-30-18.jpg

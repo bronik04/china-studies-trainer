@@ -277,6 +277,13 @@ export function CityRound({
         interactive={answersWithRegion}
         zoom={zoom}
         onZoomChange={setZoom}
+        /*
+         * Приближение к грозди живёт один вопрос: со сменой вопроса карта
+         * возвращается к той ступени, которую ученик выбрал сам. Иначе
+         * следующий вопрос о Урумчи начинался бы с пятикратно увеличенной
+         * дельты Чжуцзяна.
+         */
+        questionKey={`${roundId}:${round.currentIndex}`}
         usage="answer"
         showsCities={!answersWithRegion}
         selectedCityId={showsChoices ? targetCity.id : answeredId}

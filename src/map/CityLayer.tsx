@@ -136,15 +136,20 @@ export function CityLayer({
     ) ?? null;
 
   /*
-   * Гроздь со спрошенным городом приближается сама: в «назвать город»
-   * подсвеченная точка и есть вопрос, и свёрнутая гроздь спрятала бы его.
+   * Гроздь со спрошенным городом приближается сама — но только там, где
+   * подсвеченная точка и есть вопрос, то есть в «назвать город»: слой там не
+   * отвечает на нажатие, и раскрыть гроздь руками нельзя. Там, где на карте
+   * отвечают, та же подсветка означает уже данный ответ, и приближать к нему
+   * карту незачем — ученик и так смотрит туда, куда нажал.
+   *
    * Один раз на вопрос: если ученик после этого сам отдалил карту, снова
    * вырывать её из рук нельзя.
    */
+  const asksSelected = onSelect === undefined;
   const autoZoomedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (selectedCityId === null) {
+    if (selectedCityId === null || !asksSelected) {
       autoZoomedFor.current = null;
       return;
     }
@@ -157,7 +162,7 @@ export function CityLayer({
     if (askedCluster !== null) {
       onZoomToCluster?.(askedCluster);
     }
-  }, [askedCluster, onZoomToCluster, selectedCityId]);
+  }, [asksSelected, askedCluster, onZoomToCluster, selectedCityId]);
 
   function cityMark(cityId: string, x: number, y: number) {
     const city = (pointById.get(cityId) as CityPoint).city;

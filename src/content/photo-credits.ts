@@ -449,13 +449,6 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     page: "https://commons.wikimedia.org/wiki/File:%E5%BA%90%E5%B1%B1%E6%97%A5%E5%87%BA.JPG",
     widths: [1200, 640],
   },
-  'landmark-macao-historic-centre': {
-    author: "Bahnfrend",
-    license: "CC BY-SA 4.0",
-    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
-    page: "https://commons.wikimedia.org/wiki/File:Cathedral_of_Saint_Paul_in_Macau,_2023_(04).jpg",
-    widths: [1200, 640],
-  },
   'landmark-mogao': {
     author: "Zhangzhugang",
     license: "CC BY-SA 4.0",

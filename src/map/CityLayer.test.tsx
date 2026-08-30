@@ -3,6 +3,7 @@ import { regions } from '../content/regions';
 import { ChinaMap } from './ChinaMap';
 import { cityPointsOfRegions } from './city-points';
 import type { MapZoom } from './MapControls';
+import { MAP_VIEWBOX_WIDTH } from './target-size';
 
 const sichuan = regions.filter((region) => region.id === 'sichuan');
 
@@ -152,36 +153,70 @@ it('в слое без нажатия показывает каждый горо
   );
 });
 
+/** Сколько единиц карты видно по ширине: во столько раз она и приближена. */
+function viewBoxWidth(container: HTMLElement): number {
+  const viewBox =
+    container.querySelector('.china-map svg')?.getAttribute('viewBox') ?? '';
+
+  return Number(viewBox.split(' ')[2]);
+}
+
 /*
  * Нажатие по грозди по-настоящему приближает карту — до ступени, на которой
  * её города расходятся в отдельные цели (решение владельца от 2026-08-30
  * вместо лупы-врезки).
  */
 it('нажатие по грозди приближает карту, и города расходятся', () => {
-  const zoomChange = vi.fn();
   const select = vi.fn();
-  const { rerender } = renderMap({
+  const { container } = renderMap({
     onSelectCity: select,
     zoom: 1,
-    onZoomChange: zoomChange,
+    onZoomChange: () => {},
   });
 
   fireEvent.click(
     screen.getByRole('button', { name: /Города рядом: Ханчжоу.*приблизить/ }),
   );
 
-  expect(zoomChange).toHaveBeenCalledWith(3);
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH / 3, 3);
 
-  rerender(
-    mapElement({
-      onSelectCity: select,
-      zoom: zoomChange.mock.calls[0][0] as MapZoom,
-      onZoomChange: zoomChange,
-    }),
-  );
   fireEvent.click(screen.getByRole('button', { name: 'Шанхай, 上海' }));
 
   expect(select).toHaveBeenCalledWith('shanghai');
+});
+
+/*
+ * Приближение к грозди — заход на один вопрос, а не смена вида: собственная
+ * ступень ученика приходит свойством, и трогать её карта не смеет. Иначе
+ * возвращать было бы некуда.
+ */
+it('не меняет собственную ступень ученика', () => {
+  const zoomChange = vi.fn();
+  renderMap({ onSelectCity: () => {}, zoom: 1, onZoomChange: zoomChange });
+
+  fireEvent.click(
+    screen.getByRole('button', { name: /Города рядом: Ханчжоу.*приблизить/ }),
+  );
+
+  expect(zoomChange).not.toHaveBeenCalled();
+});
+
+/*
+ * Со сменой вопроса карта возвращается на ту ступень, на которой была: иначе
+ * вопрос об Урумчи начинался бы с пятикратно увеличенной дельты Чжуцзяна.
+ */
+it('со сменой вопроса возвращается к виду ученика', () => {
+  const props = { onSelectCity: () => {}, zoom: 1 as MapZoom, onZoomChange: () => {} };
+  const { container, rerender } = renderMap({ ...props, questionKey: 'q1' });
+
+  fireEvent.click(
+    screen.getByRole('button', { name: /Города рядом: Ханчжоу.*приблизить/ }),
+  );
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH / 3, 3);
+
+  rerender(mapElement({ ...props, questionKey: 'q2' }));
+
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH, 3);
 });
 
 /*
@@ -190,19 +225,33 @@ it('нажатие по грозди приближает карту, и гор�
  * карте просто нет.
  */
 it('сама приближает карту к грозди со спрошенным городом', () => {
-  const zoomChange = vi.fn();
-  renderMap({ selectedCityId: 'suzhou', zoom: 1, onZoomChange: zoomChange });
-
-  expect(zoomChange).toHaveBeenCalledWith(3);
-});
-
-/* Пока карту не приблизили, спрошенный город виден на самой грозди. */
-it('помечает гроздь со спрошенным городом', () => {
   const { container } = renderMap({
     selectedCityId: 'suzhou',
     zoom: 1,
     onZoomChange: () => {},
   });
+
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH / 3, 3);
+});
+
+/*
+ * Там же, где подсветка означает уже данный ответ, карта не дёргается: ученик
+ * смотрит туда, куда нажал, и приближать его к собственному ответу незачем.
+ */
+it('не приближает карту к городу, которым ответили', () => {
+  const { container } = renderMap({
+    selectedCityId: 'suzhou',
+    onSelectCity: () => {},
+    zoom: 1,
+    onZoomChange: () => {},
+  });
+
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH, 3);
+});
+
+/* Там, где приближать нечем, спрошенный город виден на самой грозди. */
+it('помечает гроздь со спрошенным городом', () => {
+  const { container } = renderMap({ selectedCityId: 'suzhou' });
 
   expect(
     container.querySelector('.map-cluster[data-selected="true"]'),
