@@ -277,11 +277,24 @@ export function CityRound({
         interactive={answersWithRegion}
         zoom={zoom}
         onZoomChange={setZoom}
+        /*
+         * Приближение к грозди живёт один вопрос: со сменой вопроса карта
+         * возвращается к той ступени, которую ученик выбрал сам. Иначе
+         * следующий вопрос о Урумчи начинался бы с пятикратно увеличенной
+         * дельты Чжуцзяна.
+         */
+        questionKey={`${roundId}:${round.currentIndex}`}
         usage="answer"
         showsCities={!answersWithRegion}
         selectedCityId={showsChoices ? targetCity.id : answeredId}
         showsCityLabels={false}
         onSelectCity={exerciseType === 'find-on-map' ? handleCitySelect : undefined}
+        /*
+         * Выноски Макао и Гонконга видны только там, где отвечают регионом:
+         * в «найти город» и «назвать город» регион не выбирается, и пустые
+         * кружки в море лишь спорили бы с гроздью городов дельты.
+         */
+        showsCallouts={answersWithRegion}
       />
     </RoundStage>
   );

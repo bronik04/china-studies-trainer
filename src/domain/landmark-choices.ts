@@ -14,18 +14,27 @@ import { shuffle } from './random';
  * плотине «Три ущелья» своих отвлекающих остаётся ровно три — а стоит ученику
  * выбрать набор «Памятники», как их не остаётся вовсе. Добор идёт из соседних
  * родов и только после того, как свои кончились.
+ *
+ * `excludedIds` — соседи цели по грозди на карте: гроздь — одна звезда, и два
+ * её члена среди вариантов оставили бы вопрос без единственного верного
+ * ответа. Кто с кем скучен, знает карта (`colocatedLandmarkIds`); домен лишь
+ * принимает список.
  */
 export function buildLandmarkChoices(
   pool: readonly Landmark[],
   targetId: string,
   random: () => number,
+  excludedIds: readonly string[] = [],
 ): readonly Landmark[] {
   const target = pool.find((one) => one.id === targetId);
   if (!target) {
     throw new Error(`Неизвестная достопримечательность: ${targetId}`);
   }
 
-  const rest = pool.filter((one) => one.id !== target.id);
+  const excluded = new Set(excludedIds);
+  const rest = pool.filter(
+    (one) => one.id !== target.id && !excluded.has(one.id),
+  );
   const sameKind = shuffle(
     rest.filter((one) => one.kind === target.kind),
     random,

@@ -13,6 +13,7 @@ import { CityLayer } from './CityLayer';
 import { LandmarkLayer } from './LandmarkLayer';
 import type { FeatureOutcome } from './PhysicalLayer';
 import { cityPointsOfRegions } from './city-points';
+import type { MapCluster } from './cluster';
 import {
   clampView,
   keyboardStep,
@@ -22,7 +23,7 @@ import {
   viewBoxOf,
   WHOLE_MAP,
 } from './map-view';
-import { MapControls, type MapZoom } from './MapControls';
+import { MapControls, ZOOM_LEVELS, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
 import { MEMBERSHIP_LABELS } from './membership';
 import { OUTCOME_LABELS } from './outcome-labels';
@@ -52,6 +53,16 @@ type ChinaMapProps = {
   readonly onClear: () => void;
   readonly zoom?: MapZoom;
   readonly onZoomChange?: (zoom: MapZoom) => void;
+  /**
+   * Какой вопрос идёт сейчас. Приближение к грозди живёт ровно один вопрос:
+   * со сменой ключа карта возвращается к той ступени и середине, которые
+   * ученик выбрал сам, — иначе следующий вопрос о другом конце страны
+   * начинался бы с пятикратного увеличения дельты Чжуцзяна.
+   *
+   * Ключ, а не сам вопрос: карте всё равно, что спрашивают, ей важно лишь,
+   * что спрашивают уже другое.
+   */
+  readonly questionKey?: string;
   readonly answerStates?: Readonly<Record<string, AnswerState>>;
   /** Ложь — карта только показывает: области не выбираются и не получают фокус. */
   readonly interactive?: boolean;
@@ -112,8 +123,26 @@ type ChinaMapProps = {
    */
   readonly showsLandmarks?: boolean;
   readonly selectedLandmarkId?: string | null;
-  readonly onSelectLandmark?: (landmarkId: string) => void;
+  /**
+   * Список, а не один идентификатор: скучившиеся звёзды — одна цель, и
+   * нажатие по ней отдаёт всех её членов. Кто из них спрошен, решает раунд.
+   */
+  readonly onSelectLandmark?: (landmarkIds: readonly string[]) => void;
   readonly showsLandmarkLabels?: boolean;
+  /**
+   * Показывать ли выноски Макао и Гонконга. В раундах, где отвечают точкой
+   * или звездой, регионы не выбираются, и два пустых кружка в море с
+   * поводками только спорят с гроздью городов дельты. На физической карте
+   * выноски скрыты всегда: там маркер типа региона ничего не означает.
+   */
+  readonly showsCallouts?: boolean;
+  /**
+   * Показывать ли подписи выносок. Не задано — правило утечки: подписи
+   * скрываются на любой поверхности ответа, кроме витрины. Атлас задаёт
+   * истину явно: он поверхность справочная, и «Макао» с «Гонконгом» там не
+   * ответ, а содержание.
+   */
+  readonly showsCalloutLabels?: boolean;
   /** Выбранный объект физической географии — река или форма рельефа. */
   readonly selectedFeatureId?: string | null;
   readonly onSelectFeature?: (featureId: string) => void;
@@ -210,6 +239,7 @@ export function ChinaMap({
   onClear,
   zoom = 1,
   onZoomChange,
+  questionKey,
   answerStates = NO_ANSWER_STATES,
   interactive = true,
   variant = 'reference',
@@ -227,6 +257,8 @@ export function ChinaMap({
   selectedLandmarkId = null,
   onSelectLandmark,
   showsLandmarkLabels = true,
+  showsCallouts = true,
+  showsCalloutLabels,
   selectedFeatureId = null,
   onSelectFeature,
   showsPhysicalLabels = true,
@@ -263,7 +295,33 @@ export function ChinaMap({
     x: WHOLE_MAP.centerX,
     y: WHOLE_MAP.centerY,
   });
-  const view = clampView({ zoom, centerX: center.x, centerY: center.y });
+  /*
+   * Заход в гроздь: временное приближение, живущее ровно один вопрос.
+   *
+   * Собственный вид ученика — `zoom` и `center` — при этом не трогается, и
+   * возврат к нему не требует ни отдельного действия, ни памяти о прежней
+   * ступени: со сменой `questionKey` заход просто перестаёт быть нынешним, и
+   * карта снова считается по своему виду. Поэтому проверка «нынешний ли» —
+   * вычисление на отрисовке, а не эффект: эффект родителя запускается после
+   * эффектов слоя, и приближение к новой грозди успело бы уехать вместе со
+   * старым заходом.
+   */
+  const [trip, setTrip] = useState<{
+    readonly key: string | undefined;
+    readonly zoom: MapZoom;
+    readonly centerX: number;
+    readonly centerY: number;
+  } | null>(null);
+  const activeTrip = trip !== null && trip.key === questionKey ? trip : null;
+  const view = clampView(
+    activeTrip === null
+      ? { zoom, centerX: center.x, centerY: center.y }
+      : {
+          zoom: activeTrip.zoom,
+          centerX: activeTrip.centerX,
+          centerY: activeTrip.centerY,
+        },
+  );
   /*
    * Тянут ли карту прямо сейчас. В ссылке, а не в состоянии: значение читается
    * и пишется в обработчиках указателя между кадрами, и перерисовка на каждое
@@ -350,6 +408,19 @@ export function ChinaMap({
 
   useEffect(() => {
     /*
+     * Выноски скрываются целиком — с кружком и поводком — там, где регионы не
+     * цель: в раундах по точкам и звёздам (`showsCallouts={false}`) и на
+     * физической карте, где маркер типа региона ничего не означает. Скрытый
+     * кружок не берёт ни нажатие, ни фокус: display снимает и то и другое.
+     */
+    const hidesWholeCallouts = !showsCallouts || variant === 'physical';
+    mapRef.current
+      ?.querySelectorAll<SVGElement>('.map-callout')
+      .forEach((callout) => {
+        callout.style.setProperty('display', hidesWholeCallouts ? 'none' : '');
+      });
+
+    /*
      * Там, где на карте отвечают, подписи выносок скрываются: иначе карта
      * печатает «Макао» и «Гонконг» рядом с маркерами и выдаёт два ответа из
      * 34. Выносные линии остаются — они показывают, к каким территориям
@@ -362,16 +433,21 @@ export function ChinaMap({
      * Витрина из условия исключена: она тоже идёт с `usage="answer"` — ни
      * заголовка, ни списка ей не нужно, — но вопроса на ней нет, а выдать
      * можно только ответ. Прятать там подписи значило бы оставить на первом
-     * экране два безымянных кружка в море.
+     * экране два безымянных кружка в море. По той же причине атлас говорит
+     * `showsCalloutLabels` явно: он тоже поверхность без хрома, но справочная,
+     * и подпись выноски там содержание, а не утечка.
      *
      * Скрытие живёт здесь, а не в таблице стилей, намеренно: утечка ответа —
      * не оформление, и проверять её нужно там, где стили не подключены.
      */
-    const hidesCallouts = usage === 'answer' && !opensRegion;
+    const hidesCalloutLabels =
+      showsCalloutLabels === undefined
+        ? usage === 'answer' && !opensRegion
+        : !showsCalloutLabels;
     mapRef.current
       ?.querySelectorAll<SVGElement>('.map-callout text')
       .forEach((label) => {
-        label.style.setProperty('display', hidesCallouts ? 'none' : '');
+        label.style.setProperty('display', hidesCalloutLabels ? 'none' : '');
       });
 
     const areas = mapRef.current?.querySelectorAll<SVGElement>('[data-region-id]');
@@ -477,12 +553,103 @@ export function ChinaMap({
     progressStates,
     regions,
     selectedRegionId,
+    showsCalloutLabels,
+    showsCallouts,
     usage,
     variant,
   ]);
 
   /** Сдвигать нечего, пока карта показана целиком. */
   const canPan = view.zoom > 1;
+
+  /**
+   * Приблизить карту так, чтобы города грозди разошлись: середина вида — в
+   * гроздь, увеличение — ближайшая ступень, на которой ближайшая пара отходит
+   * на диаметр цели. Ступени и середина — знание карты, поэтому считается
+   * здесь, а слой лишь просит.
+   *
+   * Это заход, а не смена вида: собственная ступень ученика остаётся прежней и
+   * вернётся сама со следующим вопросом.
+   *
+   * `validate:map` следит, чтобы самой тесной паре каталога хватало последней
+   * ступени, — запасной ветки «не разошлись» не существует по построению.
+   */
+  function zoomToCluster(cluster: MapCluster) {
+    const needed = cluster.scale * view.zoom;
+    const level =
+      ZOOM_LEVELS.find((one) => one >= needed - 1e-9) ??
+      ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
+
+    setTrip({
+      key: questionKey,
+      zoom: level,
+      centerX: cluster.x,
+      centerY: cluster.y,
+    });
+  }
+
+  /**
+   * Ступень, по которой работают кнопки масштаба: та, что видна, а не та, что
+   * пришла свойством. Во время захода в гроздь это разные вещи.
+   */
+  const shownZoom: MapZoom = activeTrip?.zoom ?? zoom;
+
+  /**
+   * Ученик взял вид в свои руки: то, что он видит сейчас, становится его
+   * собственным видом, а заход в гроздь на этом кончается. Иначе «плюс» посреди
+   * захода отсчитывал бы от целой карты и швырял бы ученика обратно.
+   */
+  function changeZoom(next: MapZoom) {
+    if (activeTrip !== null) {
+      setCenter({ x: view.centerX, y: view.centerY });
+      setTrip(null);
+    }
+
+    onZoomChange?.(next);
+  }
+
+  /**
+   * Сдвинуть вид на столько-то единиц карты. Во время захода едет он, а не
+   * собственный вид ученика: тот обязан дождаться его целым.
+   */
+  function panBy(dx: number, dy: number) {
+    if (activeTrip !== null) {
+      setTrip((previous) => {
+        if (previous === null) {
+          return previous;
+        }
+
+        const moved = panView(
+          {
+            zoom: previous.zoom,
+            centerX: previous.centerX,
+            centerY: previous.centerY,
+          },
+          dx,
+          dy,
+        );
+
+        return { ...previous, centerX: moved.centerX, centerY: moved.centerY };
+      });
+
+      return;
+    }
+
+    /*
+     * Считается от предыдущего значения, а не от вида этой отрисовки: между
+     * кадрами приходит несколько событий указателя, и все они читали бы одну и
+     * ту же середину — быстрый рывок терял бы почти весь путь.
+     */
+    setCenter((previous) => {
+      const moved = panView(
+        { zoom, centerX: previous.x, centerY: previous.y },
+        dx,
+        dy,
+      );
+
+      return { x: moved.centerX, y: moved.centerY };
+    });
+  }
 
   function beginDrag(event: ReactPointerEvent<HTMLDivElement>) {
     if (!canPan || event.button !== 0) {
@@ -533,21 +700,8 @@ export function ChinaMap({
 
     drag.current = { x: event.clientX, y: event.clientY, moved: true };
 
-    /*
-     * Тянут за карту, поэтому вид едет навстречу движению руки. Считается от
-     * предыдущего значения, а не от вида этой отрисовки: между кадрами
-     * приходит несколько событий указателя, и все они читали бы одну и ту же
-     * середину — быстрый рывок терял бы почти весь путь.
-     */
-    setCenter((previous) => {
-      const moved = panView(
-        { zoom, centerX: previous.x, centerY: previous.y },
-        -dx * scale,
-        -dy * scale,
-      );
-
-      return { x: moved.centerX, y: moved.centerY };
-    });
+    /* Тянут за карту, поэтому вид едет навстречу движению руки. */
+    panBy(-dx * scale, -dy * scale);
   }
 
   function endDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -736,15 +890,7 @@ export function ChinaMap({
             if (step !== undefined && canPan) {
               event.preventDefault();
               const units = keyboardStep(view);
-              setCenter((previous) => {
-                const moved = panView(
-                  { zoom, centerX: previous.x, centerY: previous.y },
-                  step[0] * units,
-                  step[1] * units,
-                );
-
-                return { x: moved.centerX, y: moved.centerY };
-              });
+              panBy(step[0] * units, step[1] * units);
             }
           }}
           dangerouslySetInnerHTML={MAP_HTML}
@@ -757,6 +903,7 @@ export function ChinaMap({
                 onSelect={onSelectCity}
                 showsLabels={showsCityLabels}
                 zoom={view.zoom}
+                onZoomToCluster={onZoomChange ? zoomToCluster : undefined}
               />,
               citySvg,
             )
@@ -817,7 +964,7 @@ export function ChinaMap({
           областями, но увеличивать и двигать её нужно как раз там.
         */}
         {onZoomChange ? (
-          <MapControls zoom={zoom} onZoomChange={onZoomChange} />
+          <MapControls zoom={shownZoom} onZoomChange={changeZoom} />
         ) : null}
         {/*
           Врезка — последней: она объясняет то, что уже нарисовано, и лежит

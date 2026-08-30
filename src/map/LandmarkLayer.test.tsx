@@ -17,7 +17,7 @@ it('рисует звезду каждой достопримечательно�
   expect(container.querySelectorAll('.landmark-mark')).toHaveLength(1);
 });
 
-it('отдаёт нажатие своей достопримечательности', () => {
+it('отдаёт нажатие своей достопримечательностью', () => {
   const select = vi.fn();
   const point = LANDMARK_POINTS.find(
     (one) => one.landmark.id === 'potala',
@@ -29,7 +29,7 @@ it('отдаёт нажатие своей достопримечательно�
     screen.getByRole('button', { name: 'Дворец Потала, 布达拉宫' }),
   );
 
-  expect(select).toHaveBeenCalledWith('potala');
+  expect(select).toHaveBeenCalledWith(['potala']);
 });
 
 /*
@@ -41,20 +41,32 @@ it('собирает пекинские объекты в гроздь', () => {
   renderLayer({ onSelect: () => {} });
 
   expect(
-    screen.getByRole('button', { name: /Гроздь из 3 достопримечательностей: Запретный город/ }),
+    screen.getByRole('button', {
+      name: /Достопримечательности рядом: Запретный город/,
+    }),
   ).toBeInTheDocument();
 });
 
-it('раскрывает гроздь и отдаёт нажатие объекту внутри', () => {
+/*
+ * Гроздь — одна цель ответа, а не врезка с лупой (решение владельца от
+ * 2026-08-30): нажатие отдаёт всех её членов, а кто из них спрошен, решает
+ * раунд.
+ */
+it('нажатие по грозди отдаёт всех её членов', () => {
   const select = vi.fn();
   renderLayer({ onSelect: select });
 
   fireEvent.click(
-    screen.getByRole('button', { name: /Гроздь из 3 достопримечательностей: Запретный город/ }),
+    screen.getByRole('button', {
+      name: /Достопримечательности рядом: Запретный город/,
+    }),
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Храм Неба, 天坛' }));
 
-  expect(select).toHaveBeenCalledWith('temple-of-heaven');
+  expect(select).toHaveBeenCalledWith([
+    'forbidden-city',
+    'temple-of-heaven',
+    'summer-palace',
+  ]);
 });
 
 /*
@@ -72,14 +84,48 @@ it('без обработчика не пускает звёзды в обход
   }
 });
 
-/* В «назвать» слой не интерактивен, и раскрыть гроздь руками нельзя. */
-it('раскрывает гроздь со спрошенным объектом сама', () => {
+/*
+ * В «назвать» слой не интерактивен, и спрошенный объект внутри грозди обязан
+ * быть виден на самой грозди — иначе вопроса на карте просто нет.
+ */
+it('помечает гроздь со спрошенным объектом', () => {
   const { container } = renderLayer({ selectedLandmarkId: 'summer-palace' });
 
-  const open = container.querySelector('.map-cluster[data-open="true"]');
+  const marked = container.querySelector('.map-cluster[data-selected="true"]');
 
-  expect(open).not.toBeNull();
-  expect(
-    open?.querySelector('.landmark[data-landmark-id="summer-palace"]'),
-  ).not.toBeNull();
+  expect(marked).not.toBeNull();
+  expect(marked?.getAttribute('data-cluster-id')).toBe('cluster:forbidden-city');
+});
+
+/*
+ * Спрошенная одиночная звезда крупнее прочих и с кольцом: знак прежнего
+ * размера, отличавшийся только заливкой, приходилось искать по всей карте.
+ */
+it('увеличивает спрошенную звезду', () => {
+  const { container } = renderLayer({ selectedLandmarkId: 'potala' });
+
+  const selected = container.querySelector(
+    '.landmark[data-selected="true"] .landmark-mark',
+  );
+  const plain = container.querySelector(
+    '.landmark[data-selected="false"] .landmark-mark',
+  );
+
+  /* Поперечник звезды: наибольшее расстояние между её вершинами. */
+  function spanOf(points: string | null | undefined): number {
+    const vertices = (points ?? '')
+      .split(' ')
+      .map((pair) => pair.split(',').map(Number));
+
+    return Math.max(
+      ...vertices.flatMap(([x1, y1]) =>
+        vertices.map(([x2, y2]) => Math.hypot(x1 - x2, y1 - y2)),
+      ),
+    );
+  }
+
+  expect(selected).not.toBeNull();
+  expect(spanOf(selected?.getAttribute('points'))).toBeGreaterThan(
+    spanOf(plain?.getAttribute('points')),
+  );
 });

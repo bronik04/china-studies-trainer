@@ -362,6 +362,13 @@ export function AtlasPage({
             showsCities={mapKind === 'political'}
             selectedFeatureId={selectedFeatureId}
             onSelectFeature={selectFeature}
+            /*
+             * Подписи выносок в атласе видны: «Макао» и «Гонконг» здесь не
+             * ответ, а содержание справочника. Правило утечки писано для
+             * поверхностей ответа, и без явного признака оно съедало бы
+             * подписи и тут — атлас тоже идёт с `usage="answer"`.
+             */
+            showsCalloutLabels
             mapInset={mapOverlay}
           />
         </div>

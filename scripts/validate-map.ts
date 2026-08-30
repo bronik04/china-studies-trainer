@@ -26,12 +26,12 @@ import {
   parseMapPath,
   type Point,
 } from '../src/map/svg-path';
-import { MAX_LENS_RADIUS_UNITS } from '../src/map/cluster';
+import { MAX_MAP_ZOOM } from '../src/map/map-view';
 import { landmarks } from '../src/content/landmarks';
 import {
   validateCityPlacement,
+  validateClusters,
   validateLandmarkPlacement,
-  validateLensRadii,
   validateMapAreaIds,
   validatePhysicalGeometry,
   validateRegionPalette,
@@ -193,10 +193,11 @@ if (goneLandmarks.length > 0) {
 }
 
 /*
- * Лупа не должна разрастаться незаметно: коэффициент считается по ближайшей
- * паре, и один объект, придвинутый вплотную к соседу, растаскивает всю гроздь.
+ * Гроздь городов обязана расходиться настоящим приближением: нажатие по ней
+ * увеличивает карту, и пары теснее предела молча запирали бы ответ. Гроздь
+ * достопримечательностей — сама цель ответа, ей предел не писан.
  */
-const lenses = validateLensRadii([
+const clusterReport = validateClusters([
   {
     layer: 'города',
     points: cities.map((city) => {
@@ -204,6 +205,7 @@ const lenses = validateLensRadii([
 
       return { id: city.id, x, y };
     }),
+    separable: true,
   },
   {
     layer: 'достопримечательности',
@@ -212,6 +214,7 @@ const lenses = validateLensRadii([
 
       return { id: one.id, x, y };
     }),
+    separable: false,
   },
 ]);
 
@@ -219,14 +222,14 @@ console.info(
   `Проверено достопримечательностей: ${landmarks.length}. На кромке контура: ` +
     `${landmarksOnBoundary.length}` +
     (landmarksOnBoundary.length > 0 ? ` (${landmarksOnBoundary.join(', ')})` : '') +
-    '. Самая широкая лупа: ' +
-    lenses
+    '. Самая тесная гроздь: ' +
+    clusterReport
       .map(
-        (lens) =>
-          `${lens.layer} — ${lens.id} ${lens.radius.toFixed(1)} единиц`,
+        (entry) =>
+          `${entry.layer} — ${entry.id} расходится на ${entry.scale.toFixed(1)}×`,
       )
       .join('; ') +
-    ` при пределе ${MAX_LENS_RADIUS_UNITS}`,
+    ` при пределе увеличения ${MAX_MAP_ZOOM}× (для городов)`,
 );
 
 /*

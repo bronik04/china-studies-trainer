@@ -2,11 +2,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { regions } from '../content/regions';
 import { ChinaMap } from './ChinaMap';
 import { cityPointsOfRegions } from './city-points';
+import type { MapZoom } from './MapControls';
+import { MAP_VIEWBOX_WIDTH } from './target-size';
 
 const sichuan = regions.filter((region) => region.id === 'sichuan');
 
-function renderMap(props: Partial<Parameters<typeof ChinaMap>[0]> = {}) {
-  return render(
+function mapElement(props: Partial<Parameters<typeof ChinaMap>[0]> = {}) {
+  return (
     <ChinaMap
       regions={regions}
       selectedRegionId={null}
@@ -14,8 +16,12 @@ function renderMap(props: Partial<Parameters<typeof ChinaMap>[0]> = {}) {
       onClear={() => {}}
       showsCities
       {...props}
-    />,
+    />
   );
+}
+
+function renderMap(props: Partial<Parameters<typeof ChinaMap>[0]> = {}) {
+  return render(mapElement(props));
 }
 
 it('рисует города внутри самой карты, а не поверх неё вторым рисунком', () => {
@@ -55,6 +61,19 @@ it('без обработчика не пускает города в обход
   }
 });
 
+/*
+ * В слое-витрине зона наведения — чуть больше знака, а не 24 px: невидимый
+ * круг верхнего города накрывал знаки соседей в дельте Чжуцзяна, и наведение
+ * на точку подписывало другой город.
+ */
+it('в слое без нажатия зона наведения не больше знака с полем', () => {
+  const { container } = renderMap();
+
+  for (const hit of container.querySelectorAll('.city-hit')) {
+    expect(Number(hit.getAttribute('r'))).toBeLessThanOrEqual(4.4 + 1.6);
+  }
+});
+
 it('с обработчиком отвечает на нажатие и называет город', () => {
   const select = vi.fn();
   renderMap({ regions: sichuan, onSelectCity: select });
@@ -89,12 +108,31 @@ it('рисует знак города заметным на уменьшенн�
 });
 
 /*
- * Дельта Янцзы — самая тесная часть каталога: между Шанхаем и Сучжоу пять
+ * Подпись рисуется последним узлом слоя, поверх всех знаков: SVG кладёт
+ * краску в порядке разметки, и подпись Лояна утопала под точками соседей,
+ * нарисованных позже.
+ */
+it('показывает подпись города под фокусом поверх всех знаков', () => {
+  const select = vi.fn();
+  const { container } = renderMap({ regions: sichuan, onSelectCity: select });
+
+  const hit = container.querySelector('.city-hit[data-city-id="chengdu"]');
+  fireEvent.focus(hit as Element);
+
+  const layer = container.querySelector('.city-layer') as Element;
+  const label = layer.lastElementChild;
+
+  expect(label?.classList.contains('city-label')).toBe(true);
+  expect(label?.textContent).toBe('Чэнду');
+});
+
+/*
+ * Дельта Янцзы — самая тесная часть каталога: между Сучжоу и Уси меньше шести
  * единиц карты при цели в семнадцать. Прежде цели разъезжались по кольцам и
  * связывались поводками; теперь города собираются в гроздь.
  */
 it('собирает тесные города в гроздь вместо поводков', () => {
-  const { container } = renderMap({ onSelectCity: () => {} });
+  const { container } = renderMap({ onSelectCity: () => {}, onZoomChange: () => {} });
 
   expect(container.querySelector('.city-leader')).toBeNull();
   expect(container.querySelectorAll('.map-cluster').length).toBeGreaterThan(0);
@@ -115,26 +153,107 @@ it('в слое без нажатия показывает каждый горо
   );
 });
 
-it('раскрывает гроздь и отдаёт нажатие городу внутри', () => {
-  const select = vi.fn();
-  renderMap({ onSelectCity: select });
+/** Сколько единиц карты видно по ширине: во столько раз она и приближена. */
+function viewBoxWidth(container: HTMLElement): number {
+  const viewBox =
+    container.querySelector('.china-map svg')?.getAttribute('viewBox') ?? '';
 
-  fireEvent.click(screen.getByRole('button', { name: /Гроздь из 4 городов: Ханчжоу/ }));
+  return Number(viewBox.split(' ')[2]);
+}
+
+/*
+ * Нажатие по грозди по-настоящему приближает карту — до ступени, на которой
+ * её города расходятся в отдельные цели (решение владельца от 2026-08-30
+ * вместо лупы-врезки).
+ */
+it('нажатие по грозди приближает карту, и города расходятся', () => {
+  const select = vi.fn();
+  const { container } = renderMap({
+    onSelectCity: select,
+    zoom: 1,
+    onZoomChange: () => {},
+  });
+
+  fireEvent.click(
+    screen.getByRole('button', { name: /Города рядом: Ханчжоу.*приблизить/ }),
+  );
+
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH / 3, 3);
+
   fireEvent.click(screen.getByRole('button', { name: 'Шанхай, 上海' }));
 
   expect(select).toHaveBeenCalledWith('shanghai');
 });
 
 /*
- * В «назвать город» слой не отвечает на нажатие, и раскрыть гроздь руками
- * нельзя. Спрошенный город внутри неё обязан быть виден сам — иначе вопроса
- * на карте просто нет.
+ * Приближение к грозди — заход на один вопрос, а не смена вида: собственная
+ * ступень ученика приходит свойством, и трогать её карта не смеет. Иначе
+ * возвращать было бы некуда.
  */
-it('раскрывает гроздь со спрошенным городом сама', () => {
+it('не меняет собственную ступень ученика', () => {
+  const zoomChange = vi.fn();
+  renderMap({ onSelectCity: () => {}, zoom: 1, onZoomChange: zoomChange });
+
+  fireEvent.click(
+    screen.getByRole('button', { name: /Города рядом: Ханчжоу.*приблизить/ }),
+  );
+
+  expect(zoomChange).not.toHaveBeenCalled();
+});
+
+/*
+ * Со сменой вопроса карта возвращается на ту ступень, на которой была: иначе
+ * вопрос об Урумчи начинался бы с пятикратно увеличенной дельты Чжуцзяна.
+ */
+it('со сменой вопроса возвращается к виду ученика', () => {
+  const props = { onSelectCity: () => {}, zoom: 1 as MapZoom, onZoomChange: () => {} };
+  const { container, rerender } = renderMap({ ...props, questionKey: 'q1' });
+
+  fireEvent.click(
+    screen.getByRole('button', { name: /Города рядом: Ханчжоу.*приблизить/ }),
+  );
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH / 3, 3);
+
+  rerender(mapElement({ ...props, questionKey: 'q2' }));
+
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH, 3);
+});
+
+/*
+ * В «назвать город» слой не отвечает на нажатие, и приблизить гроздь руками
+ * нельзя. Карта приближается к спрошенному городу сама — иначе вопроса на
+ * карте просто нет.
+ */
+it('сама приближает карту к грозди со спрошенным городом', () => {
+  const { container } = renderMap({
+    selectedCityId: 'suzhou',
+    zoom: 1,
+    onZoomChange: () => {},
+  });
+
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH / 3, 3);
+});
+
+/*
+ * Там же, где подсветка означает уже данный ответ, карта не дёргается: ученик
+ * смотрит туда, куда нажал, и приближать его к собственному ответу незачем.
+ */
+it('не приближает карту к городу, которым ответили', () => {
+  const { container } = renderMap({
+    selectedCityId: 'suzhou',
+    onSelectCity: () => {},
+    zoom: 1,
+    onZoomChange: () => {},
+  });
+
+  expect(viewBoxWidth(container)).toBeCloseTo(MAP_VIEWBOX_WIDTH, 3);
+});
+
+/* Там, где приближать нечем, спрошенный город виден на самой грозди. */
+it('помечает гроздь со спрошенным городом', () => {
   const { container } = renderMap({ selectedCityId: 'suzhou' });
 
-  const open = container.querySelector('.map-cluster[data-open="true"]');
-
-  expect(open).not.toBeNull();
-  expect(open?.querySelector('.city[data-city-id="suzhou"]')).not.toBeNull();
+  expect(
+    container.querySelector('.map-cluster[data-selected="true"]'),
+  ).not.toBeNull();
 });

@@ -1,17 +1,10 @@
-/*
- * Ступени увеличения. Верхние две добавлены ради озёр: контур Цинхая, самого
- * большого озера страны, на целом виде занимает 12,8 px, а на прежнем пределе
- * 1,5× — 19,1 px, то есть остаётся пятном. На 3× он доходит до 38 px и
- * читается настоящей формой; то же и у Поянху с Дунтинху, чьи очертания и
- * есть то, по чему их узнают.
- *
- * Цели нажатия от этого не страдают: их размер задан в пикселях экрана и
- * делится на увеличение — на 3× цель занимает втрое меньше единиц карты, и
- * соседние объекты перестают спорить, а не начинают.
- */
-const zoomLevels = [1, 1.25, 1.5, 2, 3] as const;
+import { ZOOM_LEVELS, type MapZoom } from './map-view';
 
-export type MapZoom = (typeof zoomLevels)[number];
+/*
+ * Ступени живут в `map-view.ts` — ими пользуются не только кнопки, — а
+ * отсюда реэкспортируются: поверхности знают о масштабе через управление им.
+ */
+export { ZOOM_LEVELS, type MapZoom } from './map-view';
 
 type MapControlsProps = {
   readonly zoom: MapZoom;
@@ -19,9 +12,9 @@ type MapControlsProps = {
 };
 
 export function MapControls({ zoom, onZoomChange }: MapControlsProps) {
-  const zoomIndex = zoomLevels.indexOf(zoom);
+  const zoomIndex = ZOOM_LEVELS.indexOf(zoom);
   const canZoomOut = zoomIndex > 0;
-  const canZoomIn = zoomIndex < zoomLevels.length - 1;
+  const canZoomIn = zoomIndex < ZOOM_LEVELS.length - 1;
 
   /*
    * Слова ушли в `aria-label`, на карте остались знаки: три подписи в полный
@@ -39,7 +32,7 @@ export function MapControls({ zoom, onZoomChange }: MapControlsProps) {
         type="button"
         aria-label="Увеличить"
         disabled={!canZoomIn}
-        onClick={() => onZoomChange(zoomLevels[zoomIndex + 1])}
+        onClick={() => onZoomChange(ZOOM_LEVELS[zoomIndex + 1])}
       >
         <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
           <path d="M8 3.5v9M3.5 8h9" />
@@ -49,7 +42,7 @@ export function MapControls({ zoom, onZoomChange }: MapControlsProps) {
         type="button"
         aria-label="Уменьшить"
         disabled={!canZoomOut}
-        onClick={() => onZoomChange(zoomLevels[zoomIndex - 1])}
+        onClick={() => onZoomChange(ZOOM_LEVELS[zoomIndex - 1])}
       >
         <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
           <path d="M3.5 8h9" />

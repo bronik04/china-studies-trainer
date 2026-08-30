@@ -64,6 +64,7 @@ import {
 } from './screens';
 import type { Landmark } from './content/landmarks';
 import { landmarksUpTo, type LandmarkSet } from './content/landmark-sets';
+import { regionAnswerableLandmarks } from './domain/landmark-pool';
 import { ChinaMap } from './map/ChinaMap';
 import type { MapZoom } from './map/MapControls';
 import { SiteHeader, type SiteSection } from './ui/SiteHeader';
@@ -359,7 +360,17 @@ export default function App() {
     nextLanguage: QuestionLanguage,
     set: LandmarkSet,
   ) {
-    startLandmarkPool(exerciseType, nextLanguage, landmarksUpTo(set));
+    /*
+     * В «достопримечательность — регион» не попадают объекты, называющие свой
+     * регион именем: «Исторический центр Макао» отвечает сам за себя. Тот же
+     * приём, что у городов муниципалитетов и САР в `cityPoolFor`.
+     */
+    const pool =
+      exerciseType === 'match-pair'
+        ? regionAnswerableLandmarks(landmarksUpTo(set), regions)
+        : landmarksUpTo(set);
+
+    startLandmarkPool(exerciseType, nextLanguage, pool);
   }
 
   /** Запуск по готовому пулу: тем же путём работает «Повторить ошибки». */

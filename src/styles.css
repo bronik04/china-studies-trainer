@@ -966,16 +966,6 @@ button.text:hover:enabled {
 }
 
 /*
- * Маркер выноски — исключение: это не контур области, а знак в акватории, и
- * без заливки он остаётся пустым кружком в море. Тон берётся у нижней полосы
- * шкалы — Макао и Гонконг приморские низменности, так что это не условность,
- * а та же высота, что у соседнего берега.
- */
-.china-map[data-map-variant='physical'] .map-callout circle[data-region-id] {
-  fill: var(--map-relief-band-0);
-}
-
-/*
  * Промах вспыхивает киноварью и гаснет. Гашение — переход в правиле области
  * выше, поэтому при prefers-reduced-motion токен длительности обнуляется и
  * отметка снимается мгновенно; саму вспышку это не отменяет, её длительность
@@ -1105,9 +1095,11 @@ button.text:hover:enabled {
   stroke-width: 1;
 }
 
-/* Столица крупнее прочих городов: это разный вес, а не разный цвет. */
+/*
+ * Столица крупнее прочих городов: это разный вес, а не разный цвет. Радиус
+ * задаёт слой — от него считается и зона наведения, — здесь только обводка.
+ */
 .china-map .city[data-city-set='capital'] .city-mark {
-  r: 4.4;
   stroke-width: 1.4;
 }
 
@@ -1120,13 +1112,9 @@ button.text:hover:enabled {
 }
 
 /*
- * Гроздь и лупа.
- *
- * Свёрнутая гроздь — знак своего слоя и киноварный кружок с числом; раскрытая
- * — круг тоном яркой бумаги поверх карты и киноварный якорь на настоящем
- * месте. Якорь не украшение: он единственный говорит, что лупа — врезка, а не
- * утверждение о месте, и без него уехавший внутрь неё знак читался бы как
- * переехавший объект.
+ * Гроздь: знак своего слоя и киноварный кружок с числом. Нажатие по грозди
+ * городов приближает карту, по грозди достопримечательностей — отвечает всей
+ * гроздью; лупы-врезки больше нет (решение владельца от 2026-08-30).
  *
  * Кольцо браузера снято выше, вместе с городами и областями, поэтому фокус
  * показывает сама гроздь — обводкой кружка с числом.
@@ -1158,41 +1146,22 @@ button.text:hover:enabled {
 }
 
 /*
- * Длительность берётся из токенов: там же она обнуляется при
- * `prefers-reduced-motion`, и второго правила для этого не нужно.
+ * Гроздь со спрошенной целью видна теми же каналами, что одиночный город:
+ * знак крупнее не делается — он общий на несколько объектов, — но получает
+ * киноварную заливку и светлое кольцо. В «назвать» вопрос живёт здесь, пока
+ * карта не приблизилась (города) или всегда (достопримечательности).
  */
-@keyframes cluster-lens-in {
-  from {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/*
- * Круг лупы и якорь нажатий не ловят. Лупа накрывает соседние цели — под
- * пекинской лежат Чэндэ, Шанду и Юньган, — и, перехватывая нажатие, она
- * запирала бы ученика с мышью: закрыть её он мог бы только с клавиатуры.
- * Знаки внутри лупы рисуются после неё и остаются нажимаемыми.
- */
-.china-map .cluster-lens {
-  animation: cluster-lens-in var(--duration-quick) ease-out;
-  fill: var(--surface-paper-bright);
-  fill-opacity: 0.93;
-  pointer-events: none;
-  stroke: var(--map-coast);
-  stroke-width: 0.8;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.china-map .cluster-anchor {
+.china-map .map-cluster[data-selected='true'] .city-mark,
+.china-map .map-cluster[data-selected='true'] .landmark-mark {
   fill: var(--accent);
-  pointer-events: none;
+  stroke: var(--surface-paper-bright);
+  stroke-width: 2;
+}
+
+.china-map .map-cluster[data-selected='true'] .cluster-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
 }
 
 /*
@@ -1209,10 +1178,22 @@ button.text:hover:enabled {
   stroke-width: 1;
 }
 
+/*
+ * Спрошенная звезда обязана быть видна с другого конца карты — в «назвать
+ * достопримечательность» она и есть вопрос. Каналов три, как у городов: знак
+ * крупнее (радиус задаёт слой — у многоугольника нет `r`), киноварная заливка
+ * и светлое кольцо тоном бумаги вокруг.
+ */
 .china-map .landmark[data-selected='true'] .landmark-mark {
   fill: var(--accent);
   stroke: var(--surface-paper-bright);
   stroke-width: 2;
+}
+
+.china-map .landmark[data-selected='true'] .landmark-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
 }
 
 .china-map .landmark-hit {
@@ -1224,67 +1205,27 @@ button.text:hover:enabled {
 }
 
 /*
- * Подпись видна у одного объекта за раз — при наведении, фокусе и выборе.
- * Обводка тоном бумаги отделяет её от заливки региона: подпись ложится на
- * любой из четырёх тонов карты.
- */
-.china-map .landmark-label {
-  fill: var(--map-label);
-  font-family: var(--t-family-text);
-  font-size: var(--map-label-size);
-  font-weight: var(--t-weight-bold);
-  opacity: 0;
-  paint-order: stroke;
-  stroke: var(--surface-paper-bright);
-  stroke-width: 3;
-}
-
-.china-map .landmark:hover .landmark-label,
-.china-map .landmark:focus-within .landmark-label,
-.china-map .landmark[data-selected='true'] .landmark-label {
-  opacity: 1;
-}
-
-/*
- * Там, где спрашивают о самой звезде, подписи не рисуются вовсе: подпись
- * подсвеченного объекта — готовый ответ.
- */
-.china-map .landmark-layer[data-labels='false'] .landmark-label {
-  display: none;
-}
-
-/*
- * Там, где спрашивают о самой точке, подписи не рисуются вовсе: подпись
- * подсвеченного города — готовый ответ. Скрытие в стиле, а не в разметке, —
- * а вот утечку выносок карта закрывает в коде, потому что там она возможна и
- * без таблицы стилей.
- */
-.china-map .city-layer[data-labels='false'] .city-label {
-  display: none;
-}
-
-/*
- * Подпись видна у одного города за раз — при наведении, фокусе и выборе.
- * Обводка тоном бумаги отделяет её от заливки региона: подпись ложится на
+ * Подпись видна у одного объекта за раз — при наведении, фокусе и выборе, — и
+ * рисует её слой последним узлом, поверх всех знаков: SVG кладёт краску в
+ * порядке разметки, и подпись внутри группы объекта утопала под точками
+ * соседей, нарисованных позже. Наличие подписи решает слой, а не `:hover`, —
+ * поэтому здесь только начертание, без правил видимости. Там, где спрашивают
+ * о самой точке, слой не рисует подпись вовсе: подпись подсвеченной цели —
+ * готовый ответ.
+ *
+ * Обводка тоном бумаги отделяет подпись от заливки региона: она ложится на
  * любой из четырёх тонов карты, и подкладывать под неё плашку значило бы
  * закрывать саму карту.
  */
+.china-map .landmark-label,
 .china-map .city-label {
   fill: var(--map-label);
   font-family: var(--t-family-text);
   font-size: var(--map-label-size);
   font-weight: var(--t-weight-bold);
-  opacity: 0;
   paint-order: stroke;
   stroke: var(--surface-paper-bright);
   stroke-width: 3;
-  transition: opacity var(--duration-quick) var(--ease-out);
-}
-
-.china-map .city:hover .city-label,
-.china-map .city:focus-within .city-label,
-.china-map .city[data-selected='true'] .city-label {
-  opacity: 1;
 }
 
 /*
@@ -1309,12 +1250,6 @@ button.text:hover:enabled {
   fill: none;
   stroke: var(--accent);
   stroke-width: 1.5;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .china-map .city-label {
-    transition: none;
-  }
 }
 
 /*
@@ -1585,7 +1520,7 @@ button.text:hover:enabled {
   fill: var(--surface-paper-bright);
   pointer-events: none;
   stroke: var(--map-label);
-  stroke-width: 1;
+  stroke-width: 1.2;
 }
 
 .china-map .physical-layer .point-mark-shape[data-point='depression'] {
@@ -2208,8 +2143,15 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   font-family: var(--t-family-display);
   font-size: 1.1875rem;
   font-weight: var(--t-weight-regular);
+  /*
+   * «Достопримечательности» длиннее рельсы в 200 px и без переносов уходила
+   * под карточки. Перенос по словарю, а не разрыв где попало: язык страницы
+   * объявлен, и браузер делит слово по-русски.
+   */
+  hyphens: auto;
   line-height: var(--t-leading-tight);
   margin: 0;
+  overflow-wrap: break-word;
 }
 
 .mode-group-head p {
@@ -3611,8 +3553,18 @@ button.chip[aria-pressed='true'] {
   pointer-events: auto;
 }
 
+/*
+ * Надзаголовок вопроса — приглушённым тоном, а не киноварью: красный на
+ * плашке читался знаком ошибки, хотя это просто имя игры. Киноварь на тёмном
+ * фоне остаётся отметке «стоит повторить» — там она и означает промах.
+ */
 .stage-prompt .eyebrow {
+  color: var(--text-on-ground-muted);
   margin-bottom: var(--s-1);
+}
+
+.stage-prompt[data-state='answer'] .eyebrow {
+  color: var(--accent-on-ground);
 }
 
 /* Показ верного ответа отмечен кромкой, а не только текстом. */
