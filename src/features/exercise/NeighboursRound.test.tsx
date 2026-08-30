@@ -157,3 +157,17 @@ it('после ошибки разбор держится дольше и рау
     vi.useRealTimers();
   }
 });
+
+it('держит обе отметки, поставленные в одном такте', () => {
+  renderRound();
+  openAnswerList();
+
+  const [first, second] = REGION_NEIGHBOURS[askedRegion().id];
+  /* Оба нажатия в одном такте: React успевает объединить их в один рендер. */
+  act(() => {
+    markFromList(first);
+    markFromList(second);
+  });
+
+  expect(list().getAllByRole('button', { name: /отмечен$/ })).toHaveLength(2);
+});

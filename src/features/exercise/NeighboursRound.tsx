@@ -130,7 +130,13 @@ export function NeighboursRound({
       return;
     }
 
-    setRound(toggleMark(round, regionId));
+    /*
+     * Обновление функцией, а не от `round` из замыкания: два нажатия в одном
+     * такте (быстрый двойной клик, нажатие по карте и по списку подряд) брали
+     * бы одно и то же прежнее состояние, и первая отметка терялась. Проверено
+     * в браузере до починки: три нажатия подряд оставляли одну отметку.
+     */
+    setRound((current) => toggleMark(current, regionId));
   }
 
   function handleDone() {
