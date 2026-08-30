@@ -26,11 +26,11 @@ import {
   REFERENCE_MAP_WIDTH,
   unitsToPixels,
 } from './target-size';
-import { MAX_LENS_RADIUS_UNITS } from './cluster';
+import { MAX_MAP_ZOOM } from './map-view';
 import {
   validateCityPlacement,
+  validateClusters,
   validateLandmarkPlacement,
-  validateLensRadii,
   validateMapAreaIds,
   validatePhysicalGeometry,
   validateRegionPalette,
@@ -642,39 +642,60 @@ it('называет достопримечательность своим сл�
   ).toThrow(/Достопримечательность lost вне региона square/);
 });
 
-it('пропускает грозди, укладывающиеся в предел лупы', () => {
-  const widest = validateLensRadii([
+it('пропускает грозди, расходящиеся в предел увеличения', () => {
+  const tightest = validateClusters([
     {
       layer: 'проба',
       points: [
         { id: 'a', x: 0, y: 0 },
-        { id: 'b', x: 3, y: 0 },
+        { id: 'b', x: 4, y: 0 },
       ],
+      separable: true,
     },
   ]);
 
-  expect(widest).toHaveLength(1);
-  expect(widest[0].radius).toBeLessThan(MAX_LENS_RADIUS_UNITS);
+  expect(tightest).toHaveLength(1);
+  expect(tightest[0].scale).toBeLessThanOrEqual(MAX_MAP_ZOOM);
 });
 
 /*
- * Цепочка из четырёх: ближайшая пара в половину единицы задаёт коэффициент 35,
- * и крайний объект улетает за предел. Ради такого случая проверка и стоит.
+ * Пара в половину единицы разошлась бы только на 35-кратном увеличении —
+ * дальше последней ступени. Нажатие по такой грозди приблизило бы карту до
+ * упора и оставило цели слитыми; ради такого случая проверка и стоит.
  */
-it('ловит лупу шире предела', () => {
+it('ловит гроздь теснее предела увеличения', () => {
   expect(() =>
-    validateLensRadii([
+    validateClusters([
       {
         layer: 'проба',
         points: [
           { id: 'a', x: 0, y: 0 },
           { id: 'b', x: 0, y: 0.5 },
-          { id: 'c', x: 0, y: 15 },
-          { id: 'd', x: 0, y: 30 },
         ],
+        separable: true,
       },
     ]),
-  ).toThrow(/Лупа грозди cluster:a в слое «проба»/);
+  ).toThrow(/Гроздь cluster:a в слое «проба» расходится только на/);
+});
+
+/*
+ * Гроздь достопримечательностей — сама цель ответа, разводить её не нужно, и
+ * предел увеличения к ней не применяется: три пекинских объекта в полутора
+ * единицах — законный каталог.
+ */
+it('не меряет пределом гроздь-цель', () => {
+  expect(() =>
+    validateClusters([
+      {
+        layer: 'проба',
+        points: [
+          { id: 'a', x: 0, y: 0 },
+          { id: 'b', x: 0, y: 0.5 },
+        ],
+        separable: false,
+      },
+    ]),
+  ).not.toThrow();
 });
 
 /*
@@ -684,7 +705,7 @@ it('ловит лупу шире предела', () => {
  */
 it('ловит гроздь, накрывшую соседнюю цель', () => {
   expect(() =>
-    validateLensRadii([
+    validateClusters([
       {
         layer: 'проба',
         points: [
@@ -693,6 +714,7 @@ it('ловит гроздь, накрывшую соседнюю цель', () =
           /* От обоих объектов грозди дальше диаметра, от её середины — ближе. */
           { id: 'сосед', x: 16, y: 8.5 },
         ],
+        separable: true,
       },
     ]),
   ).toThrow(/накрывают друг друга/);

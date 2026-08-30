@@ -38,7 +38,11 @@ it('собирает цепочку в одну гроздь', () => {
   ]);
 });
 
-it('разводит ближайшую пару ровно на диаметр цели', () => {
+/*
+ * `scale` — сколько увеличения нужно, чтобы ближайшая пара разошлась на
+ * диаметр: по нему нажатие на гроздь городов выбирает ступень приближения.
+ */
+it('считает кратность увеличения по ближайшей паре', () => {
   const [cluster] = clusterPlaceables(
     [
       { id: 'a', x: 100, y: 100 },
@@ -48,21 +52,11 @@ it('разводит ближайшую пару ровно на диаметр 
     D,
   ).clusters;
 
-  const nearest = Math.min(
-    ...cluster.members.flatMap((one, index) =>
-      cluster.members
-        .slice(index + 1)
-        .map((other) =>
-          Math.hypot(one.lensX - other.lensX, one.lensY - other.lensY),
-        ),
-    ),
-  );
-
-  expect(nearest).toBeCloseTo(D, 6);
+  expect(cluster.scale).toBeCloseTo(D / 2, 6);
 });
 
-/* Лупа увеличивает, а не переставляет: отношения расстояний сохраняются. */
-it('сохраняет взаимное расположение', () => {
+/* Знаки грозди остаются на настоящих местах: гроздь ничего не переставляет. */
+it('сохраняет настоящие координаты членов', () => {
   const [cluster] = clusterPlaceables(
     [
       { id: 'a', x: 0, y: 0 },
@@ -72,27 +66,28 @@ it('сохраняет взаимное расположение', () => {
     D,
   ).clusters;
 
-  const [a, b, c] = cluster.members;
-
-  expect(b.lensX - a.lensX).toBeCloseTo((c.lensX - a.lensX) / 3, 6);
-  expect(a.lensY).toBeCloseTo(b.lensY, 6);
+  expect(cluster.members.map((member) => [member.x, member.y])).toEqual([
+    [0, 0],
+    [2, 0],
+    [6, 0],
+  ]);
+  expect(cluster.x).toBeCloseTo((0 + 2 + 6) / 3, 6);
 });
 
-it('вмещает крайнюю цель в радиус лупы', () => {
+/*
+ * Два объекта в одной точке требовали бы бесконечного увеличения; слой обязан
+ * дожить до `validate:map`, а не упасть при отрисовке.
+ */
+it('не даёт бесконечной кратности на совпадающих точках', () => {
   const [cluster] = clusterPlaceables(
     [
       { id: 'a', x: 0, y: 0 },
-      { id: 'b', x: 3, y: 0 },
-      { id: 'c', x: 0, y: 4 },
+      { id: 'b', x: 0, y: 0 },
     ],
     D,
   ).clusters;
 
-  for (const member of cluster.members) {
-    const reach = Math.hypot(member.lensX - cluster.x, member.lensY - cluster.y);
-
-    expect(reach + D / 2).toBeLessThanOrEqual(cluster.radius);
-  }
+  expect(Number.isFinite(cluster.scale)).toBe(true);
 });
 
 /* Карта не должна переставлять грозди между перерисовками. */
@@ -109,5 +104,5 @@ it('не зависит от порядка входа', () => {
   expect(reversed.clusters[0].members.map((member) => member.id).sort()).toEqual(
     straight.clusters[0].members.map((member) => member.id).sort(),
   );
-  expect(reversed.clusters[0].radius).toBeCloseTo(straight.clusters[0].radius, 6);
+  expect(reversed.clusters[0].scale).toBeCloseTo(straight.clusters[0].scale, 6);
 });

@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
-import { CORRECT_PAUSE_MS } from './round-pace';
+import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
 import { landmarksUpTo } from '../../content/landmark-sets';
 import { LandmarkRound, type LandmarkRoundProps } from './LandmarkRound';
 
@@ -24,22 +24,18 @@ function askedName(): string {
 }
 
 /*
- * Ответ по звезде: если объект попал в гроздь, её сначала раскрывают. Так же
- * отвечает и ученик — прямой цели у скучившихся объектов нет, пока лупа
- * закрыта.
+ * Ответ по звезде: скучившиеся объекты — одна цель, и нажатие по грозди со
+ * спрошенным объектом само есть верный ответ (решение владельца от
+ * 2026-08-30). Так же отвечает и ученик.
  */
 function answerOnMap(name: string) {
   const own = new RegExp(`^${name},`);
+  const inCluster = new RegExp(`Достопримечательности рядом:.* ${name}`);
 
-  if (screen.queryByRole('button', { name: own }) === null) {
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: new RegExp(`Гроздь из .* ${name}`),
-      }),
-    );
-  }
-
-  fireEvent.click(screen.getByRole('button', { name: own }));
+  fireEvent.click(
+    screen.queryByRole('button', { name: own }) ??
+      screen.getByRole('button', { name: inCluster }),
+  );
 }
 
 it('засчитывает верную звезду и идёт к следующему вопросу', () => {
@@ -60,20 +56,64 @@ it('засчитывает верную звезду и идёт к следую
 });
 
 /*
- * Нажатие по свёрнутой грозди — раскрытие, а не попытка: иначе ученик терял бы
- * ответ на том, что три пекинских объекта не помещаются в один пиксель.
+ * Гроздь — одна цель: три пекинских объекта не разведёт никакое разумное
+ * увеличение, а тренажёр спрашивает «где это», не «в какой части Пекина».
+ * Нажатие по грозди со спрошенным объектом — верный ответ.
  */
-it('не считает попыткой нажатие по грозди', () => {
+it('засчитывает нажатие по грозди со спрошенным объектом', () => {
   const finish = vi.fn();
-  renderRound({ onFinish: finish });
+  vi.useFakeTimers();
+  try {
+    /* Один вопрос — про Запретный город; на карте он в пекинской грозди. */
+    renderRound({
+      landmarks: landmarksUpTo('monuments').filter(
+        (one) => one.id === 'forbidden-city',
+      ),
+      onFinish: finish,
+    });
 
-  const before = screen.getByText(/Вопрос 1 из/);
-  fireEvent.click(
-    screen.getByRole('button', { name: /Гроздь из 3 достопримечательностей: Запретный город/ }),
-  );
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Достопримечательности рядом:.*Запретный город/,
+      }),
+    );
+    act(() => {
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
+    });
 
-  expect(before).toBeInTheDocument();
-  expect(finish).not.toHaveBeenCalled();
+    expect(finish).toHaveBeenCalledWith([
+      expect.objectContaining({ isCorrect: true }),
+    ]);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+/* Гроздь без спрошенного объекта — обычный промах, как чужая звезда. */
+it('считает промахом нажатие по чужой грозди', () => {
+  const finish = vi.fn();
+  vi.useFakeTimers();
+  try {
+    renderRound({
+      landmarks: landmarksUpTo('monuments').filter((one) => one.id === 'potala'),
+      onFinish: finish,
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Достопримечательности рядом:.*Запретный город/,
+      }),
+    );
+    act(() => {
+      vi.advanceTimersByTime(WRONG_PAUSE_MS);
+    });
+
+    expect(finish).toHaveBeenCalledWith([
+      expect.objectContaining({ isCorrect: false }),
+    ]);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 /* Карта в раундах по достопримечательностям чистая: решение владельца. */
@@ -88,9 +128,8 @@ it('не показывает городов и физической карты'
 it('в «назвать» прячет звёзды от подписей и даёт четыре имени', () => {
   const { container } = renderRound({ exerciseType: 'name-target' });
 
-  expect(
-    container.querySelector('.landmark-layer')?.getAttribute('data-labels'),
-  ).toBe('false');
+  /* Подпись не спрятана стилем, а не рисуется вовсе — даже у спрошенной. */
+  expect(container.querySelector('.landmark-label')).toBeNull();
   expect(screen.getAllByRole('button', { name: /./ }).length).toBeGreaterThan(3);
 });
 

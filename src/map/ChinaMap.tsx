@@ -13,6 +13,7 @@ import { CityLayer } from './CityLayer';
 import { LandmarkLayer } from './LandmarkLayer';
 import type { FeatureOutcome } from './PhysicalLayer';
 import { cityPointsOfRegions } from './city-points';
+import type { MapCluster } from './cluster';
 import {
   clampView,
   keyboardStep,
@@ -22,7 +23,7 @@ import {
   viewBoxOf,
   WHOLE_MAP,
 } from './map-view';
-import { MapControls, type MapZoom } from './MapControls';
+import { MapControls, ZOOM_LEVELS, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
 import { MEMBERSHIP_LABELS } from './membership';
 import { OUTCOME_LABELS } from './outcome-labels';
@@ -112,8 +113,26 @@ type ChinaMapProps = {
    */
   readonly showsLandmarks?: boolean;
   readonly selectedLandmarkId?: string | null;
-  readonly onSelectLandmark?: (landmarkId: string) => void;
+  /**
+   * Список, а не один идентификатор: скучившиеся звёзды — одна цель, и
+   * нажатие по ней отдаёт всех её членов. Кто из них спрошен, решает раунд.
+   */
+  readonly onSelectLandmark?: (landmarkIds: readonly string[]) => void;
   readonly showsLandmarkLabels?: boolean;
+  /**
+   * Показывать ли выноски Макао и Гонконга. В раундах, где отвечают точкой
+   * или звездой, регионы не выбираются, и два пустых кружка в море с
+   * поводками только спорят с гроздью городов дельты. На физической карте
+   * выноски скрыты всегда: там маркер типа региона ничего не означает.
+   */
+  readonly showsCallouts?: boolean;
+  /**
+   * Показывать ли подписи выносок. Не задано — правило утечки: подписи
+   * скрываются на любой поверхности ответа, кроме витрины. Атлас задаёт
+   * истину явно: он поверхность справочная, и «Макао» с «Гонконгом» там не
+   * ответ, а содержание.
+   */
+  readonly showsCalloutLabels?: boolean;
   /** Выбранный объект физической географии — река или форма рельефа. */
   readonly selectedFeatureId?: string | null;
   readonly onSelectFeature?: (featureId: string) => void;
@@ -227,6 +246,8 @@ export function ChinaMap({
   selectedLandmarkId = null,
   onSelectLandmark,
   showsLandmarkLabels = true,
+  showsCallouts = true,
+  showsCalloutLabels,
   selectedFeatureId = null,
   onSelectFeature,
   showsPhysicalLabels = true,
@@ -350,6 +371,19 @@ export function ChinaMap({
 
   useEffect(() => {
     /*
+     * Выноски скрываются целиком — с кружком и поводком — там, где регионы не
+     * цель: в раундах по точкам и звёздам (`showsCallouts={false}`) и на
+     * физической карте, где маркер типа региона ничего не означает. Скрытый
+     * кружок не берёт ни нажатие, ни фокус: display снимает и то и другое.
+     */
+    const hidesWholeCallouts = !showsCallouts || variant === 'physical';
+    mapRef.current
+      ?.querySelectorAll<SVGElement>('.map-callout')
+      .forEach((callout) => {
+        callout.style.setProperty('display', hidesWholeCallouts ? 'none' : '');
+      });
+
+    /*
      * Там, где на карте отвечают, подписи выносок скрываются: иначе карта
      * печатает «Макао» и «Гонконг» рядом с маркерами и выдаёт два ответа из
      * 34. Выносные линии остаются — они показывают, к каким территориям
@@ -362,16 +396,21 @@ export function ChinaMap({
      * Витрина из условия исключена: она тоже идёт с `usage="answer"` — ни
      * заголовка, ни списка ей не нужно, — но вопроса на ней нет, а выдать
      * можно только ответ. Прятать там подписи значило бы оставить на первом
-     * экране два безымянных кружка в море.
+     * экране два безымянных кружка в море. По той же причине атлас говорит
+     * `showsCalloutLabels` явно: он тоже поверхность без хрома, но справочная,
+     * и подпись выноски там содержание, а не утечка.
      *
      * Скрытие живёт здесь, а не в таблице стилей, намеренно: утечка ответа —
      * не оформление, и проверять её нужно там, где стили не подключены.
      */
-    const hidesCallouts = usage === 'answer' && !opensRegion;
+    const hidesCalloutLabels =
+      showsCalloutLabels === undefined
+        ? usage === 'answer' && !opensRegion
+        : !showsCalloutLabels;
     mapRef.current
       ?.querySelectorAll<SVGElement>('.map-callout text')
       .forEach((label) => {
-        label.style.setProperty('display', hidesCallouts ? 'none' : '');
+        label.style.setProperty('display', hidesCalloutLabels ? 'none' : '');
       });
 
     const areas = mapRef.current?.querySelectorAll<SVGElement>('[data-region-id]');
@@ -477,12 +516,33 @@ export function ChinaMap({
     progressStates,
     regions,
     selectedRegionId,
+    showsCalloutLabels,
+    showsCallouts,
     usage,
     variant,
   ]);
 
   /** Сдвигать нечего, пока карта показана целиком. */
   const canPan = view.zoom > 1;
+
+  /**
+   * Приблизить карту так, чтобы города грозди разошлись: середина вида — в
+   * гроздь, увеличение — ближайшая ступень, на которой ближайшая пара отходит
+   * на диаметр цели. Ступени и середина — знание карты, поэтому считается
+   * здесь, а слой лишь просит.
+   *
+   * `validate:map` следит, чтобы самой тесной паре каталога хватало последней
+   * ступени, — запасной ветки «не разошлись» не существует по построению.
+   */
+  function zoomToCluster(cluster: MapCluster) {
+    const needed = cluster.scale * view.zoom;
+    const level =
+      ZOOM_LEVELS.find((one) => one >= needed - 1e-9) ??
+      ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
+
+    setCenter({ x: cluster.x, y: cluster.y });
+    onZoomChange?.(level);
+  }
 
   function beginDrag(event: ReactPointerEvent<HTMLDivElement>) {
     if (!canPan || event.button !== 0) {
@@ -757,6 +817,7 @@ export function ChinaMap({
                 onSelect={onSelectCity}
                 showsLabels={showsCityLabels}
                 zoom={view.zoom}
+                onZoomToCluster={onZoomChange ? zoomToCluster : undefined}
               />,
               citySvg,
             )

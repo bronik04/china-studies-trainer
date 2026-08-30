@@ -3,11 +3,8 @@ import {
   overlappingTargets,
   TARGET_DIAMETER_UNITS,
 } from './city-hit-targets';
-import {
-  clusterPlaceables,
-  MAX_LENS_RADIUS_UNITS,
-  type Placeable,
-} from './cluster';
+import { clusterPlaceables, type Placeable } from './cluster';
+import { MAX_MAP_ZOOM } from './map-view';
 import { distanceToPolylines } from './polyline';
 import { REGION_PALETTE } from './region-palette';
 import {
@@ -254,35 +251,37 @@ export function validateLandmarkPlacement(
 }
 
 /**
- * Радиус лупы каждой грозди — в пределах `MAX_LENS_RADIUS_UNITS`.
+ * Грозди слоя не ломают ответ на карте.
  *
- * Лупа шириной в десятую часть карты означает не оформительскую мелочь, а то,
- * что каталог просит другого решения: коэффициент считается по ближайшей паре,
- * и один объект, придвинутый вплотную к соседу, растаскивает всю гроздь.
- * Тихого запасного пути нет намеренно — принимать такое решение должен
- * человек.
+ * Два правила. Общее: свёрнутая гроздь — такая же цель, как одиночка, и
+ * накрывать соседнюю она не должна — знак грозди стоит в её середине, а
+ * середина ничем не связана с расстоянием до чужих точек. Меряется тем же
+ * правилом, что и цели городов, — `overlappingTargets`.
  *
- * Возвращает самую широкую лупу каждого слоя: её видно в логе сборки, и рост
- * заметен раньше, чем упрётся в предел.
+ * Второе — только для слоёв, где гроздь раскрывается приближением карты
+ * (`separable`, города): ближайшая пара обязана расходиться не дальше
+ * последней ступени увеличения, иначе нажатие по грозди приблизит карту до
+ * упора, а цели так и останутся слитыми. Тихого запасного пути нет
+ * намеренно: город, вставший вплотную к соседу, требует человеческого
+ * решения, а не молчаливой поломки. У достопримечательностей гроздь сама —
+ * цель ответа, и разводить её не нужно (решение владельца от 2026-08-30).
+ *
+ * Возвращает самую тесную гроздь каждого слоя: её видно в логе сборки, и
+ * рост тесноты заметен раньше, чем упрётся в предел.
  */
-export function validateLensRadii(
+export function validateClusters(
   layers: readonly {
     readonly layer: string;
     readonly points: readonly Placeable[];
+    readonly separable: boolean;
   }[],
-): readonly { readonly layer: string; readonly id: string; readonly radius: number }[] {
+): readonly { readonly layer: string; readonly id: string; readonly scale: number }[] {
   const errors: string[] = [];
-  const widest: { layer: string; id: string; radius: number }[] = [];
+  const tightest: { layer: string; id: string; scale: number }[] = [];
 
-  for (const { layer, points } of layers) {
+  for (const { layer, points, separable } of layers) {
     const { singles, clusters } = clusterPlaceables(points);
 
-    /*
-     * Свёрнутая гроздь — такая же цель, как одиночка, и накрывать соседнюю она
-     * не должна: знак грозди стоит в её середине, а середина ничем не связана
-     * с расстоянием до чужих точек. Меряется тем же правилом, что и цели
-     * городов, — `overlappingTargets`.
-     */
     const targets = [
       ...singles.map((single) => ({
         id: single.id,
@@ -306,24 +305,27 @@ export function validateLensRadii(
       errors.push(`Цели ${one} и ${other} в слое «${layer}» накрывают друг друга`);
     }
 
-    for (const cluster of clusters) {
-      if (cluster.radius > MAX_LENS_RADIUS_UNITS) {
-        errors.push(
-          `Лупа грозди ${cluster.id} в слое «${layer}» — ${cluster.radius.toFixed(1)} ` +
-            `единиц при пределе ${MAX_LENS_RADIUS_UNITS}. Объекты: ` +
-            cluster.members.map((member) => member.id).join(', '),
-        );
+    if (separable) {
+      for (const cluster of clusters) {
+        if (cluster.scale > MAX_MAP_ZOOM) {
+          errors.push(
+            `Гроздь ${cluster.id} в слое «${layer}» расходится только на ` +
+              `${cluster.scale.toFixed(1)}× при пределе увеличения ${MAX_MAP_ZOOM}×. ` +
+              'Объекты: ' +
+              cluster.members.map((member) => member.id).join(', '),
+          );
+        }
       }
     }
 
-    const largest = clusters.reduce<(typeof clusters)[number] | undefined>(
+    const densest = clusters.reduce<(typeof clusters)[number] | undefined>(
       (best, cluster) =>
-        best === undefined || cluster.radius > best.radius ? cluster : best,
+        best === undefined || cluster.scale > best.scale ? cluster : best,
       undefined,
     );
 
-    if (largest !== undefined) {
-      widest.push({ layer, id: largest.id, radius: largest.radius });
+    if (densest !== undefined) {
+      tightest.push({ layer, id: densest.id, scale: densest.scale });
     }
   }
 
@@ -331,7 +333,7 @@ export function validateLensRadii(
     throw new Error(errors.join('\n'));
   }
 
-  return widest;
+  return tightest;
 }
 
 /**

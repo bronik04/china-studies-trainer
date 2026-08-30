@@ -58,3 +58,26 @@ it('не зовёт Math.random: одинаковый сид даёт одина
 
   expect(first.map((one) => one.id)).toEqual(second.map((one) => one.id));
 });
+
+/*
+ * Соседи по грозди на карте — одна звезда, и два её члена среди вариантов
+ * оставили бы «что здесь отмечено» без единственного верного ответа. Список
+ * исключений приходит от карты (`colocatedLandmarkIds`); домен обязан его
+ * соблюсти при любом сиде.
+ */
+it('не берёт исключённых соседей в отвлекающие', () => {
+  for (let seed = 0; seed < 25; seed += 1) {
+    const choices = buildLandmarkChoices(
+      landmarks,
+      'forbidden-city',
+      createSeededRandom(seed),
+      ['temple-of-heaven', 'summer-palace'],
+    );
+
+    const ids = choices.map((one) => one.id);
+    expect(ids).not.toContain('temple-of-heaven');
+    expect(ids).not.toContain('summer-palace');
+    expect(ids).toContain('forbidden-city');
+    expect(choices).toHaveLength(4);
+  }
+});

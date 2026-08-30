@@ -1,16 +1,20 @@
 import { useMemo, useState } from 'react';
-import type { Landmark } from '../content/landmarks';
 import { TARGET_DIAMETER_UNITS } from './city-hit-targets';
 import { clusterPlaceables } from './cluster';
-import { ClusterLens } from './ClusterLens';
+import { ClusterMark } from './ClusterMark';
 import { LANDMARK_POINTS, type LandmarkPoint } from './landmark-points';
 import { MAP_VIEWBOX_MIN_X, MAP_VIEWBOX_WIDTH } from './target-size';
 
 export type LandmarkLayerProps = {
   readonly points?: readonly LandmarkPoint[];
   readonly selectedLandmarkId?: string | null;
-  /** Задан — звёзды отвечают на нажатие и получают фокус. То же, что у городов. */
-  readonly onSelect?: (landmarkId: string) => void;
+  /**
+   * Задан — звёзды отвечают на нажатие и получают фокус. Приходит списком:
+   * скучившиеся объекты — одна цель, и нажатие по ней отдаёт всех её членов.
+   * Кто из них спрошен, знает раунд, а не карта: карта не считает
+   * правильность ответа.
+   */
+  readonly onSelect?: (landmarkIds: readonly string[]) => void;
   readonly showsLabels?: boolean;
   readonly zoom?: number;
 };
@@ -21,7 +25,17 @@ export type LandmarkLayerProps = {
  */
 const MARK_RADIUS = 3.4;
 
+/**
+ * Спрошенная звезда крупнее: в «назвать» она и есть вопрос, и знак прежнего
+ * размера, отличавшийся только заливкой, терялся среди трёх десятков соседей —
+ * его приходилось искать по всей карте.
+ */
+const SELECTED_MARK_RADIUS = 6;
+
 const LABEL_OFFSET = MARK_RADIUS + 4;
+
+/** Зона наведения слоя, который только показывает, — чуть больше знака. */
+const HOVER_MARGIN = 1.6;
 
 function starPoints(x: number, y: number, radius: number): string {
   return Array.from({ length: 10 }, (unused, index) => {
@@ -40,10 +54,11 @@ function starPoints(x: number, y: number, radius: number): string {
  * в разметке они соседи, и форма отличает их надёжнее любого цвета — цвет тут
  * занят заливкой региона.
  *
- * Устроен как слой городов: знак стоит на настоящем месте, подпись появляется
- * у одного объекта за раз, а скучившиеся объекты собираются в гроздь и
- * раскрываются лупой. У трёх пекинских объектов между знаками полторы единицы
- * карты — без грозди они были бы одним пятном.
+ * Скучившиеся объекты собираются в гроздь, и гроздь сама — цель ответа
+ * (решение владельца от 2026-08-30): тренажёр спрашивает «где это», а не «в
+ * какой части Пекина», и три пекинских объекта в полутора единицах карты — с
+ * точки зрения вопроса одна точка. Лупы и приближения здесь нет намеренно:
+ * разводить эти звёзды не нужно ни на каком масштабе.
  */
 export function LandmarkLayer({
   points = LANDMARK_POINTS,
@@ -53,10 +68,8 @@ export function LandmarkLayer({
   zoom = 1,
 }: LandmarkLayerProps) {
   /*
-   * Гроздь нужна там, где есть что разделять: цель нажатия или подсвеченный
-   * ответ. Слой, который только показывает, — атлас — собирать знаки в число
-   * не должен: раскрыть такую гроздь нечем, и половина звёзд просто
-   * исчезла бы с карты.
+   * Гроздь нужна там, где есть что объединять: цель нажатия или подсвеченный
+   * ответ. Слой, который только показывает, рисует каждую звезду отдельно.
    */
   const separates = onSelect !== undefined || selectedLandmarkId !== null;
 
@@ -75,38 +88,26 @@ export function LandmarkLayer({
     [points, separates, zoom],
   );
 
-  const landmarkById = useMemo(
-    () => new Map(points.map((point) => [point.landmark.id, point.landmark])),
+  const pointById = useMemo(
+    () => new Map(points.map((point) => [point.landmark.id, point])),
     [points],
   );
 
-  /*
-   * Гроздь со спрошенным объектом раскрывается сама: в «назвать» подсвеченная
-   * звезда и есть вопрос, а свёрнутая гроздь спрятала бы его.
-   */
-  const askedClusterId =
-    layout.clusters.find((cluster) =>
-      cluster.members.some((member) => member.id === selectedLandmarkId),
-    )?.id ?? null;
+  /* Объект под рукой или в фокусе — его подпись рисуется поверх слоя. */
+  const [activeLandmarkId, setActiveLandmarkId] = useState<string | null>(null);
 
-  /*
-   * Что раскрыто. `null` — ученик ничего не трогал, и раскрыта гроздь со
-   * спрошенной целью; пустая строка — он закрыл её сам; иначе — та, которую он
-   * раскрыл. Так раскрытой всегда остаётся ровно одна.
-   */
-  const [openClusterId, setOpenClusterId] = useState<string | null>(null);
-  const [lastAsked, setLastAsked] = useState<string | null>(askedClusterId);
-
-  /* Подстройка во время отрисовки, а не эффектом: см. `CityLayer`. */
-  if (askedClusterId !== lastAsked) {
-    setLastAsked(askedClusterId);
-    setOpenClusterId(null);
-  }
-
-  function landmarkMark(id: string, x: number, y: number, inLens: boolean) {
-    const landmark = landmarkById.get(id) as Landmark;
-    const onEasternHalf = x > MAP_VIEWBOX_MIN_X + MAP_VIEWBOX_WIDTH * 0.75;
+  function landmarkMark(id: string, x: number, y: number) {
+    const landmark = (pointById.get(id) as LandmarkPoint).landmark;
+    const selected = landmark.id === selectedLandmarkId;
     const label = `${landmark.nameRu}, ${landmark.nameZh}`;
+    const markRadius = selected ? SELECTED_MARK_RADIUS : MARK_RADIUS;
+    /* Цель нажатия не меньше знака — как у городов. */
+    const hitRadius = onSelect
+      ? Math.max(
+          TARGET_DIAMETER_UNITS / zoom / 2,
+          markRadius * 1.55 + HOVER_MARGIN,
+        )
+      : markRadius * 1.55 + HOVER_MARGIN;
 
     return (
       <g
@@ -114,40 +115,55 @@ export function LandmarkLayer({
         className="landmark"
         data-landmark-id={landmark.id}
         data-landmark-kind={landmark.kind}
-        data-selected={landmark.id === selectedLandmarkId}
+        data-selected={selected}
       >
         <polygon
           className="landmark-mark"
-          points={starPoints(x, y, MARK_RADIUS)}
+          points={starPoints(x, y, markRadius)}
           aria-hidden="true"
         />
-        <text
-          className="landmark-label"
-          x={x + (onEasternHalf ? -LABEL_OFFSET : LABEL_OFFSET)}
-          y={y}
-          textAnchor={onEasternHalf ? 'end' : 'start'}
+        {/* Кольцо видно только у спрошенной звезды — как у городов. */}
+        <circle
+          className="landmark-halo"
+          cx={x}
+          cy={y}
+          r={SELECTED_MARK_RADIUS * 1.9}
+          fill="none"
+          stroke="none"
           aria-hidden="true"
-        >
-          {landmark.nameRu}
-        </text>
+        />
         <circle
           className="landmark-hit"
           cx={x}
           cy={y}
-          r={TARGET_DIAMETER_UNITS / zoom / 2}
+          r={hitRadius}
           data-landmark-id={landmark.id}
-          data-cluster-member={inLens ? landmark.id : undefined}
           role={onSelect ? 'button' : undefined}
           aria-label={onSelect ? label : undefined}
           aria-hidden={onSelect ? undefined : 'true'}
           tabIndex={onSelect ? 0 : -1}
-          onClick={onSelect ? () => onSelect(landmark.id) : undefined}
+          onPointerEnter={() => setActiveLandmarkId(landmark.id)}
+          onPointerLeave={() =>
+            setActiveLandmarkId((previous) =>
+              previous === landmark.id ? null : previous,
+            )
+          }
+          onFocus={onSelect ? () => setActiveLandmarkId(landmark.id) : undefined}
+          onBlur={
+            onSelect
+              ? () =>
+                  setActiveLandmarkId((previous) =>
+                    previous === landmark.id ? null : previous,
+                  )
+              : undefined
+          }
+          onClick={onSelect ? () => onSelect([landmark.id]) : undefined}
           onKeyDown={
             onSelect
               ? (event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
-                    onSelect(landmark.id);
+                    onSelect([landmark.id]);
                   }
                 }
               : undefined
@@ -157,50 +173,69 @@ export function LandmarkLayer({
     );
   }
 
+  const labelledIds = showsLabels
+    ? [...new Set([selectedLandmarkId, activeLandmarkId])].filter(
+        (id): id is string => id !== null && pointById.has(id),
+      )
+    : [];
+
   return (
-    <g
-      className="landmark-layer"
-      data-interactive={onSelect !== undefined}
-      data-labels={showsLabels}
-    >
+    <g className="landmark-layer" data-interactive={onSelect !== undefined}>
       {layout.singles.map((single) =>
-        landmarkMark(single.id, single.x, single.y, false),
+        landmarkMark(single.id, single.x, single.y),
       )}
       {layout.clusters.map((cluster) => {
+        const askedInside = cluster.members.some(
+          (member) => member.id === selectedLandmarkId,
+        );
         const names = cluster.members
-          .map((member) => (landmarkById.get(member.id) as Landmark).nameRu)
+          .map(
+            (member) => (pointById.get(member.id) as LandmarkPoint).landmark.nameRu,
+          )
           .join(', ');
 
         return (
-          <ClusterLens
+          <ClusterMark
             key={cluster.id}
             cluster={cluster}
-            open={
-              openClusterId === null
-                ? cluster.id === askedClusterId
-                : openClusterId === cluster.id
-            }
-            movesFocus={openClusterId === cluster.id}
             hitRadius={TARGET_DIAMETER_UNITS / zoom / 2}
+            selected={askedInside}
             label={
-              onSelect
-                ? `Гроздь из ${cluster.members.length} достопримечательностей: ${names}`
-                : undefined
+              onSelect ? `Достопримечательности рядом: ${names}` : undefined
             }
             mark={
               <polygon
                 className="landmark-mark"
-                points={starPoints(cluster.x, cluster.y, MARK_RADIUS)}
+                points={starPoints(
+                  cluster.x,
+                  cluster.y,
+                  askedInside ? SELECTED_MARK_RADIUS : MARK_RADIUS,
+                )}
                 aria-hidden="true"
               />
             }
-            onOpen={() => setOpenClusterId(cluster.id)}
-            onClose={() => setOpenClusterId('')}
+            onActivate={() =>
+              onSelect?.(cluster.members.map((member) => member.id))
+            }
+          />
+        );
+      })}
+      {labelledIds.map((landmarkId) => {
+        const point = pointById.get(landmarkId) as LandmarkPoint;
+        const onEasternHalf =
+          point.x > MAP_VIEWBOX_MIN_X + MAP_VIEWBOX_WIDTH * 0.75;
+
+        return (
+          <text
+            key={landmarkId}
+            className="landmark-label"
+            x={point.x + (onEasternHalf ? -LABEL_OFFSET : LABEL_OFFSET)}
+            y={point.y}
+            textAnchor={onEasternHalf ? 'end' : 'start'}
+            aria-hidden="true"
           >
-            {cluster.members.map((member) =>
-              landmarkMark(member.id, member.lensX, member.lensY, true),
-            )}
-          </ClusterLens>
+            {point.landmark.nameRu}
+          </text>
         );
       })}
     </g>

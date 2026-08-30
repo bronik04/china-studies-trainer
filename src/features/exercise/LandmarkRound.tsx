@@ -20,6 +20,7 @@ import {
   type Round,
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
+import { colocatedLandmarkIds } from '../../map/landmark-points';
 import type { MapZoom } from '../../map/MapControls';
 import { answerStatesFor } from './answer-states';
 import { LANDMARK_MODES } from './exercise-modes';
@@ -92,8 +93,18 @@ export function LandmarkRound({
   const choicesByQuestion = useMemo(() => {
     const random = createSeededRandom(seed + 1);
 
+    /*
+     * Соседи по грозди исключаются из отвлекающих: на карте гроздь — одна
+     * звезда, и «Запретный город» рядом с «Храмом Неба» в вариантах оставил
+     * бы вопрос «что здесь отмечено» без единственного верного ответа.
+     */
     return round.questions.map((question) =>
-      buildLandmarkChoices(landmarks, question.target.id, random),
+      buildLandmarkChoices(
+        landmarks,
+        question.target.id,
+        random,
+        colocatedLandmarkIds(question.target.id),
+      ),
     );
   }, [landmarks, round.questions, seed]);
 
@@ -152,8 +163,14 @@ export function LandmarkRound({
     }
   }
 
-  function handleLandmarkSelect(landmarkId: string) {
-    answer(landmarkId);
+  /*
+   * Со звезды приходит список: скучившиеся объекты — одна цель, и попадание в
+   * неё, когда спрошенный внутри, — верный ответ (решение владельца от
+   * 2026-08-30: важно «что это в Пекине», а не в какой части Пекина). Промах
+   * записывается первым членом грозди — любым, он всё равно не спрошенный.
+   */
+  function handleLandmarkSelect(landmarkIds: readonly string[]) {
+    answer(landmarkIds.includes(target.id) ? target.id : landmarkIds[0]);
   }
 
   const showsAnswer =
@@ -240,7 +257,7 @@ export function LandmarkRound({
             answeredId={answeredId}
             targetId={target.id}
             disabled={round.status !== 'ready'}
-            onSelect={handleLandmarkSelect}
+            onSelect={answer}
           />
         ) : undefined
       }
@@ -268,6 +285,12 @@ export function LandmarkRound({
         onSelectLandmark={
           exerciseType === 'find-on-map' ? handleLandmarkSelect : undefined
         }
+        /*
+         * Выноски Макао и Гонконга видны только там, где отвечают регионом: в
+         * «найти» и «назвать» регион не выбирается, и пустые кружки в море
+         * лишь спорили бы со звёздами дельты.
+         */
+        showsCallouts={answersWithRegion}
       />
     </RoundStage>
   );

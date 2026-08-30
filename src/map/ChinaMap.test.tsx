@@ -840,3 +840,92 @@ it('витрина отдаёт нажатие переходом, а не вы�
   expect(open).toHaveBeenCalledWith('hunan');
   expect(select).not.toHaveBeenCalled();
 });
+
+/*
+ * В раундах, где отвечают точкой или звездой, регионы не выбираются, и
+ * выноски Макао и Гонконга скрываются целиком — вместе с кружком и поводком:
+ * пустые кружки в море спорили бы с гроздью городов дельты. Скрытый кружок не
+ * должен оставаться и остановкой Tab.
+ */
+it('прячет выноски целиком там, где регионы не цель', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      interactive={false}
+      usage="answer"
+      showsCallouts={false}
+    />,
+  );
+
+  const callouts = [...container.querySelectorAll<SVGElement>('.map-callout')];
+
+  expect(callouts).not.toHaveLength(0);
+  for (const callout of callouts) {
+    expect(callout.style.display).toBe('none');
+  }
+});
+
+/* На физической карте маркер типа региона ничего не означает. */
+it('на физической карте выносок нет', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      variant="physical"
+    />,
+  );
+
+  for (const callout of [...container.querySelectorAll<SVGElement>('.map-callout')]) {
+    expect(callout.style.display).toBe('none');
+  }
+});
+
+/*
+ * Атлас — поверхность справочная: «Макао» и «Гонконг» там содержание, а не
+ * ответ, и правило утечки обходится явным признаком. Без этого теста признак
+ * можно было бы потерять, и подписи пропали бы из атласа снова.
+ */
+it('с явным признаком показывает подписи выносок и на поверхности ответа', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      usage="answer"
+      showsCalloutLabels
+    />,
+  );
+
+  const labels = [...container.querySelectorAll<SVGElement>('.map-callout text')];
+
+  expect(labels).not.toHaveLength(0);
+  for (const label of labels) {
+    expect(label.style.display).toBe('');
+  }
+});
+
+/* В раунде по регионам маркеры остаются целями, но подписи молчат. */
+it('в раунде по регионам оставляет маркеры выносок без подписей', () => {
+  const { container } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      usage="answer"
+    />,
+  );
+
+  for (const callout of [...container.querySelectorAll<SVGElement>('.map-callout')]) {
+    expect(callout.style.display).toBe('');
+  }
+  for (const label of [...container.querySelectorAll<SVGElement>('.map-callout text')]) {
+    expect(label.style.display).toBe('none');
+  }
+});

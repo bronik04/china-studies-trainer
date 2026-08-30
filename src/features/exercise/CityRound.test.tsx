@@ -199,15 +199,18 @@ it('в «город — регион» после ошибки называет 
 
 /*
  * В «найти город» подпись выдавала бы ответ наведением курсора — точку
- * достаточно было бы обвести мышью.
+ * достаточно было бы обвести мышью. Подписи не спрятаны стилем, а не
+ * рисуются вовсе: слой не создаёт узла даже у точки под курсором.
  */
 it.each(['find-on-map', 'name-target'] as const)(
   'в игре %s не подписывает города на карте',
   (exerciseType) => {
     const { container } = renderRound(exerciseType);
 
-    expect(container.querySelector('.city-layer')?.getAttribute('data-labels')).toBe(
-      'false',
-    );
+    const hit = container.querySelector('.city-hit');
+    expect(hit).not.toBeNull();
+    fireEvent.pointerEnter(hit as Element);
+
+    expect(container.querySelector('.city-label')).toBeNull();
   },
 );

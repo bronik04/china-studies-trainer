@@ -3,6 +3,12 @@ import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
+  /*
+   * Порт берётся из окружения, когда он назначен снаружи (предпросмотр
+   * Claude Code поднимает второй сервер рядом с уже занятым 5173). Без
+   * переменной Vite ведёт себя как прежде.
+   */
+  server: process.env.PORT ? { port: Number(process.env.PORT) } : undefined,
   test: {
     environment: 'jsdom',
     globals: true,
