@@ -50,6 +50,10 @@ export type HomePageProps = {
   ) => void;
   readonly onStartFillRound: (language: QuestionLanguage) => void;
   readonly onStartNeighboursRound: (language: QuestionLanguage) => void;
+  readonly onStartCountryRound: (
+    exerciseType: 'find-on-map' | 'name-target',
+    language: QuestionLanguage,
+  ) => void;
   readonly onStartCultureRound: (
     language: QuestionLanguage,
     set: CultureSet,
@@ -188,6 +192,7 @@ export function HomePage({
   onStartRound,
   onStartFillRound,
   onStartNeighboursRound,
+  onStartCountryRound,
   onStartCityRound,
   onStartLandmarkRound,
   onStartCultureRound,
@@ -218,6 +223,8 @@ export function HomePage({
       onStartFillRound(language);
     } else if (card.kind === 'neighbours') {
       onStartNeighboursRound(language);
+    } else if (card.kind === 'country') {
+      onStartCountryRound(card.exerciseType, language);
     } else if (card.kind === 'city') {
       onStartCityRound(card.exerciseType, language, set as CitySet);
     } else if (card.kind === 'landmark') {

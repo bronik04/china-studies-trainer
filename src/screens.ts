@@ -33,6 +33,7 @@ const loaders = {
   culture: () => import('./features/exercise/CultureRound'),
   fill: () => import('./features/exercise/FillMapRound'),
   neighbours: () => import('./features/exercise/NeighboursRound'),
+  country: () => import('./features/exercise/CountryRound'),
   order: () => import('./features/exercise/OrderRound'),
   results: () => import('./features/results/RoundResultsPage'),
   fillResults: () => import('./features/results/FillMapResultsPage'),
@@ -71,6 +72,9 @@ export const FillMapRound = lazy(() =>
 );
 export const NeighboursRound = lazy(() =>
   loaders.neighbours().then((module) => ({ default: module.NeighboursRound })),
+);
+export const CountryRound = lazy(() =>
+  loaders.country().then((module) => ({ default: module.CountryRound })),
 );
 export const OrderRound = lazy(() =>
   loaders.order().then((module) => ({ default: module.OrderRound })),

@@ -57,6 +57,7 @@ import {
   ExerciseRound,
   FillMapResultsPage,
   FillMapRound,
+  CountryRound,
   NeighboursRound,
   OrderRound,
   PhysicalRound,
@@ -65,6 +66,7 @@ import {
 } from './screens';
 import type { Landmark } from './content/landmarks';
 import { landmarksUpTo, type LandmarkSet } from './content/landmark-sets';
+import { countries, type Country } from './content/countries';
 import { regionAnswerableLandmarks } from './domain/landmark-pool';
 import { ChinaMap } from './map/ChinaMap';
 import type { MapZoom } from './map/MapControls';
@@ -87,6 +89,7 @@ type Screen =
   | 'fill'
   | 'fill-results'
   | 'neighbours-exercise'
+  | 'country-exercise'
   | 'order-exercise';
 
 /**
@@ -194,6 +197,10 @@ export default function App() {
   const [fillRound, setFillRound] = useState<FillRound | null>(null);
   const [neighboursPool, setNeighboursPool] =
     useState<readonly Region[]>(regions);
+  const [countryPool, setCountryPool] = useState<readonly Country[]>(countries);
+  const [countryExerciseType, setCountryExerciseType] = useState<
+    'find-on-map' | 'name-target'
+  >('find-on-map');
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
   const [collectionId, setCollectionId] = useState<string | null>(null);
@@ -475,6 +482,30 @@ export default function App() {
     startNeighboursPool(nextLanguage, regions);
   }
 
+  /**
+   * Игры по странам: цели из своего справочника, поэтому запуск свой. Пул
+   * нужен повтору ошибок — он спрашивает те же страны той же игрой.
+   */
+  function startCountryPool(
+    exerciseType: 'find-on-map' | 'name-target',
+    nextLanguage: QuestionLanguage,
+    pool: readonly Country[],
+  ) {
+    setLanguage(nextLanguage);
+    setCountryExerciseType(exerciseType);
+    setCountryPool(pool);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('country-exercise');
+  }
+
+  function startCountryRound(
+    exerciseType: 'find-on-map' | 'name-target',
+    nextLanguage: QuestionLanguage,
+  ) {
+    startCountryPool(exerciseType, nextLanguage, countries);
+  }
+
   function startFillRound(nextLanguage: QuestionLanguage) {
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
@@ -536,6 +567,22 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={(round) => finishRound(round.attempts)}
+          onExit={goToModes}
+        />
+      </AppFrame>
+    );
+  }
+
+  if (screen === 'country-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <CountryRound
+          countries={countryPool}
+          exerciseType={countryExerciseType}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishRound}
           onExit={goToModes}
         />
       </AppFrame>
@@ -925,6 +972,7 @@ export default function App() {
           onStartRound={startRound}
           onStartFillRound={startFillRound}
           onStartNeighboursRound={startNeighboursRound}
+          onStartCountryRound={startCountryRound}
           onStartCityRound={startCityRound}
           onStartCultureRound={startCultureRound}
           onStartHistoryRound={startHistoryRound}
