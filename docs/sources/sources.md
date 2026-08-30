@@ -36,6 +36,24 @@
 - Лицензия: CC0 1.0; полное описание и перечень городов — `cities.md`.
 - Подтверждает: координаты городов, которых нет в Natural Earth.
 
+## natural-earth-countries-5.1.2
+
+- Название: Natural Earth 50m Admin 0 – Countries, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries/
+- Дата обращения: 2026-08-30
+- Лицензия: public domain; полное описание набора и изменений — `countries.md`.
+- Подтверждает: границы четырнадцати сопредельных с Китаем государств; русские и китайские названия этих государств.
+
+## natural-earth-disputed-areas-5.1.2
+
+- Название: Natural Earth 10m Admin 0 – Breakaway and Disputed Areas, версия 5.1.2
+- Организация: Natural Earth
+- URL: https://www.naturalearthdata.com/downloads/10m-cultural-vectors/
+- Дата обращения: 2026-08-30
+- Лицензия: public domain; полное описание набора и изменений — `countries.md`.
+- Подтверждает: спорные участки сухопутной границы Китая; кто участком управляет и кто его заявляет.
+
 ## natural-earth-rivers-5.1.2
 
 - Название: Natural Earth 10m Rivers and Lake Centerlines, версия 5.1.2

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { cities } from '../src/content/cities';
 import { physicalFeatures } from '../src/content/physical-features';
@@ -15,6 +16,7 @@ import {
 import { RELIEF_BANDS, RELIEF_INPUTS_FINGERPRINT } from '../src/map/relief-bands';
 import {
   COMFORTABLE_TARGET_PX,
+  MAP_VIEWBOX_WIDTH,
   MIN_TARGET_PX,
   REFERENCE_MAP_WIDTH,
   undersizedRegions,
@@ -44,6 +46,10 @@ import {
   REGION_NEIGHBOURS,
 } from '../src/map/region-neighbours';
 import { neighboursOf, shapesFrom } from './generate-region-neighbours';
+import {
+  COUNTRIES_INPUTS_FINGERPRINT,
+  COUNTRY_SHAPES,
+} from '../src/map/country-geometry';
 import { physicalInputsFingerprint } from './physical-fingerprint';
 import { paletteInputsFingerprint } from './palette-fingerprint';
 import { reliefInputsFingerprint } from './relief-fingerprint';
@@ -321,6 +327,39 @@ for (const [regionId, list] of Object.entries(REGION_NEIGHBOURS)) {
     );
   }
 }
+
+/*
+ * Слой стран — тем же приёмом: он собран из выжимки, и подменённая выжимка без
+ * перегенерации оставила бы на карте прежние очертания при зелёной сборке.
+ */
+const expectedCountriesFingerprint = createHash('sha256')
+  .update(
+    readFileSync(new URL('data/countries-source.json', import.meta.url), 'utf8'),
+  )
+  .digest('hex')
+  .slice(0, 16);
+if (expectedCountriesFingerprint !== COUNTRIES_INPUTS_FINGERPRINT) {
+  throw new Error(
+    `Слой стран собран из другой выжимки: в файле ${COUNTRIES_INPUTS_FINGERPRINT}, ` +
+      `у нынешней ${expectedCountriesFingerprint}. Запустите npm run generate:countries`,
+  );
+}
+
+/*
+ * Сколько стран мельче порога нажатия. Не роняет сборку: у Афганистана в кадр
+ * заходит только Ваханский коридор, и это не дефект карты, а география. Число
+ * объясняет, почему такие страны отвечаются из равнозначного списка.
+ */
+const smallCountries = COUNTRY_SHAPES.filter(
+  (shape) => (shape.diameter * REFERENCE_MAP_WIDTH) / MAP_VIEWBOX_WIDTH < MIN_TARGET_PX,
+);
+console.info(
+  `Проверено стран: ${COUNTRY_SHAPES.length}. Мельче ${MIN_TARGET_PX} px при ширине ` +
+    `${REFERENCE_MAP_WIDTH} px: ${smallCountries.length}` +
+    (smallCountries.length > 0
+      ? ` (${smallCountries.map((shape) => shape.id).join(', ')})`
+      : ''),
+);
 
 /*
  * Полосы высот проверяются тем же приёмом и по той же причине: заменить
