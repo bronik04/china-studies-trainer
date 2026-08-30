@@ -22,7 +22,8 @@ export type TargetKind =
   | 'history'
   | 'collection'
   | 'landmark'
-  | 'neighbours';
+  | 'neighbours'
+  | 'country';
 
 export type Target = {
   readonly kind: TargetKind;
@@ -41,6 +42,15 @@ export function regionTarget(id: string): Target {
  */
 export function neighboursTarget(id: string): Target {
   return { kind: 'neighbours', id };
+}
+
+/**
+ * Цель игр по сопредельным государствам. Отдельный вид: «не знает, где
+ * Казахстан» — не то же, что «не знает, где Синьцзян», и ошибки не должны
+ * смешиваться в повторе.
+ */
+export function countryTarget(id: string): Target {
+  return { kind: 'country', id };
 }
 
 export function cityTarget(id: string): Target {

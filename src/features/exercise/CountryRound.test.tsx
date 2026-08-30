@@ -1,0 +1,90 @@
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { countries } from '../../content/countries';
+import { CORRECT_PAUSE_MS } from './round-pace';
+import { CountryRound, type CountryExerciseType } from './CountryRound';
+
+function renderRound(
+  exerciseType: CountryExerciseType = 'find-on-map',
+  onFinish: (attempts: readonly unknown[]) => void = () => {},
+) {
+  return render(
+    <CountryRound
+      exerciseType={exerciseType}
+      language="ru"
+      roundId="r1"
+      seed={1}
+      onFinish={onFinish}
+      onExit={() => {}}
+    />,
+  );
+}
+
+/** Список — в панели оболочки: перед ответом её нужно открыть. */
+function openAnswerList() {
+  const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
+  if (toggle.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.click(toggle);
+  }
+}
+
+function list() {
+  return within(screen.getByRole('list', { name: 'Список стран' }));
+}
+
+function asked(): string {
+  return screen.getByTestId('exercise-target').textContent ?? '';
+}
+
+it('спрашивает все четырнадцать стран', () => {
+  renderRound();
+
+  expect(screen.getByText(`Вопрос 1 из ${countries.length}`)).toBeInTheDocument();
+  expect(countries.map((country) => country.nameRu)).toContain(asked());
+});
+
+it('отвечает из списка и идёт дальше сам', () => {
+  vi.useFakeTimers();
+  try {
+    renderRound();
+    openAnswerList();
+
+    const target = countries.find((country) => country.nameRu === asked())!;
+    fireEvent.click(list().getByRole('button', { name: target.nameRu }));
+
+    /* Верный ответ виден полсекунды, потом раунд едет дальше сам. */
+    act(() => {
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
+    });
+
+    expect(screen.getByText('Вопрос 2 из 14')).toBeInTheDocument();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('после ошибки называет верную страну', () => {
+  renderRound();
+  openAnswerList();
+
+  const target = countries.find((country) => country.nameRu === asked())!;
+  const other = countries.find((country) => country.id !== target.id)!;
+  fireEvent.click(list().getByRole('button', { name: other.nameRu }));
+
+  expect(asked()).toContain(target.nameRu);
+  expect(asked()).toContain(target.nameZh);
+});
+
+it('в «назвать страну» вопрос не называет страну, а варианты называют', () => {
+  renderRound('name-target');
+
+  expect(asked()).toBe('Страна на карте');
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+it('в «назвать страну» списка ответов нет: отвечают кнопкой', () => {
+  renderRound('name-target');
+
+  expect(
+    screen.queryByRole('button', { name: 'Ответить из списка' }),
+  ).toBeNull();
+});

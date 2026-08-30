@@ -164,6 +164,26 @@ export const CITY_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
 };
 
 /**
+ * Две игры по сопредельным государствам. `match-pair` здесь нет: связать
+ * страну со вторым каталогом нечем — «в каком регионе Казахстан» вопрос без
+ * ответа.
+ */
+export const COUNTRY_MODES: Readonly<
+  Record<'find-on-map' | 'name-target', ExerciseMode>
+> = {
+  'find-on-map': {
+    exerciseType: 'find-on-map',
+    title: 'Найти страну',
+    eyebrow: 'Найдите страну на карте',
+  },
+  'name-target': {
+    exerciseType: 'name-target',
+    title: 'Назвать страну',
+    eyebrow: 'Какая страна подсвечена',
+  },
+};
+
+/**
  * Две игры по физической географии. `match-pair` здесь нет и не будет: у реки
  * нет второго каталога, с которым её связывают.
  */

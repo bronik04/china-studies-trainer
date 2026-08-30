@@ -1,0 +1,269 @@
+import { useMemo, useState } from 'react';
+import { countries as allCountries } from '../../content/countries';
+import type { Country } from '../../content/countries';
+import { regions } from '../../content/regions';
+import { buildCountryChoices } from '../../domain/country-choices';
+import {
+  labelOf,
+  langOf,
+  type QuestionLanguage,
+} from '../../domain/question-language';
+import { createSeededRandom } from '../../domain/random';
+import {
+  answerQuestion,
+  countryTarget,
+  createRound,
+  currentQuestion,
+  goToNextQuestion,
+  isRoundFinished,
+  type Attempt,
+  type Round,
+} from '../../domain/round';
+import { ChinaMap } from '../../map/ChinaMap';
+import type { AnswerState } from '../../map/region-selection';
+import { CountryAnswerList } from './CountryAnswerList';
+import { COUNTRY_MODES } from './exercise-modes';
+import { RoundProgressTrail } from './RoundProgressTrail';
+import { RoundStage } from './RoundStage';
+import { StageChoices, type StageChoice } from './StageChoices';
+import { useAutoAdvance } from './use-auto-advance';
+
+/*
+ * Часы раунда живут в модуле, а не в теле компонента: `performance.now` нечист,
+ * и проверка чистоты React считает его вызов внутри компонента вызовом во время
+ * отрисовки. Тот же приём в `CityRound`.
+ */
+function startClock(): number {
+  return performance.now();
+}
+
+function elapsedSince(start: number): number {
+  return Math.round(startClock() - start);
+}
+
+export type CountryExerciseType = 'find-on-map' | 'name-target';
+
+export type CountryRoundProps = {
+  readonly countries?: readonly Country[];
+  readonly exerciseType: CountryExerciseType;
+  readonly language: QuestionLanguage;
+  readonly roundId: string;
+  readonly seed: number;
+  readonly onFinish: (attempts: readonly Attempt[]) => void;
+  readonly onExit: () => void;
+};
+
+/**
+ * Две игры по сопредельным государствам одним экраном.
+ *
+ * | Игра | Вопрос | Ответ |
+ * | --- | --- | --- |
+ * | `find-on-map` | имя страны | нажатие по её контуру или выбор из списка |
+ * | `name-target` | подсвеченная страна | одно из четырёх имён |
+ *
+ * Третьей игры, как у городов, здесь нет: связать страну со вторым каталогом
+ * нечем — «в каком регионе Казахстан» вопрос без ответа.
+ *
+ * Подписи стран видны в «найти страну» и скрыты в «назвать страну»: там
+ * подпись подсвеченной страны и есть ответ.
+ */
+export function CountryRound({
+  countries = allCountries,
+  exerciseType,
+  language,
+  roundId,
+  seed,
+  onFinish,
+  onExit,
+}: CountryRoundProps) {
+  const [round, setRound] = useState<Round>(() =>
+    createRound(
+      countries.map((country) => countryTarget(country.id)),
+      {
+        roundId,
+        exerciseTypes: [exerciseType],
+        language,
+        random: createSeededRandom(seed),
+      },
+    ),
+  );
+  const [answeredId, setAnsweredId] = useState<string | null>(null);
+  const [askedAt, setAskedAt] = useState(startClock);
+  const [startedAt] = useState(startClock);
+  const { schedule } = useAutoAdvance();
+
+  const choicesByQuestion = useMemo(() => {
+    const random = createSeededRandom(seed + 1);
+
+    return round.questions.map((question) =>
+      buildCountryChoices(countries, question.target.id, random),
+    );
+  }, [countries, round.questions, seed]);
+
+  const question = currentQuestion(round);
+  const targetCountry = countries.find(
+    (country) => country.id === question.target.id,
+  )!;
+  const mode = COUNTRY_MODES[exerciseType];
+  const lastAttempt = round.attempts[round.attempts.length - 1];
+  const showsChoices = exerciseType === 'name-target';
+  const showsAnswer =
+    round.status === 'feedback' && lastAttempt?.isCorrect === false;
+
+  /*
+   * После ответа карта называет исход: верная страна залита, ошибочная
+   * заштрихована, остальные закрыты. То же правило, что у регионов
+   * (`answer-states.ts`), но своим списком: там регионы, здесь страны.
+   */
+  const countryStates = useMemo(() => {
+    if (answeredId === null) {
+      return {};
+    }
+
+    const states: Record<string, AnswerState> = {};
+    for (const country of countries) {
+      states[country.id] = 'disabled';
+    }
+
+    if (answeredId !== targetCountry.id) {
+      states[answeredId] = 'incorrect';
+    }
+    states[targetCountry.id] = 'correct';
+
+    return states;
+  }, [answeredId, countries, targetCountry.id]);
+
+  function goNext(from: Round) {
+    const next = goToNextQuestion(from);
+    if (isRoundFinished(next)) {
+      onFinish(next.attempts);
+      return;
+    }
+
+    setRound(next);
+    setAnsweredId(null);
+    setAskedAt(startClock());
+  }
+
+  function answer(id: string) {
+    if (round.status !== 'ready') {
+      return;
+    }
+
+    setAnsweredId(id);
+    const answered = answerQuestion(round, {
+      answeredId: id,
+      durationMs: elapsedSince(askedAt),
+      answeredAt: new Date().toISOString(),
+    });
+    setRound(answered);
+
+    const isCorrect = answered.attempts[answered.attempts.length - 1].isCorrect;
+    schedule(isCorrect, () => goNext(answered));
+  }
+
+  function handleCountrySelect(countryId: string) {
+    if (!showsChoices) {
+      answer(countryId);
+    }
+  }
+
+  const stageChoices: readonly StageChoice[] = showsChoices
+    ? choicesByQuestion[round.currentIndex].map((choice) => ({
+        id: choice.id,
+        label: labelOf(choice, question.language),
+        lang: langOf(question.language),
+        result:
+          answeredId === null
+            ? undefined
+            : choice.id === targetCountry.id
+              ? 'correct'
+              : choice.id === answeredId
+                ? 'incorrect'
+                : undefined,
+      }))
+    : [];
+
+  const prompt = showsAnswer ? (
+    <>
+      <p className="eyebrow">Эту страну стоит повторить</p>
+      <h1 className="stage-target" data-testid="exercise-target">
+        Это {targetCountry.nameRu}{' '}
+        <span lang="zh-Hans">{targetCountry.nameZh}</span>
+      </h1>
+    </>
+  ) : (
+    <>
+      <p className="eyebrow">{mode.eyebrow}</p>
+      <h1
+        className="stage-target"
+        data-testid="exercise-target"
+        lang={showsChoices ? undefined : langOf(question.language)}
+      >
+        {showsChoices
+          ? 'Страна на карте'
+          : labelOf(targetCountry, question.language)}
+      </h1>
+    </>
+  );
+
+  return (
+    <RoundStage
+      prompt={prompt}
+      promptState={showsAnswer ? 'answer' : 'question'}
+      startedAt={startedAt}
+      progress={
+        <>
+          <p className="exercise-progress">
+            Вопрос {round.currentIndex + 1} из {round.questions.length}
+          </p>
+          <RoundProgressTrail
+            total={round.questions.length}
+            attempts={round.attempts}
+          />
+        </>
+      }
+      choices={
+        showsChoices ? (
+          <StageChoices
+            choices={stageChoices}
+            disabled={round.status !== 'ready'}
+            onChoose={answer}
+          />
+        ) : undefined
+      }
+      answerList={
+        showsChoices ? undefined : (
+          <CountryAnswerList
+            countries={countries}
+            language={question.language}
+            answeredId={answeredId}
+            targetId={targetCountry.id}
+            disabled={round.status !== 'ready'}
+            onSelect={handleCountrySelect}
+          />
+        )
+      }
+      onExit={onExit}
+    >
+      {/*
+        Регионы передаются настоящие, хотя выбирать их нельзя: карта берёт
+        отсюда имена областей для читалки экрана, и с пустым списком Китай
+        заговорил бы по-английски именами из разметки SVG.
+      */}
+      <ChinaMap
+        regions={regions}
+        selectedRegionId={null}
+        onSelect={() => {}}
+        onClear={() => {}}
+        usage="answer"
+        interactive={false}
+        showsCountries
+        selectedCountryId={showsChoices ? targetCountry.id : answeredId}
+        onSelectCountry={handleCountrySelect}
+        showsCountryLabels={!showsChoices}
+        countryStates={countryStates}
+      />
+    </RoundStage>
+  );
+}
