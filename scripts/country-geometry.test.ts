@@ -39,15 +39,17 @@ it('каждая страна подходит к границе Китая вп
   }
 });
 
-it('у каждой страны есть место для подписи внутри кадра', () => {
+it('в каждую страну есть куда попасть указателем', () => {
   for (const shape of COUNTRY_SHAPES) {
-    const [x, y] = shape.label;
-
-    expect(x).toBeGreaterThan(-16);
-    expect(x).toBeLessThan(790);
-    expect(y).toBeGreaterThan(-16);
-    expect(y).toBeLessThan(585);
-    expect(shape.diameter).toBeGreaterThan(0);
+    /*
+     * Мера — диаметр наибольшей вписанной окружности, как у регионов. На
+     * расширенном кадре мельче порога нажатия не остаётся ни одной страны:
+     * при обычном кадре от Афганистана виден был Ваханский коридор в 8.4.
+     */
+    expect({ id: shape.id, big: shape.diameter >= 19 }).toEqual({
+      id: shape.id,
+      big: true,
+    });
   }
 });
 

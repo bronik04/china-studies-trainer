@@ -989,12 +989,6 @@ button.text:hover:enabled {
   pointer-events: none;
 }
 
-.china-map .country-label {
-  fill: var(--text-on-ground-muted);
-  font-size: var(--map-label-size);
-  paint-order: stroke;
-  pointer-events: none;
-}
 
 /*
  * Соседи. Игра начинается серой по тому же доводу, что и заполнение карты:

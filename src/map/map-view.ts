@@ -19,6 +19,16 @@ export type MapView = {
   readonly zoom: number;
   readonly centerX: number;
   readonly centerY: number;
+  /**
+   * Во сколько раз кадр шире обычного. Единица — кадр, обрезанный по Китаю;
+   * больше единицы карта показывает поле вокруг него. Нужен играм по
+   * сопредельным государствам: при обычном кадре от Афганистана видна полоска.
+   *
+   * Живёт в самом виде, а не отдельным признаком карты, потому что от него
+   * зависят и `viewBox`, и пределы сдвига: разъедься они — карту можно было бы
+   * утащить в пустоту.
+   */
+  readonly outset?: number;
 };
 
 /*
@@ -47,6 +57,23 @@ const FULL = {
   height: MAP_VIEWBOX_HEIGHT,
 } as const;
 
+/**
+ * Кадр вида с учётом расширения. Растёт пропорционально по обеим сторонам:
+ * иначе изменилось бы соотношение сторон, и карта поехала бы в рамке.
+ */
+function frameOf(outset: number | undefined) {
+  const factor = outset ?? 1;
+  const width = FULL.width * factor;
+  const height = FULL.height * factor;
+
+  return {
+    minX: FULL.minX - (width - FULL.width) / 2,
+    minY: FULL.minY - (height - FULL.height) / 2,
+    width,
+    height,
+  };
+}
+
 export const WHOLE_MAP: MapView = {
   zoom: 1,
   centerX: FULL.minX + FULL.width / 2,
@@ -62,28 +89,31 @@ function clamp(value: number, min: number, max: number): number {
  * показалась пустота: на единичном увеличении середина одна-единственная.
  */
 export function clampView(view: MapView): MapView {
-  const width = FULL.width / view.zoom;
-  const height = FULL.height / view.zoom;
+  const frame = frameOf(view.outset);
+  const width = frame.width / view.zoom;
+  const height = frame.height / view.zoom;
 
   return {
     zoom: view.zoom,
+    outset: view.outset,
     centerX: clamp(
       view.centerX,
-      FULL.minX + width / 2,
-      FULL.minX + FULL.width - width / 2,
+      frame.minX + width / 2,
+      frame.minX + frame.width - width / 2,
     ),
     centerY: clamp(
       view.centerY,
-      FULL.minY + height / 2,
-      FULL.minY + FULL.height - height / 2,
+      frame.minY + height / 2,
+      frame.minY + frame.height - height / 2,
     ),
   };
 }
 
 export function viewBoxOf(view: MapView): string {
   const { zoom, centerX, centerY } = clampView(view);
-  const width = FULL.width / zoom;
-  const height = FULL.height / zoom;
+  const frame = frameOf(view.outset);
+  const width = frame.width / zoom;
+  const height = frame.height / zoom;
 
   return `${centerX - width / 2} ${centerY - height / 2} ${width} ${height}`;
 }

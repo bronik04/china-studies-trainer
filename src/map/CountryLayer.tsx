@@ -5,8 +5,6 @@ import type { AnswerState } from './region-selection';
 export type CountryLayerProps = {
   readonly selectedCountryId: string | null;
   readonly onSelect: (countryId: string) => void;
-  /** В «найти страну» подписи видны, в «назвать страну» — нет: подпись и есть ответ. */
-  readonly showsLabels?: boolean;
   /**
    * Отвечают ли нажатием по стране. В «назвать страну» ответ выбирается
    * кнопкой, и контуры перестают быть управлением: роль и фокус снимаются,
@@ -26,20 +24,22 @@ const NO_STATES: Readonly<Record<string, AnswerState>> = {};
  * физический, и по той же причине: система координат и увеличение достаются
  * ему от самой карты, а не подгоняются вторым `svg` поверх.
  *
- * Страны обрезаны рамкой карты и видны ободом: кадр кончается почти по границе
- * Китая. Это не изъян, а следствие того, что карта кадрирована по стране;
- * мелкие цели (Афганистан — 8.4 единицы) отвечаются из равнозначного списка,
- * как Гонконг и Макао.
+ * Подписей у стран нет: в обеих играх имя страны и есть ответ (решение
+ * владельца от 2026-08-31). До ответа его называет только равнозначный список,
+ * после — разбор.
+ *
+ * Слой рисуется на расширенном кадре: при обычном, обрезанном по Китаю, от
+ * Афганистана оставалась полоска в 8.4 единицы. Множитель общий с генератором
+ * геометрии — `COUNTRY_FRAME_OUTSET`.
  */
 export function CountryLayer({
   selectedCountryId,
   onSelect,
-  showsLabels = true,
   answers = true,
   answerStates = NO_STATES,
 }: CountryLayerProps) {
   return (
-    <g className="country-layer" data-labels={showsLabels}>
+    <g className="country-layer">
       {COUNTRY_SHAPES.map((shape) => {
         const country = countryById(shape.id);
         const answerState = answerStates[shape.id];
@@ -86,25 +86,6 @@ export function CountryLayer({
           aria-hidden="true"
         />
       ))}
-
-      {showsLabels
-        ? COUNTRY_SHAPES.map((shape) => {
-            const country = countryById(shape.id);
-
-            return (
-              <text
-                key={shape.id}
-                className="country-label"
-                x={shape.label[0]}
-                y={shape.label[1]}
-                textAnchor="middle"
-                aria-hidden="true"
-              >
-                {country?.nameRu}
-              </text>
-            );
-          })
-        : null}
 
       {/*
         Штриховка недоступна программе чтения с экрана, поэтому спорные участки

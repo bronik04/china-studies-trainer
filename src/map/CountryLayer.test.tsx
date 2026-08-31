@@ -2,17 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { countries } from '../content/countries';
 import { CountryLayer } from './CountryLayer';
 
-function renderLayer(
-  onSelect: (id: string) => void = () => {},
-  showsLabels = true,
-) {
+function renderLayer(onSelect: (id: string) => void = () => {}) {
   return render(
     <svg>
-      <CountryLayer
-        selectedCountryId={null}
-        onSelect={onSelect}
-        showsLabels={showsLabels}
-      />
+      <CountryLayer selectedCountryId={null} onSelect={onSelect} />
     </svg>,
   );
 }
@@ -63,10 +56,10 @@ it('называет спорный участок словами источни
   expect(screen.getByText(/Аксайчин — спорная территория/)).toBeInTheDocument();
 });
 
-it('прячет подписи, когда подпись и есть ответ', () => {
-  const { container } = renderLayer(() => {}, false);
+it('подписей стран на карте нет: имя страны и есть ответ', () => {
+  const { container } = renderLayer();
 
-  expect(container.querySelectorAll('.country-label')).toHaveLength(0);
+  expect(container.querySelectorAll('text')).toHaveLength(0);
 });
 
 it('без ответа по карте контуры перестают быть кнопками', () => {
@@ -75,7 +68,6 @@ it('без ответа по карте контуры перестают быт
       <CountryLayer
         selectedCountryId={null}
         onSelect={() => {}}
-        showsLabels={false}
         answers={false}
       />
     </svg>,

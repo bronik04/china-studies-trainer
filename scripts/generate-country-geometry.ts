@@ -26,6 +26,7 @@ import {
 import { projectLonLat } from '../src/map/projection';
 import { largestInscribedCircle, type Point } from '../src/map/svg-path';
 import {
+  COUNTRY_FRAME_OUTSET,
   MAP_VIEWBOX_HEIGHT,
   MAP_VIEWBOX_MIN_X,
   MAP_VIEWBOX_MIN_Y,
@@ -56,11 +57,19 @@ const source = JSON.parse(sourceJson) as {
   readonly disputed: readonly SourceDisputed[];
 };
 
+/*
+ * Обрезка идёт по расширенному кадру: в играх по странам карта отъезжает, и
+ * по обычному кадру у стран появились бы рубленые края прямо посреди
+ * видимого. Множитель общий с экраном — он живёт в `target-size.ts`.
+ */
+const OUTSET_X = (MAP_VIEWBOX_WIDTH * (COUNTRY_FRAME_OUTSET - 1)) / 2;
+const OUTSET_Y = (MAP_VIEWBOX_HEIGHT * (COUNTRY_FRAME_OUTSET - 1)) / 2;
+
 const FRAME: Frame = {
-  minX: MAP_VIEWBOX_MIN_X,
-  minY: MAP_VIEWBOX_MIN_Y,
-  maxX: MAP_VIEWBOX_MIN_X + MAP_VIEWBOX_WIDTH,
-  maxY: MAP_VIEWBOX_MIN_Y + MAP_VIEWBOX_HEIGHT,
+  minX: MAP_VIEWBOX_MIN_X - OUTSET_X,
+  minY: MAP_VIEWBOX_MIN_Y - OUTSET_Y,
+  maxX: MAP_VIEWBOX_MIN_X + MAP_VIEWBOX_WIDTH + OUTSET_X,
+  maxY: MAP_VIEWBOX_MIN_Y + MAP_VIEWBOX_HEIGHT + OUTSET_Y,
 };
 
 /** Допуск упрощения. Тот же, что у форм рельефа: карта одна и та же. */
@@ -98,7 +107,7 @@ const shapes = source.countries.map((country) => {
   return {
     id: country.id,
     d: toPathData(rings, { closed: true }),
-    label: [Number(circle.x.toFixed(1)), Number(circle.y.toFixed(1))] as const,
+    /* Точки подписи нет: подписей на карте нет ни в одной игре по странам. */
     diameter: Number((circle.radius * 2).toFixed(1)),
   };
 });
@@ -134,8 +143,8 @@ const fingerprint = createHash('sha256')
 const countryLines = shapes
   .map(
     (shape) =>
-      `  {\n    id: '${shape.id}',\n    label: [${shape.label[0]}, ${shape.label[1]}],\n` +
-      `    diameter: ${shape.diameter},\n    d: '${shape.d}',\n  },`,
+      `  {\n    id: '${shape.id}',\n    diameter: ${shape.diameter},\n` +
+      `    d: '${shape.d}',\n  },`,
   )
   .join('\n');
 
@@ -164,9 +173,10 @@ export const COUNTRIES_INPUTS_FINGERPRINT = '${fingerprint}';
 
 export type CountryShape = {
   readonly id: string;
-  /** Середина наибольшей вписанной окружности: место подписи. */
-  readonly label: readonly [number, number];
-  /** Её диаметр — мера того, во что можно попасть указателем. */
+  /**
+   * Диаметр наибольшей вписанной окружности — мера того, во что можно попасть
+   * указателем. Её печатает \`validate:map\`.
+   */
   readonly diameter: number;
   readonly d: string;
 };

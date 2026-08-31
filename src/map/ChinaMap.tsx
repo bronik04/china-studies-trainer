@@ -160,9 +160,13 @@ type ChinaMapProps = {
   readonly showsCountries?: boolean;
   readonly selectedCountryId?: string | null;
   readonly onSelectCountry?: (countryId: string) => void;
-  readonly showsCountryLabels?: boolean;
   /** Отвечают ли нажатием по стране: в «назвать страну» — нет. */
   readonly countriesAnswer?: boolean;
+  /**
+   * Во сколько раз шире обычного показывать карту. Нужен играм по странам:
+   * кадр обрезан по Китаю, и соседи в нём остаются полосками.
+   */
+  readonly frameOutset?: number;
   readonly countryStates?: Readonly<Record<string, AnswerState>>;
   readonly showsCallouts?: boolean;
   /**
@@ -275,8 +279,8 @@ export function ChinaMap({
   showsCountries = false,
   selectedCountryId = null,
   onSelectCountry,
-  showsCountryLabels = true,
   countriesAnswer = true,
+  frameOutset,
   countryStates = NO_ANSWER_STATES,
   interactive = true,
   variant = 'reference',
@@ -352,11 +356,12 @@ export function ChinaMap({
   const activeTrip = trip !== null && trip.key === questionKey ? trip : null;
   const view = clampView(
     activeTrip === null
-      ? { zoom, centerX: center.x, centerY: center.y }
+      ? { zoom, centerX: center.x, centerY: center.y, outset: frameOutset }
       : {
           zoom: activeTrip.zoom,
           centerX: activeTrip.centerX,
           centerY: activeTrip.centerY,
+          outset: frameOutset,
         },
   );
   /*
@@ -981,7 +986,6 @@ export function ChinaMap({
               <countryMap.CountryLayer
                 selectedCountryId={selectedCountryId}
                 onSelect={onSelectCountry}
-                showsLabels={showsCountryLabels}
                 answers={countriesAnswer}
                 answerStates={countryStates}
               />,

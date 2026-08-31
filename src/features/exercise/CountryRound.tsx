@@ -20,6 +20,7 @@ import {
   type Round,
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
+import { COUNTRY_FRAME_OUTSET } from '../../map/target-size';
 import type { AnswerState } from '../../map/region-selection';
 import { CountryAnswerList } from './CountryAnswerList';
 import { COUNTRY_MODES } from './exercise-modes';
@@ -273,15 +274,20 @@ export function CountryRound({
         interactive={false}
         showsCountries
         /*
-         * В «назвать страну» контуры не отвечают: ответ выбирается кнопкой.
-         * Признак снимает с них роль и фокус — иначе читалка экрана объявляла
-         * бы четырнадцать кнопок, а обход Tab вёл через четырнадцать
-         * остановок, ни одна из которых ничего не делает.
+         * Подписей стран на карте нет ни в одной из двух игр (решение
+         * владельца от 2026-08-31): подпись и есть ответ, и с ней вопрос
+         * «найдите Афганистан» решается чтением. Имя называет разбор после
+         * ответа, а до ответа его называет только список.
+         *
+         * В «назвать страну» контуры вдобавок не отвечают: ответ выбирается
+         * кнопкой. Признак снимает с них роль и фокус — иначе читалка экрана
+         * объявляла бы четырнадцать кнопок, а обход Tab вёл через
+         * четырнадцать остановок, ни одна из которых ничего не делает.
          */
         countriesAnswer={!showsChoices}
+        frameOutset={COUNTRY_FRAME_OUTSET}
         selectedCountryId={showsChoices ? targetCountry.id : answeredId}
         onSelectCountry={handleCountrySelect}
-        showsCountryLabels={!showsChoices}
         countryStates={countryStates}
       />
     </RoundStage>
