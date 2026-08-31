@@ -257,6 +257,14 @@ export function CountryRound({
         onSelect={() => {}}
         onClear={() => {}}
         usage="answer"
+        /*
+         * Китай остаётся в политических цветах, хотя вопрос про то, что
+         * вокруг него. Проверено в браузере на обоих вариантах: серый Китай
+         * сливается с нейтральным тоном стран, и граница между своим и чужим
+         * пропадает — ровно та, о которой игра и спрашивает. Подсказки в цвете
+         * нет: спрашивают не про области.
+         */
+        variant="reference"
         interactive={false}
         showsCountries
         selectedCountryId={showsChoices ? targetCountry.id : answeredId}
