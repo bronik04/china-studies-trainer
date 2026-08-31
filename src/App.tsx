@@ -68,6 +68,7 @@ import {
 import type { Landmark } from './content/landmarks';
 import { landmarksUpTo, type LandmarkSet } from './content/landmark-sets';
 import { countries, type Country } from './content/countries';
+import type { CountryExerciseType } from './features/exercise/exercise-modes';
 import { regionAnswerableLandmarks } from './domain/landmark-pool';
 import { ChinaMap } from './map/ChinaMap';
 import type { MapZoom } from './map/MapControls';
@@ -199,9 +200,8 @@ export default function App() {
   const [neighboursPool, setNeighboursPool] =
     useState<readonly Region[]>(regions);
   const [countryPool, setCountryPool] = useState<readonly Country[]>(countries);
-  const [countryExerciseType, setCountryExerciseType] = useState<
-    'find-on-map' | 'name-target'
-  >('find-on-map');
+  const [countryExerciseType, setCountryExerciseType] =
+    useState<CountryExerciseType>('find-on-map');
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
   const [collectionId, setCollectionId] = useState<string | null>(null);
@@ -488,7 +488,7 @@ export default function App() {
    * нужен повтору ошибок — он спрашивает те же страны той же игрой.
    */
   function startCountryPool(
-    exerciseType: 'find-on-map' | 'name-target',
+    exerciseType: CountryExerciseType,
     nextLanguage: QuestionLanguage,
     pool: readonly Country[],
   ) {
@@ -501,7 +501,7 @@ export default function App() {
   }
 
   function startCountryRound(
-    exerciseType: 'find-on-map' | 'name-target',
+    exerciseType: CountryExerciseType,
     nextLanguage: QuestionLanguage,
   ) {
     startCountryPool(exerciseType, nextLanguage, countries);

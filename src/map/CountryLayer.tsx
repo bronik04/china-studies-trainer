@@ -39,7 +39,7 @@ export function CountryLayer({
   answerStates = NO_STATES,
 }: CountryLayerProps) {
   return (
-    <g className="country-layer">
+    <g className="country-layer" data-answers={answers}>
       {COUNTRY_SHAPES.map((shape) => {
         const country = countryById(shape.id);
         const answerState = answerStates[shape.id];

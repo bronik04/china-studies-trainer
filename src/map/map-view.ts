@@ -144,8 +144,9 @@ export function zoomView(view: MapView, zoom: number): MapView {
  */
 export function unitsPerPixel(view: MapView, rect: MapFitRect): number {
   const { zoom } = clampView(view);
+  const frame = frameOf(view.outset);
 
-  return 1 / Math.min(rect.width / (FULL.width / zoom), rect.height / (FULL.height / zoom));
+  return 1 / Math.min(rect.width / (frame.width / zoom), rect.height / (frame.height / zoom));
 }
 
 /** Рамка показа: только те стороны, по которым карту вписывают. */
@@ -156,7 +157,7 @@ export type MapFitRect = {
 
 /** Шаг клавиатуры — десятая часть видимого, как у прокрутки строкой. */
 export function keyboardStep(view: MapView): number {
-  return FULL.width / view.zoom / 10;
+  return frameOf(view.outset).width / view.zoom / 10;
 }
 
 /** Прямоугольник карты на экране — та часть `DOMRect`, что здесь нужна. */
@@ -188,8 +189,9 @@ export function pointAtClient(
   clientY: number,
 ): readonly [number, number] {
   const { zoom, centerX, centerY } = clampView(view);
-  const boxWidth = FULL.width / zoom;
-  const boxHeight = FULL.height / zoom;
+  const frame = frameOf(view.outset);
+  const boxWidth = frame.width / zoom;
+  const boxHeight = frame.height / zoom;
 
   const scale = Math.min(rect.width / boxWidth, rect.height / boxHeight);
   const padX = (rect.width - boxWidth * scale) / 2;

@@ -1,31 +1,37 @@
-import type { Region } from '../../content/types';
 import type { AnswerState } from '../../map/ChinaMap';
 
+/** Всё, что правилу нужно от цели: её опознают по идентификатору. */
+type Identified = { readonly id: string };
+
 /**
- * После ответа остальные области закрываются: второй ответ на вопрос
- * запрещён (SPEC.md), и запрет должен быть виден в интерфейсе, а не только
- * отклоняться движком. Правильная область подсвечивается всегда, в том
- * числе после ошибки.
+ * После ответа остальные цели закрываются: второй ответ на вопрос запрещён
+ * (SPEC.md), и запрет должен быть виден в интерфейсе, а не только отклоняться
+ * движком. Правильная цель подсвечивается всегда, в том числе после ошибки.
+ *
+ * Правило одно на все карты ответа, поэтому и справочник любой: областям оно
+ * досталось первым, странам — то же самое. Передавать сюда нужно весь
+ * справочник, а не пул раунда: в повторе ошибок пул бывает из одной цели, а
+ * нарисованы на карте все, и остальные остались бы открытыми на вид.
  */
 export function answerStatesFor(
-  regions: readonly Region[],
-  targetRegionId: string,
-  answeredRegionId: string | null,
+  targets: readonly Identified[],
+  targetId: string,
+  answeredId: string | null,
 ): Readonly<Record<string, AnswerState>> {
-  if (answeredRegionId === null) {
+  if (answeredId === null) {
     return {};
   }
 
   const states: Record<string, AnswerState> = {};
-  for (const region of regions) {
-    states[region.id] = 'disabled';
+  for (const target of targets) {
+    states[target.id] = 'disabled';
   }
 
-  if (answeredRegionId !== targetRegionId) {
-    states[answeredRegionId] = 'incorrect';
+  if (answeredId !== targetId) {
+    states[answeredId] = 'incorrect';
   }
 
-  states[targetRegionId] = 'correct';
+  states[targetId] = 'correct';
 
   return states;
 }

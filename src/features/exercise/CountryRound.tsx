@@ -21,9 +21,9 @@ import {
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { COUNTRY_FRAME_OUTSET } from '../../map/target-size';
-import type { AnswerState } from '../../map/region-selection';
+import { answerStatesFor } from './answer-states';
 import { CountryAnswerList } from './CountryAnswerList';
-import { COUNTRY_MODES } from './exercise-modes';
+import { COUNTRY_MODES, type CountryExerciseType } from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
@@ -42,7 +42,7 @@ function elapsedSince(start: number): number {
   return Math.round(startClock() - start);
 }
 
-export type CountryExerciseType = 'find-on-map' | 'name-target';
+export type { CountryExerciseType };
 
 export type CountryRoundProps = {
   readonly countries?: readonly Country[];
@@ -118,26 +118,15 @@ export function CountryRound({
 
   /*
    * После ответа карта называет исход: верная страна залита, ошибочная
-   * заштрихована, остальные закрыты. То же правило, что у регионов
-   * (`answer-states.ts`), но своим списком: там регионы, здесь страны.
+   * заштрихована, остальные закрыты — то же правило, что у регионов и городов
+   * (`answer-states.ts`). Справочник передаётся целиком, а не пулом раунда: в
+   * повторе ошибок пул бывает из одной страны, а нарисованы на карте все
+   * четырнадцать.
    */
-  const countryStates = useMemo(() => {
-    if (answeredId === null) {
-      return {};
-    }
-
-    const states: Record<string, AnswerState> = {};
-    for (const country of countries) {
-      states[country.id] = 'disabled';
-    }
-
-    if (answeredId !== targetCountry.id) {
-      states[answeredId] = 'incorrect';
-    }
-    states[targetCountry.id] = 'correct';
-
-    return states;
-  }, [answeredId, countries, targetCountry.id]);
+  const countryStates = useMemo(
+    () => answerStatesFor(allCountries, targetCountry.id, answeredId),
+    [answeredId, targetCountry.id],
+  );
 
   function goNext(from: Round) {
     const next = goToNextQuestion(from);

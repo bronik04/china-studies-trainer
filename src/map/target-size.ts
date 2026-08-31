@@ -29,6 +29,14 @@ export const MAP_VIEWBOX_HEIGHT = 601;
  * Опорная ширина карты: `.app-shell` ограничен 1120 px, карта занимает его
  * целиком. На этой ширине карта — основной способ ответа, и порог обязателен.
  */
+export const REFERENCE_MAP_WIDTH = 1120;
+
+/** Минимум WCAG 2.2 AA (2.5.8 Target Size, Minimum). */
+export const MIN_TARGET_PX = 24;
+
+/** Цель, к которой стоит стремиться (2.5.5 Target Size, AAA). */
+export const COMFORTABLE_TARGET_PX = 44;
+
 /**
  * Во сколько раз шире кадр в играх по сопредельным государствам.
  *
@@ -42,20 +50,29 @@ export const MAP_VIEWBOX_HEIGHT = 601;
  */
 export const COUNTRY_FRAME_OUTSET = 1.3;
 
-export const REFERENCE_MAP_WIDTH = 1120;
-
-/** Минимум WCAG 2.2 AA (2.5.8 Target Size, Minimum). */
-export const MIN_TARGET_PX = 24;
-
-/** Цель, к которой стоит стремиться (2.5.5 Target Size, AAA). */
-export const COMFORTABLE_TARGET_PX = 44;
-
-export function unitsToPixels(units: number, mapWidth: number): number {
-  return (units * mapWidth) / MAP_VIEWBOX_WIDTH;
+/**
+ * Единицы карты в пиксели экрана.
+ *
+ * `outset` — во сколько раз кадр шире обычного, и на расширенном кадре он
+ * обязателен: в ту же ширину экрана влезает больше единиц, и та же фигура
+ * становится мельче ровно во столько же раз. Забыть его значит отчитаться о
+ * цели крупнее настоящей — ровно это и случилось со странами, пока счёт шёл
+ * по обычному кадру.
+ */
+export function unitsToPixels(
+  units: number,
+  mapWidth: number,
+  outset = 1,
+): number {
+  return (units * mapWidth) / (MAP_VIEWBOX_WIDTH * outset);
 }
 
-export function pixelsToUnits(pixels: number, mapWidth: number): number {
-  return (pixels * MAP_VIEWBOX_WIDTH) / mapWidth;
+export function pixelsToUnits(
+  pixels: number,
+  mapWidth: number,
+  outset = 1,
+): number {
+  return (pixels * MAP_VIEWBOX_WIDTH * outset) / mapWidth;
 }
 
 export type UndersizedRegion = {

@@ -149,7 +149,7 @@ export type ModeCard = {
    */
   | {
       readonly kind: 'country';
-      readonly exerciseType: 'find-on-map' | 'name-target';
+      readonly exerciseType: CountryExerciseType;
     }
   /** Режим объявлен, но ещё не написан: карточка не запускается. */
   | { readonly kind: 'planned' }
@@ -177,13 +177,16 @@ export const CITY_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
   },
 };
 
+/** Две формы вопроса по странам. Одна на всех: карточка, главная, экран. */
+export type CountryExerciseType = 'find-on-map' | 'name-target';
+
 /**
  * Две игры по сопредельным государствам. `match-pair` здесь нет: связать
  * страну со вторым каталогом нечем — «в каком регионе Казахстан» вопрос без
  * ответа.
  */
 export const COUNTRY_MODES: Readonly<
-  Record<'find-on-map' | 'name-target', ExerciseMode>
+  Record<CountryExerciseType, ExerciseMode>
 > = {
   'find-on-map': {
     exerciseType: 'find-on-map',
@@ -359,7 +362,7 @@ export const MODE_CARDS: readonly ModeCard[] = [
     mark: '国',
     title: 'Найти страну',
     summary:
-      'Названа страна — нажать её на карте или выбрать из списка. Страны видны ободом: кадр карты обрезан по Китаю, и у Афганистана в него заходит только Ваханский коридор — его берут из списка.',
+      'Названа страна — нажать её на карте или выбрать из списка. Карта здесь отъезжает шире обычного, иначе соседи остаются полосками по краю; в мелкие — Бутан — указателем не попасть, их берут из списка.',
     volume: '14 стран · около 5 минут',
     groupId: 'countries',
   },

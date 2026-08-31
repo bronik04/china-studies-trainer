@@ -16,10 +16,11 @@ import {
 import { RELIEF_BANDS, RELIEF_INPUTS_FINGERPRINT } from '../src/map/relief-bands';
 import {
   COMFORTABLE_TARGET_PX,
-  MAP_VIEWBOX_WIDTH,
+  COUNTRY_FRAME_OUTSET,
   MIN_TARGET_PX,
   REFERENCE_MAP_WIDTH,
   undersizedRegions,
+  unitsToPixels,
 } from '../src/map/target-size';
 import { projectLonLat } from '../src/map/projection';
 import {
@@ -346,18 +347,34 @@ if (expectedCountriesFingerprint !== COUNTRIES_INPUTS_FINGERPRINT) {
 }
 
 /*
- * Сколько стран мельче порога нажатия. Не роняет сборку: у Афганистана в кадр
- * заходит только Ваханский коридор, и это не дефект карты, а география. Число
- * объясняет, почему такие страны отвечаются из равнозначного списка.
+ * Сколько стран мельче порога нажатия. Не роняет сборку: Бутан мал сам по
+ * себе, и это не дефект карты, а его размер. Число объясняет, почему такие
+ * страны отвечаются из равнозначного списка.
+ *
+ * Счёт идёт по расширенному кадру, на котором эти игры и показывают карту: в
+ * ту же ширину экрана влезает в 1.3 раза больше единиц, и та же страна на нём
+ * во столько же раз мельче. По обычному кадру счёт врал в свою пользу.
  */
 const smallCountries = COUNTRY_SHAPES.filter(
-  (shape) => (shape.diameter * REFERENCE_MAP_WIDTH) / MAP_VIEWBOX_WIDTH < MIN_TARGET_PX,
+  (shape) =>
+    unitsToPixels(shape.diameter, REFERENCE_MAP_WIDTH, COUNTRY_FRAME_OUTSET) <
+    MIN_TARGET_PX,
 );
 console.info(
   `Проверено стран: ${COUNTRY_SHAPES.length}. Мельче ${MIN_TARGET_PX} px при ширине ` +
-    `${REFERENCE_MAP_WIDTH} px: ${smallCountries.length}` +
+    `${REFERENCE_MAP_WIDTH} px и кадре шире в ${COUNTRY_FRAME_OUTSET} раза: ` +
+    `${smallCountries.length}` +
     (smallCountries.length > 0
-      ? ` (${smallCountries.map((shape) => shape.id).join(', ')})`
+      ? ` (${smallCountries
+          .map(
+            (shape) =>
+              `${shape.id} ${unitsToPixels(
+                shape.diameter,
+                REFERENCE_MAP_WIDTH,
+                COUNTRY_FRAME_OUTSET,
+              ).toFixed(1)} px`,
+          )
+          .join(', ')})`
       : ''),
 );
 

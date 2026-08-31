@@ -966,8 +966,22 @@ button.text:hover:enabled {
   fill: url('#map-hatch-incorrect');
 }
 
-.china-map .country[data-answer-state='disabled'] {
+/*
+ * Ответ закрыт — закрыты все страны, а не только запертые: то же правило, что
+ * у областей, и по тому же доводу. Палец, наведённый на верную и на ошибочную,
+ * обещал бы второй ответ.
+ */
+.china-map .country[data-answer-state] {
   cursor: not-allowed;
+}
+
+/*
+ * В «назвать страну» по контурам не отвечают: роли, фокуса и обработчика у них
+ * там нет, а палец-указатель обещал бы нажатие, которого не случится. Тот же
+ * приём, что на карте освоенности, — курсор обычный.
+ */
+.china-map .country-layer[data-answers='false'] .country {
+  cursor: default;
 }
 
 /*
@@ -988,7 +1002,6 @@ button.text:hover:enabled {
   opacity: 0;
   pointer-events: none;
 }
-
 
 /*
  * Соседи. Игра начинается серой по тому же доводу, что и заполнение карты:

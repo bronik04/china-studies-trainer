@@ -31,6 +31,9 @@ import {
   MAP_VIEWBOX_MIN_X,
   MAP_VIEWBOX_MIN_Y,
   MAP_VIEWBOX_WIDTH,
+  MIN_TARGET_PX,
+  REFERENCE_MAP_WIDTH,
+  unitsToPixels,
 } from '../src/map/target-size';
 
 const OUTPUT_FILE = 'src/map/country-geometry.ts';
@@ -140,19 +143,28 @@ const fingerprint = createHash('sha256')
   .digest('hex')
   .slice(0, 16);
 
+/*
+ * Строка в исходник идёт через одну воронку: имена и пояснения приходят из
+ * набора, и апостроф в них написал бы сломанный модуль. Обратная косая тоже —
+ * без неё экранирование подделало бы само себя.
+ */
+function quote(value: string): string {
+  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+}
+
 const countryLines = shapes
   .map(
     (shape) =>
-      `  {\n    id: '${shape.id}',\n    diameter: ${shape.diameter},\n` +
-      `    d: '${shape.d}',\n  },`,
+      `  {\n    id: ${quote(shape.id)},\n    diameter: ${shape.diameter},\n` +
+      `    d: ${quote(shape.d)},\n  },`,
   )
   .join('\n');
 
 const disputedLines = disputed
   .map(
     (area) =>
-      `  {\n    id: '${area.id}',\n    nameRu: '${area.nameRu}',\n` +
-      `    note: '${area.note.replace(/'/g, "\\'")}',\n    d: '${area.d}',\n  },`,
+      `  {\n    id: ${quote(area.id)},\n    nameRu: ${quote(area.nameRu)},\n` +
+      `    note: ${quote(area.note)},\n    d: ${quote(area.d)},\n  },`,
   )
   .join('\n');
 
@@ -200,8 +212,15 @@ ${disputedLines}
   'utf8',
 );
 
+/* Счёт по тому же кадру, на котором эти игры показывают карту. */
+const small = shapes.filter(
+  (shape) =>
+    unitsToPixels(shape.diameter, REFERENCE_MAP_WIDTH, COUNTRY_FRAME_OUTSET) <
+    MIN_TARGET_PX,
+);
+
 console.info(
   `Страны: ${shapes.length}, спорных участков ${disputed.length}. ` +
-    `Мельче 24 px при ширине 1120: ` +
-    `${shapes.filter((shape) => (shape.diameter * 1120) / MAP_VIEWBOX_WIDTH < 24).length}`,
+    `Мельче ${MIN_TARGET_PX} px при ширине ${REFERENCE_MAP_WIDTH}: ` +
+    `${small.length}${small.length > 0 ? ` (${small.map((shape) => shape.id).join(', ')})` : ''}`,
 );

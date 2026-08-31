@@ -34,6 +34,7 @@ import { SiteFooter } from '../../ui/SiteFooter';
 import {
   MODE_CARDS,
   MODE_GROUPS,
+  type CountryExerciseType,
   type ModeCard,
 } from '../exercise/exercise-modes';
 import { CollectionCard } from './CollectionCard';
@@ -51,7 +52,7 @@ export type HomePageProps = {
   readonly onStartFillRound: (language: QuestionLanguage) => void;
   readonly onStartNeighboursRound: (language: QuestionLanguage) => void;
   readonly onStartCountryRound: (
-    exerciseType: 'find-on-map' | 'name-target',
+    exerciseType: CountryExerciseType,
     language: QuestionLanguage,
   ) => void;
   readonly onStartCultureRound: (

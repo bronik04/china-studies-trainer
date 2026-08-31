@@ -148,12 +148,6 @@ type ChinaMapProps = {
   readonly onSelectLandmark?: (landmarkIds: readonly string[]) => void;
   readonly showsLandmarkLabels?: boolean;
   /**
-   * Показывать ли выноски Макао и Гонконга. В раундах, где отвечают точкой
-   * или звездой, регионы не выбираются, и два пустых кружка в море с
-   * поводками только спорят с гроздью городов дельты. На физической карте
-   * выноски скрыты всегда: там маркер типа региона ничего не означает.
-   */
-  /**
    * Слой сопредельных государств. Включается только в играх по странам: на всех
    * прочих поверхностях за границей Китая пусто, и так и должно остаться.
    */
@@ -168,6 +162,12 @@ type ChinaMapProps = {
    */
   readonly frameOutset?: number;
   readonly countryStates?: Readonly<Record<string, AnswerState>>;
+  /**
+   * Показывать ли выноски Макао и Гонконга. В раундах, где отвечают точкой
+   * или звездой, регионы не выбираются, и два пустых кружка в море с
+   * поводками только спорят с гроздью городов дельты. На физической карте
+   * выноски скрыты всегда: там маркер типа региона ничего не означает.
+   */
   readonly showsCallouts?: boolean;
   /**
    * Показывать ли подписи выносок. Не задано — правило утечки: подписи
@@ -694,6 +694,7 @@ export function ChinaMap({
             zoom: previous.zoom,
             centerX: previous.centerX,
             centerY: previous.centerY,
+            outset: frameOutset,
           },
           dx,
           dy,
@@ -712,7 +713,7 @@ export function ChinaMap({
      */
     setCenter((previous) => {
       const moved = panView(
-        { zoom, centerX: previous.x, centerY: previous.y },
+        { zoom, centerX: previous.x, centerY: previous.y, outset: frameOutset },
         dx,
         dy,
       );

@@ -77,4 +77,9 @@ it('без ответа по карте контуры перестают быт
   for (const shape of container.querySelectorAll('[data-country-id]')) {
     expect(shape.getAttribute('tabindex')).toBeNull();
   }
+
+  /* По этому признаку слою снимают курсор-палец: нажимать здесь не на что. */
+  expect(
+    container.querySelector('.country-layer')?.getAttribute('data-answers'),
+  ).toBe('false');
 });

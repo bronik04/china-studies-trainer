@@ -3,6 +3,12 @@ import { expect, it } from 'vitest';
 import { countries } from '../src/content/countries';
 import { COUNTRY_SHAPES, DISPUTED_SHAPES } from '../src/map/country-geometry';
 import { parseMapPath } from '../src/map/svg-path';
+import {
+  COUNTRY_FRAME_OUTSET,
+  MIN_TARGET_PX,
+  REFERENCE_MAP_WIDTH,
+  unitsToPixels,
+} from '../src/map/target-size';
 import { regionContours } from './palette-fingerprint';
 
 it('рисует все четырнадцать стран', () => {
@@ -39,16 +45,49 @@ it('каждая страна подходит к границе Китая вп
   }
 });
 
-it('в каждую страну есть куда попасть указателем', () => {
-  for (const shape of COUNTRY_SHAPES) {
-    /*
-     * Мера — диаметр наибольшей вписанной окружности, как у регионов. На
-     * расширенном кадре мельче порога нажатия не остаётся ни одной страны:
-     * при обычном кадре от Афганистана виден был Ваханский коридор в 8.4.
-     */
-    expect({ id: shape.id, big: shape.diameter >= 19 }).toEqual({
-      id: shape.id,
-      big: true,
+it('мельче порога нажатия остаётся один Бутан', () => {
+  /*
+   * Мера — диаметр наибольшей вписанной окружности, как у регионов, а счёт
+   * идёт по расширенному кадру: в него влезает в 1.3 раза больше единиц, и та
+   * же страна на экране во столько же раз мельче. По обычному кадру проверка
+   * говорила бы, что порог берут все.
+   *
+   * Бутан не берёт его и на широком кадре — 20.8 px против 24, — и это не
+   * дефект карты, а его размер: он отвечается из равнозначного списка, как
+   * Гонконг и Макао. Проверка сторожит, чтобы таких стран не стало больше.
+   */
+  const small = COUNTRY_SHAPES.filter(
+    (shape) =>
+      unitsToPixels(shape.diameter, REFERENCE_MAP_WIDTH, COUNTRY_FRAME_OUTSET) <
+      MIN_TARGET_PX,
+  );
+
+  expect(small.map((shape) => shape.id)).toEqual(['bhutan']);
+});
+
+/*
+ * Справочник стран выписан руками, а имена в нём — из выжимки. Два списка
+ * одного и того же расходятся молча: правка в выжимке не тронет справочник, и
+ * на карте останется имя, которого источник больше не говорит.
+ */
+it('имена справочника — те же, что в выжимке', () => {
+  const source = JSON.parse(
+    readFileSync('scripts/data/countries-source.json', 'utf8'),
+  ) as {
+    readonly countries: readonly {
+      readonly id: string;
+      readonly nameRu: string;
+      readonly nameZh: string;
+    }[];
+  };
+
+  for (const country of countries) {
+    const extracted = source.countries.find((one) => one.id === country.id);
+
+    expect({ id: country.id, ru: country.nameRu, zh: country.nameZh }).toEqual({
+      id: country.id,
+      ru: extracted?.nameRu,
+      zh: extracted?.nameZh,
     });
   }
 });
