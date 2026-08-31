@@ -34,6 +34,8 @@ const loaders = {
   fill: () => import('./features/exercise/FillMapRound'),
   neighbours: () => import('./features/exercise/NeighboursRound'),
   country: () => import('./features/exercise/CountryRound'),
+  /* Слой стран тянется заранее: без него игра в классе без сети не откроется. */
+  countryLayer: () => import('./map/CountryLayer'),
   order: () => import('./features/exercise/OrderRound'),
   results: () => import('./features/results/RoundResultsPage'),
   fillResults: () => import('./features/results/FillMapResultsPage'),

@@ -7,6 +7,13 @@ export type CountryLayerProps = {
   readonly onSelect: (countryId: string) => void;
   /** В «найти страну» подписи видны, в «назвать страну» — нет: подпись и есть ответ. */
   readonly showsLabels?: boolean;
+  /**
+   * Отвечают ли нажатием по стране. В «назвать страну» ответ выбирается
+   * кнопкой, и контуры перестают быть управлением: роль и фокус снимаются,
+   * иначе читалка экрана объявит четырнадцать кнопок, которые ничего не
+   * делают. Тот же довод, по которому роли нет у спорных участков.
+   */
+  readonly answers?: boolean;
   readonly answerStates?: Readonly<Record<string, AnswerState>>;
 };
 
@@ -28,6 +35,7 @@ export function CountryLayer({
   selectedCountryId,
   onSelect,
   showsLabels = true,
+  answers = true,
   answerStates = NO_STATES,
 }: CountryLayerProps) {
   return (
@@ -44,17 +52,21 @@ export function CountryLayer({
             data-country-id={shape.id}
             data-selected={shape.id === selectedCountryId}
             data-answer-state={answerState}
-            role="button"
-            tabIndex={0}
+            role={answers ? 'button' : undefined}
+            tabIndex={answers ? 0 : undefined}
             aria-label={`${country?.nameRu}, ${country?.nameZh}`}
-            aria-disabled={answerState ? true : undefined}
-            onClick={() => onSelect(shape.id)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                onSelect(shape.id);
-              }
-            }}
+            aria-disabled={answers && answerState ? true : undefined}
+            onClick={answers ? () => onSelect(shape.id) : undefined}
+            onKeyDown={
+              answers
+                ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onSelect(shape.id);
+                    }
+                  }
+                : undefined
+            }
           />
         );
       })}

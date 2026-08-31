@@ -95,10 +95,15 @@ export function CountryRound({
   const choicesByQuestion = useMemo(() => {
     const random = createSeededRandom(seed + 1);
 
+    /*
+     * Отвлекающие берутся из всего справочника, а не из пула раунда: в повторе
+     * ошибок пул бывает из одной страны, и вариант остался бы один — сам ответ.
+     * Спрашиваются при этом только страны пула.
+     */
     return round.questions.map((question) =>
-      buildCountryChoices(countries, question.target.id, random),
+      buildCountryChoices(allCountries, question.target.id, random),
     );
-  }, [countries, round.questions, seed]);
+  }, [round.questions, seed]);
 
   const question = currentQuestion(round);
   const targetCountry = countries.find(
@@ -267,6 +272,13 @@ export function CountryRound({
         variant="reference"
         interactive={false}
         showsCountries
+        /*
+         * В «назвать страну» контуры не отвечают: ответ выбирается кнопкой.
+         * Признак снимает с них роль и фокус — иначе читалка экрана объявляла
+         * бы четырнадцать кнопок, а обход Tab вёл через четырнадцать
+         * остановок, ни одна из которых ничего не делает.
+         */
+        countriesAnswer={!showsChoices}
         selectedCountryId={showsChoices ? targetCountry.id : answeredId}
         onSelectCountry={handleCountrySelect}
         showsCountryLabels={!showsChoices}

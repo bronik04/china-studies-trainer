@@ -10,7 +10,6 @@ import mapMarkup from '../../public/maps/china-provinces.svg?raw';
 import type { Region } from '../content/types';
 import type { RegionOutcome } from '../domain/fill-round';
 import { CityLayer } from './CityLayer';
-import { CountryLayer } from './CountryLayer';
 import { LandmarkLayer } from './LandmarkLayer';
 import type { FeatureOutcome } from './PhysicalLayer';
 import { cityPointsOfRegions } from './city-points';
@@ -24,6 +23,11 @@ import {
   viewBoxOf,
   WHOLE_MAP,
 } from './map-view';
+import {
+  loadCountryLayer,
+  loadedCountryLayer,
+  type CountryMap,
+} from './load-country-layer';
 import { MapControls, ZOOM_LEVELS, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
 import { MEMBERSHIP_LABELS } from './membership';
@@ -157,6 +161,8 @@ type ChinaMapProps = {
   readonly selectedCountryId?: string | null;
   readonly onSelectCountry?: (countryId: string) => void;
   readonly showsCountryLabels?: boolean;
+  /** Отвечают ли нажатием по стране: в «назвать страну» — нет. */
+  readonly countriesAnswer?: boolean;
   readonly countryStates?: Readonly<Record<string, AnswerState>>;
   readonly showsCallouts?: boolean;
   /**
@@ -270,6 +276,7 @@ export function ChinaMap({
   selectedCountryId = null,
   onSelectCountry,
   showsCountryLabels = true,
+  countriesAnswer = true,
   countryStates = NO_ANSWER_STATES,
   interactive = true,
   variant = 'reference',
@@ -370,6 +377,14 @@ export function ChinaMap({
    * и обычно он здесь ещё до того, как кто-то откроет физическую карту.
    * Иначе слой появится кадром позже, а до тех пор карта просто политическая.
    */
+  /*
+   * Слой стран приезжает отдельным куском: он нужен двум играм из
+   * восемнадцати, а его геометрия весит 27 КБ. Статический импорт клал их на
+   * первый экран каждому, кто просто открыл главную.
+   */
+  const [countryMap, setCountryMap] = useState<CountryMap | null>(
+    loadedCountryLayer,
+  );
   const [physicalMap, setPhysicalMap] = useState<PhysicalMap | null>(
     loadedPhysicalMap,
   );
@@ -392,6 +407,16 @@ export function ChinaMap({
   useEffect(() => {
     setCitySvg(mapRef.current?.querySelector<SVGSVGElement>('svg') ?? null);
   }, []);
+
+  useEffect(() => {
+    if (!showsCountries || countryMap !== null) {
+      return;
+    }
+
+    void loadCountryLayer().then(setCountryMap, () => {
+      /* Отказ показывать нечем: карта без обода — прежняя карта, а не поломка. */
+    });
+  }, [countryMap, showsCountries]);
 
   /*
    * Отказ виден. Кусок приезжает по сети, и в классе с упавшим Wi-Fi он может
@@ -948,12 +973,16 @@ export function ChinaMap({
               citySvg,
             )
           : null}
-        {showsCountries && citySvg !== null && onSelectCountry !== undefined
+        {showsCountries &&
+        citySvg !== null &&
+        countryMap !== null &&
+        onSelectCountry !== undefined
           ? createPortal(
-              <CountryLayer
+              <countryMap.CountryLayer
                 selectedCountryId={selectedCountryId}
                 onSelect={onSelectCountry}
                 showsLabels={showsCountryLabels}
+                answers={countriesAnswer}
                 answerStates={countryStates}
               />,
               citySvg,

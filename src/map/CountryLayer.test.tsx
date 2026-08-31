@@ -68,3 +68,21 @@ it('прячет подписи, когда подпись и есть отве�
 
   expect(container.querySelectorAll('.country-label')).toHaveLength(0);
 });
+
+it('без ответа по карте контуры перестают быть кнопками', () => {
+  const { container } = render(
+    <svg>
+      <CountryLayer
+        selectedCountryId={null}
+        onSelect={() => {}}
+        showsLabels={false}
+        answers={false}
+      />
+    </svg>,
+  );
+
+  expect(screen.queryAllByRole('button')).toHaveLength(0);
+  for (const shape of container.querySelectorAll('[data-country-id]')) {
+    expect(shape.getAttribute('tabindex')).toBeNull();
+  }
+});

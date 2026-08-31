@@ -88,3 +88,23 @@ it('в «назвать страну» списка ответов нет: от�
     screen.queryByRole('button', { name: 'Ответить из списка' }),
   ).toBeNull();
 });
+
+it('в повторе одной страны вариантов всё равно четыре', () => {
+  const single = countries.filter((country) => country.id === 'nepal');
+
+  render(
+    <CountryRound
+      countries={single}
+      exerciseType="name-target"
+      language="ru"
+      roundId="r1"
+      seed={1}
+      onFinish={() => {}}
+      onExit={() => {}}
+    />,
+  );
+
+  /* Спрашивается одна страна, но отвлекающие берутся из всего справочника. */
+  expect(screen.getByText('Вопрос 1 из 1')).toBeInTheDocument();
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
