@@ -1092,13 +1092,15 @@ button.text:hover:enabled {
 .china-map .city-hit:focus,
 .china-map .landmark-hit:focus,
 .china-map .cluster-hit:focus,
+.china-map .country:focus,
 .china-map .physical-layer .relief-shape:focus,
 .china-map .physical-layer .river-line:focus,
 .china-map .physical-layer .lake-hit:focus {
   outline: none;
 }
 
-.china-map [data-region-id]:focus-visible {
+.china-map [data-region-id]:focus-visible,
+.china-map .country:focus-visible {
   stroke: var(--focus-on-paper);
   stroke-width: 4;
 }
