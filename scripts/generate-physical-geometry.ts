@@ -418,7 +418,7 @@ export type ReliefShape = {
   readonly labelY?: number;
 };
 
-export type RiverLine = {
+export type WaterLine = {
   readonly featureId: string;
   /**
    * Путь линии. Кусков в нём может быть несколько: обрезка по рамке карты
@@ -516,7 +516,7 @@ ${points
 
 export const INPUTS_FINGERPRINT = '${fingerprint}';
 
-export const RIVER_LINES: readonly RiverLine[] = [
+export const WATER_LINES: readonly WaterLine[] = [
 ${riverLines
   .map((line) => `  { featureId: ${quote(line.featureId)}, d: ${quote(line.d)} },`)
   .join('\n')}

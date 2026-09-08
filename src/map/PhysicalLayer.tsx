@@ -8,7 +8,7 @@ import {
   MARINE_SHAPES,
   POINT_MARKS,
   RELIEF_SHAPES,
-  RIVER_LINES,
+  WATER_LINES,
 } from './physical-geometry';
 import { RELIEF_BANDS } from './relief-bands';
 import {
@@ -345,7 +345,7 @@ export function PhysicalLayer({
         кончается на государственной границе, и так физические карты и рисуют.
       */}
       <g className="rivers">
-        {RIVER_LINES.map((line) => {
+        {WATER_LINES.map((line) => {
           const label = NAME_OF.get(line.featureId) ?? line.featureId;
 
           return (

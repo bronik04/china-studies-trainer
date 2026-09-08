@@ -6,7 +6,7 @@
  * Точка достаётся ближайшей реке, если та ближе порога: цели по построению не
  * спорят, и у каждой точки карты ответ ровно один.
  */
-import { RIVER_LINES } from './physical-geometry';
+import { WATER_LINES } from './physical-geometry';
 import { distanceToPolylines } from './polyline';
 import { parseMapPath, type Point } from './svg-path';
 import { TARGET_DIAMETER_UNITS } from './city-hit-targets';
@@ -27,7 +27,7 @@ export type RiverShape = {
   readonly parts: Point[][];
 };
 
-export const RIVER_SHAPES: readonly RiverShape[] = RIVER_LINES.map((line) => ({
+export const RIVER_SHAPES: readonly RiverShape[] = WATER_LINES.map((line) => ({
   featureId: line.featureId,
   parts: parseMapPath(line.d),
 }));

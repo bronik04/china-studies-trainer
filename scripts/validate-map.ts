@@ -10,7 +10,7 @@ import {
   MARINE_SHAPES,
   POINT_MARKS,
   RELIEF_SHAPES,
-  RIVER_LINES,
+  WATER_LINES,
 } from '../src/map/physical-geometry';
 import { RELIEF_BANDS, RELIEF_INPUTS_FINGERPRINT } from '../src/map/relief-bands';
 import {
@@ -403,7 +403,7 @@ if (expectedReliefFingerprint !== RELIEF_INPUTS_FINGERPRINT) {
 const physical = validatePhysicalGeometry(
   physicalFeatures,
   {
-    rivers: new Map(RIVER_LINES.map((line) => [line.featureId, parseMapPath(line.d)])),
+    rivers: new Map(WATER_LINES.map((line) => [line.featureId, parseMapPath(line.d)])),
     landforms: new Map(
       RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined).map((shape) => [
         shape.featureId as string,
