@@ -210,3 +210,24 @@ it('каждый набор спрашивает свои цели ровно п
     expect(new Set(round.questions.map((q) => q.target.id)).size).toBe(length);
   }
 });
+
+/*
+ * Пул сужается на «Повторить ошибки», справочник — нет. Отвлекающие это уже
+ * учитывают, а равнозначный список — нет: на карте нарисованы все объекты, и
+ * список обязан предлагать то же, иначе в повторе одной ошибки в нём остаётся
+ * одна кнопка — она же ответ.
+ */
+it('в повторе одного объекта список предлагает весь справочник', () => {
+  renderRound('find-on-map', physicalFeatures.slice(0, 1));
+
+  const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
+  if (toggle.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.click(toggle);
+  }
+
+  expect(
+    within(screen.getByRole('list', { name: 'Список объектов' })).getAllByRole(
+      'button',
+    ),
+  ).toHaveLength(physicalFeatures.length);
+});

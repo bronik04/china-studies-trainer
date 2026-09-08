@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Landmark } from '../../content/landmarks';
+import { landmarks as allLandmarks, type Landmark } from '../../content/landmarks';
 import { regions } from '../../content/regions';
 import { buildLandmarkChoices } from '../../domain/landmark-choices';
 import {
@@ -40,6 +40,11 @@ function elapsedSince(start: number): number {
 }
 
 export type LandmarkRoundProps = {
+  /**
+   * Пул раунда: какие объекты спрашиваются. Набор выбирается перед стартом, а
+   * на «Повторить ошибки» пул сужается до ошибочных, — справочником он не
+   * является: отвлекающие и равнозначный список берут `allLandmarks`.
+   */
   readonly landmarks: readonly Landmark[];
   readonly exerciseType: ExerciseType;
   readonly language: QuestionLanguage;
@@ -99,14 +104,19 @@ export function LandmarkRound({
      * бы вопрос «что здесь отмечено» без единственного верного ответа.
      */
     return round.questions.map((question) =>
+      /*
+       * Отвлекающие берутся из всего справочника, а не из пула раунда: в
+       * повторе ошибок пул бывает из одного объекта, и вариант остался бы
+       * один — сам ответ. Спрашиваются при этом только объекты пула.
+       */
       buildLandmarkChoices(
-        landmarks,
+        allLandmarks,
         question.target.id,
         random,
         colocatedLandmarkIds(question.target.id),
       ),
     );
-  }, [landmarks, round.questions, seed]);
+  }, [round.questions, seed]);
 
   const question = currentQuestion(round);
   const target = landmarks.find((one) => one.id === question.target.id)!;
@@ -251,8 +261,13 @@ export function LandmarkRound({
       }
       answerList={
         exerciseType === 'find-on-map' ? (
+          /*
+           * Список равнозначен карте, а звёзды на ней — из справочника, а не
+           * из пула: ответить нажатием можно по любой, значит и в списке
+           * обязаны стоять все.
+           */
           <LandmarkAnswerList
-            landmarks={landmarks}
+            landmarks={allLandmarks}
             language={question.language}
             answeredId={answeredId}
             targetId={target.id}

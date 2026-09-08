@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { cityById } from '../../content/cities';
+import { regions as allRegions } from '../../content/regions';
 import type { Region } from '../../content/types';
 import { buildChoices } from '../../domain/choices';
 import { createSeededRandom } from '../../domain/random';
@@ -25,6 +26,11 @@ import { StageChoices, type StageChoice } from './StageChoices';
 import { useAutoAdvance } from './use-auto-advance';
 
 export type ExerciseRoundProps = {
+  /**
+   * Пул раунда: какие регионы спрашиваются. На «Повторить ошибки» он сужается
+   * до ошибочных, поэтому справочником он не является — отвлекающие,
+   * равнозначный список и сама карта берут `allRegions`.
+   */
   readonly regions: readonly Region[];
   readonly exerciseTypes: readonly ExerciseType[];
   readonly language: QuestionLanguage;
@@ -84,13 +90,18 @@ export function ExerciseRound({
 
   // Варианты считаются один раз на раунд: иначе перерисовка тасовала бы их
   // прямо под курсором.
+  /*
+   * Отвлекающие берутся из всего справочника, а не из пула раунда: в повторе
+   * ошибок пул бывает из одного региона, и вариант остался бы один — сам
+   * ответ. Спрашиваются при этом только регионы пула.
+   */
   const choicesByQuestion = useMemo(() => {
     const random = createSeededRandom(seed + 1);
 
     return round.questions.map((question) =>
-      buildChoices(regions, question.target.id, random),
+      buildChoices(allRegions, question.target.id, random),
     );
-  }, [regions, round.questions, seed]);
+  }, [round.questions, seed]);
 
   const question = currentQuestion(round);
   const targetRegion = regions.find((region) => region.id === question.target.id)!;
@@ -99,10 +110,18 @@ export function ExerciseRound({
   const lastAttempt = round.attempts[round.attempts.length - 1];
   const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
 
+  /*
+   * Состояния ответа считаются по всему справочнику: нарисованы на карте все
+   * тридцать четыре области, и после ответа закрыться должны все. С пулом
+   * повтора остальные оставались бы на вид открытыми, хотя движок их уже не
+   * принимает.
+   */
   const answerStates = useMemo(
     () =>
-      isMapAnswer ? answerStatesFor(regions, question.target.id, answeredRegionId) : {},
-    [isMapAnswer, regions, question.target.id, answeredRegionId],
+      isMapAnswer
+        ? answerStatesFor(allRegions, question.target.id, answeredRegionId)
+        : {},
+    [isMapAnswer, question.target.id, answeredRegionId],
   );
 
   function goNext(from: Round) {
@@ -230,7 +249,7 @@ export function ExerciseRound({
       answerList={
         isMapAnswer ? (
           <RegionAnswerList
-              regions={regions}
+            regions={allRegions}
             selectedRegionId={answeredRegionId}
             onSelect={answer}
             answerStates={answerStates}
@@ -244,8 +263,13 @@ export function ExerciseRound({
         лишней колонкой при старом макете; в едином кадре она показывает
         спрошенный регион — столицу подсветка не выдаёт.
       */}
+      {/*
+        Карте отдаётся справочник, а не пул: она рисует все области всегда, и
+        с пулом повтора остальные остались бы без русского имени — читалка
+        экрана называла бы их английскими именами из разметки SVG.
+      */}
       <ChinaMap
-        regions={regions}
+        regions={allRegions}
         selectedRegionId={isMapAnswer ? answeredRegionId : question.target.id}
         onSelect={isMapAnswer ? answer : () => {}}
         onClear={() => {}}
