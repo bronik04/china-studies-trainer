@@ -23,6 +23,11 @@ import {
   viewBoxOf,
   WHOLE_MAP,
 } from './map-view';
+import {
+  loadCountryLayer,
+  loadedCountryLayer,
+  type CountryMap,
+} from './load-country-layer';
 import { MapControls, ZOOM_LEVELS, type MapZoom } from './MapControls';
 import { MapDefs } from './MapDefs';
 import { MEMBERSHIP_LABELS } from './membership';
@@ -143,6 +148,21 @@ type ChinaMapProps = {
   readonly onSelectLandmark?: (landmarkIds: readonly string[]) => void;
   readonly showsLandmarkLabels?: boolean;
   /**
+   * Слой сопредельных государств. Включается только в играх по странам: на всех
+   * прочих поверхностях за границей Китая пусто, и так и должно остаться.
+   */
+  readonly showsCountries?: boolean;
+  readonly selectedCountryId?: string | null;
+  readonly onSelectCountry?: (countryId: string) => void;
+  /** Отвечают ли нажатием по стране: в «назвать страну» — нет. */
+  readonly countriesAnswer?: boolean;
+  /**
+   * Во сколько раз шире обычного показывать карту. Нужен играм по странам:
+   * кадр обрезан по Китаю, и соседи в нём остаются полосками.
+   */
+  readonly frameOutset?: number;
+  readonly countryStates?: Readonly<Record<string, AnswerState>>;
+  /**
    * Показывать ли выноски Макао и Гонконга. В раундах, где отвечают точкой
    * или звездой, регионы не выбираются, и два пустых кружка в море с
    * поводками только спорят с гроздью городов дельты. На физической карте
@@ -256,6 +276,12 @@ export function ChinaMap({
   questionKey,
   answerStates = NO_ANSWER_STATES,
   neighbourStates = NO_NEIGHBOUR_STATES,
+  showsCountries = false,
+  selectedCountryId = null,
+  onSelectCountry,
+  countriesAnswer = true,
+  frameOutset,
+  countryStates = NO_ANSWER_STATES,
   interactive = true,
   variant = 'reference',
   usage = 'browse',
@@ -330,11 +356,12 @@ export function ChinaMap({
   const activeTrip = trip !== null && trip.key === questionKey ? trip : null;
   const view = clampView(
     activeTrip === null
-      ? { zoom, centerX: center.x, centerY: center.y }
+      ? { zoom, centerX: center.x, centerY: center.y, outset: frameOutset }
       : {
           zoom: activeTrip.zoom,
           centerX: activeTrip.centerX,
           centerY: activeTrip.centerY,
+          outset: frameOutset,
         },
   );
   /*
@@ -348,6 +375,14 @@ export function ChinaMap({
    * саму линию, а на полосу вокруг неё, и браузер о такой цели не знает.
    */
   const [hoveredFeatureId, setHoveredFeatureId] = useState<string | null>(null);
+  /*
+   * Слой стран приезжает отдельным куском: он нужен двум играм из
+   * восемнадцати, а его геометрия весит 27 КБ. Статический импорт клал их на
+   * первый экран каждому, кто просто открыл главную.
+   */
+  const [countryMap, setCountryMap] = useState<CountryMap | null>(
+    loadedCountryLayer,
+  );
   /*
    * Физический слой приезжает отдельным куском сборки: на первом экране он не
    * нужен, а весит больше всего после самой карты. Начальное значение — то,
@@ -377,6 +412,39 @@ export function ChinaMap({
   useEffect(() => {
     setCitySvg(mapRef.current?.querySelector<SVGSVGElement>('svg') ?? null);
   }, []);
+
+  /*
+   * Отказ виден и здесь, и по тому же доводу, что у физического слоя: слой
+   * стран показывается только в двух играх, а в них он и есть вопрос. Без
+   * него «назвать страну» просит назвать то, чего на карте нет, — кнопки при
+   * этом остаются нажимаемыми, и попытки уходят в прогресс. Повторить
+   * попытку эффект не может: его зависимости после отказа не меняются.
+   */
+  const [countryFailed, setCountryFailed] = useState(false);
+
+  useEffect(() => {
+    if (!showsCountries || countryMap !== null) {
+      return;
+    }
+
+    let alive = true;
+    void loadCountryLayer().then(
+      (module) => {
+        if (alive) {
+          setCountryMap(module);
+        }
+      },
+      () => {
+        if (alive) {
+          setCountryFailed(true);
+        }
+      },
+    );
+
+    return () => {
+      alive = false;
+    };
+  }, [countryMap, showsCountries]);
 
   /*
    * Отказ виден. Кусок приезжает по сети, и в классе с упавшим Wi-Fi он может
@@ -649,6 +717,7 @@ export function ChinaMap({
             zoom: previous.zoom,
             centerX: previous.centerX,
             centerY: previous.centerY,
+            outset: frameOutset,
           },
           dx,
           dy,
@@ -667,7 +736,7 @@ export function ChinaMap({
      */
     setCenter((previous) => {
       const moved = panView(
-        { zoom, centerX: previous.x, centerY: previous.y },
+        { zoom, centerX: previous.x, centerY: previous.y, outset: frameOutset },
         dx,
         dy,
       );
@@ -933,6 +1002,20 @@ export function ChinaMap({
               citySvg,
             )
           : null}
+        {showsCountries &&
+        citySvg !== null &&
+        countryMap !== null &&
+        onSelectCountry !== undefined
+          ? createPortal(
+              <countryMap.CountryLayer
+                selectedCountryId={selectedCountryId}
+                onSelect={onSelectCountry}
+                answers={countriesAnswer}
+                answerStates={countryStates}
+              />,
+              citySvg,
+            )
+          : null}
         {showsLandmarks && citySvg !== null
           ? createPortal(
               <LandmarkLayer
@@ -976,6 +1059,12 @@ export function ChinaMap({
         {variant === 'physical' && physicalFailed && physicalMap === null ? (
           <p className="map-failure" role="status">
             Физическая карта не загрузилась: нет связи. Она появится, когда
+            связь вернётся, — обновите страницу.
+          </p>
+        ) : null}
+        {showsCountries && countryFailed && countryMap === null ? (
+          <p className="map-failure" role="status">
+            Соседние государства не загрузились: нет связи. Они появятся, когда
             связь вернётся, — обновите страницу.
           </p>
         ) : null}

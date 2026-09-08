@@ -42,6 +42,28 @@ export const sources = [
     covers: ['линии шести крупнейших рек Китая'],
   },
   {
+    id: 'natural-earth-countries-5.1.2',
+    title: 'Natural Earth 50m Admin 0 – Countries, версия 5.1.2',
+    organization: 'Natural Earth',
+    url: 'https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries/',
+    accessedAt: '2026-08-30',
+    covers: [
+      'границы четырнадцати сопредельных с Китаем государств',
+      'русские и китайские названия этих государств',
+    ],
+  },
+  {
+    id: 'natural-earth-disputed-areas-5.1.2',
+    title: 'Natural Earth 10m Admin 0 – Breakaway and Disputed Areas, версия 5.1.2',
+    organization: 'Natural Earth',
+    url: 'https://www.naturalearthdata.com/downloads/10m-cultural-vectors/',
+    accessedAt: '2026-08-30',
+    covers: [
+      'спорные участки сухопутной границы Китая',
+      'кто участком управляет и кто его заявляет',
+    ],
+  },
+  {
     id: 'natural-earth-geography-regions-5.1.2',
     title: 'Natural Earth 10m Physical Labels: Geographic Regions, версия 5.1.2',
     organization: 'Natural Earth',

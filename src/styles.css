@@ -937,6 +937,92 @@ button.text:hover:enabled {
   fill: url('#map-hatch-failed');
 }
 
+/* --- Сопредельные государства ---------------------------------------------- */
+
+/*
+ * Страны за границей Китая. Заливка нейтральная: это фон вопроса, а не ответ,
+ * — и по тому же доводу, по которому игровая карта начинается серой.
+ *
+ * Выбранная страна берёт тот же киноварный тон, что и выбранный регион: язык
+ * выбора на карте должен остаться один, иначе ученику придётся держать в
+ * голове два.
+ */
+.china-map .country {
+  cursor: pointer;
+  fill: var(--map-locked);
+  stroke: var(--map-border);
+  stroke-width: var(--map-border-width);
+}
+
+.china-map .country[data-selected='true'] {
+  fill: var(--map-selected);
+}
+
+/*
+ * Исход у страны показан теми же тремя каналами, что у области: заливка,
+ * обводка и её толщина. Одной заливки мало — в «назвать страну» спрошенная
+ * страна до ответа киноварная, а после верного ответа стала бы нефритовой той
+ * же светлоты: пара даёт 1.01:1, и в оттенках серого, на проекторе и при
+ * дальтонизме на карте не менялось бы ничего.
+ *
+ * Токен тот же, что у области (`--map-correct`, а не исход карты освоенности):
+ * язык карты ответа один на все справочники, и проверка палитры сторожит
+ * именно эту пару.
+ */
+.china-map .country[data-answer-state='correct'] {
+  fill: var(--map-correct);
+  stroke: var(--map-correct-ink);
+  stroke-width: var(--map-border-width-strong);
+}
+
+.china-map .country[data-answer-state='incorrect'] {
+  fill: url('#map-hatch-incorrect');
+  stroke: var(--map-incorrect-mark);
+  stroke-dasharray: 4 2;
+  stroke-width: var(--map-border-width-strong);
+}
+
+/*
+ * Ответ закрыт — закрыты все страны, а не только запертые: то же правило, что
+ * у областей, и по тому же доводу. Палец, наведённый на верную и на ошибочную,
+ * обещал бы второй ответ.
+ */
+.china-map .country[data-answer-state] {
+  cursor: not-allowed;
+}
+
+/*
+ * В «назвать страну» по контурам не отвечают: роли, фокуса и обработчика у них
+ * там нет, а палец-указатель обещал бы нажатие, которого не случится. Тот же
+ * приём, что на карте освоенности, — курсор обычный.
+ */
+.china-map .country-layer[data-answers='false'] .country {
+  cursor: default;
+}
+
+/*
+ * Спорный участок закрыт штриховкой поверх заливки: он не перекрашивает
+ * страну, а показывает, что здесь спор. Нажатие проходит сквозь него к стране
+ * под ним — участок не цель ответа.
+ *
+ * Образец свой, без фона: у исходов подложка непрозрачная, и штриховка
+ * «верно со второй попытки» закрасила бы и заливку страны, и её исход — а
+ * заодно сказала бы про спорный участок то, чего про него не говорят.
+ */
+.china-map .country-disputed {
+  fill: url('#map-hatch-disputed');
+  pointer-events: none;
+}
+
+/* Подписи спорных участков — текст для читалки экрана, а не для глаза. */
+.china-map .country-disputed-note {
+  overflow: hidden;
+  height: 1px;
+  width: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /*
  * Соседи. Игра начинается серой по тому же доводу, что и заполнение карты:
  * цвет — это ответ, и до ответа его быть не должно.
@@ -1039,13 +1125,15 @@ button.text:hover:enabled {
 .china-map .city-hit:focus,
 .china-map .landmark-hit:focus,
 .china-map .cluster-hit:focus,
+.china-map .country:focus,
 .china-map .physical-layer .relief-shape:focus,
 .china-map .physical-layer .river-line:focus,
 .china-map .physical-layer .lake-hit:focus {
   outline: none;
 }
 
-.china-map [data-region-id]:focus-visible {
+.china-map [data-region-id]:focus-visible,
+.china-map .country:focus-visible {
   stroke: var(--focus-on-paper);
   stroke-width: 4;
 }

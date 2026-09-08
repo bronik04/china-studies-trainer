@@ -35,6 +35,42 @@ it('увеличение сужает вид, сохраняя пропорци�
   expect(height).toBeCloseTo(MAP_VIEWBOX_HEIGHT / 2);
 });
 
+/*
+ * Расширенный кадр — игры по сопредельным государствам. Множитель общий у вида
+ * и у генератора геометрии, и разъехаться им нельзя: обрезка обязана совпадать
+ * с кадром, иначе у стран появятся рубленые края посреди видимого.
+ */
+it('расширенный кадр показывает поле вокруг карты, не сдвигая середины', () => {
+  const [x, y, width, height] = parse(viewBoxOf({ ...WHOLE_MAP, outset: 1.3 }));
+
+  expect(width).toBeCloseTo(MAP_VIEWBOX_WIDTH * 1.3);
+  expect(height).toBeCloseTo(MAP_VIEWBOX_HEIGHT * 1.3);
+  expect(x + width / 2).toBeCloseTo(WHOLE_MAP.centerX);
+  expect(y + height / 2).toBeCloseTo(WHOLE_MAP.centerY);
+});
+
+it('пределы сдвига на расширенном кадре считаются по нему же', () => {
+  const corner = panView(zoomView({ ...WHOLE_MAP, outset: 1.3 }, 2), 9999, 9999);
+  const [x, y, width, height] = parse(viewBoxOf(corner));
+
+  expect(x + width).toBeCloseTo(
+    MAP_VIEWBOX_MIN_X + MAP_VIEWBOX_WIDTH * 1.15,
+  );
+  expect(y + height).toBeCloseTo(
+    MAP_VIEWBOX_MIN_Y + MAP_VIEWBOX_HEIGHT * 1.15,
+  );
+});
+
+it('на расширенном кадре рука и клавиша ведут карту по нему же', () => {
+  const rect = { width: 1120, height: 835 };
+  const wide = { ...WHOLE_MAP, outset: 1.3 };
+
+  expect(unitsPerPixel(wide, rect)).toBeCloseTo(
+    unitsPerPixel(WHOLE_MAP, rect) * 1.3,
+  );
+  expect(keyboardStep(wide)).toBeCloseTo(keyboardStep(WHOLE_MAP) * 1.3);
+});
+
 it('на единичном увеличении сдвигать некуда', () => {
   expect(viewBoxOf(panView(WHOLE_MAP, 200, 200))).toBe(viewBoxOf(WHOLE_MAP));
 });

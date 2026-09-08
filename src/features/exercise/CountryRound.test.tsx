@@ -1,0 +1,182 @@
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import { countries } from '../../content/countries';
+import { CORRECT_PAUSE_MS } from './round-pace';
+import {
+  COUNTRY_FRAME_OUTSET,
+  MAP_VIEWBOX_WIDTH,
+} from '../../map/target-size';
+import { CountryRound, type CountryExerciseType } from './CountryRound';
+
+function renderRound(
+  exerciseType: CountryExerciseType = 'find-on-map',
+  onFinish: (attempts: readonly unknown[]) => void = () => {},
+) {
+  return render(
+    <CountryRound
+      exerciseType={exerciseType}
+      language="ru"
+      roundId="r1"
+      seed={1}
+      onFinish={onFinish}
+      onExit={() => {}}
+    />,
+  );
+}
+
+/** Список — в панели оболочки: перед ответом её нужно открыть. */
+function openAnswerList() {
+  const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
+  if (toggle.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.click(toggle);
+  }
+}
+
+function list() {
+  return within(screen.getByRole('list', { name: 'Список стран' }));
+}
+
+function asked(): string {
+  return screen.getByTestId('exercise-target').textContent ?? '';
+}
+
+it('спрашивает все четырнадцать стран', () => {
+  renderRound();
+
+  expect(screen.getByText(`Вопрос 1 из ${countries.length}`)).toBeInTheDocument();
+  expect(countries.map((country) => country.nameRu)).toContain(asked());
+});
+
+it('отвечает из списка и идёт дальше сам', () => {
+  vi.useFakeTimers();
+  try {
+    renderRound();
+    openAnswerList();
+
+    const target = countries.find((country) => country.nameRu === asked())!;
+    fireEvent.click(list().getByRole('button', { name: target.nameRu }));
+
+    /* Верный ответ виден полсекунды, потом раунд едет дальше сам. */
+    act(() => {
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS);
+    });
+
+    expect(screen.getByText('Вопрос 2 из 14')).toBeInTheDocument();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('после ошибки называет верную страну', () => {
+  renderRound();
+  openAnswerList();
+
+  const target = countries.find((country) => country.nameRu === asked())!;
+  const other = countries.find((country) => country.id !== target.id)!;
+  fireEvent.click(list().getByRole('button', { name: other.nameRu }));
+
+  expect(asked()).toContain(target.nameRu);
+  expect(asked()).toContain(target.nameZh);
+});
+
+it('в «назвать страну» вопрос не называет страну, а варианты называют', () => {
+  renderRound('name-target');
+
+  expect(asked()).toBe('Страна на карте');
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+it('в «назвать страну» списка ответов нет: отвечают кнопкой', () => {
+  renderRound('name-target');
+
+  expect(
+    screen.queryByRole('button', { name: 'Ответить из списка' }),
+  ).toBeNull();
+});
+
+it('в повторе одной страны вариантов всё равно четыре', () => {
+  const single = countries.filter((country) => country.id === 'nepal');
+
+  render(
+    <CountryRound
+      countries={single}
+      exerciseType="name-target"
+      language="ru"
+      roundId="r1"
+      seed={1}
+      onFinish={() => {}}
+      onExit={() => {}}
+    />,
+  );
+
+  /* Спрашивается одна страна, но отвлекающие берутся из всего справочника. */
+  expect(screen.getByText('Вопрос 1 из 1')).toBeInTheDocument();
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+it('в повторе одной страны список остаётся полным: одна кнопка была бы ответом', () => {
+  const single = countries.filter((country) => country.id === 'bhutan');
+
+  render(
+    <CountryRound
+      countries={single}
+      exerciseType="find-on-map"
+      language="ru"
+      roundId="r1"
+      seed={1}
+      onFinish={() => {}}
+      onExit={() => {}}
+    />,
+  );
+  openAnswerList();
+
+  /* Спрашивается одна страна, но выбирают из всех четырнадцати. */
+  expect(screen.getByText('Вопрос 1 из 1')).toBeInTheDocument();
+  expect(list().getAllByRole('button')).toHaveLength(countries.length);
+});
+
+/*
+ * Слой стран приезжает отдельным куском сборки, поэтому проверяется через
+ * ожидание: без этого раунд можно оставить с картой, на которой нет ни одной
+ * страны, и весь набор тестов останется зелёным.
+ */
+async function countryLayer(container: HTMLElement): Promise<Element> {
+  return await waitFor(() => {
+    const layer = container.querySelector('.country-layer');
+    expect(layer).not.toBeNull();
+    return layer!;
+  });
+}
+
+it('рисует страны на карте раунда и берёт расширенный кадр', async () => {
+  const { container } = renderRound();
+  const layer = await countryLayer(container);
+
+  expect(layer.querySelectorAll('[data-country-id]')).toHaveLength(
+    countries.length,
+  );
+  expect(layer.getAttribute('data-answers')).toBe('true');
+
+  const [, , width] = (
+    container.querySelector('.china-map svg')?.getAttribute('viewBox') ?? ''
+  )
+    .split(' ')
+    .map(Number);
+  expect(width).toBeCloseTo(MAP_VIEWBOX_WIDTH * COUNTRY_FRAME_OUTSET, 1);
+});
+
+it('в «назвать страну» одна страна подсвечена, а контуры не отвечают', async () => {
+  const { container } = renderRound('name-target');
+  const layer = await countryLayer(container);
+
+  expect(layer.getAttribute('data-answers')).toBe('false');
+  expect(
+    layer.querySelectorAll('[data-country-id][data-selected="true"]'),
+  ).toHaveLength(1);
+});

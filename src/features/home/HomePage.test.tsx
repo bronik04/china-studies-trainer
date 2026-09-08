@@ -16,6 +16,7 @@ function renderHome(attempts: readonly Attempt[] = []) {
     onStartRound: vi.fn(),
     onStartFillRound: vi.fn(),
     onStartNeighboursRound: vi.fn(),
+    onStartCountryRound: vi.fn(),
     onStartCityRound: vi.fn(),
     onStartLandmarkRound: vi.fn(),
     onStartCultureRound: vi.fn(),
@@ -229,6 +230,7 @@ it('раздел режимов принимает фокус: шапка вед
       onStartRound={vi.fn()}
       onStartFillRound={vi.fn()}
       onStartNeighboursRound={vi.fn()}
+      onStartCountryRound={vi.fn()}
       onStartCityRound={vi.fn()}
       onStartLandmarkRound={vi.fn()}
       onStartCultureRound={vi.fn()}
@@ -259,16 +261,17 @@ function openCard(title: string | RegExp): void {
  * Одиннадцать равных карточек подряд требовали прочитать одиннадцать абзацев,
  * чтобы выбрать. Группы — те же справочники, из которых берутся цели.
  */
-it('игры разложены по шести предметам, и каждая попала ровно в одну группу', () => {
+it('игры разложены по семи предметам, и каждая попала ровно в одну группу', () => {
   renderHome();
 
   /*
-   * Шесть полок. «История и культура» стояли вместе, пока у каждой было по
+   * Семь полок. «История и культура» стояли вместе, пока у каждой было по
    * одной игре; у истории их стало пять, и полки разделились. Шестую дали
    * достопримечательности (2026-08-28): это третий справочник целей, а не
-   * ещё один взгляд на города.
+   * ещё один взгляд на города. Седьмую — сопредельные государства
+   * (2026-08-30): свой справочник и свой слой на карте.
    */
-  expect(MODE_GROUPS).toHaveLength(6);
+  expect(MODE_GROUPS).toHaveLength(7);
   expect(
     screen.getByRole('heading', { level: 3, name: 'История' }),
   ).toBeInTheDocument();
@@ -448,4 +451,12 @@ it('запускает игру про соседей с главной', () => 
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
 
   expect(onStartNeighboursRound).toHaveBeenCalledWith('ru');
+});
+
+it('запускает игру про страны с главной', () => {
+  const { onStartCountryRound } = renderHome();
+  fireEvent.click(screen.getByRole('button', { name: /Найти страну/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+
+  expect(onStartCountryRound).toHaveBeenCalledWith('find-on-map', 'ru');
 });

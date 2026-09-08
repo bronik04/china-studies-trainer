@@ -37,12 +37,42 @@ export const MIN_TARGET_PX = 24;
 /** Цель, к которой стоит стремиться (2.5.5 Target Size, AAA). */
 export const COMFORTABLE_TARGET_PX = 44;
 
-export function unitsToPixels(units: number, mapWidth: number): number {
-  return (units * mapWidth) / MAP_VIEWBOX_WIDTH;
+/**
+ * Во сколько раз шире кадр в играх по сопредельным государствам.
+ *
+ * Кадр карты обрезан по Китаю, и при обычном кадре от Афганистана виден только
+ * Ваханский коридор — 8.4 единицы, полоска. Решение владельца от 2026-08-31:
+ * в этих двух играх карта отъезжает, чтобы у соседей было тело.
+ *
+ * Число живёт здесь, а не в экране: по нему обрезает геометрию генератор
+ * (`generate:countries`) и по нему же расширяет вид карта. Разойдись они — у
+ * стран появились бы рубленые края посреди видимой области.
+ */
+export const COUNTRY_FRAME_OUTSET = 1.3;
+
+/**
+ * Единицы карты в пиксели экрана.
+ *
+ * `outset` — во сколько раз кадр шире обычного, и на расширенном кадре он
+ * обязателен: в ту же ширину экрана влезает больше единиц, и та же фигура
+ * становится мельче ровно во столько же раз. Забыть его значит отчитаться о
+ * цели крупнее настоящей — ровно это и случилось со странами, пока счёт шёл
+ * по обычному кадру.
+ */
+export function unitsToPixels(
+  units: number,
+  mapWidth: number,
+  outset = 1,
+): number {
+  return (units * mapWidth) / (MAP_VIEWBOX_WIDTH * outset);
 }
 
-export function pixelsToUnits(pixels: number, mapWidth: number): number {
-  return (pixels * MAP_VIEWBOX_WIDTH) / mapWidth;
+export function pixelsToUnits(
+  pixels: number,
+  mapWidth: number,
+  outset = 1,
+): number {
+  return (pixels * MAP_VIEWBOX_WIDTH * outset) / mapWidth;
 }
 
 export type UndersizedRegion = {

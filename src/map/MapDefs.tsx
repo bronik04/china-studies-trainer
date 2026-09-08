@@ -18,6 +18,7 @@ const IN_PROGRESS_PATTERN_ID = 'map-hatch-in-progress';
 const PHYSICAL_CORRECT_PATTERN_ID = 'map-hatch-physical-correct';
 const PHYSICAL_INCORRECT_PATTERN_ID = 'map-hatch-physical-incorrect';
 const PHYSICAL_HIGHLIGHT_PATTERN_ID = 'map-hatch-physical-highlight';
+const DISPUTED_PATTERN_ID = 'map-hatch-disputed';
 
 export function MapDefs() {
   return (
@@ -179,6 +180,33 @@ export function MapDefs() {
             x2="0"
             y2="9"
             stroke="var(--map-highlight)"
+            strokeWidth="1.5"
+          />
+        </pattern>
+        {/*
+          Спорный участок границы. Фона у образца нет намеренно: под ним лежит
+          страна или область со своей заливкой, и она обязана просвечивать —
+          иначе штриховка не отмечает спор, а перекрашивает страну и прячет
+          исход ответа под собой.
+
+          Тушь нейтральная, а не из палитры исходов: спор — свойство участка, а
+          не оценка ответа. Наклон минус 45° против 45° у образца ошибки —
+          верная и спорная отметки бывают на экране разом и обязаны различаться
+          не только тоном.
+        */}
+        <pattern
+          id={DISPUTED_PATTERN_ID}
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(-45)"
+        >
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="6"
+            stroke="var(--map-border)"
             strokeWidth="1.5"
           />
         </pattern>

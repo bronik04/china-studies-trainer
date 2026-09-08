@@ -34,6 +34,7 @@ import { SiteFooter } from '../../ui/SiteFooter';
 import {
   MODE_CARDS,
   MODE_GROUPS,
+  type CountryExerciseType,
   type ModeCard,
 } from '../exercise/exercise-modes';
 import { CollectionCard } from './CollectionCard';
@@ -50,6 +51,10 @@ export type HomePageProps = {
   ) => void;
   readonly onStartFillRound: (language: QuestionLanguage) => void;
   readonly onStartNeighboursRound: (language: QuestionLanguage) => void;
+  readonly onStartCountryRound: (
+    exerciseType: CountryExerciseType,
+    language: QuestionLanguage,
+  ) => void;
   readonly onStartCultureRound: (
     language: QuestionLanguage,
     set: CultureSet,
@@ -188,6 +193,7 @@ export function HomePage({
   onStartRound,
   onStartFillRound,
   onStartNeighboursRound,
+  onStartCountryRound,
   onStartCityRound,
   onStartLandmarkRound,
   onStartCultureRound,
@@ -218,6 +224,8 @@ export function HomePage({
       onStartFillRound(language);
     } else if (card.kind === 'neighbours') {
       onStartNeighboursRound(language);
+    } else if (card.kind === 'country') {
+      onStartCountryRound(card.exerciseType, language);
     } else if (card.kind === 'city') {
       onStartCityRound(card.exerciseType, language, set as CitySet);
     } else if (card.kind === 'landmark') {

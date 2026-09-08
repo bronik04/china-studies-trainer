@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { loadCountryLayer } from './map/load-country-layer';
 import { loadPhysicalMap } from './map/load-physical-map';
 
 /**
@@ -33,6 +34,14 @@ const loaders = {
   culture: () => import('./features/exercise/CultureRound'),
   fill: () => import('./features/exercise/FillMapRound'),
   neighbours: () => import('./features/exercise/NeighboursRound'),
+  country: () => import('./features/exercise/CountryRound'),
+  /*
+   * Слой стран тянется заранее: без него игра в классе без сети не откроется.
+   * Тянется своим загрузчиком, а не вторым `import()` того же модуля: только
+   * он запоминает загруженное, и без него карта каждый раз рисовала бы первый
+   * кадр без стран. Тот же довод, что у физической карты ниже.
+   */
+  countryLayer: loadCountryLayer,
   order: () => import('./features/exercise/OrderRound'),
   results: () => import('./features/results/RoundResultsPage'),
   fillResults: () => import('./features/results/FillMapResultsPage'),
@@ -71,6 +80,9 @@ export const FillMapRound = lazy(() =>
 );
 export const NeighboursRound = lazy(() =>
   loaders.neighbours().then((module) => ({ default: module.NeighboursRound })),
+);
+export const CountryRound = lazy(() =>
+  loaders.country().then((module) => ({ default: module.CountryRound })),
 );
 export const OrderRound = lazy(() =>
   loaders.order().then((module) => ({ default: module.OrderRound })),

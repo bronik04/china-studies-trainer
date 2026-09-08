@@ -22,6 +22,7 @@ import {
 import { dynasties } from './content/dynasties';
 import {
   citiesWord,
+  countriesWord,
   dynastiesWord,
   featuresWord,
   landmarksWord,
@@ -57,6 +58,7 @@ import {
   ExerciseRound,
   FillMapResultsPage,
   FillMapRound,
+  CountryRound,
   NeighboursRound,
   OrderRound,
   PhysicalRound,
@@ -65,6 +67,8 @@ import {
 } from './screens';
 import type { Landmark } from './content/landmarks';
 import { landmarksUpTo, type LandmarkSet } from './content/landmark-sets';
+import { countries, type Country } from './content/countries';
+import type { CountryExerciseType } from './features/exercise/exercise-modes';
 import { regionAnswerableLandmarks } from './domain/landmark-pool';
 import { ChinaMap } from './map/ChinaMap';
 import type { MapZoom } from './map/MapControls';
@@ -87,6 +91,7 @@ type Screen =
   | 'fill'
   | 'fill-results'
   | 'neighbours-exercise'
+  | 'country-exercise'
   | 'order-exercise';
 
 /**
@@ -194,6 +199,9 @@ export default function App() {
   const [fillRound, setFillRound] = useState<FillRound | null>(null);
   const [neighboursPool, setNeighboursPool] =
     useState<readonly Region[]>(regions);
+  const [countryPool, setCountryPool] = useState<readonly Country[]>(countries);
+  const [countryExerciseType, setCountryExerciseType] =
+    useState<CountryExerciseType>('find-on-map');
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<MapZoom>(1);
   const [collectionId, setCollectionId] = useState<string | null>(null);
@@ -475,6 +483,30 @@ export default function App() {
     startNeighboursPool(nextLanguage, regions);
   }
 
+  /**
+   * Игры по странам: цели из своего справочника, поэтому запуск свой. Пул
+   * нужен повтору ошибок — он спрашивает те же страны той же игрой.
+   */
+  function startCountryPool(
+    exerciseType: CountryExerciseType,
+    nextLanguage: QuestionLanguage,
+    pool: readonly Country[],
+  ) {
+    setLanguage(nextLanguage);
+    setCountryExerciseType(exerciseType);
+    setCountryPool(pool);
+    setRoundId(newRoundId());
+    setSeed(Math.floor(Math.random() * 2 ** 31));
+    setScreen('country-exercise');
+  }
+
+  function startCountryRound(
+    exerciseType: CountryExerciseType,
+    nextLanguage: QuestionLanguage,
+  ) {
+    startCountryPool(exerciseType, nextLanguage, countries);
+  }
+
   function startFillRound(nextLanguage: QuestionLanguage) {
     setLanguage(nextLanguage);
     setRoundId(newRoundId());
@@ -536,6 +568,22 @@ export default function App() {
           roundId={roundId}
           seed={seed}
           onFinish={(round) => finishRound(round.attempts)}
+          onExit={goToModes}
+        />
+      </AppFrame>
+    );
+  }
+
+  if (screen === 'country-exercise') {
+    return (
+      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+        <CountryRound
+          countries={countryPool}
+          exerciseType={countryExerciseType}
+          language={language}
+          roundId={roundId}
+          seed={seed}
+          onFinish={finishRound}
           onExit={goToModes}
         />
       </AppFrame>
@@ -708,6 +756,7 @@ export default function App() {
     const isCultureRound = roundKind === 'collection';
     const isLandmarkRound = roundKind === 'landmark';
     const isNeighboursRound = roundKind === 'neighbours';
+    const isCountryRound = roundKind === 'country';
     /*
      * Набор повтора — ошибки этого раунда, те же, что показаны списком
      * (решение владельца от 2026-08-25). Отдельного источника у кнопки нет:
@@ -727,6 +776,9 @@ export default function App() {
     const repeatLandmarks = landmarkPool.filter((one) =>
       repeatIds.includes(one.id),
     );
+    const repeatCountries = countryPool.filter((one) =>
+      repeatIds.includes(one.id),
+    );
 
     /*
      * Карта итога есть у раундов по регионам. У раунда по городам исход по
@@ -739,7 +791,8 @@ export default function App() {
       isPhysicalRound ||
       isHistoryRound ||
       isCultureRound ||
-      isLandmarkRound
+      isLandmarkRound ||
+      isCountryRound
         ? undefined
         : (
         <ChinaMap
@@ -769,7 +822,9 @@ export default function App() {
                     ? culturePool
                     : isLandmarkRound
                       ? landmarkPool
-                      : regions
+                      : isCountryRound
+                        ? countryPool
+                        : regions
           }
           countWord={
             isCityRound
@@ -782,7 +837,9 @@ export default function App() {
                     ? photosWord
                     : isLandmarkRound
                       ? landmarksWord
-                      : undefined
+                      : isCountryRound
+                        ? countriesWord
+                        : undefined
           }
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
@@ -828,6 +885,11 @@ export default function App() {
               return;
             }
 
+            if (isCountryRound) {
+              startCountryPool(countryExerciseType, language, repeatCountries);
+              return;
+            }
+
             startRound(exerciseTypes[0], language, repeatIds);
           }}
           onNewRound={() => {
@@ -859,6 +921,11 @@ export default function App() {
 
             if (isNeighboursRound) {
               startNeighboursRound(language);
+              return;
+            }
+
+            if (isCountryRound) {
+              startCountryRound(countryExerciseType, language);
               return;
             }
 
@@ -925,6 +992,7 @@ export default function App() {
           onStartRound={startRound}
           onStartFillRound={startFillRound}
           onStartNeighboursRound={startNeighboursRound}
+          onStartCountryRound={startCountryRound}
           onStartCityRound={startCityRound}
           onStartCultureRound={startCultureRound}
           onStartHistoryRound={startHistoryRound}

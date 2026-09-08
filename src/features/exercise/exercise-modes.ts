@@ -41,6 +41,7 @@ export const EXERCISE_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
  */
 export type ModeGroupId =
   | 'regions'
+  | 'countries'
   | 'cities'
   | 'physical'
   | 'landmarks'
@@ -57,6 +58,11 @@ export const MODE_GROUPS: readonly {
     id: 'regions',
     title: 'Регионы',
     note: '34 единицы провинциального уровня',
+  },
+  {
+    id: 'countries',
+    title: 'Соседние государства',
+    note: 'четырнадцать стран сухопутной границы',
   },
   { id: 'cities', title: 'Города', note: 'набор выбирается перед стартом' },
   {
@@ -137,6 +143,14 @@ export type ModeCard = {
    * его соседей. Первая такая форма в тренажёре.
    */
   | { readonly kind: 'neighbours' }
+  /**
+   * Игра по сопредельным государствам: цели берутся из справочника стран, а
+   * карта показывает слой за границей Китая.
+   */
+  | {
+      readonly kind: 'country';
+      readonly exerciseType: CountryExerciseType;
+    }
   /** Режим объявлен, но ещё не написан: карточка не запускается. */
   | { readonly kind: 'planned' }
 );
@@ -160,6 +174,29 @@ export const CITY_MODES: Readonly<Record<ExerciseType, ExerciseMode>> = {
     exerciseType: 'match-pair',
     title: 'Город — регион',
     eyebrow: 'В каком регионе этот город',
+  },
+};
+
+/** Две формы вопроса по странам. Одна на всех: карточка, главная, экран. */
+export type CountryExerciseType = 'find-on-map' | 'name-target';
+
+/**
+ * Две игры по сопредельным государствам. `match-pair` здесь нет: связать
+ * страну со вторым каталогом нечем — «в каком регионе Казахстан» вопрос без
+ * ответа.
+ */
+export const COUNTRY_MODES: Readonly<
+  Record<CountryExerciseType, ExerciseMode>
+> = {
+  'find-on-map': {
+    exerciseType: 'find-on-map',
+    title: 'Найти страну',
+    eyebrow: 'Найдите страну на карте',
+  },
+  'name-target': {
+    exerciseType: 'name-target',
+    title: 'Назвать страну',
+    eyebrow: 'Какая страна подсвечена',
   },
 };
 
@@ -317,6 +354,28 @@ export const MODE_CARDS: readonly ModeCard[] = [
       'Назван регион — отметить все, что с ним граничат, и нажать «Готово». Верно, только когда множество совпало точно: пропущенный сосед и лишний весят одинаково.',
     volume: '30 регионов · около 12 минут',
     groupId: 'regions',
+  },
+  {
+    id: 'find-country',
+    kind: 'country',
+    exerciseType: 'find-on-map',
+    mark: '国',
+    title: 'Найти страну',
+    summary:
+      'Названа страна — нажать её на карте или выбрать из списка. Карта здесь отъезжает шире обычного, иначе соседи остаются полосками по краю; в мелкие — Бутан — указателем не попасть, их берут из списка.',
+    volume: '14 стран · около 5 минут',
+    groupId: 'countries',
+  },
+  {
+    id: 'name-country',
+    kind: 'country',
+    exerciseType: 'name-target',
+    mark: '界',
+    title: 'Назвать страну',
+    summary:
+      'Подсвечена страна — выбрать имя из четырёх. Подписи на карте скрыты: подпись подсвеченной страны и есть ответ.',
+    volume: '14 стран · около 4 минут',
+    groupId: 'countries',
   },
   {
     id: 'find-city',
