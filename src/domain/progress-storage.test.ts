@@ -123,3 +123,56 @@ it('не резервирует прогресс текущей версии п�
 
   expect(storage.getItem(BACKUP_KEY)).toBeNull();
 });
+
+/*
+ * Пробная запись при создании говорит только о том, что запись работала тогда.
+ * Квота кончается посреди сеанса — и ученику до конца раунда обещали бы, что
+ * прогресс сохранён, тогда как он уже не сохраняется.
+ */
+it('отказ записи по ходу сеанса виден в признаке доступности', () => {
+  const storage = memoryStorage();
+  const store = createProgressStore(storage);
+  expect(store.isAvailable).toBe(true);
+
+  storage.setItem = () => {
+    throw new DOMException('QuotaExceededError');
+  };
+  store.write(addAttempts(EMPTY_PROGRESS, [attempt]));
+
+  expect(store.isAvailable).toBe(false);
+});
+
+/*
+ * Резерв — это тоже запись, и она тоже может отказать. Прежде исключение
+ * вылетало из `read()` наружу: приложение падало на первом же чтении вместо
+ * того, чтобы начать с чистого прогресса.
+ */
+it('чтение не падает, когда резерв записать некуда', () => {
+  const storage = memoryStorage({ [PROGRESS_KEY]: 'это не json' });
+  const store = createProgressStore(storage);
+
+  storage.setItem = () => {
+    throw new DOMException('QuotaExceededError');
+  };
+
+  expect(store.read()).toEqual(EMPTY_PROGRESS);
+  expect(store.isAvailable).toBe(false);
+});
+
+/*
+ * Испорченная запись текущей версии не удаляется, а откладывается в резерв —
+ * то же правило, что и для непонятной версии (DATA_MODEL.md).
+ */
+it('испорченный прогресс текущей версии откладывается в резерв', () => {
+  const raw = JSON.stringify({
+    schemaVersion: 3,
+    attempts: null,
+    masteredTargets: [],
+  });
+  const storage = memoryStorage({ [PROGRESS_KEY]: raw });
+  const store = createProgressStore(storage);
+
+  expect(store.read()).toEqual(EMPTY_PROGRESS);
+  expect(storage.getItem(BACKUP_KEY)).toBe(raw);
+  expect(storage.getItem(PROGRESS_KEY)).toBeNull();
+});

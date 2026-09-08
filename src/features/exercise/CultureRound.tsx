@@ -76,8 +76,9 @@ export function CultureRound({
     ),
   );
   const [answeredId, setAnsweredId] = useState<string | null>(null);
-  const [startedAt] = useState(startClock);
-  const [askedAt, setAskedAt] = useState(startClock);
+  const [mountedAt] = useState(startClock);
+  /* Пока `null` — вопрос ещё не сменялся: считаем от начала раунда. */
+  const [askedAt, setAskedAt] = useState<number | null>(null);
   const { schedule } = useAutoAdvance();
 
   /*
@@ -92,7 +93,20 @@ export function CultureRound({
         .filter((id): id is string => id !== undefined),
     [collections],
   );
-  const photosReady = usePhotoPreload(photoIds);
+  const { ready: photosReady, readyAt } = usePhotoPreload(photoIds);
+
+  /*
+   * Часы идут с первого вопроса, а не с появления экрана: пока показано
+   * «Готовим снимки», ученик ждёт, а не думает, и на медленной сети это
+   * ожидание доходит до предела прогрева в двадцать секунд. Прежде они
+   * попадали и в длительность первого ответа, и в общее время раунда.
+   *
+   * Момент берётся у самого прогрева, а не ставится эффектом: состояние,
+   * которое пишет эффект сразу после отрисовки, — это лишний проход рендера
+   * (и запрет линтера), а здесь достаточно вычислить.
+   */
+  const roundStartedAt = readyAt ?? mountedAt;
+  const questionStartedAt = askedAt ?? roundStartedAt;
 
   const question = currentQuestion(round);
   const byId = useMemo(
@@ -140,7 +154,7 @@ export function CultureRound({
     setAnsweredId(collectionId);
     const answered = answerQuestion(round, {
       answeredId: collectionId,
-      durationMs: Math.round(startClock() - askedAt),
+      durationMs: Math.round(startClock() - questionStartedAt),
       answeredAt: new Date().toISOString(),
     });
     setRound(answered);
@@ -206,7 +220,7 @@ export function CultureRound({
     <RoundStage
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
-      startedAt={startedAt}
+      startedAt={roundStartedAt}
       progress={
         <>
           <p className="exercise-progress">

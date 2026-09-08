@@ -909,6 +909,13 @@ export default function App() {
               return;
             }
 
+            if (isLandmarkRound) {
+              /* Тот же набор, что и был: он выводится из пула — так же, как у
+                 физической карты, и по тому же доводу. */
+              startLandmarkPool(exerciseTypes[0], language, landmarkPool);
+              return;
+            }
+
             if (isHistoryRound) {
               startHistoryRound();
               return;
