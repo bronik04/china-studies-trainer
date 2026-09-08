@@ -25,8 +25,20 @@ import { photoSource } from '../../ui/photo-source';
 /** Дольше этого не ждём: раунд важнее полноты прогрева. */
 const PRELOAD_LIMIT_MS = 20_000;
 
-export function usePhotoPreload(photoIds: readonly string[]): boolean {
-  const [ready, setReady] = useState(photoIds.length === 0);
+export type PhotoPreload = {
+  readonly ready: boolean;
+  /**
+   * Когда прогрев кончился. Нужен раунду, чтобы пустить часы с первого
+   * вопроса, а не с появления экрана: ожидание снимков — не время на
+   * размышление, и приписывать его ответу нельзя.
+   */
+  readonly readyAt: number | null;
+};
+
+export function usePhotoPreload(photoIds: readonly string[]): PhotoPreload {
+  const [readyAt, setReadyAt] = useState<number | null>(() =>
+    photoIds.length === 0 ? performance.now() : null,
+  );
 
   useEffect(() => {
     if (photoIds.length === 0) {
@@ -36,7 +48,7 @@ export function usePhotoPreload(photoIds: readonly string[]): boolean {
     let alive = true;
     const finish = () => {
       if (alive) {
-        setReady(true);
+        setReadyAt((known) => known ?? performance.now());
       }
     };
 
@@ -64,5 +76,5 @@ export function usePhotoPreload(photoIds: readonly string[]): boolean {
     };
   }, [photoIds]);
 
-  return ready;
+  return { ready: readyAt !== null, readyAt };
 }

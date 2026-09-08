@@ -16,8 +16,19 @@ import { writeFileSync } from 'node:fs';
 import { physicalFeatures } from '../src/content/physical-features';
 import { RELIEF_STEPS } from './data/relief-steps';
 
+/*
+ * Версия закреплена тегом, а не веткой `master`: `docs/sources` называет
+ * Natural Earth 5.1.2, и выжимка обязана приходить из того же издания. С
+ * подвижной ветки повторный запуск однажды принёс бы другие контуры, а
+ * отпечаток сказал бы только то, что файлы согласованы между собой.
+ *
+ * Уже лежащие выжимки взяты с `master` до этого закрепления; повторное
+ * извлечение под тегом может дать небольшие расхождения — это отдельная
+ * работа, а не побочный итог правки адреса.
+ */
+const NATURAL_EARTH_VERSION = 'v5.1.2';
 const BASE =
-  'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson';
+  `https://raw.githubusercontent.com/nvkelso/natural-earth-vector/${NATURAL_EARTH_VERSION}/geojson`;
 const OUT = new URL('data/physical-source.json', import.meta.url);
 const PRECISION = 5;
 

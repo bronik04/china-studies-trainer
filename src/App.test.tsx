@@ -519,3 +519,41 @@ it('итог игры про страны считает страны, а не �
     screen.getByRole('button', { name: /Повторить ошибки: \d+ стран/ }),
   ).toBeInTheDocument();
 }, 20_000);
+
+/*
+ * «Новый раунд» повторяет ту же игру. У достопримечательностей ветки не было,
+ * и управление доходило до общего запуска раундов по регионам: ученик нажимал
+ * «ещё раз» после игры про памятники и получал вопрос о провинциях.
+ */
+it('новый раунд после достопримечательностей — снова достопримечательности', async () => {
+  render(<App />);
+  fireEvent.click(
+    screen.getByRole('button', { name: /Назвать достопримечательность/ }),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+  await settle();
+
+  vi.useFakeTimers();
+  try {
+    /* Ответы какие попались: важен экран итога, а не счёт. */
+    for (let index = 0; index < 25; index += 1) {
+      const choices = screen.queryAllByTestId('choice-option');
+      if (choices.length === 0) {
+        break;
+      }
+
+      fireEvent.click(choices[0]);
+      act(() => {
+        vi.advanceTimersByTime(WRONG_PAUSE_MS);
+      });
+    }
+  } finally {
+    vi.useRealTimers();
+  }
+  await settle();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Новый раунд' }));
+  await settle();
+
+  expect(screen.getByText('Что здесь отмечено')).toBeInTheDocument();
+}, 30_000);
