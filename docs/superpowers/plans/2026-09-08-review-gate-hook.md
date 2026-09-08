@@ -1141,12 +1141,14 @@ git commit -m "feat: ворота не пускают в master неотревь
 
 - [ ] **Шаг 2: Проверить, что файл перестал игнорироваться**
 
-Запустить: `git check-ignore -v .claude/settings.json; echo "код: $?"`
-Ожидается: `код: 1` — правила, скрывающего файл, больше нет. Личное
-(`launch.json`, `worktrees/`, `settings.local.json`) по-прежнему скрыто:
+Проверять надо не `git check-ignore` — он и на строку-исключение отвечает
+кодом 0, показывая сработавшее правило, — а то, что git собирается добавить.
+В свежем рабочем дереве каталога `.claude/` нет вовсе (он не отслеживался),
+поэтому его сначала надо создать.
 
-Запустить: `git check-ignore .claude/launch.json`
-Ожидается: `.claude/launch.json`
+Запустить: `mkdir -p .claude && touch .claude/settings.local.json && git add -n .claude/`
+Ожидается: одна строка `add '.claude/settings.json'` — личное рядом не
+подхватывается. Затем убрать пустышку: `rm .claude/settings.local.json`.
 
 - [ ] **Шаг 3: Написать настройку**
 
