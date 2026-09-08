@@ -1261,6 +1261,19 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
  */
 export type PhysicalSet = 'base' | 'ranges' | 'all';
 
+/**
+ * Чьей частью является цель, если она часть чего-то.
+ *
+ * Ущелья — часть Янцзы, и попадание в них верно, когда спрошена сама река:
+ * ученик, ткнувший в самое узнаваемое место, не должен получать ошибку.
+ * Обратное неверно — когда спрошены ущелья, годится только их отрезок.
+ */
+export function partOfFeature(featureId: string): string | undefined {
+  const feature = physicalFeatureById(featureId);
+
+  return feature?.kind === 'gorge' ? feature.partOf : undefined;
+}
+
 export function physicalFeaturesUpTo(
   set: PhysicalSet,
 ): readonly PhysicalFeature[] {

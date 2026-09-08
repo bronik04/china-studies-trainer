@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
-import { physicalFeatures } from '../../content/physical-features';
+import {
+  partOfFeature,
+  physicalFeatures,
+} from '../../content/physical-features';
 import { regions } from '../../content/regions';
 import type { PhysicalFeature } from '../../content/types';
 import { buildPhysicalChoices } from '../../domain/physical-choices';
@@ -172,9 +175,17 @@ export function PhysicalRound({
    * вызовом во время отрисовки. Тот же приём в `CityRound`.
    */
   function handleFeatureSelect(featureId: string) {
-    if (!showsChoices) {
-      answer(featureId);
+    if (showsChoices) {
+      return;
     }
+
+    /*
+     * Попадание в часть засчитывается целому: ущелья лежат на Янцзы, и при
+     * вопросе о реке нажатие по ним — верный ответ. Обратное неверно: когда
+     * спрошены ущелья, годится только сам отрезок.
+     */
+    const whole = partOfFeature(featureId);
+    answer(whole === question.target.id ? whole : featureId);
   }
 
   const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
