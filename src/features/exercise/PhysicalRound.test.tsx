@@ -53,7 +53,7 @@ function openAnswerList() {
 it('спрашивает тридцать девять объектов подряд', () => {
   renderRound('find-on-map');
 
-  expect(screen.getByText(/Вопрос 1 из 39/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 40/)).toBeInTheDocument();
 });
 
 it('в «найти» вопрос называет объект, а карта его не подписывает', () => {
@@ -186,14 +186,15 @@ it('на 320 px список отвечает за все тридцать де�
   openAnswerList();
   const list = screen.getByRole('list', { name: 'Список объектов' });
 
-  expect(within(list).getAllByRole('button')).toHaveLength(39);
+  expect(within(list).getAllByRole('button')).toHaveLength(40);
 });
 
 it('каждый набор спрашивает свои цели ровно по разу', () => {
   for (const [set, length] of [
-    ['base', 19],
-    ['ranges', 26],
-    ['all', 39],
+    /* Ущелья входят с первого набора: они рядом со своей рекой. */
+    ['base', 20],
+    ['ranges', 27],
+    ['all', 40],
   ] as const) {
     const pool = physicalFeaturesUpTo(set);
     const round = createRound(

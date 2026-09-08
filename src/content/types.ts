@@ -148,7 +148,8 @@ export type PhysicalKind =
   | 'landform'
   | 'lake'
   | 'point'
-  | 'marine';
+  | 'marine'
+  | 'gorge';
 
 type PhysicalCommon = {
   readonly id: string;
@@ -222,5 +223,15 @@ export type PhysicalFeature = PhysicalCommon &
          * там не уникальны, номера уникальны.
          */
         readonly neId: number;
+      }
+    | {
+        readonly kind: 'gorge';
+        /**
+         * Река, чьим отрезком объект является. Не украшение: геометрия ущелья
+         * вырезается генератором из линии этой реки, а попадание в отрезок
+         * засчитывается и тогда, когда спрошена сама река, — ущелье и есть
+         * она.
+         */
+        readonly partOf: string;
       }
   );

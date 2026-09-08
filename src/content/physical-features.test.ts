@@ -1,5 +1,9 @@
 import { expect, it } from 'vitest';
-import { physicalFeatureById, physicalKindLabel } from './physical-features';
+import {
+  physicalFeatureById,
+  physicalFeatures,
+  physicalKindLabel,
+} from './physical-features';
 
 /*
  * Род читается формой знака, а не цветом, и словом в карточке: вершина и
@@ -25,4 +29,26 @@ it('хребет остаётся хребтом, а озеро озером', (
     'Горный хребет',
   );
   expect(physicalKindLabel(physicalFeatureById('chaohu')!)).toBe('Озеро');
+});
+
+/*
+ * Ущелья — часть реки, и это сказано полем, а не подразумевается именем:
+ * попадание в отрезок засчитывается вопросу о самой Янцзы, и правило должно
+ * читаться из справочника, а не из карты.
+ */
+it('Три ущелья — часть Янцзы, и это сказано полем', () => {
+  const gorges = physicalFeatureById('three-gorges');
+
+  expect(gorges?.kind).toBe('gorge');
+  expect(gorges?.kind === 'gorge' ? gorges.partOf : null).toBe('yangtze');
+  expect(gorges?.regionIds).toEqual(['chongqing', 'hubei']);
+  expect(gorges?.facts).toHaveLength(3);
+});
+
+it('род ущелья назван словом', () => {
+  expect(physicalKindLabel(physicalFeatureById('three-gorges')!)).toBe('Ущелье');
+});
+
+it('целей физической карты стало сорок', () => {
+  expect(physicalFeatures).toHaveLength(40);
 });

@@ -32,6 +32,7 @@ export const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
   lake: 'Озеро',
   point: 'Крайняя точка',
   marine: 'Море',
+  gorge: 'Ущелье',
 };
 
 /**
@@ -902,7 +903,31 @@ const taiwanStraitFacts: readonly Fact[] = [
   },
 ];
 
+/*
+ * Полной статьи о Трёх ущельях у «Британники» нет; всё, что ниже, — из её
+ * статьи о Янцзы, раздел о среднем течении. Сводку, собранную их же ИИ,
+ * источником не считаем: она сама предупреждает, что может ошибаться.
+ */
+const threeGorgesFacts: readonly Fact[] = [
+  {
+    title: 'Двести километров теснин',
+    body: 'Через Три ущелья Янцзы идёт около 200 км — от востока Чунцина до запада Хубэя, — а дальше выходит на равнину.',
+    sourceIds: ['britannica-yangtze'],
+  },
+  {
+    title: 'Стены в четыреста метров',
+    body: 'Склоны сложены толстым известняком и до постройки плотины в 2006 году поднимались над рекой на 400–600 м; с наполнением водохранилища они стали заметно ниже.',
+    sourceIds: ['britannica-yangtze'],
+  },
+  {
+    title: 'Их и правда три',
+    body: 'Цюйтан — самое короткое, около 8 км; Уся тянется примерно на 50 км; Силин, последнее, — около 34 км выше Ичана.',
+    sourceIds: ['britannica-yangtze'],
+  },
+];
+
 const FACTS: Readonly<Record<string, readonly Fact[]>> = {
+  'three-gorges': threeGorgesFacts,
   yangtze: yangtzeFacts,
   'yellow-river': yellowRiverFacts,
   heilongjiang: heilongjiangFacts,
@@ -954,6 +979,21 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
     'anhui',
     'jiangsu',
   ]),
+  /*
+   * Ущелья стоят сразу за своей рекой: они её часть, и читать справочник проще
+   * там, где часть рядом с целым.
+   */
+  {
+    id: 'three-gorges',
+    kind: 'gorge',
+    partOf: 'yangtze',
+    nameRu: 'Три ущелья',
+    nameZh: '三峡',
+    pinyin: 'Sānxiá',
+    regionIds: ['chongqing', 'hubei'],
+    facts: FACTS['three-gorges'] ?? [],
+    sourceIds: RIVERS,
+  },
   river('yellow-river', 'Хуанхэ', '黄河', 'Huáng Hé', [66, 95], [
     'qinghai',
     'gansu',

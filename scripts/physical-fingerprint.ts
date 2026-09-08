@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { PhysicalFeature } from '../src/content/types';
 import { RELIEF_STEPS, SHAPE_FEATURE_IDS } from './data/relief-steps';
+import { GORGE_ENDPOINTS } from './data/gorge-endpoints';
 
 /**
  * Отпечаток входов генератора геометрии.
@@ -12,8 +13,8 @@ import { RELIEF_STEPS, SHAPE_FEATURE_IDS } from './data/relief-steps';
  * получена ли эта геометрия из тех входов, что лежат в репозитории сейчас.
  *
  * В отпечаток входит всё, что меняет результат: состав целей и номера
- * отрезков, номера озёр, разметка ступеней, привязка форм к целям и сама
- * выжимка. Порядок
+ * отрезков, номера озёр, разметка ступеней, привязка форм к целям, концы
+ * участков-ущелий и сама выжимка. Порядок
  * ключей фиксируется сортировкой — иначе отпечаток менялся бы от перестановки
  * строк в справочнике, ничего не меняя по существу.
  */
@@ -39,6 +40,10 @@ export function physicalInputsFingerprint(
         return `point:${feature.id}:${feature.neId}`;
       }
 
+      if (feature.kind === 'gorge') {
+        return `gorge:${feature.id}:${feature.partOf}`;
+      }
+
       return `landform:${feature.id}:${feature.step}`;
     })
     .sort();
@@ -51,8 +56,17 @@ export function physicalInputsFingerprint(
     .map(([key, id]) => `${key}=${id}`)
     .sort();
 
+  /*
+   * Концы участков — такой же вход, как номера отрезков реки: сдвинуть конец и
+   * не перегенерировать значит оставить на карте прежний участок при зелёной
+   * сборке.
+   */
+  const ends = Object.entries(GORGE_ENDPOINTS)
+    .map(([id, at]) => `${id}=${at.from.join(',')}>${at.to.join(',')}`)
+    .sort();
+
   return createHash('sha256')
-    .update([...catalog, ...steps, ...targets, sourceJson].join('\n'))
+    .update([...catalog, ...steps, ...targets, ...ends, sourceJson].join('\n'))
     .digest('hex')
     .slice(0, 16);
 }

@@ -11,9 +11,11 @@ function pointOn(featureId: string) {
 }
 
 describe('riverAt', () => {
-  it('разбирает все шесть рек', () => {
+  it('разбирает все линии карты — реки и участки рек', () => {
     expect(RIVER_SHAPES).toHaveLength(
-      physicalFeatures.filter((feature) => feature.kind === 'river').length,
+      physicalFeatures.filter(
+        (feature) => feature.kind === 'river' || feature.kind === 'gorge',
+      ).length,
     );
   });
 
