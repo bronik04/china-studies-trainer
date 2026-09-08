@@ -65,8 +65,8 @@ export type CountryRoundProps = {
  * Третьей игры, как у городов, здесь нет: связать страну со вторым каталогом
  * нечем — «в каком регионе Казахстан» вопрос без ответа.
  *
- * Подписи стран видны в «найти страну» и скрыты в «назвать страну»: там
- * подпись подсвеченной страны и есть ответ.
+ * Подписей стран на карте нет ни в одной из двух игр (решение владельца от
+ * 2026-08-31): имя страны и есть ответ в обеих.
  */
 export function CountryRound({
   countries = allCountries,
@@ -229,8 +229,14 @@ export function CountryRound({
       }
       answerList={
         showsChoices ? undefined : (
+          /*
+           * Список тоже берёт весь справочник, а не пул раунда, и по тому же
+           * доводу, что отвлекающие: в повторе одной ошибки пул из одной
+           * страны дал бы список из одной кнопки — она же ответ. Спрашиваются
+           * при этом только страны пула.
+           */
           <CountryAnswerList
-            countries={countries}
+            countries={allCountries}
             language={question.language}
             answeredId={answeredId}
             targetId={targetCountry.id}
@@ -274,6 +280,14 @@ export function CountryRound({
          * четырнадцать остановок, ни одна из которых ничего не делает.
          */
         countriesAnswer={!showsChoices}
+        /*
+         * Выносок Макао и Гонконга здесь нет: регион в играх по странам не
+         * выбирается, и на карте остались бы два пустых кружка с поводками в
+         * море — да ещё с ролью кнопки и именем области из разметки SVG, то
+         * есть две кнопки, которые ничего не делают. То же правило и по тому
+         * же доводу, что в «найти город» и «назвать город».
+         */
+        showsCallouts={false}
         frameOutset={COUNTRY_FRAME_OUTSET}
         selectedCountryId={showsChoices ? targetCountry.id : answeredId}
         onSelectCountry={handleCountrySelect}

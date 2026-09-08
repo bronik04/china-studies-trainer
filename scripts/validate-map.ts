@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { cities } from '../src/content/cities';
 import { physicalFeatures } from '../src/content/physical-features';
@@ -54,6 +53,7 @@ import {
 import { physicalInputsFingerprint } from './physical-fingerprint';
 import { paletteInputsFingerprint } from './palette-fingerprint';
 import { reliefInputsFingerprint } from './relief-fingerprint';
+import { countryInputsFingerprint } from './countries-fingerprint';
 
 const assetPath = new URL('../public/maps/china-provinces.svg', import.meta.url);
 const svg = readFileSync(assetPath, 'utf8');
@@ -333,12 +333,9 @@ for (const [regionId, list] of Object.entries(REGION_NEIGHBOURS)) {
  * Слой стран — тем же приёмом: он собран из выжимки, и подменённая выжимка без
  * перегенерации оставила бы на карте прежние очертания при зелёной сборке.
  */
-const expectedCountriesFingerprint = createHash('sha256')
-  .update(
-    readFileSync(new URL('data/countries-source.json', import.meta.url), 'utf8'),
-  )
-  .digest('hex')
-  .slice(0, 16);
+const expectedCountriesFingerprint = countryInputsFingerprint(
+  readFileSync(new URL('data/countries-source.json', import.meta.url), 'utf8'),
+);
 if (expectedCountriesFingerprint !== COUNTRIES_INPUTS_FINGERPRINT) {
   throw new Error(
     `Слой стран собран из другой выжимки: в файле ${COUNTRIES_INPUTS_FINGERPRINT}, ` +
@@ -355,27 +352,32 @@ if (expectedCountriesFingerprint !== COUNTRIES_INPUTS_FINGERPRINT) {
  * ту же ширину экрана влезает в 1.3 раза больше единиц, и та же страна на нём
  * во столько же раз мельче. По обычному кадру счёт врал в свою пользу.
  */
-const smallCountries = COUNTRY_SHAPES.filter(
-  (shape) =>
-    unitsToPixels(shape.diameter, REFERENCE_MAP_WIDTH, COUNTRY_FRAME_OUTSET) <
-    MIN_TARGET_PX,
-);
+function smallCountriesAt(mapWidth: number): string {
+  const small = COUNTRY_SHAPES.map((shape) => ({
+    id: shape.id,
+    px: unitsToPixels(shape.diameter, mapWidth, COUNTRY_FRAME_OUTSET),
+  })).filter((shape) => shape.px < MIN_TARGET_PX);
+
+  return (
+    `при ширине ${mapWidth} px: ${small.length}` +
+    (small.length > 0
+      ? ` (${small.map((shape) => `${shape.id} ${shape.px.toFixed(1)} px`).join(', ')})`
+      : '')
+  );
+}
+
+/*
+ * Ширина карты раунда при кадре 1440×900: постоянная шапка отнимает у карты
+ * 69 px высоты, и до опорной ширины она недотягивает. Замер по одной опорной
+ * ширине называл бы один Бутан там, где на настоящем экране мельче порога
+ * четыре страны, — та же пара замеров, что у областей выше.
+ */
+const ROUND_MAP_WIDTH = 804;
+
 console.info(
-  `Проверено стран: ${COUNTRY_SHAPES.length}. Мельче ${MIN_TARGET_PX} px при ширине ` +
-    `${REFERENCE_MAP_WIDTH} px и кадре шире в ${COUNTRY_FRAME_OUTSET} раза: ` +
-    `${smallCountries.length}` +
-    (smallCountries.length > 0
-      ? ` (${smallCountries
-          .map(
-            (shape) =>
-              `${shape.id} ${unitsToPixels(
-                shape.diameter,
-                REFERENCE_MAP_WIDTH,
-                COUNTRY_FRAME_OUTSET,
-              ).toFixed(1)} px`,
-          )
-          .join(', ')})`
-      : ''),
+  `Проверено стран: ${COUNTRY_SHAPES.length}. Мельче ${MIN_TARGET_PX} px при кадре ` +
+    `шире в ${COUNTRY_FRAME_OUTSET} раза — ${smallCountriesAt(REFERENCE_MAP_WIDTH)}; ` +
+    `${smallCountriesAt(ROUND_MAP_WIDTH)}.`,
 );
 
 /*

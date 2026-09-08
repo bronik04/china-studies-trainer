@@ -76,6 +76,15 @@ it('без ответа по карте контуры перестают быт
   expect(screen.queryAllByRole('button')).toHaveLength(0);
   for (const shape of container.querySelectorAll('[data-country-id]')) {
     expect(shape.getAttribute('tabindex')).toBeNull();
+
+    /*
+     * Имя снимается вместе с ролью: фигура с именем остаётся в дереве
+     * доступности и без роли, и читалка экрана объявила бы четырнадцать
+     * названий вместо четырнадцати кнопок — а в «назвать страну» имя и есть
+     * ответ.
+     */
+    expect(shape.getAttribute('aria-label')).toBeNull();
+    expect(shape.getAttribute('aria-hidden')).toBe('true');
   }
 
   /* По этому признаку слою снимают курсор-палец: нажимать здесь не на что. */

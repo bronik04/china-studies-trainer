@@ -54,7 +54,17 @@ export function CountryLayer({
             data-answer-state={answerState}
             role={answers ? 'button' : undefined}
             tabIndex={answers ? 0 : undefined}
-            aria-label={`${country?.nameRu}, ${country?.nameZh}`}
+            /*
+             * Там, где по контурам не отвечают, у них снимается и имя: фигура
+             * с именем остаётся в дереве доступности и без роли, и читалка
+             * экрана обошла бы четырнадцать безролевых названий вместо
+             * четырнадцати кнопок. Тот же приём, что у слоёв городов и
+             * достопримечательностей.
+             */
+            aria-label={
+              answers ? `${country?.nameRu}, ${country?.nameZh}` : undefined
+            }
+            aria-hidden={answers ? undefined : 'true'}
             aria-disabled={answers && answerState ? true : undefined}
             onClick={answers ? () => onSelect(shape.id) : undefined}
             onKeyDown={
@@ -91,12 +101,18 @@ export function CountryLayer({
         Штриховка недоступна программе чтения с экрана, поэтому спорные участки
         названы ещё и текстом. Слова взяты у источника: он сам говорит, кто
         участком управляет и кто его заявляет.
+
+        Формулировка источника английская, и это помечено `lang`: без пометки
+        русский синтезатор читает «Admin. by China» русской фонетикой
+        (WCAG 3.1.2). Переводить её нельзя — дословность записана решением
+        владельца от 2026-08-30.
       */}
       <foreignObject className="country-disputed-note" width="1" height="1">
         <ul>
           {DISPUTED_SHAPES.map((shape) => (
             <li key={shape.id}>
-              {shape.nameRu} — спорная территория: {shape.note}
+              {shape.nameRu} — спорная территория:{' '}
+              <span lang="en">{shape.note}</span>
             </li>
           ))}
         </ul>

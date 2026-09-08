@@ -143,9 +143,15 @@ if (missingDisputed.length > 0) {
   throw new Error(`Не найдены спорные участки: ${missingDisputed.join(', ')}`);
 }
 
+/*
+ * Запись компактная, как у остальных выжимок: те же данные с отступами весят
+ * втрое больше (1,1 МБ против 324 КБ) и дают шестьдесят четыре тысячи строк,
+ * читать которые всё равно некому, — а `validate:map` хеширует их на каждой
+ * сборке.
+ */
 writeFileSync(
   OUT,
-  `${JSON.stringify({ countries: extracted, disputed }, null, 2)}\n`,
+  `${JSON.stringify({ countries: extracted, disputed })}\n`,
   'utf8',
 );
 

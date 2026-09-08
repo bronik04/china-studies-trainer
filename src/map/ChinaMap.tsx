@@ -376,13 +376,6 @@ export function ChinaMap({
    */
   const [hoveredFeatureId, setHoveredFeatureId] = useState<string | null>(null);
   /*
-   * Физический слой приезжает отдельным куском сборки: на первом экране он не
-   * нужен, а весит больше всего после самой карты. Начальное значение — то,
-   * что уже загружено: приложение тянет кусок в простое после первого экрана,
-   * и обычно он здесь ещё до того, как кто-то откроет физическую карту.
-   * Иначе слой появится кадром позже, а до тех пор карта просто политическая.
-   */
-  /*
    * Слой стран приезжает отдельным куском: он нужен двум играм из
    * восемнадцати, а его геометрия весит 27 КБ. Статический импорт клал их на
    * первый экран каждому, кто просто открыл главную.
@@ -390,6 +383,13 @@ export function ChinaMap({
   const [countryMap, setCountryMap] = useState<CountryMap | null>(
     loadedCountryLayer,
   );
+  /*
+   * Физический слой приезжает отдельным куском сборки: на первом экране он не
+   * нужен, а весит больше всего после самой карты. Начальное значение — то,
+   * что уже загружено: приложение тянет кусок в простое после первого экрана,
+   * и обычно он здесь ещё до того, как кто-то откроет физическую карту.
+   * Иначе слой появится кадром позже, а до тех пор карта просто политическая.
+   */
   const [physicalMap, setPhysicalMap] = useState<PhysicalMap | null>(
     loadedPhysicalMap,
   );
@@ -413,14 +413,37 @@ export function ChinaMap({
     setCitySvg(mapRef.current?.querySelector<SVGSVGElement>('svg') ?? null);
   }, []);
 
+  /*
+   * Отказ виден и здесь, и по тому же доводу, что у физического слоя: слой
+   * стран показывается только в двух играх, а в них он и есть вопрос. Без
+   * него «назвать страну» просит назвать то, чего на карте нет, — кнопки при
+   * этом остаются нажимаемыми, и попытки уходят в прогресс. Повторить
+   * попытку эффект не может: его зависимости после отказа не меняются.
+   */
+  const [countryFailed, setCountryFailed] = useState(false);
+
   useEffect(() => {
     if (!showsCountries || countryMap !== null) {
       return;
     }
 
-    void loadCountryLayer().then(setCountryMap, () => {
-      /* Отказ показывать нечем: карта без обода — прежняя карта, а не поломка. */
-    });
+    let alive = true;
+    void loadCountryLayer().then(
+      (module) => {
+        if (alive) {
+          setCountryMap(module);
+        }
+      },
+      () => {
+        if (alive) {
+          setCountryFailed(true);
+        }
+      },
+    );
+
+    return () => {
+      alive = false;
+    };
   }, [countryMap, showsCountries]);
 
   /*
@@ -1036,6 +1059,12 @@ export function ChinaMap({
         {variant === 'physical' && physicalFailed && physicalMap === null ? (
           <p className="map-failure" role="status">
             Физическая карта не загрузилась: нет связи. Она появится, когда
+            связь вернётся, — обновите страницу.
+          </p>
+        ) : null}
+        {showsCountries && countryFailed && countryMap === null ? (
+          <p className="map-failure" role="status">
+            Соседние государства не загрузились: нет связи. Они появятся, когда
             связь вернётся, — обновите страницу.
           </p>
         ) : null}

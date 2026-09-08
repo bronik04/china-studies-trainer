@@ -13,9 +13,13 @@
  *
  * Запуск: npm run generate:countries
  */
-import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { countries } from '../src/content/countries';
+import {
+  COUNTRY_GEOMETRY_TUNING,
+  DISPUTED_NAMES_RU,
+  countryInputsFingerprint,
+} from './countries-fingerprint';
 import {
   clipRingToFrame,
   ringArea,
@@ -75,16 +79,11 @@ const FRAME: Frame = {
   maxY: MAP_VIEWBOX_MIN_Y + MAP_VIEWBOX_HEIGHT + OUTSET_Y,
 };
 
-/** Допуск упрощения. Тот же, что у форм рельефа: карта одна и та же. */
-const SIMPLIFY_TOLERANCE = 0.4;
-
-/**
- * Меньше этой площади — обрезок, а не земля: кромка кадра режет контуры, и от
- * дальних островов остаются треугольники в доли единицы. Рисовать их значит
- * ставить на карту крапинки, в которые нельзя попасть и которые ничего не
- * говорят.
+/*
+ * Допуски и точность записи живут рядом с отпечатком: от них зависит, что
+ * окажется в файле, поэтому в отпечаток они входят наравне с выжимкой.
  */
-const MIN_RING_AREA = 1;
+const { simplifyTolerance, minRingArea, pathPrecision } = COUNTRY_GEOMETRY_TUNING;
 
 function toMapRings(rings: SourceRings): Point[][] {
   return rings
@@ -94,8 +93,8 @@ function toMapRings(rings: SourceRings): Point[][] {
         FRAME,
       ),
     )
-    .filter((ring) => ring.length >= 3 && Math.abs(ringArea(ring)) >= MIN_RING_AREA)
-    .map((ring) => simplifyRing(ring, SIMPLIFY_TOLERANCE))
+    .filter((ring) => ring.length >= 3 && Math.abs(ringArea(ring)) >= minRingArea)
+    .map((ring) => simplifyRing(ring, simplifyTolerance))
     .filter((ring) => ring.length >= 3);
 }
 
@@ -109,7 +108,7 @@ const shapes = source.countries.map((country) => {
 
   return {
     id: country.id,
-    d: toPathData(rings, { closed: true }),
+    d: toPathData(rings, { closed: true, precision: pathPrecision }),
     /* Точки подписи нет: подписей на карте нет ни в одной игре по странам. */
     diameter: Number((circle.radius * 2).toFixed(1)),
   };
@@ -125,7 +124,7 @@ if (missing.length > 0) {
 const disputed = source.disputed
   .map((area) => ({
     id: area.id,
-    nameRu: area.nameRu,
+    nameRu: DISPUTED_NAMES_RU[area.id] ?? area.nameRu,
     note: area.note,
     rings: toMapRings(area.rings),
   }))
@@ -135,13 +134,10 @@ const disputed = source.disputed
     id: area.id,
     nameRu: area.nameRu,
     note: area.note,
-    d: toPathData(area.rings, { closed: true }),
+    d: toPathData(area.rings, { closed: true, precision: pathPrecision }),
   }));
 
-const fingerprint = createHash('sha256')
-  .update(sourceJson)
-  .digest('hex')
-  .slice(0, 16);
+const fingerprint = countryInputsFingerprint(sourceJson);
 
 /*
  * Строка в исходник идёт через одну воронку: имена и пояснения приходят из

@@ -958,12 +958,28 @@ button.text:hover:enabled {
   fill: var(--map-selected);
 }
 
+/*
+ * Исход у страны показан теми же тремя каналами, что у области: заливка,
+ * обводка и её толщина. Одной заливки мало — в «назвать страну» спрошенная
+ * страна до ответа киноварная, а после верного ответа стала бы нефритовой той
+ * же светлоты: пара даёт 1.01:1, и в оттенках серого, на проекторе и при
+ * дальтонизме на карте не менялось бы ничего.
+ *
+ * Токен тот же, что у области (`--map-correct`, а не исход карты освоенности):
+ * язык карты ответа один на все справочники, и проверка палитры сторожит
+ * именно эту пару.
+ */
 .china-map .country[data-answer-state='correct'] {
-  fill: var(--map-first-try);
+  fill: var(--map-correct);
+  stroke: var(--map-correct-ink);
+  stroke-width: var(--map-border-width-strong);
 }
 
 .china-map .country[data-answer-state='incorrect'] {
   fill: url('#map-hatch-incorrect');
+  stroke: var(--map-incorrect-mark);
+  stroke-dasharray: 4 2;
+  stroke-width: var(--map-border-width-strong);
 }
 
 /*
@@ -988,9 +1004,13 @@ button.text:hover:enabled {
  * Спорный участок закрыт штриховкой поверх заливки: он не перекрашивает
  * страну, а показывает, что здесь спор. Нажатие проходит сквозь него к стране
  * под ним — участок не цель ответа.
+ *
+ * Образец свой, без фона: у исходов подложка непрозрачная, и штриховка
+ * «верно со второй попытки» закрасила бы и заливку страны, и её исход — а
+ * заодно сказала бы про спорный участок то, чего про него не говорят.
  */
 .china-map .country-disputed {
-  fill: url('#map-hatch-second-try');
+  fill: url('#map-hatch-disputed');
   pointer-events: none;
 }
 

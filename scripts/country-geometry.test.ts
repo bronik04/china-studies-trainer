@@ -45,7 +45,21 @@ it('каждая страна подходит к границе Китая вп
   }
 });
 
-it('мельче порога нажатия остаётся один Бутан', () => {
+/*
+ * Ширина карты раунда при кадре 1440x900: постоянная шапка отнимает у карты
+ * 69 px высоты, и до опорной ширины она недотягивает (см. CLAUDE.md).
+ */
+const ROUND_MAP_WIDTH = 804;
+
+function smallerThanTarget(mapWidth: number): string[] {
+  return COUNTRY_SHAPES.filter(
+    (shape) =>
+      unitsToPixels(shape.diameter, mapWidth, COUNTRY_FRAME_OUTSET) <
+      MIN_TARGET_PX,
+  ).map((shape) => shape.id);
+}
+
+it('мельче порога нажатия остаётся один Бутан на опорной ширине', () => {
   /*
    * Мера — диаметр наибольшей вписанной окружности, как у регионов, а счёт
    * идёт по расширенному кадру: в него влезает в 1.3 раза больше единиц, и та
@@ -56,13 +70,22 @@ it('мельче порога нажатия остаётся один Бута�
    * дефект карты, а его размер: он отвечается из равнозначного списка, как
    * Гонконг и Макао. Проверка сторожит, чтобы таких стран не стало больше.
    */
-  const small = COUNTRY_SHAPES.filter(
-    (shape) =>
-      unitsToPixels(shape.diameter, REFERENCE_MAP_WIDTH, COUNTRY_FRAME_OUTSET) <
-      MIN_TARGET_PX,
-  );
+  expect(smallerThanTarget(REFERENCE_MAP_WIDTH)).toEqual(['bhutan']);
+});
 
-  expect(small.map((shape) => shape.id)).toEqual(['bhutan']);
+it('на карте раунда порога не берут четыре страны', () => {
+  /*
+   * Опорная ширина — предел оболочки, а не то, что видит ученик: карту раунда
+   * жмёт постоянная шапка. Замер по одной опорной ширине называл бы один Бутан
+   * там, где мелких целей вчетверо больше, и равнозначный список выглядел бы
+   * приёмом ради одной страны. Список нужен всем четырём.
+   */
+  expect(smallerThanTarget(ROUND_MAP_WIDTH).sort()).toEqual([
+    'bhutan',
+    'nepal',
+    'north-korea',
+    'tajikistan',
+  ]);
 });
 
 /*
