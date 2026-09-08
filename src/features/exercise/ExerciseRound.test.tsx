@@ -345,3 +345,55 @@ it('последний вопрос с ошибкой всё равно заве
     vi.useRealTimers();
   }
 });
+
+/*
+ * Пул сужается на «Повторить ошибки», а справочник — нет. Отвлекающие,
+ * равнозначный список и сама карта обязаны брать все тридцать четыре области:
+ * нарисованы на карте всё равно все, и повтор одной ошибки не должен
+ * превращаться в вопрос с единственным вариантом.
+ */
+const SINGLE_POOL = regions.slice(0, 1);
+
+it('в повторе одного региона вариантов всё равно четыре', () => {
+  renderRound(['name-target'], 'ru', () => {}, SINGLE_POOL);
+
+  expect(screen.getByText('Вопрос 1 из 1')).toBeInTheDocument();
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+it('в повторе одного региона столицу тоже выбирают из четырёх', () => {
+  renderRound(['match-pair'], 'ru', () => {}, SINGLE_POOL);
+
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+it('в повторе одного региона список предлагает все области карты', () => {
+  renderRound(['find-on-map'], 'ru', () => {}, SINGLE_POOL);
+  openAnswerList();
+
+  expect(
+    within(screen.getByRole('list', { name: 'Список регионов карты' })).getAllByRole(
+      'button',
+    ),
+  ).toHaveLength(regions.length);
+});
+
+it('в повторе одного региона карта называет остальные области по-русски', () => {
+  const { container } = renderRound(['find-on-map'], 'ru', () => {}, SINGLE_POOL);
+  const other = regions.find((region) => region.id !== SINGLE_POOL[0].id)!;
+
+  expect(
+    container
+      .querySelector(`[data-region-id="${other.mapAreaId}"]`)
+      ?.getAttribute('aria-label'),
+  ).toContain(other.nameRu);
+});
+
+it('в повторе одного региона ответ закрывает всю карту, а не одну область', () => {
+  const { container } = renderRound(['find-on-map'], 'ru', () => {}, SINGLE_POOL);
+  answerCorrectly();
+
+  const areas = container.querySelectorAll('[data-region-id]');
+  const closed = container.querySelectorAll('[data-region-id][data-answer-state]');
+  expect(closed).toHaveLength(areas.length);
+});

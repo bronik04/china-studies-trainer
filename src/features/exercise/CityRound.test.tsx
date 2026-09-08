@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
-import { citiesUpTo } from '../../content/cities';
+import { cities as allCities, citiesUpTo } from '../../content/cities';
 import { regions } from '../../content/regions';
 import type { City } from '../../content/types';
 import type { ExerciseType } from '../../domain/round';
@@ -214,3 +214,36 @@ it.each(['find-on-map', 'name-target'] as const)(
     expect(container.querySelector('.city-label')).toBeNull();
   },
 );
+
+/*
+ * Пул сужается на «Повторить ошибки», справочник — нет. Точки на карте берутся
+ * из справочника городов, а не из пула, поэтому и равнозначный список обязан
+ * предлагать то же, что нарисовано: иначе список и карта отвечают на разные
+ * вопросы, а в повторе одной ошибки в списке остаётся одна кнопка — она же
+ * ответ.
+ */
+const SINGLE_POOL = capitals.slice(0, 1);
+
+it('в повторе одного города вариантов всё равно четыре', () => {
+  renderRound('name-target', SINGLE_POOL);
+
+  expect(screen.getByText('Вопрос 1 из 1')).toBeInTheDocument();
+  expect(screen.getAllByTestId('choice-option')).toHaveLength(4);
+});
+
+it('в повторе одного города список предлагает весь справочник', () => {
+  const { container } = renderRound('find-on-map', SINGLE_POOL);
+  openAnswerList();
+
+  /* Карта рисует города справочника, а не пула: ответить можно по любому. */
+  const onMap = new Set(
+    [...container.querySelectorAll('[data-city-id]')].map(
+      (mark) => mark.getAttribute('data-city-id') ?? '',
+    ),
+  );
+  expect(onMap.size).toBeGreaterThan(SINGLE_POOL.length);
+
+  expect(
+    within(screen.getByRole('list', { name: 'Список городов' })).getAllByRole('button'),
+  ).toHaveLength(allCities.length);
+});

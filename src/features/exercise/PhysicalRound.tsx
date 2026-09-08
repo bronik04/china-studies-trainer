@@ -245,8 +245,13 @@ export function PhysicalRound({
       }
       answerList={
         exerciseType === 'find-on-map' ? (
+          /*
+           * Список равнозначен карте, а на ней нарисован весь справочник, а не
+           * пул: ответить нажатием можно по любому объекту, значит и в списке
+           * обязаны стоять все. Тот же довод, что у отвлекающих выше.
+           */
           <PhysicalAnswerList
-            features={features}
+            features={physicalFeatures}
             language={question.language}
             answeredId={answeredId}
             targetId={targetFeature.id}

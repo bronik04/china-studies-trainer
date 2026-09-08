@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { cities as allCities } from '../../content/cities';
 import { regions } from '../../content/regions';
 import type { City } from '../../content/types';
 import { buildCityChoices } from '../../domain/city-choices';
@@ -41,6 +42,11 @@ function elapsedSince(start: number): number {
 }
 
 export type CityRoundProps = {
+  /**
+   * Пул раунда: какие города спрашиваются. Набор выбирается перед стартом, а
+   * на «Повторить ошибки» пул сужается до ошибочных, — справочником он не
+   * является: отвлекающие и равнозначный список берут `allCities`.
+   */
   readonly cities: readonly City[];
   readonly exerciseType: ExerciseType;
   readonly language: QuestionLanguage;
@@ -99,13 +105,18 @@ export function CityRound({
   const [startedAt] = useState(startClock);
   const { schedule } = useAutoAdvance();
 
+  /*
+   * Отвлекающие берутся из всего справочника, а не из пула раунда: в повторе
+   * ошибок пул бывает из одного города, и вариант остался бы один — сам
+   * ответ. Спрашиваются при этом только города пула.
+   */
   const choicesByQuestion = useMemo(() => {
     const random = createSeededRandom(seed + 1);
 
     return round.questions.map((question) =>
-      buildCityChoices(cities, question.target.id, random),
+      buildCityChoices(allCities, question.target.id, random),
     );
-  }, [cities, round.questions, seed]);
+  }, [round.questions, seed]);
 
   const question = currentQuestion(round);
   const targetCity = cities.find((city) => city.id === question.target.id)!;
@@ -249,8 +260,13 @@ export function CityRound({
       }
       answerList={
         exerciseType === 'find-on-map' ? (
+          /*
+           * Список равнозначен карте, а карта рисует точки всего справочника,
+           * а не пула: ответить нажатием можно по любому городу, значит и в
+           * списке обязаны стоять все.
+           */
           <CityAnswerList
-            cities={cities}
+            cities={allCities}
             language={question.language}
             answeredId={answeredId}
             targetId={targetCity.id}
