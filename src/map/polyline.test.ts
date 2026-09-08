@@ -7,6 +7,7 @@ import {
   ringArea,
   simplifyPath,
   simplifyRing,
+  sliceLine,
   toPathData,
   type Frame,
 } from './polyline';
@@ -302,5 +303,61 @@ describe('clipRingToFrame', () => {
         FRAME,
       ),
     ).toEqual([]);
+  });
+});
+
+describe('sliceLine', () => {
+  it('вырезает часть ломаной между двумя точками', () => {
+    const line = [
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 20, y: 0 },
+        { x: 30, y: 0 },
+        { x: 40, y: 0 },
+      ],
+    ];
+
+    expect(sliceLine(line, { x: 9, y: 1 }, { x: 31, y: -1 })).toEqual([
+      [
+        { x: 10, y: 0 },
+        { x: 20, y: 0 },
+        { x: 30, y: 0 },
+      ],
+    ]);
+  });
+
+  it('вырезает в том же порядке, в каком концы названы', () => {
+    const line = [
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 20, y: 0 },
+      ],
+    ];
+
+    expect(sliceLine(line, { x: 21, y: 0 }, { x: 9, y: 0 })).toEqual([
+      [
+        { x: 20, y: 0 },
+        { x: 10, y: 0 },
+      ],
+    ]);
+  });
+
+  it('не молчит, когда концы лежат в разных кусках', () => {
+    const parts = [
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+      [
+        { x: 100, y: 0 },
+        { x: 110, y: 0 },
+      ],
+    ];
+
+    expect(() => sliceLine(parts, { x: 1, y: 0 }, { x: 101, y: 0 })).toThrow(
+      /разных кусках/,
+    );
   });
 });

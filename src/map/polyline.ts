@@ -369,3 +369,52 @@ export function toPathData(
     })
     .join(' ');
 }
+
+/**
+ * Часть ломаной между двумя точками.
+ *
+ * Концы задаются координатами, а не номерами вершин: номер зависит от
+ * упрощения, а координата — от местности. Берутся ближайшие вершины, и итог
+ * идёт в том порядке, в каком концы названы.
+ *
+ * Куски не склеиваются: обрезка по рамке рвёт линию, и часть, начатая в одном
+ * куске и законченная в другом, означала бы звено через пустоту — это ошибка
+ * входных данных, и генератор обязан о ней сказать.
+ */
+export function sliceLine(
+  parts: readonly (readonly Point[])[],
+  from: Point,
+  to: Point,
+): Point[][] {
+  const nearest = (target: Point): { part: number; index: number } => {
+    let best = { part: -1, index: -1 };
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    parts.forEach((part, partIndex) => {
+      part.forEach((point, index) => {
+        const distance = Math.hypot(point.x - target.x, point.y - target.y);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = { part: partIndex, index };
+        }
+      });
+    });
+
+    return best;
+  };
+
+  const start = nearest(from);
+  const end = nearest(to);
+
+  if (start.part !== end.part || start.part === -1) {
+    throw new Error('Концы отрезка лежат в разных кусках ломаной');
+  }
+
+  const part = parts[start.part];
+  const slice =
+    start.index <= end.index
+      ? part.slice(start.index, end.index + 1)
+      : part.slice(end.index, start.index + 1).reverse();
+
+  return [slice.map((point) => ({ ...point }))];
+}
