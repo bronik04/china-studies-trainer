@@ -610,13 +610,17 @@ git commit -m "feat: журнал пройденных ревью в общем 
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, resolve as resolvePath } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { commonGitDir, currentBranch, headSha } from './git.ts';
 import { logPath, readLog } from './review-log.ts';
 
-const ENTRY = fileURLToPath(new URL('./review-record.ts', import.meta.url));
+/*
+ * `import.meta.dirname`, а не `fileURLToPath(import.meta.url)`: под jsdom
+ * `import.meta.url` — адрес http, и разбор его как файлового пути падает.
+ * Тем же способом ищет свои файлы `scripts/sources-mirror.test.ts`.
+ */
+const ENTRY = resolvePath(import.meta.dirname, 'review-record.ts');
 
 /** Временный репозиторий с одним коммитом на master. */
 function temporaryRepository(): string {
@@ -852,14 +856,13 @@ git commit -m "feat: хук записывает пройденное ревью
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, resolve as resolvePath } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { commonGitDir, headSha } from './git.ts';
 import { appendReview, logPath } from './review-log.ts';
 
-const ENTRY = fileURLToPath(new URL('./review-gate.ts', import.meta.url));
-const SHELL_ENTRY = fileURLToPath(new URL('./review-gate.sh', import.meta.url));
+const ENTRY = resolvePath(import.meta.dirname, 'review-gate.ts');
+const SHELL_ENTRY = resolvePath(import.meta.dirname, 'review-gate.sh');
 
 /** Временный репозиторий: master и ветка feat/x со своим коммитом. */
 function repositoryWithBranch(): string {
