@@ -62,19 +62,36 @@ export function createProgressStore(
   // проверенное хранилище закрепляется в константе.
   const available = storage;
 
+  /*
+   * Пробная запись сказала лишь то, что запись работала при создании
+   * хранилища. Квота кончается посреди сеанса, и признак обязан это
+   * показать: по нему экран итогов обещает ученику, что прогресс сохранён.
+   */
+  let writable = true;
+
   /**
    * Испорченные или чужие данные не удаляются: DATA_MODEL.md требует
    * сохранить их отдельно, чтобы неудачная миграция ничего не уничтожила.
+   *
+   * Резерв — тоже запись, и отказать могут и ей. Тогда чтение всё равно
+   * возвращает пустой прогресс: упасть на первом же запуске хуже, чем начать
+   * с чистого листа и сказать об этом признаком.
    */
   function setAside(raw: string): Progress {
-    available.setItem(BACKUP_KEY, raw);
-    available.removeItem(PROGRESS_KEY);
+    try {
+      available.setItem(BACKUP_KEY, raw);
+      available.removeItem(PROGRESS_KEY);
+    } catch {
+      writable = false;
+    }
 
     return EMPTY_PROGRESS;
   }
 
   return {
-    isAvailable: true,
+    get isAvailable() {
+      return writable;
+    },
 
     read() {
       const raw = available.getItem(PROGRESS_KEY);
@@ -109,12 +126,20 @@ export function createProgressStore(
       try {
         available.setItem(PROGRESS_KEY, JSON.stringify(progress));
       } catch {
-        // Запись перестала работать во время сеанса: раунд важнее записи.
+        /*
+         * Запись перестала работать во время сеанса: раунд важнее записи, но
+         * молчать об этом нельзя — иначе итоги продолжат обещать сохранение.
+         */
+        writable = false;
       }
     },
 
     clear() {
-      available.removeItem(PROGRESS_KEY);
+      try {
+        available.removeItem(PROGRESS_KEY);
+      } catch {
+        writable = false;
+      }
     },
   };
 }

@@ -99,6 +99,33 @@ export function isCurrentVersion(parsed: unknown): boolean {
   return isRecord(parsed) && parsed.schemaVersion === PROGRESS_SCHEMA_VERSION;
 }
 
+/** Цель попытки: без неё запись не о чем, и разбор итогов по ней перебирает. */
+function isTarget(value: unknown): boolean {
+  return isRecord(value) && typeof value.kind === 'string' && typeof value.id === 'string';
+}
+
+/**
+ * Годна ли запись к чтению приложением.
+ *
+ * Номер схемы говорит только о том, что перевод не нужен, — но не о том, что
+ * запись цела: в хранилище браузера кто угодно правит что угодно, а прежняя
+ * версия приложения могла записать её недописанной. Приложение читает
+ * `attempts` перебором, и `null` в этом поле роняет тренажёр при каждом
+ * запуске, пока ученик сам не очистит хранилище.
+ *
+ * Проверяется форма, а не каждое поле попытки: недостающая длительность даёт
+ * пустое время в итогах, а не падение, тогда как отсутствие цели ломает и
+ * повтор ошибок, и подсчёт освоенного.
+ */
+function isReadable(record: UnknownRecord): boolean {
+  return (
+    Array.isArray(record.attempts) &&
+    record.attempts.every((attempt) => isRecord(attempt) && isTarget(attempt.target)) &&
+    Array.isArray(record.masteredTargets) &&
+    record.masteredTargets.every(isTarget)
+  );
+}
+
 /**
  * `null` — данные не понятны. Вызывающий обязан отложить их в резерв, а не
  * удалить: DATA_MODEL.md требует, чтобы неудачная миграция ничего не
@@ -110,7 +137,7 @@ export function migrateProgress(parsed: unknown): Progress | null {
   }
 
   if (isCurrentVersion(parsed)) {
-    return parsed as unknown as Progress;
+    return isReadable(parsed) ? (parsed as unknown as Progress) : null;
   }
 
   /*
@@ -131,5 +158,10 @@ export function migrateProgress(parsed: unknown): Progress | null {
     return null;
   }
 
-  return current as unknown as Progress;
+  /*
+   * Переведённая запись проверяется тем же мерилом, что и своя: перевод
+   * отвечает за форму версии, а поля, которых он не трогает, копируются как
+   * есть — вместе с тем, что в них лежало.
+   */
+  return isReadable(current) ? (current as unknown as Progress) : null;
 }

@@ -113,3 +113,68 @@ it('проводит прогресс первой версии через вс�
   expect(migrated?.attempts[0]).not.toHaveProperty('level');
   expect(migrated?.attempts[0]).not.toHaveProperty('regionId');
 });
+
+/*
+ * Данные текущей версии проверяются так же, как переведённые: номер схемы
+ * говорит лишь о том, что перевод не нужен, — но испорченную или чужую запись
+ * с тем же номером принимать нельзя. Приложение читает `attempts` перебором, и
+ * `null` в этом поле роняет весь тренажёр при каждом запуске, пока ученик сам
+ * не очистит хранилище браузера.
+ */
+it('не принимает текущую версию с непригодным полем попыток', () => {
+  expect(
+    migrateProgress({ schemaVersion: 3, attempts: null, masteredTargets: [] }),
+  ).toBeNull();
+  expect(
+    migrateProgress({ schemaVersion: 3, attempts: {}, masteredTargets: [] }),
+  ).toBeNull();
+  expect(migrateProgress({ schemaVersion: 3, masteredTargets: [] })).toBeNull();
+});
+
+it('не принимает текущую версию с непригодным полем освоенного', () => {
+  expect(
+    migrateProgress({ schemaVersion: 3, attempts: [], masteredTargets: null }),
+  ).toBeNull();
+});
+
+it('не принимает попытку без цели', () => {
+  expect(
+    migrateProgress({
+      schemaVersion: 3,
+      attempts: [{ questionId: '1', isCorrect: true }],
+      masteredTargets: [],
+    }),
+  ).toBeNull();
+});
+
+it('принимает целую запись текущей версии', () => {
+  const whole = {
+    schemaVersion: 3,
+    attempts: [
+      {
+        questionId: '1-sichuan',
+        roundId: 'round-1',
+        target: { kind: 'region', id: 'sichuan' },
+        exerciseType: 'find-on-map',
+        language: 'ru',
+        isCorrect: true,
+        durationMs: 1000,
+        answeredAt: '2026-08-03T10:00:00.000Z',
+      },
+    ],
+    masteredTargets: [{ kind: 'region', id: 'sichuan' }],
+  };
+
+  expect(migrateProgress(whole)).toEqual(whole);
+});
+
+/*
+ * Перевод отвечает за форму версии, а не за целость записи: вторая версия с
+ * испорченным полем освоенного проходила чередой переводов насквозь — поле
+ * копируется как есть, — и падало уже в приложении.
+ */
+it('не принимает переведённую запись с непригодным полем освоенного', () => {
+  expect(
+    migrateProgress({ schemaVersion: 2, attempts: [], masteredTargets: null }),
+  ).toBeNull();
+});
