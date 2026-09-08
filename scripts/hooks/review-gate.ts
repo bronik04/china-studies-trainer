@@ -10,7 +10,7 @@
  * исправления, которое AGENTS.md допускает по решению владельца.
  */
 import { readFileSync } from 'node:fs';
-import { commonGitDir, currentBranch, resolveCommit } from './git.ts';
+import { branchExists, commonGitDir, currentBranch, isAncestor, resolveCommit } from './git.ts';
 import { isMasterBranch, parseMergeCommand } from './merge-command.ts';
 import { findReview, logPath, readLog } from './review-log.ts';
 
@@ -45,7 +45,19 @@ function main(): void {
   const cwd = typeof payload.cwd === 'string' && payload.cwd !== '' ? payload.cwd : process.cwd();
 
   const merge = parseMergeCommand(command, currentBranch(cwd));
-  if (merge === null || !isMasterBranch(merge.target)) return;
+  if (merge === null) return;
+
+  /*
+   * Разбор не умеет отличить `git checkout master` от `git checkout .` —
+   * это знает только git. Токен, который веткой не оказался, ветку не менял,
+   * значит слияние произойдёт на текущей.
+   */
+  const target =
+    merge.target !== null && (merge.targetIsCertain || branchExists(cwd, merge.target))
+      ? merge.target
+      : currentBranch(cwd);
+
+  if (!isMasterBranch(target)) return;
 
   const directory = commonGitDir(cwd);
   if (directory === null) return;
@@ -53,7 +65,8 @@ function main(): void {
 
   const missing: string[] = [];
   for (const ref of merge.refs) {
-    if (isMasterBranch(ref)) continue;
+    /* Уже содержится в цели — сливать нечего. */
+    if (target !== null && isAncestor(cwd, ref, target)) continue;
     const sha = resolveCommit(cwd, ref);
     /* Не разрешилось в коммит — сливать нечего, и мешать незачем. */
     if (sha === null) continue;
@@ -64,7 +77,7 @@ function main(): void {
   if (missing.length === 0) return;
 
   deny(
-    `Слияние в ${merge.target} остановлено: у ${missing.join(', ')} нет записи о ревью. ` +
+    `Слияние в ${target} остановлено: у ${missing.join(', ')} нет записи о ревью. ` +
       'Запустите /code-review в этой ветке — запись появится сама, — затем повторите слияние. ' +
       'Правило из AGENTS.md: до слияния в главную ветку изменения проходят ревью.',
   );

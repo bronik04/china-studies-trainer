@@ -13,6 +13,15 @@ export const MASTER_BRANCHES = ['master', 'main'] as const;
 export type MergeCommand = {
   /** Ветка, на которой окажется git к моменту `git merge`. */
   readonly target: string | null;
+  /*
+   * Точно ли цель — ветка. Имя из `-b` или из текущей ветки сомнений не
+   * вызывает, а голый токен `git checkout X` может оказаться и путём:
+   * `git checkout .` перед слиянием ветку не меняет. Отличить путь от ветки
+   * может только git, а этот модуль о нём не знает — потому и признак, а не
+   * решение. Без него `git checkout . && git merge feat/x` на master
+   * разбирался как слияние в «.» и проходил мимо ворот.
+   */
+  readonly targetIsCertain: boolean;
   /** Токены после `git merge`, не являющиеся флагами и значениями флагов. */
   readonly refs: readonly string[];
 };
@@ -150,17 +159,20 @@ function gitCall(segment: readonly string[]): { name: string; rest: string[] } |
 }
 
 /** Ветка, на которую переходит checkout или switch. Пути после `--` — не ветка. */
-function checkoutTarget(rest: readonly string[]): string | null {
+function checkoutTarget(rest: readonly string[]): { name: string; certain: boolean } | null {
   for (let i = 0; i < rest.length; i += 1) {
     const token = rest[i];
     if (token === '--') return null;
-    if (NEW_BRANCH_FLAGS.has(token)) return rest[i + 1] ?? null;
+    if (NEW_BRANCH_FLAGS.has(token)) {
+      const name = rest[i + 1];
+      return name === undefined ? null : { name, certain: true };
+    }
     if (CHECKOUT_VALUE_FLAGS.has(token)) {
       i += 1;
       continue;
     }
     if (token.startsWith('-')) continue;
-    return token;
+    return { name: token, certain: false };
   }
   return null;
 }
@@ -197,6 +209,7 @@ function mergeRefs(rest: readonly string[]): string[] {
  */
 export function parseMergeCommand(command: string, currentBranch: string | null): MergeCommand | null {
   let branch = currentBranch;
+  let certain = true;
 
   for (const segment of segments(tokenize(command))) {
     const call = gitCall(segment);
@@ -204,12 +217,15 @@ export function parseMergeCommand(command: string, currentBranch: string | null)
 
     if (call.name === 'checkout' || call.name === 'switch') {
       const target = checkoutTarget(call.rest);
-      if (target !== null) branch = target;
+      if (target !== null) {
+        branch = target.name;
+        certain = target.certain;
+      }
       continue;
     }
 
     if (call.name === 'merge') {
-      return { target: branch, refs: mergeRefs(call.rest) };
+      return { target: branch, targetIsCertain: certain, refs: mergeRefs(call.rest) };
     }
   }
 

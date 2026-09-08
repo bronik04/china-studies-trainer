@@ -75,6 +75,35 @@ describe('ворота ревью', () => {
     expect(callGate(bashPayload(repository, 'git merge feat/x'))).toBe('');
   });
 
+  it('чистка дерева перед слиянием ворота не отключает', () => {
+    /*
+     * Дыра, найденная ревью 2026-09-08: `git checkout .` разбирался как
+     * переход на ветку «.», цель переставала быть master, и неотревьюенная
+     * ветка уезжала в master молча.
+     */
+    const repository = repositoryWithBranch();
+    const output = callGate(bashPayload(repository, 'git checkout . && git merge --no-ff feat/x'));
+    expect(JSON.parse(output).hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
+  it('ветка с именем main без ревью в master не проходит', () => {
+    /*
+     * Вторая дыра оттуда же: пропуск был написан как «любое имя из
+     * MASTER_BRANCHES», и main проходил как «слияние master в самого себя».
+     * Теперь пропускается только то, что уже содержится в цели.
+     */
+    const repository = repositoryWithBranch();
+    execFileSync('git', ['branch', 'main', 'feat/x'], { cwd: repository, stdio: 'ignore' });
+    const output = callGate(bashPayload(repository, 'git checkout master && git merge main'));
+    expect(JSON.parse(output).hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
+  it('уже слитая ветка проходит: сливать нечего', () => {
+    const repository = repositoryWithBranch();
+    execFileSync('git', ['branch', 'уже-слито', 'master'], { cwd: repository, stdio: 'ignore' });
+    expect(callGate(bashPayload(repository, 'git merge уже-слито'))).toBe('');
+  });
+
   it('слияние master в ветку не трогается', () => {
     const repository = repositoryWithBranch();
     execFileSync('git', ['checkout', 'feat/x'], { cwd: repository, stdio: 'ignore' });

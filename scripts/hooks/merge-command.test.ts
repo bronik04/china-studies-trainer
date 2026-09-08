@@ -10,6 +10,7 @@ describe('parseMergeCommand', () => {
      */
     expect(parseMergeCommand('git checkout master && git merge --no-ff feat/x', 'feat/x')).toEqual({
       target: 'master',
+      targetIsCertain: false,
       refs: ['feat/x'],
     });
   });
@@ -17,6 +18,7 @@ describe('parseMergeCommand', () => {
   it('берёт текущую ветку, когда перехода в строке нет', () => {
     expect(parseMergeCommand('git merge feat/x', 'master')).toEqual({
       target: 'master',
+      targetIsCertain: true,
       refs: ['feat/x'],
     });
   });
@@ -24,6 +26,7 @@ describe('parseMergeCommand', () => {
   it('не принимает сообщение -m за ссылку', () => {
     expect(parseMergeCommand('git merge --no-ff -m "merge: соседи; правки" feat/x', 'master')).toEqual({
       target: 'master',
+      targetIsCertain: true,
       refs: ['feat/x'],
     });
   });
@@ -34,7 +37,11 @@ describe('parseMergeCommand', () => {
 
   it('оставляет список ссылок пустым у --abort, --continue и --quit', () => {
     for (const flag of ['--abort', '--continue', '--quit']) {
-      expect(parseMergeCommand(`git merge ${flag}`, 'master')).toEqual({ target: 'master', refs: [] });
+      expect(parseMergeCommand(`git merge ${flag}`, 'master')).toEqual({
+        target: 'master',
+        targetIsCertain: true,
+        refs: [],
+      });
     }
   });
 
@@ -45,12 +52,32 @@ describe('parseMergeCommand', () => {
   it('слияние master в ветку остаётся слиянием в ветку', () => {
     expect(parseMergeCommand('git merge master', 'feat/x')).toEqual({
       target: 'feat/x',
+      targetIsCertain: true,
       refs: ['master'],
     });
   });
 
   it('не принимает пути после -- за имя ветки', () => {
     expect(parseMergeCommand('git checkout -- . && git merge feat/x', 'master')?.target).toBe('master');
+  });
+
+  it('голый токен checkout цель не подтверждает', () => {
+    /*
+     * `git checkout .` перед слиянием — обычная чистка дерева, а не смена
+     * ветки. Разбор о путях не знает и потому лишь помечает цель неточной;
+     * сверять с git будет вызывающий. Без этого ворота молчали.
+     */
+    const merge = parseMergeCommand('git checkout . && git merge --no-ff feat/x', 'master');
+    expect(merge).toEqual({ target: '.', targetIsCertain: false, refs: ['feat/x'] });
+  });
+
+  it('имя из -b подтверждено: такой токен путём быть не может', () => {
+    const merge = parseMergeCommand('git checkout -b main && git merge feat/x', 'feat/x');
+    expect(merge?.targetIsCertain).toBe(true);
+  });
+
+  it('текущая ветка подтверждена, когда checkout в строке нет', () => {
+    expect(parseMergeCommand('git merge feat/x', 'master')?.targetIsCertain).toBe(true);
   });
 
   it('видит несколько сливаемых веток', () => {
