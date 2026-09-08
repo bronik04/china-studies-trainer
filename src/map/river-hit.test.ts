@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { physicalFeatures } from '../content/physical-features';
-import { RIVER_SHAPES, riverAt } from './river-hit';
+import { nearestLine, RIVER_SHAPES, riverAt, type RiverShape } from './river-hit';
 
 /** Точка на самой линии реки: берём её из настоящей геометрии. */
 function pointOn(featureId: string) {
@@ -41,5 +41,43 @@ describe('riverAt', () => {
     // ответ обязан быть «Янцзы», а не «та, что нашлась первой».
     const [x, y] = pointOn('yangtze');
     expect(riverAt(x, y, 8)).toBe('yangtze');
+  });
+});
+
+/*
+ * Выбор ближайшей линии вынесен отдельной функцией со списком в доводе: до
+ * этого ничью решал порядок записей в сгенерированном файле, а он ничего не
+ * значит. Ущелья лежат на самой Янцзы, и оба ответа стоят к точке вплотную —
+ * побеждать должен меньший объект, как у вложенных форм рельефа.
+ */
+describe('nearestLine', () => {
+  const short: RiverShape = {
+    featureId: 'short',
+    parts: [
+      [
+        [10, 0],
+        [20, 0],
+      ],
+    ],
+    length: 10,
+  };
+  const long: RiverShape = {
+    featureId: 'long',
+    parts: [
+      [
+        [0, 0],
+        [40, 0],
+      ],
+    ],
+    length: 40,
+  };
+
+  it('на равном расстоянии побеждает короткая линия, как бы ни шёл список', () => {
+    expect(nearestLine([short, long], 15, 0, 1)).toBe('short');
+    expect(nearestLine([long, short], 15, 0, 1)).toBe('short');
+  });
+
+  it('дальше порога не отвечает никто', () => {
+    expect(nearestLine([short, long], 15, 5, 1)).toBeNull();
   });
 });

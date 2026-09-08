@@ -3,7 +3,9 @@ import {
   MARINE_SHAPES,
   POINT_MARKS,
   RELIEF_SHAPES,
+  WATER_LINES,
 } from './physical-geometry';
+import { parseMapPath } from './svg-path';
 import { physicalTargetAt } from './physical-hit';
 import { RIVER_SHAPES } from './river-hit';
 
@@ -110,4 +112,23 @@ it('каждая морская цель достаётся себе в точк
       shape.featureId,
     ).toBe(shape.featureId);
   }
+});
+
+/*
+ * Ущелья лежат на самой Янцзы, и обе линии стоят к точке вплотную. Побеждает
+ * меньший объект — то же правило, что у вложенных форм рельефа, — и оно
+ * названо, а не выведено из порядка записей в сгенерированном файле.
+ */
+it('на отрезке ущелий побеждает ущелье, а не река', () => {
+  const gorges = WATER_LINES.find((line) => line.featureId === 'three-gorges')!;
+  const [x, y] = parseMapPath(gorges.d).flat()[1];
+
+  expect(physicalTargetAt(x, y, 1)).toBe('three-gorges');
+});
+
+it('вне отрезка Янцзы остаётся Янцзы', () => {
+  const river = WATER_LINES.find((line) => line.featureId === 'yangtze')!;
+  const [x, y] = parseMapPath(river.d).flat()[0];
+
+  expect(physicalTargetAt(x, y, 1)).toBe('yangtze');
 });
