@@ -26,17 +26,26 @@ concurrency:
   group: checks-${{ github.ref }}
   cancel-in-progress: true
 
+# Прогону нужно только чтение исходников: он ничего не публикует и никуда не
+# пишет. Без этой строки токен получает права по умолчанию для репозитория —
+# больше, чем требуется проверкам.
+permissions:
+  contents: read
+
 jobs:
   checks:
     name: Линтер, тесты, сборка
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      # Действия закреплены по коммиту, а не по подвижному тегу: `v5`
+      # переставляют, и прогон однажды взял бы не тот код. Рядом оставлена
+      # версия — по ней и обновлять.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       # Версия берётся из .nvmrc, чтобы она была записана один раз и здесь, и
       # у разработчика. Кэш npm — по package-lock.json.
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version-file: .nvmrc
           cache: npm
