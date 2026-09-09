@@ -126,9 +126,27 @@ it('на отрезке ущелий побеждает ущелье, а не р
   expect(physicalTargetAt(x, y, 1)).toBe('three-gorges');
 });
 
-it('вне отрезка Янцзы остаётся Янцзы', () => {
-  const river = WATER_LINES.find((line) => line.featureId === 'yangtze')!;
-  const [x, y] = parseMapPath(river.d).flat()[0];
+it('сразу за концом участка Янцзы снова становится Янцзы', () => {
+  const river = parseMapPath(
+    WATER_LINES.find((line) => line.featureId === 'yangtze')!.d,
+  ).flat();
+  const gorges = parseMapPath(
+    WATER_LINES.find((line) => line.featureId === 'three-gorges')!.d,
+  ).flat();
+  const east = gorges[gorges.length - 1];
 
-  expect(physicalTargetAt(x, y, 1)).toBe('yangtze');
+  /*
+   * Граница участка проверяется у самой границы, а не в истоке за триста
+   * единиц: там спора нет вовсе, и проверка ничего не сторожила бы.
+   */
+  const beyond = river
+    .filter((point) => point[0] > east[0])
+    .sort(
+      (left, right) =>
+        Math.hypot(left[0] - east[0], left[1] - east[1]) -
+        Math.hypot(right[0] - east[0], right[1] - east[1]),
+    )[0];
+
+  expect(Math.hypot(beyond[0] - east[0], beyond[1] - east[1])).toBeLessThan(12);
+  expect(physicalTargetAt(beyond[0], beyond[1], 1)).toBe('yangtze');
 });

@@ -6,6 +6,7 @@
  * Точка достаётся ближайшей реке, если та ближе порога: цели по построению не
  * спорят, и у каждой точки карты ответ ровно один.
  */
+import { partOfFeature } from '../content/physical-features';
 import { WATER_LINES } from './physical-geometry';
 import { distanceToPolylines } from './polyline';
 import { parseMapPath, type Point } from './svg-path';
@@ -19,11 +20,10 @@ import { TARGET_DIAMETER_UNITS } from './city-hit-targets';
 export const RIVER_HIT_RADIUS_UNITS = TARGET_DIAMETER_UNITS / 2;
 
 /**
- * Насколько два расстояния считаются равными. Участок вырезан из той же линии,
- * что и река, поэтому расстояния совпадают до последнего знака; допуск нужен
- * лишь на случай округления при записи путей.
+ * Точность записи путей: координаты пишутся с двумя знаками после запятой, и
+ * вырезанный участок отстоит от своей реки на эти самые сотые.
  */
-const TIE_UNITS = 1e-6;
+const PATH_PRECISION_UNITS = 0.05;
 
 export type RiverShape = {
   readonly featureId: string;
@@ -32,72 +32,64 @@ export type RiverShape = {
    * разрывает реку, и склеенные точки дали бы звено через всю карту.
    */
   readonly parts: Point[][];
-  /** Длина линии в единицах карты: ею решается ничья (см. `nearestLine`). */
-  readonly length: number;
 };
 
-function lengthOf(parts: readonly (readonly Point[])[]): number {
-  return parts.reduce(
-    (total, part) =>
-      total +
-      part.reduce(
-        (sum, point, index) =>
-          index === 0
-            ? sum
-            : sum +
-              Math.hypot(point[0] - part[index - 1][0], point[1] - part[index - 1][1]),
-        0,
-      ),
-    0,
-  );
-}
-
-export const RIVER_SHAPES: readonly RiverShape[] = WATER_LINES.map((line) => {
-  const parts = parseMapPath(line.d);
-
-  return { featureId: line.featureId, parts, length: lengthOf(parts) };
-});
+export const RIVER_SHAPES: readonly RiverShape[] = WATER_LINES.map((line) => ({
+  featureId: line.featureId,
+  parts: parseMapPath(line.d),
+}));
 
 /**
  * Ближайшая линия к точке или `null`, если все дальше порога.
  *
- * Список приходит доводом, а не берётся из модуля: правило ничьей нужно
- * проверять на выдуманных линиях, а не на настоящей карте, где порядок записей
- * случаен.
+ * Список и связь «часть — целое» приходят доводами, а не берутся из модулей:
+ * правило проверяется на выдуманных линиях, а не на настоящей карте, где
+ * порядок записей случаен.
  *
- * На равном расстоянии побеждает более короткая: участок реки лежит на самой
- * реке, и оба ответа стоят к точке вплотную. То же правило, что у вложенных
- * форм рельефа, — побеждает меньший объект, — и здесь оно названо, а не
- * выведено из порядка записей в сгенерированном файле.
+ * Правило: **часть побеждает целое**. Участок реки вырезан из самой реки, и
+ * расстояние до реки никогда не больше расстояния до участка — равенство
+ * бывает лишь в общих вершинах, а концы участка вдобавок округлены при записи
+ * пути. Сравнением расстояний часть не выигрывает никогда, поэтому она
+ * выигрывает по существу: попал в ленту участка — ответ участок. То же
+ * правило, что у вложенных форм рельефа, — побеждает меньший объект.
  */
 export function nearestLine(
   shapes: readonly RiverShape[],
   x: number,
   y: number,
   maxDistance: number,
+  wholeOf: (featureId: string) => string | undefined = partOfFeature,
 ): string | null {
-  let nearestId: string | null = null;
-  let nearest = Number.POSITIVE_INFINITY;
-  let nearestLength = Number.POSITIVE_INFINITY;
+  const within = shapes
+    .map((shape) => ({
+      featureId: shape.featureId,
+      distance: distanceToPolylines(x, y, shape.parts),
+    }))
+    .filter((shape) => shape.distance <= maxDistance);
 
-  for (const shape of shapes) {
-    const distance = distanceToPolylines(x, y, shape.parts);
-    if (distance > maxDistance) {
-      continue;
-    }
-
-    const closer = distance < nearest - TIE_UNITS;
-    const sameButShorter =
-      Math.abs(distance - nearest) <= TIE_UNITS && shape.length < nearestLength;
-
-    if (closer || sameButShorter) {
-      nearest = distance;
-      nearestLength = shape.length;
-      nearestId = shape.featureId;
-    }
+  if (within.length === 0) {
+    return null;
   }
 
-  return nearestId;
+  const nearest = within.reduce((best, shape) =>
+    shape.distance < best.distance ? shape : best,
+  );
+
+  /*
+   * Часть выигрывает там, где она не дальше своего целого: на общем отрезке
+   * расстояния совпадают до сотых — ровно до той точности, с какой записан
+   * путь, — и сравнение расстояний часть проигрывала бы всегда. За концом
+   * участка река ближе уже на единицы, и тогда отвечает река: лента цели
+   * шириной в двенадцать единиц иначе отдала бы участку ещё столько же реки
+   * за его концом.
+   */
+  const part = within.find(
+    (shape) =>
+      wholeOf(shape.featureId) === nearest.featureId &&
+      shape.distance <= nearest.distance + PATH_PRECISION_UNITS,
+  );
+
+  return (part ?? nearest).featureId;
 }
 
 /** Ближайшая река к точке карты или `null`, если все дальше порога. */

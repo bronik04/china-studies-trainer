@@ -174,18 +174,31 @@ export function PhysicalRound({
    * свойстве JSX создаётся на рендере, и проверка чистоты считает вызов из неё
    * вызовом во время отрисовки. Тот же приём в `CityRound`.
    */
+  /**
+   * Ответ нажатием по карте. Попадание в часть засчитывается целому: ущелья
+   * лежат на Янцзы, и при вопросе о реке нажатие по ним — верный ответ.
+   * Обратное неверно: когда спрошены ущелья, годится только сам отрезок.
+   *
+   * Послабление живёт только здесь, у карты. В равнозначном списке оба имени
+   * стоят отдельными кнопками, и выбор «Три ущелья» на вопрос о Янцзы — это
+   * другой ответ, а не неточное попадание пальцем.
+   */
   function handleFeatureSelect(featureId: string) {
     if (showsChoices) {
       return;
     }
 
-    /*
-     * Попадание в часть засчитывается целому: ущелья лежат на Янцзы, и при
-     * вопросе о реке нажатие по ним — верный ответ. Обратное неверно: когда
-     * спрошены ущелья, годится только сам отрезок.
-     */
     const whole = partOfFeature(featureId);
     answer(whole === question.target.id ? whole : featureId);
+  }
+
+  /** Ответ из списка: имена там названы прямо, и послабления карты не нужны. */
+  function handleNameSelect(featureId: string) {
+    if (showsChoices) {
+      return;
+    }
+
+    answer(featureId);
   }
 
   const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
@@ -267,7 +280,7 @@ export function PhysicalRound({
             answeredId={answeredId}
             targetId={targetFeature.id}
             disabled={round.status !== 'ready'}
-            onSelect={handleFeatureSelect}
+            onSelect={handleNameSelect}
           />
         ) : undefined
       }

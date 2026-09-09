@@ -184,6 +184,23 @@ const riverLines = physicalFeatures
  * своим данным означала бы два ответа на вопрос «где проходит Янцзы», и
  * однажды они разошлись бы: у реки своё упрощение, у участка своё.
  */
+/** Насколько заявленный конец участка вправе отстоять от линии реки. */
+const MAX_GORGE_SNAP_UNITS = 2;
+
+/*
+ * Лишняя запись координат — тоже ошибка: она входит в отпечаток, то есть
+ * меняет его, ничего не меняя на карте, и прячет опечатку в ключе.
+ */
+const gorgeIds = new Set(
+  physicalFeatures.filter((feature) => feature.kind === 'gorge').map((one) => one.id),
+);
+const orphanEnds = Object.keys(GORGE_ENDPOINTS).filter((id) => !gorgeIds.has(id));
+if (orphanEnds.length > 0) {
+  throw new Error(
+    `Концы записаны для целей, которых нет в справочнике: ${orphanEnds.join(', ')}`,
+  );
+}
+
 const gorgeLines = physicalFeatures.flatMap((feature) => {
   if (feature.kind !== 'gorge') {
     return [];
@@ -201,10 +218,17 @@ const gorgeLines = physicalFeatures.flatMap((feature) => {
     );
   }
 
+  /*
+   * Предел прилипания: заявленный конец обязан лежать у самой линии. Две
+   * единицы — это около четырнадцати километров, вдвое больше звена
+   * упрощённой реки; дальше начинается не неточность источника, а другая
+   * точка на карте.
+   */
   const parts = sliceLine(
     parent.parts,
     projectLonLat(ends.from[0], ends.from[1]),
     projectLonLat(ends.to[0], ends.to[1]),
+    MAX_GORGE_SNAP_UNITS,
   );
 
   console.info(

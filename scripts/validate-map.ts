@@ -23,6 +23,7 @@ import {
 } from '../src/map/target-size';
 import { projectLonLat } from '../src/map/projection';
 import { distanceToPolylines } from '../src/map/polyline';
+import { GORGE_ENDPOINTS } from './data/gorge-endpoints';
 import {
   containsPoint,
   distanceToBoundary,
@@ -455,6 +456,12 @@ const physical = validatePhysicalGeometry(
  * не правят, и сборка обязана это поймать, а не показать ученику две линии
  * там, где река одна.
  */
+/*
+ * Предел расхождения конца с заявленной координатой. Тот же, что у генератора
+ * (`MAX_GORGE_SNAP_UNITS`), плюс запас на округление пути до сотых.
+ */
+const MAX_GORGE_END_DRIFT_UNITS = 2.5;
+
 const gorges = physicalFeatures.filter((feature) => feature.kind === 'gorge');
 for (const gorge of gorges) {
   const part = WATER_LINES.find((line) => line.featureId === gorge.id);
@@ -467,14 +474,39 @@ for (const gorge of gorges) {
   }
 
   const river = parseMapPath(whole.d);
-  const off = parseMapPath(part.d)
-    .flat()
-    .filter(([x, y]) => distanceToPolylines(x, y, river) >= 0.5);
+  const points = parseMapPath(part.d).flat();
+  const off = points.filter(([x, y]) => distanceToPolylines(x, y, river) >= 0.5);
 
   if (off.length > 0) {
     throw new Error(
       `Участок ${gorge.id} сошёл с линии ${gorge.partOf} в ${off.length} точках. ` +
         'Запустите npm run generate:physical',
+    );
+  }
+
+  /*
+   * Та проверка выше сравнивает участок с линией, из которой он вырезан, и
+   * ловит только правку сгенерированного файла руками. Здесь сравнение с
+   * замыслом: концы участка обязаны стоять там, где названы координаты. Иначе
+   * опечатка в одной цифре молча даёт другой участок реки.
+   */
+  const ends = GORGE_ENDPOINTS[gorge.id];
+  if (ends === undefined) {
+    throw new Error(`Нет координат концов у участка ${gorge.id}`);
+  }
+
+  const declared = [ends.from, ends.to].map(([lon, lat]) => projectLonLat(lon, lat));
+  const actual = [points[0], points[points.length - 1]];
+  const drift = Math.max(
+    ...declared.map((end) =>
+      Math.min(...actual.map((point) => Math.hypot(point[0] - end[0], point[1] - end[1]))),
+    ),
+  );
+
+  if (drift > MAX_GORGE_END_DRIFT_UNITS) {
+    throw new Error(
+      `Конец участка ${gorge.id} отстоит от заявленной координаты на ${drift.toFixed(2)} ` +
+        `единиц при пределе ${MAX_GORGE_END_DRIFT_UNITS}. Запустите npm run generate:physical`,
     );
   }
 }

@@ -387,6 +387,7 @@ export function sliceLine(
   parts: readonly (readonly Point[])[],
   from: Point,
   to: Point,
+  maxSnapUnits = Number.POSITIVE_INFINITY,
 ): Point[][] {
   const nearest = (
     target: Point,
@@ -429,6 +430,19 @@ export function sliceLine(
 
   if (start.part === -1 || start.part !== end.part) {
     throw new Error('Концы отрезка лежат в разных кусках ломаной');
+  }
+
+  /*
+   * Насколько конец «прилип» к линии. Без этой меры опечатка в одной цифре
+   * координаты даёт другой участок при зелёной сборке: ближайшая точка на
+   * ломаной найдётся всегда, какой бы далёкой ни была заявленная.
+   */
+  const snap = Math.max(start.distance, end.distance);
+  if (snap > maxSnapUnits) {
+    throw new Error(
+      `Конец отрезка лежит в ${snap.toFixed(2)} единицах от ломаной ` +
+        `при пределе ${maxSnapUnits}: проверьте координаты`,
+    );
   }
 
   const part = parts[start.part];

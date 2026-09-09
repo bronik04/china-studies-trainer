@@ -1,7 +1,9 @@
 import { expect, it } from 'vitest';
 import { WATER_LINES } from '../src/map/physical-geometry';
 import { distanceToPolylines } from '../src/map/polyline';
+import { projectLonLat } from '../src/map/projection';
 import { parseMapPath } from '../src/map/svg-path';
+import { GORGE_ENDPOINTS } from './data/gorge-endpoints';
 
 /*
  * Отрезок ущелий не добывается, а вырезается из линии Янцзы: двух источников
@@ -24,7 +26,7 @@ it('отрезок ущелий лежит на линии Янцзы', () => {
   }
 });
 
-it('отрезок ущелий не короче цели нажатия', () => {
+it('длина отрезка ущелий держится в ожидаемой полосе', () => {
   const gorges = WATER_LINES.find((line) => line.featureId === 'three-gorges')!;
   const points = parseMapPath(gorges.d).flat();
   const length = points.reduce(
@@ -37,9 +39,26 @@ it('отрезок ущелий не короче цели нажатия', () =
   );
 
   /*
-   * Двести километров на этой карте — около 28 единиц. Порог взят вдвое
-   * меньше: линию мерят полосой в 24 px вокруг неё, и отрезок короче этой
-   * полосы был бы целью, в которую не прицелиться.
+   * У «Британники» участок — около 200 км; генерализованная линия короче
+   * настоящей реки, потому что теряет извивы, и на этой карте даёт около 23
+   * единиц (единица — примерно 7 км). Полоса, а не пол: без потолка опечатка в
+   * координате конца — участок вдвое длиннее — проходила бы проверку. Порог
+   * снизу тот же, что и был: линию мерят полосой в 24 px вокруг неё.
    */
-  expect(length).toBeGreaterThan(12);
+  expect(length).toBeGreaterThan(18);
+  expect(length).toBeLessThan(28);
+});
+
+it('концы отрезка стоят там, где названы координаты', () => {
+  const gorges = WATER_LINES.find((line) => line.featureId === 'three-gorges')!;
+  const points = parseMapPath(gorges.d).flat();
+  const ends = [points[0], points[points.length - 1]];
+
+  for (const [lon, lat] of [GORGE_ENDPOINTS['three-gorges'].from, GORGE_ENDPOINTS['three-gorges'].to]) {
+    const [x, y] = projectLonLat(lon, lat);
+    const nearest = Math.min(...ends.map((end) => Math.hypot(end[0] - x, end[1] - y)));
+
+    /* Полторы единицы — около десяти километров: генерализация линии. */
+    expect(nearest).toBeLessThan(1.5);
+  }
 });

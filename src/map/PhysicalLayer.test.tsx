@@ -422,3 +422,24 @@ it('моря нарисованы вне маски суши и без пост�
     }
   });
 });
+
+/*
+ * Участок реки нарисован поверх неё, поэтому берёт её состояние: своим обычным
+ * штрихом он вырезал бы из подсвеченной линии бледную выемку ровно там, о чём
+ * вопрос.
+ */
+it('участок реки подсвечивается вместе со своей рекой', () => {
+  const { container } = renderLayer({ selectedFeatureId: 'yangtze' });
+
+  expect(
+    container.querySelector('.river-line[data-feature-id="three-gorges"]'),
+  ).toHaveAttribute('data-selected', 'true');
+});
+
+it('участок реки берёт и исход ответа своей реки', () => {
+  const { container } = renderLayer({ featureOutcomes: { yangtze: 'correct' } });
+
+  expect(
+    container.querySelector('.river-line[data-feature-id="three-gorges"]'),
+  ).toHaveAttribute('data-outcome', 'correct');
+});

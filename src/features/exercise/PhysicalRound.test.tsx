@@ -281,3 +281,27 @@ it('в вопросе об ущельях попадание в другую ч�
     vi.useRealTimers();
   }
 });
+
+/*
+ * Послабление «часть засчитывается целому» — про неточное попадание пальцем по
+ * карте. В списке оба имени стоят отдельными кнопками, и «Три ущелья» на
+ * вопрос о Янцзы — другой ответ, а не промах.
+ */
+it('в списке «Три ущелья» не засчитываются за Янцзы', () => {
+  vi.useFakeTimers();
+  try {
+    const yangtze = physicalFeatures.find((one) => one.id === 'yangtze')!;
+    const { onFinish } = renderRound('find-on-map', [yangtze]);
+
+    openAnswerList();
+    answerFromList('Три ущелья');
+    act(() => {
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS + WRONG_PAUSE_MS);
+    });
+
+    expect(onFinish).toHaveBeenCalledOnce();
+    expect(onFinish.mock.calls[0][0][0].isCorrect).toBe(false);
+  } finally {
+    vi.useRealTimers();
+  }
+});
