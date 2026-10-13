@@ -318,10 +318,8 @@ const FEATURE_COLLECTION_EXTRAS: Readonly<
   Record<string, CollectionExtras>
 > = {
   /*
-   * Вводка написана руками, потому что порождённая из справочника страница у
-   * этого объекта осталась бы без единого слова над фактами: снимка у него
-   * пока нет — его ещё предстоит подобрать на Викискладе и записать лицензию,
-   * — и страница открывалась бы пустым местом.
+   * Вводка написана руками: рядом в каталоге стоит плотина «Три ущелья», и
+   * страница должна сразу развести долину и плотину — спрашивается долина.
    */
   'three-gorges': {
     lead:
@@ -436,6 +434,13 @@ const FEATURE_PHOTOS: Readonly<Record<string, CollectionPhoto>> = {
     captionRu: 'Первый изгиб Янцзы у посёлка Шигу',
     captionZh: '长江第一湾',
     place: 'Юньнань',
+  },
+  'three-gorges': {
+    id: 'feature-three-gorges',
+    subject: 'река в глубоком ущелье',
+    captionRu: 'Ущелье Уся с высоты',
+    captionZh: '巫峡',
+    place: 'Чунцин и Хубэй',
   },
   'yellow-river': {
     id: 'feature-yellow-river',
