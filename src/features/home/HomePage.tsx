@@ -541,6 +541,14 @@ export function HomePage({
               <a href="https://github.com/antvis/china-geojson">china-geojson</a>{' '}
               (AntV).
             </li>
+            <li>
+              Линия Великого канала: ©{' '}
+              <a href="https://www.openstreetmap.org/copyright">
+                участники OpenStreetMap
+              </a>
+              ,{' '}
+              <a href="https://opendatacommons.org/licenses/odbl/1-0/">ODbL</a>.
+            </li>
           </ul>
         </div>
       </section>
