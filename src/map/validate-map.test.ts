@@ -382,6 +382,52 @@ describe('validatePhysicalGeometry', () => {
     ).not.toThrow();
   });
 
+  /*
+   * Свободная доля — доля длины, а не доля вершин. У канала вершин мало, и
+   * гуще всего они на изгибах у переправы: четыре из шести вершин ниже стоят
+   * у реки, а по длине у реки лишь шестая часть линии. Река тоже густа у
+   * пересечения — как настоящая, у которой вершины идут через доли единицы.
+   */
+  it('мерит свободную долю по длине, а не по вершинам', () => {
+    const crossing: PhysicalFeature = { ...river, id: 'crossing-river', riverNums: [3] };
+
+    expect(() =>
+      validatePhysicalGeometry(
+        [canal, crossing],
+        physicalGeometry({
+          rivers: new Map([
+            [
+              'straight-canal',
+              [
+                [
+                  [0, 50],
+                  [60, 50],
+                  [62, 50],
+                  [64, 50],
+                  [66, 50],
+                  [100, 50],
+                ] as Point[],
+              ],
+            ],
+            [
+              'crossing-river',
+              [
+                [
+                  [63, 0],
+                  [63, 48],
+                  [63, 50],
+                  [63, 52],
+                  [63, 100],
+                ] as Point[],
+              ],
+            ],
+          ]),
+        }),
+        shapes,
+      ),
+    ).not.toThrow();
+  });
+
   it('ловит канал, идущий вдоль реки всей длиной', () => {
     expect(() =>
       validatePhysicalGeometry(

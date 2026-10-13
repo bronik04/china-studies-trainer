@@ -15,8 +15,8 @@ describe('PhysicalLayer', () => {
     const { container } = renderLayer();
 
     expect(container.querySelectorAll('.relief-shape')).toHaveLength(38);
-    /* Шесть рек и участок одной из них — Три ущелья. */
-    expect(container.querySelectorAll('.river-line')).toHaveLength(7);
+    /* Шесть рек, участок одной из них — Три ущелья — и Великий канал. */
+    expect(container.querySelectorAll('.river-line')).toHaveLength(8);
   });
 
   it('рисует полосы высот снизу вверх', () => {
@@ -129,6 +129,7 @@ it('моря нарисованы вне маски суши и без пост�
     }
     expect(screen.getByLabelText(/Тибетское нагорье, 青藏高原/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Янцзы, 长江/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Великий канал, 京杭大运河/)).toBeInTheDocument();
   });
 
   it('без обработчика ни одна цель не получает фокус: слой только показывает', () => {
@@ -167,7 +168,7 @@ it('моря нарисованы вне маски суши и без пост�
   it('подпись есть у каждой цели и ни у одной декоративной формы', () => {
     const { container } = renderLayer();
 
-    expect(container.querySelectorAll('.physical-label')).toHaveLength(40);
+    expect(container.querySelectorAll('.physical-label')).toHaveLength(41);
   });
 
   it('подпись помечена как видная только у выбранного объекта', () => {

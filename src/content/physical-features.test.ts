@@ -49,6 +49,23 @@ it('род ущелья назван словом', () => {
   expect(physicalKindLabel(physicalFeatureById('three-gorges')!)).toBe('Ущелье');
 });
 
-it('целей физической карты стало сорок', () => {
-  expect(physicalFeatures).toHaveLength(40);
+it('целей физической карты стало сорок одна', () => {
+  expect(physicalFeatures).toHaveLength(41);
+});
+
+it('Великий канал — линия-канал с тремя фактами и шестью регионами', () => {
+  const canal = physicalFeatureById('grand-canal');
+
+  expect(canal?.kind).toBe('canal');
+  expect(canal?.nameZh).toBe('京杭大运河');
+  expect(canal?.facts).toHaveLength(3);
+  expect(canal?.regionIds).toEqual([
+    'beijing',
+    'tianjin',
+    'hebei',
+    'shandong',
+    'jiangsu',
+    'zhejiang',
+  ]);
+  expect(physicalKindLabel(canal!)).toBe('Канал');
 });

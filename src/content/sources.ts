@@ -42,6 +42,14 @@ export const sources = [
     covers: ['линии шести крупнейших рек Китая'],
   },
   {
+    id: 'openstreetmap-grand-canal',
+    title: 'OpenStreetMap: отношение 1112801 «京杭大运河»',
+    organization: 'OpenStreetMap',
+    url: 'https://www.openstreetmap.org/relation/1112801',
+    accessedAt: '2026-10-13',
+    covers: ['линия Великого канала'],
+  },
+  {
     id: 'natural-earth-countries-5.1.2',
     title: 'Natural Earth 50m Admin 0 – Countries, версия 5.1.2',
     organization: 'Natural Earth',
@@ -346,6 +354,19 @@ export const sources = [
     url: 'https://www.britannica.com/place/Jiangsu/Cultural-life',
     accessedAt: '2026-08-19',
     covers: ['промышленность Цзянсу', 'сады Сучжоу как объект Всемирного наследия ЮНЕСКО'],
+  },
+  {
+    id: 'unesco-grand-canal-1443',
+    title: 'The Grand Canal',
+    organization: 'UNESCO World Heritage Centre',
+    shortLabel: 'ЮНЕСКО',
+    url: 'https://whc.unesco.org/en/list/1443',
+    accessedAt: '2026-10-13',
+    covers: [
+      'протяжённость Великого канала от Пекина до Чжэцзяна, самый длинный и древний канал мира',
+      'назначение канала: перевозка зерна, сырья и риса',
+      'века постройки и объединения при династии Суй, сеть к XIII веку',
+    ],
   },
   {
     id: 'unesco-suzhou-gardens-813',

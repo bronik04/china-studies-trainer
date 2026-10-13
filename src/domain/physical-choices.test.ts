@@ -98,7 +98,7 @@ it('у участка реки четыре варианта, и все — ли
 
   expect(choices).toHaveLength(4);
   for (const choice of choices) {
-    expect(['river', 'gorge']).toContain(choice.kind);
+    expect(['river', 'gorge', 'canal']).toContain(choice.kind);
   }
 });
 
@@ -154,4 +154,17 @@ it('у канала четыре варианта, и все — линии', ()
 
 it('род канала назван словом', () => {
   expect(physicalKindLabel(testCanal)).toBe('Канал');
+});
+
+it('у настоящего канала варианты — линии', () => {
+  for (let seed = 1; seed <= 10; seed += 1) {
+    const choices = buildPhysicalChoices(
+      physicalFeatures,
+      'grand-canal',
+      createSeededRandom(seed),
+    );
+
+    expect(choices).toHaveLength(4);
+    expect(choices.every((choice) => ['river', 'gorge', 'canal'].includes(choice.kind))).toBe(true);
+  }
 });

@@ -343,8 +343,8 @@ export function validateClusters(
 export const RIVER_RIBBON_UNITS = pixelsToUnits(MIN_TARGET_PX, REFERENCE_MAP_WIDTH);
 
 /**
- * Какая доля точек реки обязана быть свободна — то есть иметь ближайшую чужую
- * реку дальше половины ленты.
+ * Какая доля длины линии — реки или канала — обязана быть свободна, то есть
+ * лежать дальше половины ленты от любой чужой линии.
  *
  * Требовать непересечения лент нельзя: Янцзы и Ланьцанцзян сближаются до 4,0
  * единицы карты, и это не дефект данных, а «три параллельные реки» Юньнани —
@@ -357,8 +357,37 @@ export const RIVER_RIBBON_UNITS = pixelsToUnits(MIN_TARGET_PX, REFERENCE_MAP_WID
  * четырёх — 100 %. Порог 80 % оставляет запас настоящей географии и всё равно
  * ловит ошибку, ради которой он стоит: отрезок, отданный не той реке, кладёт
  * две линии друг на друга целиком.
+ *
+ * Числа выше мерились долей вершин. С 2026-10-13 мерится доля длины (см.
+ * подсчёт в `validatePhysicalGeometry`): на ней Янцзы — 92 %, Ланьцанцзян —
+ * 87 %, Хуанхэ — 97 %, Великий канал — 81 %. Канал ближе всех к порогу: он
+ * дважды пересекает реки, и у каждого пересечения лента занята по обе стороны.
  */
 export const MIN_FREE_SHARE = 0.8;
+
+/** Шаг, которым линия проходится при подсчёте свободной доли, в единицах карты. */
+const FREE_SHARE_STEP_UNITS = 0.5;
+
+/**
+ * Точки вдоль линии с шагом не больше `step`: вершины и промежуточные точки
+ * каждого звена. Конец звена не берётся — он начало следующего.
+ */
+function sampleAlong(parts: readonly (readonly Point[])[], step: number): Point[] {
+  return parts.flatMap((part) =>
+    part.slice(1).flatMap((end, index) => {
+      const start = part[index];
+      const count = Math.max(1, Math.ceil(Math.hypot(end[0] - start[0], end[1] - start[1]) / step));
+
+      return Array.from(
+        { length: count },
+        (_, k): Point => [
+          start[0] + ((end[0] - start[0]) * k) / count,
+          start[1] + ((end[1] - start[1]) * k) / count,
+        ],
+      );
+    }),
+  );
+}
 
 export type PhysicalGeometry = {
   readonly rivers: ReadonlyMap<string, Point[][]>;
@@ -727,53 +756,46 @@ export function validatePhysicalGeometry(
   }
 
   /*
-   * Свободная доля считается по всем рекам сразу: «свободна» — значит, что
-   * ближайшая точка любой другой реки дальше половины ленты. Канал считается
-   * наравне с реками: он пересекает Янцзы и Хуанхэ, и ни ему, ни им нельзя
-   * потерять место для однозначного нажатия.
+   * Свободная доля считается по всем линиям сразу: «свободна» — значит, что
+   * любая другая линия дальше половины ленты. Канал считается наравне с
+   * реками: он пересекает Янцзы и Хуанхэ, и ни ему, ни им нельзя потерять
+   * место для однозначного нажатия.
+   *
+   * Доля — доля длины, а не доля вершин. Прежде считались вершины, и это
+   * держалось на густоте рек: звено в доли единицы. У канала вершин четырнадцать
+   * на часть, и гуще всего они на изгибах у переправы — по вершинам он выходил
+   * занятым на пятую часть, хотя по длине у рек лежит меньше. Поэтому линия
+   * проходится шагом в полединицы, а расстояние берётся до звеньев чужой
+   * линии — каждой по отдельности: склеить звенья разных линий значило бы
+   * получить ложные звенья через всю страну.
    */
-  const riverPoints = new Map(
+  const lines = new Map(
     features
       .filter((feature) => feature.kind === 'river' || feature.kind === 'canal')
-      .map((feature) => [feature.id, (geometry.rivers.get(feature.id) ?? []).flat()]),
+      .map((feature) => [feature.id, geometry.rivers.get(feature.id) ?? []]),
   );
 
-  for (const [featureId, points] of riverPoints) {
-    if (points.length === 0) {
+  for (const [featureId, parts] of lines) {
+    const samples = sampleAlong(parts, FREE_SHARE_STEP_UNITS);
+    if (samples.length === 0) {
       continue;
     }
 
-    const others = [...riverPoints]
+    const others = [...lines]
       .filter(([otherId]) => otherId !== featureId)
-      .flatMap(([, otherPoints]) => otherPoints);
+      .map(([, otherParts]) => otherParts);
 
-    /*
-     * Расстояние до ближайшей вершины чужой реки, а не до её звена: звенья
-     * разных рек соединять нельзя, а склеить их в одну ломаную значило бы
-     * получить ложные звенья через всю страну. При звене реки в доли единицы и
-     * пороге в 8,6 разница между вершиной и звеном ничтожна.
-     */
-    const nearestOtherPoint = (x: number, y: number): number => {
-      let nearest = Number.POSITIVE_INFINITY;
-      for (const [otherX, otherY] of others) {
-        const distance = Math.hypot(x - otherX, y - otherY);
-        if (distance < nearest) {
-          nearest = distance;
-        }
-      }
-
-      return nearest;
-    };
-
-    const free = points.filter(
-      ([x, y]) => nearestOtherPoint(x, y) > RIVER_RIBBON_UNITS / 2,
+    const free = samples.filter(([x, y]) =>
+      others.every(
+        (otherParts) => distanceToPolylines(x, y, otherParts) > RIVER_RIBBON_UNITS / 2,
+      ),
     ).length;
-    const share = free / points.length;
+    const share = free / samples.length;
     freeShare.set(featureId, share);
 
     if (share < MIN_FREE_SHARE) {
       errors.push(
-        `У реки ${featureId} свободно ${(100 * share).toFixed(1)} % длины при ` +
+        `У линии ${featureId} свободно ${(100 * share).toFixed(1)} % длины при ` +
           `пороге ${(100 * MIN_FREE_SHARE).toFixed(0)} %: её негде показать однозначно`,
       );
     }

@@ -46,6 +46,8 @@ import { RELIEF_STEPS, SHAPE_FEATURE_IDS } from './data/relief-steps';
 import { chainPieces } from './physical-assembly';
 import { physicalInputsFingerprint } from './physical-fingerprint';
 import { GORGE_ENDPOINTS } from './data/gorge-endpoints';
+import { CANAL_RELATIONS } from './data/canal-relations';
+import { assembleCanal } from './canal-assembly';
 
 /*
  * Выжимка читается файлом, а не импортом JSON: импорт модулей JSON требует
@@ -241,6 +243,84 @@ const gorgeLines = physicalFeatures.flatMap((feature) => {
       (n, part) => n + part.length,
       0,
     )} у реки`,
+  );
+
+  return [{ featureId: feature.id, parts, d: toPathData(parts) }];
+});
+
+// --- Каналы -----------------------------------------------------------------
+
+/*
+ * Канал собирается из участков OpenStreetMap: в Natural Earth его нет. Склейка
+ * та же, что у рек, но цепей может быть несколько — у Великого канала в OSM
+ * нет звеньев через Хуанхэ, и линия рвётся там на 11,5 км.
+ */
+const canalSource = JSON.parse(canalSourceJson) as {
+  canals: { featureId: string; relation: number; ways: [number, number][][] }[];
+};
+
+/** Сколько частей позволено каналу: северная и южная. */
+const MAX_CANAL_PARTS = 2;
+
+/** Наибольший разрыв между частями, в градусах: около 17 км. */
+const MAX_CANAL_GAP_DEG = 0.15;
+
+/** Цепь меньше этой доли точек — обрывок, а не часть канала. */
+const MIN_CANAL_PART_SHARE = 0.01;
+
+/*
+ * Лишний номер отношения — ошибка по тому же доводу, что лишние концы ущелий:
+ * он входит в отпечаток и прячет опечатку в ключе.
+ */
+const canalIds = new Set(
+  physicalFeatures.filter((feature) => feature.kind === 'canal').map((one) => one.id),
+);
+const orphanCanals = Object.keys(CANAL_RELATIONS).filter((id) => !canalIds.has(id));
+if (orphanCanals.length > 0) {
+  throw new Error(
+    `Отношения OSM записаны для целей, которых нет в справочнике: ${orphanCanals.join(', ')}`,
+  );
+}
+
+const canalLines = physicalFeatures.flatMap((feature) => {
+  if (feature.kind !== 'canal') {
+    return [];
+  }
+
+  const relation = CANAL_RELATIONS[feature.id];
+  if (relation === undefined) {
+    throw new Error(
+      `Нет отношения OSM у канала ${feature.id}. Впишите его в scripts/data/canal-relations.ts`,
+    );
+  }
+
+  const canal = canalSource.canals.find(
+    (one) => one.featureId === feature.id && one.relation === relation,
+  );
+  if (canal === undefined) {
+    throw new Error(`Канала ${feature.id} нет в выжимке. Запустите npm run extract:canal`);
+  }
+
+  const { parts: chains, total, dropped } = assembleCanal(canal.ways, {
+    joinTolerance: JOIN_TOLERANCE_DEG,
+    minPartShare: MIN_CANAL_PART_SHARE,
+    maxParts: MAX_CANAL_PARTS,
+    maxGap: MAX_CANAL_GAP_DEG,
+    maxDroppedShare: MAX_LEFTOVER_SHARE,
+  });
+
+  /* Как у рек: сначала упрощение, потом обрезка по рамке. */
+  const parts = chains.flatMap((chain) =>
+    clipToFrame(simplifyPath(project(chain), SIMPLIFY_TOLERANCE_UNITS), FRAME),
+  );
+  if (parts.length === 0) {
+    throw new Error(`Канал ${feature.id} целиком за рамкой карты`);
+  }
+
+  console.info(
+    `${feature.nameRu}: точек ${total} → частей ${chains.length} → в рамке ` +
+      `${parts.reduce((n, part) => n + part.length, 0)}` +
+      (dropped > 0 ? `, отброшено ${dropped}` : ''),
   );
 
   return [{ featureId: feature.id, parts, d: toPathData(parts) }];
@@ -471,7 +551,8 @@ const fingerprint = physicalInputsFingerprint(
 
 const module = `/**
  * СГЕНЕРИРОВАННЫЙ ФАЙЛ. Не править руками.
- * Источник: scripts/data/physical-source.json (Natural Earth, public domain)
+ * Источник: scripts/data/physical-source.json (Natural Earth, public domain);
+ * линии каналов — scripts/data/canal-source.json (© участники OpenStreetMap, ODbL 1.0)
  * Генератор: scripts/generate-physical-geometry.ts
  */
 import type { ReliefStep } from '../content/types';
@@ -592,7 +673,7 @@ ${points
 export const INPUTS_FINGERPRINT = '${fingerprint}';
 
 export const WATER_LINES: readonly WaterLine[] = [
-${[...riverLines, ...gorgeLines]
+${[...riverLines, ...canalLines, ...gorgeLines]
   .map((line) => `  { featureId: ${quote(line.featureId)}, d: ${quote(line.d)} },`)
   .join('\n')}
 ];
@@ -600,7 +681,7 @@ ${[...riverLines, ...gorgeLines]
 
 writeFileSync(OUT, module);
 console.info(
-  `Записано: форм ${shapes.length}, рек ${riverLines.length}, ` +
+  `Записано: форм ${shapes.length}, рек ${riverLines.length}, каналов ${canalLines.length}, ` +
     `озёр ${lakes.length}, крайних точек ${points.length}, морей ${marine.length}, размер ${(module.length / 1024).toFixed(0)} КБ, ` +
     `отпечаток входов ${fingerprint}`,
 );

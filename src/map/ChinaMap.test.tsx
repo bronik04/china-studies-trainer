@@ -599,8 +599,8 @@ it('вид physical показывает ступени рельефа и рек
   );
 
   expect(container.querySelector('.physical-layer')).toBeInTheDocument();
-  /* Шесть рек и участок одной из них — Три ущелья. */
-  expect(container.querySelectorAll('.river-line')).toHaveLength(7);
+  /* Шесть рек, участок одной из них — Три ущелья — и Великий канал. */
+  expect(container.querySelectorAll('.river-line')).toHaveLength(8);
 });
 
 it('в остальных видах физического слоя нет', () => {
