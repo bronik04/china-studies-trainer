@@ -274,6 +274,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     page: "https://commons.wikimedia.org/wiki/File:Taklamakan_desert.jpg",
     widths: [986, 640],
   },
+  'feature-three-gorges': {
+    author: "Nihongarden",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    page: "https://commons.wikimedia.org/wiki/File:%E5%B7%AB%E5%B3%A1.jpg",
+    widths: [1200, 640],
+  },
   'feature-tian-shan': {
     author: "Maryliflower",
     license: "CC BY-SA 4.0",

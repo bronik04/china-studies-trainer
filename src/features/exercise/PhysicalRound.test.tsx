@@ -53,7 +53,7 @@ function openAnswerList() {
 it('спрашивает тридцать девять объектов подряд', () => {
   renderRound('find-on-map');
 
-  expect(screen.getByText(/Вопрос 1 из 39/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 40/)).toBeInTheDocument();
 });
 
 it('в «найти» вопрос называет объект, а карта его не подписывает', () => {
@@ -186,14 +186,15 @@ it('на 320 px список отвечает за все тридцать де�
   openAnswerList();
   const list = screen.getByRole('list', { name: 'Список объектов' });
 
-  expect(within(list).getAllByRole('button')).toHaveLength(39);
+  expect(within(list).getAllByRole('button')).toHaveLength(40);
 });
 
 it('каждый набор спрашивает свои цели ровно по разу', () => {
   for (const [set, length] of [
-    ['base', 19],
-    ['ranges', 26],
-    ['all', 39],
+    /* Ущелья входят с первого набора: они рядом со своей рекой. */
+    ['base', 20],
+    ['ranges', 27],
+    ['all', 40],
   ] as const) {
     const pool = physicalFeaturesUpTo(set);
     const round = createRound(
@@ -230,4 +231,77 @@ it('в повторе одного объекта список предлага�
       'button',
     ),
   ).toHaveLength(physicalFeatures.length);
+});
+
+/*
+ * Ущелья лежат на Янцзы, и один отрезок карты делят два ответа. Ученик,
+ * ткнувший в самое узнаваемое место реки, не должен получать ошибку: часть
+ * засчитывается целому. Обратное неверно — когда спрошены ущелья, годится
+ * только сам отрезок.
+ */
+function answerOnLine(container: HTMLElement, featureId: string): void {
+  /* Линии отвечают с клавиатуры: указателем в них целятся по координате. */
+  fireEvent.keyDown(container.querySelector(`[data-feature-id="${featureId}"]`)!, {
+    key: 'Enter',
+  });
+}
+
+it('в вопросе о Янцзы попадание в ущелья тоже верно', () => {
+  vi.useFakeTimers();
+  try {
+    const yangtze = physicalFeatures.find((one) => one.id === 'yangtze')!;
+    const { container, onFinish } = renderRound('find-on-map', [yangtze]);
+
+    answerOnLine(container, 'three-gorges');
+    act(() => {
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS + WRONG_PAUSE_MS);
+    });
+
+    expect(onFinish).toHaveBeenCalledOnce();
+    expect(onFinish.mock.calls[0][0][0].isCorrect).toBe(true);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('в вопросе об ущельях попадание в другую часть Янцзы — ошибка', () => {
+  vi.useFakeTimers();
+  try {
+    const gorges = physicalFeatures.find((one) => one.id === 'three-gorges')!;
+    const { container, onFinish } = renderRound('find-on-map', [gorges]);
+
+    answerOnLine(container, 'yangtze');
+    act(() => {
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS + WRONG_PAUSE_MS);
+    });
+
+    expect(onFinish).toHaveBeenCalledOnce();
+    expect(onFinish.mock.calls[0][0][0].isCorrect).toBe(false);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+/*
+ * Послабление «часть засчитывается целому» — про неточное попадание пальцем по
+ * карте. В списке оба имени стоят отдельными кнопками, и «Три ущелья» на
+ * вопрос о Янцзы — другой ответ, а не промах.
+ */
+it('в списке «Три ущелья» не засчитываются за Янцзы', () => {
+  vi.useFakeTimers();
+  try {
+    const yangtze = physicalFeatures.find((one) => one.id === 'yangtze')!;
+    const { onFinish } = renderRound('find-on-map', [yangtze]);
+
+    openAnswerList();
+    answerFromList('Три ущелья');
+    act(() => {
+      vi.advanceTimersByTime(CORRECT_PAUSE_MS + WRONG_PAUSE_MS);
+    });
+
+    expect(onFinish).toHaveBeenCalledOnce();
+    expect(onFinish.mock.calls[0][0][0].isCorrect).toBe(false);
+  } finally {
+    vi.useRealTimers();
+  }
 });

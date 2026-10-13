@@ -5,15 +5,34 @@ import { shuffle } from './random';
 /**
  * Четыре имени к подсвеченному объекту: правильное и три отвлекающих.
  *
- * Отвлекающие берутся только того же вида — реку отвлекают реками, форму
+ * Отвлекающие берутся только похожих на вид — линию отвлекают линиями, форму
  * формами. Иначе вопрос решается не знанием, а формой подсветки: линия не
  * может оказаться пустыней, и три из четырёх вариантов отпадают, не будучи
  * прочитанными.
  *
- * Своих ровно шесть, значит четыре варианта — предел набора, и добирать из
- * чужого вида нельзя: это и есть та самая подсказка. Отсюда и объём режима в
- * спеке: двенадцать целей, по шесть на вид.
+ * Похожесть — это семья, а не род. Участок реки нарисован тем же пером, что и
+ * река, поэтому они в одной семье; своего рода у участка один-единственный, и
+ * по роду вариант остался бы один — он же ответ.
+ *
+ * Часть и целое в одном вопросе не встречаются: подсвечена вся Янцзы, а среди
+ * имён её же участок — это подсказка наоборот, и она вдобавок делает вопрос
+ * спорным.
  */
+type Family = 'line' | 'landform' | 'lake' | 'point' | 'marine';
+
+function familyOf(feature: PhysicalFeature): Family {
+  return feature.kind === 'river' || feature.kind === 'gorge'
+    ? 'line'
+    : feature.kind;
+}
+
+function isPartOfEachOther(left: PhysicalFeature, right: PhysicalFeature): boolean {
+  const partOf = (feature: PhysicalFeature): string | undefined =>
+    feature.kind === 'gorge' ? feature.partOf : undefined;
+
+  return partOf(left) === right.id || partOf(right) === left.id;
+}
+
 export function buildPhysicalChoices(
   features: readonly PhysicalFeature[],
   targetId: string,
@@ -24,12 +43,15 @@ export function buildPhysicalChoices(
     throw new Error(`Неизвестный объект: ${targetId}`);
   }
 
-  const sameKind = shuffle(
+  const sameFamily = shuffle(
     features.filter(
-      (feature) => feature.kind === target.kind && feature.id !== target.id,
+      (feature) =>
+        familyOf(feature) === familyOf(target) &&
+        feature.id !== target.id &&
+        !isPartOfEachOther(feature, target),
     ),
     random,
   );
 
-  return shuffle([target, ...sameKind.slice(0, CHOICE_COUNT - 1)], random);
+  return shuffle([target, ...sameFamily.slice(0, CHOICE_COUNT - 1)], random);
 }

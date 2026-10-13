@@ -79,3 +79,43 @@ describe('buildPhysicalChoices', () => {
     ).toThrow(/not-a-feature/);
   });
 });
+
+/*
+ * Участок реки — тоже линия, и отвлекать его должны линии: иначе вопрос
+ * решается видом подсветки, а не знанием. Своего рода у ущелий один-
+ * единственный, поэтому без объединения в семью вариант остаётся один — он же
+ * ответ.
+ */
+it('у участка реки четыре варианта, и все — линии', () => {
+  const choices = buildPhysicalChoices(
+    physicalFeatures,
+    'three-gorges',
+    createSeededRandom(1),
+  );
+
+  expect(choices).toHaveLength(4);
+  for (const choice of choices) {
+    expect(['river', 'gorge']).toContain(choice.kind);
+  }
+});
+
+/*
+ * Часть и целое рядом в одном вопросе — подсказка наоборот: подсвечена вся
+ * Янцзы, а среди имён стоит её же участок.
+ */
+it('часть и целое не встречаются в одном вопросе', () => {
+  for (const [targetId, forbidden] of [
+    ['yangtze', 'three-gorges'],
+    ['three-gorges', 'yangtze'],
+  ] as const) {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const choices = buildPhysicalChoices(
+        physicalFeatures,
+        targetId,
+        createSeededRandom(seed),
+      );
+
+      expect(choices.map((choice) => choice.id)).not.toContain(forbidden);
+    }
+  }
+});

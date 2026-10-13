@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
-import { physicalFeatures } from '../../content/physical-features';
+import {
+  partOfFeature,
+  physicalFeatures,
+} from '../../content/physical-features';
 import { regions } from '../../content/regions';
 import type { PhysicalFeature } from '../../content/types';
 import { buildPhysicalChoices } from '../../domain/physical-choices';
@@ -171,10 +174,31 @@ export function PhysicalRound({
    * свойстве JSX создаётся на рендере, и проверка чистоты считает вызов из неё
    * вызовом во время отрисовки. Тот же приём в `CityRound`.
    */
+  /**
+   * Ответ нажатием по карте. Попадание в часть засчитывается целому: ущелья
+   * лежат на Янцзы, и при вопросе о реке нажатие по ним — верный ответ.
+   * Обратное неверно: когда спрошены ущелья, годится только сам отрезок.
+   *
+   * Послабление живёт только здесь, у карты. В равнозначном списке оба имени
+   * стоят отдельными кнопками, и выбор «Три ущелья» на вопрос о Янцзы — это
+   * другой ответ, а не неточное попадание пальцем.
+   */
   function handleFeatureSelect(featureId: string) {
-    if (!showsChoices) {
-      answer(featureId);
+    if (showsChoices) {
+      return;
     }
+
+    const whole = partOfFeature(featureId);
+    answer(whole === question.target.id ? whole : featureId);
+  }
+
+  /** Ответ из списка: имена там названы прямо, и послабления карты не нужны. */
+  function handleNameSelect(featureId: string) {
+    if (showsChoices) {
+      return;
+    }
+
+    answer(featureId);
   }
 
   const showsAnswer = round.status === 'feedback' && lastAttempt?.isCorrect === false;
@@ -256,7 +280,7 @@ export function PhysicalRound({
             answeredId={answeredId}
             targetId={targetFeature.id}
             disabled={round.status !== 'ready'}
-            onSelect={handleFeatureSelect}
+            onSelect={handleNameSelect}
           />
         ) : undefined
       }

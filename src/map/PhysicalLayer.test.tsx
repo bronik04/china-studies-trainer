@@ -11,11 +11,12 @@ function renderLayer(props: Parameters<typeof PhysicalLayer>[0] = {}) {
 }
 
 describe('PhysicalLayer', () => {
-  it('рисует все формы подложки и все реки', () => {
+  it('рисует все формы подложки и все линии воды', () => {
     const { container } = renderLayer();
 
     expect(container.querySelectorAll('.relief-shape')).toHaveLength(38);
-    expect(container.querySelectorAll('.river-line')).toHaveLength(6);
+    /* Шесть рек и участок одной из них — Три ущелья. */
+    expect(container.querySelectorAll('.river-line')).toHaveLength(7);
   });
 
   it('рисует полосы высот снизу вверх', () => {
@@ -166,7 +167,7 @@ it('моря нарисованы вне маски суши и без пост�
   it('подпись есть у каждой цели и ни у одной декоративной формы', () => {
     const { container } = renderLayer();
 
-    expect(container.querySelectorAll('.physical-label')).toHaveLength(39);
+    expect(container.querySelectorAll('.physical-label')).toHaveLength(40);
   });
 
   it('подпись помечена как видная только у выбранного объекта', () => {
@@ -420,4 +421,25 @@ it('моря нарисованы вне маски суши и без пост�
       );
     }
   });
+});
+
+/*
+ * Участок реки нарисован поверх неё, поэтому берёт её состояние: своим обычным
+ * штрихом он вырезал бы из подсвеченной линии бледную выемку ровно там, о чём
+ * вопрос.
+ */
+it('участок реки подсвечивается вместе со своей рекой', () => {
+  const { container } = renderLayer({ selectedFeatureId: 'yangtze' });
+
+  expect(
+    container.querySelector('.river-line[data-feature-id="three-gorges"]'),
+  ).toHaveAttribute('data-selected', 'true');
+});
+
+it('участок реки берёт и исход ответа своей реки', () => {
+  const { container } = renderLayer({ featureOutcomes: { yangtze: 'correct' } });
+
+  expect(
+    container.querySelector('.river-line[data-feature-id="three-gorges"]'),
+  ).toHaveAttribute('data-outcome', 'correct');
 });

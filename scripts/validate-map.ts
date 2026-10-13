@@ -10,7 +10,7 @@ import {
   MARINE_SHAPES,
   POINT_MARKS,
   RELIEF_SHAPES,
-  RIVER_LINES,
+  WATER_LINES,
 } from '../src/map/physical-geometry';
 import { RELIEF_BANDS, RELIEF_INPUTS_FINGERPRINT } from '../src/map/relief-bands';
 import {
@@ -22,6 +22,8 @@ import {
   unitsToPixels,
 } from '../src/map/target-size';
 import { projectLonLat } from '../src/map/projection';
+import { distanceToPolylines } from '../src/map/polyline';
+import { GORGE_ENDPOINTS } from './data/gorge-endpoints';
 import {
   containsPoint,
   distanceToBoundary,
@@ -403,7 +405,7 @@ if (expectedReliefFingerprint !== RELIEF_INPUTS_FINGERPRINT) {
 const physical = validatePhysicalGeometry(
   physicalFeatures,
   {
-    rivers: new Map(RIVER_LINES.map((line) => [line.featureId, parseMapPath(line.d)])),
+    rivers: new Map(WATER_LINES.map((line) => [line.featureId, parseMapPath(line.d)])),
     landforms: new Map(
       RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined).map((shape) => [
         shape.featureId as string,
@@ -448,8 +450,69 @@ const physical = validatePhysicalGeometry(
   },
 );
 
+/*
+ * Участок реки обязан лежать на своей реке: он из неё и вырезан генератором.
+ * Разойтись они могут только от правки руками — а сгенерированный файл руками
+ * не правят, и сборка обязана это поймать, а не показать ученику две линии
+ * там, где река одна.
+ */
+/*
+ * Предел расхождения конца с заявленной координатой. Тот же, что у генератора
+ * (`MAX_GORGE_SNAP_UNITS`), плюс запас на округление пути до сотых.
+ */
+const MAX_GORGE_END_DRIFT_UNITS = 2.5;
+
+const gorges = physicalFeatures.filter((feature) => feature.kind === 'gorge');
+for (const gorge of gorges) {
+  const part = WATER_LINES.find((line) => line.featureId === gorge.id);
+  const whole = WATER_LINES.find((line) => line.featureId === gorge.partOf);
+  if (part === undefined || whole === undefined) {
+    throw new Error(
+      `Нет линии у участка ${gorge.id} или у реки ${gorge.partOf}. ` +
+        'Запустите npm run generate:physical',
+    );
+  }
+
+  const river = parseMapPath(whole.d);
+  const points = parseMapPath(part.d).flat();
+  const off = points.filter(([x, y]) => distanceToPolylines(x, y, river) >= 0.5);
+
+  if (off.length > 0) {
+    throw new Error(
+      `Участок ${gorge.id} сошёл с линии ${gorge.partOf} в ${off.length} точках. ` +
+        'Запустите npm run generate:physical',
+    );
+  }
+
+  /*
+   * Та проверка выше сравнивает участок с линией, из которой он вырезан, и
+   * ловит только правку сгенерированного файла руками. Здесь сравнение с
+   * замыслом: концы участка обязаны стоять там, где названы координаты. Иначе
+   * опечатка в одной цифре молча даёт другой участок реки.
+   */
+  const ends = GORGE_ENDPOINTS[gorge.id];
+  if (ends === undefined) {
+    throw new Error(`Нет координат концов у участка ${gorge.id}`);
+  }
+
+  const declared = [ends.from, ends.to].map(([lon, lat]) => projectLonLat(lon, lat));
+  const actual = [points[0], points[points.length - 1]];
+  const drift = Math.max(
+    ...declared.map((end) =>
+      Math.min(...actual.map((point) => Math.hypot(point[0] - end[0], point[1] - end[1]))),
+    ),
+  );
+
+  if (drift > MAX_GORGE_END_DRIFT_UNITS) {
+    throw new Error(
+      `Конец участка ${gorge.id} отстоит от заявленной координаты на ${drift.toFixed(2)} ` +
+        `единиц при пределе ${MAX_GORGE_END_DRIFT_UNITS}. Запустите npm run generate:physical`,
+    );
+  }
+}
+
 console.info(
-  `Проверено физических целей: ${physicalFeatures.length}. ` +
+  `Проверено физических целей: ${physicalFeatures.length}, из них участков рек: ${gorges.length}. ` +
     `Форм на подложке: ${RELIEF_SHAPES.length}. Свободная длина рек: ` +
     [...physical.freeShare]
       .map(([id, share]) => `${id} ${(100 * share).toFixed(0)} %`)

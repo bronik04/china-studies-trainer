@@ -369,3 +369,99 @@ export function toPathData(
     })
     .join(' ');
 }
+
+/**
+ * Часть ломаной между двумя точками.
+ *
+ * Концы задаются координатами, а не номерами вершин: номер зависит от
+ * упрощения, а координата — от местности. Режется по звену, а не по ближайшей
+ * вершине: у упрощённой реки вершины редкие, и привязка к вершине отняла бы у
+ * участка до половины звена с каждого конца — двести километров Трёх ущелий
+ * превращались в сотню.
+ *
+ * Куски не склеиваются: обрезка по рамке рвёт линию, и часть, начатая в одном
+ * куске и законченная в другом, означала бы звено через пустоту — это ошибка
+ * входных данных, и генератор обязан о ней сказать.
+ */
+export function sliceLine(
+  parts: readonly (readonly Point[])[],
+  from: Point,
+  to: Point,
+  maxSnapUnits = Number.POSITIVE_INFINITY,
+): Point[][] {
+  const nearest = (
+    target: Point,
+  ): { part: number; segment: number; at: Point; distance: number } => {
+    let best = {
+      part: -1,
+      segment: -1,
+      at: [0, 0] as Point,
+      distance: Number.POSITIVE_INFINITY,
+    };
+
+    parts.forEach((part, partIndex) => {
+      for (let index = 0; index + 1 < part.length; index += 1) {
+        const [ax, ay] = part[index];
+        const [bx, by] = part[index + 1];
+        const dx = bx - ax;
+        const dy = by - ay;
+        const square = dx * dx + dy * dy;
+        const t =
+          square === 0
+            ? 0
+            : Math.min(
+                1,
+                Math.max(0, ((target[0] - ax) * dx + (target[1] - ay) * dy) / square),
+              );
+        const at: Point = [ax + t * dx, ay + t * dy];
+        const distance = Math.hypot(at[0] - target[0], at[1] - target[1]);
+
+        if (distance < best.distance) {
+          best = { part: partIndex, segment: index, at, distance };
+        }
+      }
+    });
+
+    return best;
+  };
+
+  const start = nearest(from);
+  const end = nearest(to);
+
+  if (start.part === -1 || start.part !== end.part) {
+    throw new Error('Концы отрезка лежат в разных кусках ломаной');
+  }
+
+  /*
+   * Насколько конец «прилип» к линии. Без этой меры опечатка в одной цифре
+   * координаты даёт другой участок при зелёной сборке: ближайшая точка на
+   * ломаной найдётся всегда, какой бы далёкой ни была заявленная.
+   */
+  const snap = Math.max(start.distance, end.distance);
+  if (snap > maxSnapUnits) {
+    throw new Error(
+      `Конец отрезка лежит в ${snap.toFixed(2)} единицах от ломаной ` +
+        `при пределе ${maxSnapUnits}: проверьте координаты`,
+    );
+  }
+
+  const part = parts[start.part];
+  const forward =
+    start.segment < end.segment ||
+    (start.segment === end.segment &&
+      Math.hypot(start.at[0] - part[start.segment][0], start.at[1] - part[start.segment][1]) <=
+        Math.hypot(end.at[0] - part[start.segment][0], end.at[1] - part[start.segment][1]));
+
+  const [head, tail] = forward ? [start, end] : [end, start];
+  const middle = part.slice(head.segment + 1, tail.segment + 1);
+  const slice: Point[] = [head.at, ...middle.map((point) => [point[0], point[1]] as Point), tail.at];
+
+  /* Совпавшие концы звена не удваиваются: две одинаковые точки — не линия. */
+  const cleaned = slice.filter(
+    (point, index) =>
+      index === 0 ||
+      Math.hypot(point[0] - slice[index - 1][0], point[1] - slice[index - 1][1]) > 1e-9,
+  );
+
+  return [forward ? cleaned : [...cleaned].reverse()];
+}

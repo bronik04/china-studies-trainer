@@ -488,6 +488,14 @@ export function validatePhysicalGeometry(
       return geometry.marine.get(feature.id);
     }
 
+    /*
+     * Участок реки лежит в том же наборе линий, что и сама река: он из неё и
+     * вырезан. Проверки рамки и заявленных регионов достаются ему даром.
+     */
+    if (feature.kind === 'gorge') {
+      return geometry.rivers.get(feature.id);
+    }
+
     return geometry.landforms.get(feature.id);
   };
 

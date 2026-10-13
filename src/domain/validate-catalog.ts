@@ -377,6 +377,18 @@ export function validatePhysicalFeatures(
           `Номер объекта не целое число у точки ${feature.id}: ${feature.neId}`,
         );
       }
+    } else if (feature.kind === 'gorge') {
+      /*
+       * У участка реки нет ни номеров отрезков, ни ступени: его геометрия
+       * вырезается из линии той реки, которую он называет. Значит, река должна
+       * существовать и быть рекой — иначе резать будет нечего.
+       */
+      const parent = features.find((one) => one.id === feature.partOf);
+      if (parent === undefined || parent.kind !== 'river') {
+        errors.push(
+          `Участок ${feature.id} назвал рекой ${feature.partOf}, а такой реки в справочнике нет`,
+        );
+      }
     } else if (![1, 2, 3].includes(feature.step)) {
       errors.push(`Ступень рельефа у ${feature.id} вне 1..3: ${feature.step}`);
     }
