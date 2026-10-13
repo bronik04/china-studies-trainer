@@ -337,6 +337,15 @@
 - Оригинал: 986×739
 - Ширины в репозитории: 986, 640
 
+## feature-three-gorges
+
+- Файл: 巫峡.jpg
+- Автор: Nihongarden
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:%E5%B7%AB%E5%B3%A1.jpg
+- Оригинал: 4299×3448
+- Ширины в репозитории: 1200, 640
+
 ## feature-tian-shan
 
 - Файл: Alpine meadows and snow-covered peaks in Khan Tengri Nature Park, Tien Shan.jpg

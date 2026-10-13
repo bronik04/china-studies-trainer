@@ -22,6 +22,7 @@ import {
   distanceToPolylines,
   ringArea,
   simplifyPath,
+  sliceLine,
   simplifyRing,
   toPathData,
   type Frame,
@@ -44,6 +45,7 @@ import {
 import { RELIEF_STEPS, SHAPE_FEATURE_IDS } from './data/relief-steps';
 import { chainPieces } from './physical-assembly';
 import { physicalInputsFingerprint } from './physical-fingerprint';
+import { GORGE_ENDPOINTS } from './data/gorge-endpoints';
 
 /*
  * Выжимка читается файлом, а не импортом JSON: импорт модулей JSON требует
@@ -174,6 +176,70 @@ const riverLines = physicalFeatures
 
     return { featureId: feature.id, parts, d: toPathData(parts) };
   });
+
+// --- Участки рек ------------------------------------------------------------
+
+/*
+ * Ущелье — часть уже посчитанной реки, а не отдельная геометрия. Своя линия по
+ * своим данным означала бы два ответа на вопрос «где проходит Янцзы», и
+ * однажды они разошлись бы: у реки своё упрощение, у участка своё.
+ */
+/** Насколько заявленный конец участка вправе отстоять от линии реки. */
+const MAX_GORGE_SNAP_UNITS = 2;
+
+/*
+ * Лишняя запись координат — тоже ошибка: она входит в отпечаток, то есть
+ * меняет его, ничего не меняя на карте, и прячет опечатку в ключе.
+ */
+const gorgeIds = new Set(
+  physicalFeatures.filter((feature) => feature.kind === 'gorge').map((one) => one.id),
+);
+const orphanEnds = Object.keys(GORGE_ENDPOINTS).filter((id) => !gorgeIds.has(id));
+if (orphanEnds.length > 0) {
+  throw new Error(
+    `Концы записаны для целей, которых нет в справочнике: ${orphanEnds.join(', ')}`,
+  );
+}
+
+const gorgeLines = physicalFeatures.flatMap((feature) => {
+  if (feature.kind !== 'gorge') {
+    return [];
+  }
+
+  const parent = riverLines.find((line) => line.featureId === feature.partOf);
+  if (parent === undefined) {
+    throw new Error(`Нет линии реки ${feature.partOf} для ущелья ${feature.id}`);
+  }
+
+  const ends = GORGE_ENDPOINTS[feature.id];
+  if (ends === undefined) {
+    throw new Error(
+      `Нет координат концов у ${feature.id}. Впишите их в scripts/data/gorge-endpoints.ts`,
+    );
+  }
+
+  /*
+   * Предел прилипания: заявленный конец обязан лежать у самой линии. Две
+   * единицы — это около четырнадцати километров, вдвое больше звена
+   * упрощённой реки; дальше начинается не неточность источника, а другая
+   * точка на карте.
+   */
+  const parts = sliceLine(
+    parent.parts,
+    projectLonLat(ends.from[0], ends.from[1]),
+    projectLonLat(ends.to[0], ends.to[1]),
+    MAX_GORGE_SNAP_UNITS,
+  );
+
+  console.info(
+    `${feature.nameRu}: точек в участке ${parts[0].length} из ${parent.parts.reduce(
+      (n, part) => n + part.length,
+      0,
+    )} у реки`,
+  );
+
+  return [{ featureId: feature.id, parts, d: toPathData(parts) }];
+});
 
 // --- Озёра ------------------------------------------------------------------
 
@@ -418,7 +484,7 @@ export type ReliefShape = {
   readonly labelY?: number;
 };
 
-export type RiverLine = {
+export type WaterLine = {
   readonly featureId: string;
   /**
    * Путь линии. Кусков в нём может быть несколько: обрезка по рамке карты
@@ -516,8 +582,8 @@ ${points
 
 export const INPUTS_FINGERPRINT = '${fingerprint}';
 
-export const RIVER_LINES: readonly RiverLine[] = [
-${riverLines
+export const WATER_LINES: readonly WaterLine[] = [
+${[...riverLines, ...gorgeLines]
   .map((line) => `  { featureId: ${quote(line.featureId)}, d: ${quote(line.d)} },`)
   .join('\n')}
 ];

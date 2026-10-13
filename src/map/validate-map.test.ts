@@ -8,7 +8,7 @@ import {
   MARINE_SHAPES,
   POINT_MARKS,
   RELIEF_SHAPES,
-  RIVER_LINES,
+  WATER_LINES,
 } from './physical-geometry';
 import {
   containsPoint,
@@ -188,7 +188,7 @@ function validateRealPhysicalGeometry(): void {
   validatePhysicalGeometry(
     physicalFeatures,
     {
-      rivers: new Map(RIVER_LINES.map((line) => [line.featureId, parseMapPath(line.d)])),
+      rivers: new Map(WATER_LINES.map((line) => [line.featureId, parseMapPath(line.d)])),
       landforms: new Map(
         RELIEF_SHAPES.filter((shape) => shape.featureId !== undefined).map((shape) => [
           shape.featureId as string,

@@ -3,7 +3,9 @@ import {
   MARINE_SHAPES,
   POINT_MARKS,
   RELIEF_SHAPES,
+  WATER_LINES,
 } from './physical-geometry';
+import { parseMapPath } from './svg-path';
 import { physicalTargetAt } from './physical-hit';
 import { RIVER_SHAPES } from './river-hit';
 
@@ -110,4 +112,41 @@ it('каждая морская цель достаётся себе в точк
       shape.featureId,
     ).toBe(shape.featureId);
   }
+});
+
+/*
+ * Ущелья лежат на самой Янцзы, и обе линии стоят к точке вплотную. Побеждает
+ * меньший объект — то же правило, что у вложенных форм рельефа, — и оно
+ * названо, а не выведено из порядка записей в сгенерированном файле.
+ */
+it('на отрезке ущелий побеждает ущелье, а не река', () => {
+  const gorges = WATER_LINES.find((line) => line.featureId === 'three-gorges')!;
+  const [x, y] = parseMapPath(gorges.d).flat()[1];
+
+  expect(physicalTargetAt(x, y, 1)).toBe('three-gorges');
+});
+
+it('сразу за концом участка Янцзы снова становится Янцзы', () => {
+  const river = parseMapPath(
+    WATER_LINES.find((line) => line.featureId === 'yangtze')!.d,
+  ).flat();
+  const gorges = parseMapPath(
+    WATER_LINES.find((line) => line.featureId === 'three-gorges')!.d,
+  ).flat();
+  const east = gorges[gorges.length - 1];
+
+  /*
+   * Граница участка проверяется у самой границы, а не в истоке за триста
+   * единиц: там спора нет вовсе, и проверка ничего не сторожила бы.
+   */
+  const beyond = river
+    .filter((point) => point[0] > east[0])
+    .sort(
+      (left, right) =>
+        Math.hypot(left[0] - east[0], left[1] - east[1]) -
+        Math.hypot(right[0] - east[0], right[1] - east[1]),
+    )[0];
+
+  expect(Math.hypot(beyond[0] - east[0], beyond[1] - east[1])).toBeLessThan(12);
+  expect(physicalTargetAt(beyond[0], beyond[1], 1)).toBe('yangtze');
 });

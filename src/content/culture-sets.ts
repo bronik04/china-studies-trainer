@@ -1,4 +1,5 @@
 import { collections, type Collection } from './collections';
+import { partOfFeature } from './physical-features';
 
 /**
  * Что спрашивать в режиме «узнать по фотографии».
@@ -85,5 +86,23 @@ export function sameKindAs(collection: Collection): readonly Collection[] {
     return LANDMARKS;
   }
 
-  return collection.aboutFeatureId !== undefined ? NATURE : CULTURE;
+  return collection.aboutFeatureId !== undefined
+    ? NATURE.filter((other) => !isPartOrWhole(collection, other))
+    : CULTURE;
+}
+
+/**
+ * Часть и целое в одном вопросе не встречаются — то же правило, что у
+ * вариантов физической карты (`physical-choices.ts`). На снимке Трёх ущелий
+ * река и есть Янцзы, и вариант «Янцзы» был бы вторым верным ответом.
+ */
+function isPartOrWhole(left: Collection, right: Collection): boolean {
+  const leftId = left.aboutFeatureId;
+  const rightId = right.aboutFeatureId;
+
+  if (leftId === undefined || rightId === undefined) {
+    return false;
+  }
+
+  return partOfFeature(leftId) === rightId || partOfFeature(rightId) === leftId;
 }

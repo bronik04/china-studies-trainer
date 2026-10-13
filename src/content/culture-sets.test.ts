@@ -50,3 +50,18 @@ it('соседи по роду — того же рода', () => {
   expect(sameKindAs(culture)).toContain(culture);
   expect(sameKindAs(culture).length).toBeLessThan(sameKindAs(region).length);
 });
+
+/*
+ * Часть и целое в одном вопросе не встречаются — то же правило, что у
+ * вариантов физической карты. На снимке Трёх ущелий река и есть Янцзы:
+ * вариант «Янцзы» был бы вторым верным ответом.
+ */
+it('участок и его река не отвлекают друг от друга', () => {
+  const gorges = collections.find((item) => item.id === 'feature-three-gorges')!;
+  const yangtze = collections.find((item) => item.id === 'feature-yangtze')!;
+
+  expect(gorges.photos.length).toBeGreaterThan(0);
+  expect(sameKindAs(gorges)).not.toContain(yangtze);
+  expect(sameKindAs(yangtze)).not.toContain(gorges);
+  expect(sameKindAs(yangtze)).toContain(yangtze);
+});

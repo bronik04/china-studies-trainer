@@ -350,7 +350,7 @@ it('запускает раунд по физической географии �
   await settle();
 
   // Без выбора берётся первый набор — реки и формы, двенадцать целей.
-  expect(screen.getByText(/Вопрос 1 из 19/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 20/)).toBeInTheDocument();
 });
 
 it('набор перед стартом задаёт длину физического раунда', async () => {
@@ -361,7 +361,7 @@ it('набор перед стартом задаёт длину физичес�
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();
 
-  expect(screen.getByText(/Вопрос 1 из 39/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 40/)).toBeInTheDocument();
 });
 
 /** В заполнении по-русски спрошенный регион назван в плашке `fill-target`. */

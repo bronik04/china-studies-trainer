@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { physicalFeatures } from '../content/physical-features';
+import { partOfFeature, physicalFeatures } from '../content/physical-features';
 import { regions } from '../content/regions';
 import { lakeMarks } from './lake-marks';
 import { pointMarks } from './point-marks';
@@ -8,7 +8,7 @@ import {
   MARINE_SHAPES,
   POINT_MARKS,
   RELIEF_SHAPES,
-  RIVER_LINES,
+  WATER_LINES,
 } from './physical-geometry';
 import { RELIEF_BANDS } from './relief-bands';
 import {
@@ -345,8 +345,20 @@ export function PhysicalLayer({
         кончается на государственной границе, и так физические карты и рисуют.
       */}
       <g className="rivers">
-        {RIVER_LINES.map((line) => {
+        {WATER_LINES.map((line) => {
           const label = NAME_OF.get(line.featureId) ?? line.featureId;
+          /*
+           * Участок реки берёт состояние своей реки: он нарисован поверх неё и
+           * своим обычным штрихом вырезал бы из подсвеченной линии бледную
+           * выемку — ровно там, о чём вопрос.
+           */
+          const whole = partOfFeature(line.featureId);
+          const selected =
+            line.featureId === selectedFeatureId || whole === selectedFeatureId;
+          const hoveredLine = line.featureId === hovered || whole === hovered;
+          const outcome =
+            featureOutcomes[line.featureId] ??
+            (whole === undefined ? undefined : featureOutcomes[whole]);
 
           return (
             <g key={line.featureId} className="river">
@@ -354,9 +366,9 @@ export function PhysicalLayer({
                 className="river-line"
                 d={line.d}
                 data-feature-id={line.featureId}
-                data-selected={line.featureId === selectedFeatureId}
-                data-hovered={line.featureId === hovered}
-                data-outcome={featureOutcomes[line.featureId]}
+                data-selected={selected}
+                data-hovered={hoveredLine}
+                data-outcome={outcome}
                 role={onSelect ? 'button' : undefined}
                 aria-label={label}
                 tabIndex={onSelect ? 0 : -1}

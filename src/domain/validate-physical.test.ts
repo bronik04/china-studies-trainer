@@ -20,7 +20,7 @@ const river: PhysicalFeature = {
 describe('validatePhysicalFeatures', () => {
   it('принимает настоящий справочник', () => {
     expect(() =>
-      validatePhysicalFeatures(physicalFeatures, regions, sources, { expectedCount: 39 }),
+      validatePhysicalFeatures(physicalFeatures, regions, sources, { expectedCount: 40 }),
     ).not.toThrow();
   });
 
