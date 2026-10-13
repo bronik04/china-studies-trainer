@@ -2,6 +2,14 @@ import react from '@vitejs/plugin-react';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  /*
+   * Проектный сайт GitHub Pages живёт не в корне домена, а в подкаталоге с
+   * именем репозитория. Путь задан безусловно, а не только на сборке: иначе
+   * разработка шла бы в корне, и адрес, записанный от корня, ломался бы
+   * только после выкладки. Сервер разработки отдаёт приложение по
+   * localhost:5173/china-studies-trainer/ и перебрасывает туда с корня.
+   */
+  base: '/china-studies-trainer/',
   plugins: [react()],
   /*
    * Порт берётся из окружения, когда он назначен снаружи (предпросмотр

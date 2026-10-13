@@ -19,9 +19,13 @@ import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-/* Только ASCII: заголовок запроса кириллицу не принимает. */
+/*
+ * Только ASCII: заголовок запроса кириллицу не принимает. Связь — адрес
+ * репозитория: правила Викисклада просят способ связаться, а личная почта в
+ * открытом коде ни к чему.
+ */
 const AGENT =
-  'china-studies-trainer/0.3.0 (educational, not distributed; bronik004@gmail.com)';
+  'china-studies-trainer/0.3.0 (educational; https://github.com/bronik04/china-studies-trainer)';
 const API = 'https://commons.wikimedia.org/w/api.php';
 const OUTPUT_DIR = 'public/photos';
 const CREDITS_FILE = 'src/content/photo-credits.ts';

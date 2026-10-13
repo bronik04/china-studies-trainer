@@ -1,6 +1,6 @@
 import type { CollectionPhoto } from '../content/collections';
 import { PHOTO_CREDITS } from '../content/photo-credits';
-import { photoSource } from './photo-source';
+import { photoSource, photoSourceSet } from './photo-source';
 import { PhotoSlot } from './PhotoSlot';
 
 /**
@@ -69,9 +69,7 @@ export function CollectionImage({
       decoding="async"
       sizes={sizes}
       src={photoSource(photo.id) ?? ''}
-      srcSet={credit.widths
-        .map((width) => `/photos/${photo.id}-${width}.webp ${width}w`)
-        .join(', ')}
+      srcSet={photoSourceSet(photo.id) ?? ''}
     />
   );
 
