@@ -2,6 +2,8 @@
 
 [![Проверки](https://github.com/bronik04/china-studies-trainer/actions/workflows/checks.yml/badge.svg)](https://github.com/bronik04/china-studies-trainer/actions/workflows/checks.yml)
 
+**Приложение:** https://bronik04.github.io/china-studies-trainer/
+
 Стартовый комплект документации для веб-приложения, которое помогает школьникам изучать страноведение Китая: административное деление, города, географию, историю и культуру.
 
 ## Что входит в MVP
