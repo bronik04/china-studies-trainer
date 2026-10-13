@@ -46,6 +46,29 @@ describe('assembleCanal', () => {
     expect(total).toBe(62);
   });
 
+  /*
+   * Вырожденный кусок лежит и в пуле, и в остатке на каждом проходе: счёт
+   * разностью его не теряет и не задваивает — он один раз уходит в обрывки.
+   */
+  it('считает вырожденные куски вперемешку с цепями один раз', () => {
+    const { parts, dropped, total } = assembleCanal(
+      [run(0, 10), [[40, 40]] as Point[], run(0.9, 10), [[41, 41]] as Point[]],
+      LIMITS,
+    );
+
+    expect(parts).toHaveLength(1);
+    expect(parts[0]).toHaveLength(19);
+    expect(total).toBe(22);
+    expect(dropped).toBe(2);
+  });
+
+  it('отдаёт части от длинной к короткой', () => {
+    /* Короткая цепь идёт первой во входе, но в ответе — второй. */
+    const { parts } = assembleCanal([run(0, 5), run(0.5, 20)], LIMITS);
+
+    expect(parts.map((part) => part.length)).toEqual([20, 5]);
+  });
+
   it('падает, если разрыв между цепями больше предела', () => {
     expect(() => assembleCanal([run(0, 10), run(2, 10)], LIMITS)).toThrow(
       /разрыв/,

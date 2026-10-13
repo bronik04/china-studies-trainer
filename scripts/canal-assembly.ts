@@ -96,13 +96,13 @@ export function assembleCanal(
 
   if (dropped > total * limits.maxDroppedShare) {
     throw new Error(
-      `Канал не собирается: в обрывки ушло ${dropped} точек из ${total}`,
+      `Канал не собирается: в обрывки ушло слишком много точек — ${dropped} из ${total}`,
     );
   }
 
   if (parts.length > limits.maxParts) {
     throw new Error(
-      `Канал распался на ${parts.length} цепей при пределе ${limits.maxParts}`,
+      `Канал распался на части: цепей ${parts.length} при пределе ${limits.maxParts}`,
     );
   }
 

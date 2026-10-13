@@ -169,3 +169,13 @@ it('знак Хунцзэху канал не перехватывает', () =>
 
   expect(physicalTargetAt(hongze.hitX, hongze.hitY, 1)).toBe('hongze');
 });
+
+/*
+ * Канал идёт и мимо Тайху: знак озера на опорном масштабе накрывает около
+ * десятой доли его длины, и правило «озеро побеждает линию» обязано держаться.
+ */
+it('знак Тайху канал не перехватывает', () => {
+  const taihu = lakeMarks(1).find((mark) => mark.featureId === 'taihu')!;
+
+  expect(physicalTargetAt(taihu.hitX, taihu.hitY, 1)).toBe('taihu');
+});

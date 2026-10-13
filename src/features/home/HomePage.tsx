@@ -124,7 +124,7 @@ const LANDMARK_SET_ORDER: readonly LandmarkSet[] = [
 ];
 
 const PHYSICAL_SETS: readonly (readonly [PhysicalSet, string])[] = [
-  ['base', 'Реки и формы'],
+  ['base', 'Реки, канал и формы'],
   ['ranges', 'И хребты'],
   ['all', 'И озёра, точки и моря'],
 ];
