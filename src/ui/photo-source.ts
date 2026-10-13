@@ -5,7 +5,7 @@ import { PHOTO_CREDITS } from '../content/photo-credits';
  * собирается по частям: базовый путь сайта живёт здесь и больше нигде.
  */
 function photoFile(photoId: string, width: number): string {
-  return `/photos/${photoId}-${width}.webp`;
+  return `${import.meta.env.BASE_URL}photos/${photoId}-${width}.webp`;
 }
 
 /**
