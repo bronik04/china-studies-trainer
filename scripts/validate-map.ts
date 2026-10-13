@@ -279,6 +279,7 @@ console.info(
 const expectedFingerprint = physicalInputsFingerprint(
   physicalFeatures,
   readFileSync(new URL('data/physical-source.json', import.meta.url), 'utf8'),
+  readFileSync(new URL('data/canal-source.json', import.meta.url), 'utf8'),
 );
 if (expectedFingerprint !== INPUTS_FINGERPRINT) {
   throw new Error(

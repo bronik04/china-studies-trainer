@@ -149,7 +149,8 @@ export type PhysicalKind =
   | 'lake'
   | 'point'
   | 'marine'
-  | 'gorge';
+  | 'gorge'
+  | 'canal';
 
 type PhysicalCommon = {
   readonly id: string;
@@ -233,5 +234,14 @@ export type PhysicalFeature = PhysicalCommon &
          * она.
          */
         readonly partOf: string;
+      }
+    | {
+        /*
+         * Своих полей у канала нет: линия приходит из OpenStreetMap по номеру
+         * отношения, а номер живёт во входах генератора
+         * (`scripts/data/canal-relations.ts`), как концы ущелий, — справочник
+         * не знает, откуда берётся геометрия.
+         */
+        readonly kind: 'canal';
       }
   );

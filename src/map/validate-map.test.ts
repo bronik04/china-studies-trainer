@@ -360,6 +360,51 @@ describe('validatePhysicalGeometry', () => {
     ).toThrow(/показать однозначно|свободн/i);
   });
 
+  /* Канал лежит в том же наборе линий, что реки, и проверяется теми же правилами. */
+  const canal: PhysicalFeature = {
+    id: 'straight-canal',
+    kind: 'canal',
+    nameRu: 'Прямой канал',
+    nameZh: '直运河',
+    pinyin: 'Zhí Yùnhé',
+    regionIds: ['qinghai'],
+    facts: [],
+    sourceIds: [],
+  };
+
+  it('принимает канал, лежащий в заявленном регионе', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [canal],
+        physicalGeometry({ rivers: new Map([['straight-canal', [line]]]) }),
+        shapes,
+      ),
+    ).not.toThrow();
+  });
+
+  it('ловит канал, идущий вдоль реки всей длиной', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [river, canal],
+        physicalGeometry({
+          rivers: new Map([
+            ['straight-river', [line]],
+            [
+              'straight-canal',
+              [
+                [
+                  [10, 12],
+                  [90, 12],
+                ] as Point[],
+              ],
+            ],
+          ]),
+        }),
+        shapes,
+      ),
+    ).toThrow(/показать однозначно|свободн/i);
+  });
+
   /* Форма-квадрат: подпись у неё проверяется тем же правилом, что у настоящей. */
   const plateau: PhysicalFeature = {
     id: 'square-plateau',

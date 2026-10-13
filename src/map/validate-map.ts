@@ -496,6 +496,14 @@ export function validatePhysicalGeometry(
       return geometry.rivers.get(feature.id);
     }
 
+    /*
+     * Канал лежит в том же наборе линий, что реки: рисуется тем же пером и
+     * попадает в цель так же. Рамка и заявленные регионы достаются ему даром.
+     */
+    if (feature.kind === 'canal') {
+      return geometry.rivers.get(feature.id);
+    }
+
     return geometry.landforms.get(feature.id);
   };
 
@@ -720,11 +728,13 @@ export function validatePhysicalGeometry(
 
   /*
    * Свободная доля считается по всем рекам сразу: «свободна» — значит, что
-   * ближайшая точка любой другой реки дальше половины ленты.
+   * ближайшая точка любой другой реки дальше половины ленты. Канал считается
+   * наравне с реками: он пересекает Янцзы и Хуанхэ, и ни ему, ни им нельзя
+   * потерять место для однозначного нажатия.
    */
   const riverPoints = new Map(
     features
-      .filter((feature) => feature.kind === 'river')
+      .filter((feature) => feature.kind === 'river' || feature.kind === 'canal')
       .map((feature) => [feature.id, (geometry.rivers.get(feature.id) ?? []).flat()]),
   );
 

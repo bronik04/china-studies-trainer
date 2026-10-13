@@ -56,6 +56,11 @@ const sourceJson = readFileSync(
   new URL('data/physical-source.json', import.meta.url),
   'utf8',
 );
+/* Выжимка канала — отдельный файл под ODbL (`scripts/extract-canal-source.ts`). */
+const canalSourceJson = readFileSync(
+  new URL('data/canal-source.json', import.meta.url),
+  'utf8',
+);
 const source = JSON.parse(sourceJson) as {
   rivers: { rivernum: number; parts: [number, number][][] }[];
   landforms: { key: string; nameRu: string; nameZh: string; rings: [number, number][][] }[];
@@ -458,7 +463,11 @@ const marine = marineShapes.map((shape) => ({
 const quote = (value: string) =>
   `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 
-const fingerprint = physicalInputsFingerprint(physicalFeatures, sourceJson);
+const fingerprint = physicalInputsFingerprint(
+  physicalFeatures,
+  sourceJson,
+  canalSourceJson,
+);
 
 const module = `/**
  * СГЕНЕРИРОВАННЫЙ ФАЙЛ. Не править руками.

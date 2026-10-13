@@ -33,6 +33,7 @@ export const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
   point: 'Крайняя точка',
   marine: 'Море',
   gorge: 'Ущелье',
+  canal: 'Канал',
 };
 
 /**

@@ -389,6 +389,12 @@ export function validatePhysicalFeatures(
           `Участок ${feature.id} назвал рекой ${feature.partOf}, а такой реки в справочнике нет`,
         );
       }
+    } else if (feature.kind === 'canal') {
+      /*
+       * Своих полей у канала нет: геометрия приходит по номеру отношения OSM
+       * из входов генератора, и проверяет её `validate:map`. Ветка нужна,
+       * чтобы канал не дошёл до проверки ступени, которой у него нет.
+       */
     } else if (![1, 2, 3].includes(feature.step)) {
       errors.push(`Ступень рельефа у ${feature.id} вне 1..3: ${feature.step}`);
     }
