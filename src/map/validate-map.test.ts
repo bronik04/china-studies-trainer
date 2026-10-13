@@ -360,6 +360,97 @@ describe('validatePhysicalGeometry', () => {
     ).toThrow(/показать однозначно|свободн/i);
   });
 
+  /* Канал лежит в том же наборе линий, что реки, и проверяется теми же правилами. */
+  const canal: PhysicalFeature = {
+    id: 'straight-canal',
+    kind: 'canal',
+    nameRu: 'Прямой канал',
+    nameZh: '直运河',
+    pinyin: 'Zhí Yùnhé',
+    regionIds: ['qinghai'],
+    facts: [],
+    sourceIds: [],
+  };
+
+  it('принимает канал, лежащий в заявленном регионе', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [canal],
+        physicalGeometry({ rivers: new Map([['straight-canal', [line]]]) }),
+        shapes,
+      ),
+    ).not.toThrow();
+  });
+
+  /*
+   * Свободная доля — доля длины, а не доля вершин. У канала вершин мало, и
+   * гуще всего они на изгибах у переправы: четыре из шести вершин ниже стоят
+   * у реки, а по длине у реки лишь шестая часть линии. Река тоже густа у
+   * пересечения — как настоящая, у которой вершины идут через доли единицы.
+   */
+  it('мерит свободную долю по длине, а не по вершинам', () => {
+    const crossing: PhysicalFeature = { ...river, id: 'crossing-river', riverNums: [3] };
+
+    expect(() =>
+      validatePhysicalGeometry(
+        [canal, crossing],
+        physicalGeometry({
+          rivers: new Map([
+            [
+              'straight-canal',
+              [
+                [
+                  [0, 50],
+                  [60, 50],
+                  [62, 50],
+                  [64, 50],
+                  [66, 50],
+                  [100, 50],
+                ] as Point[],
+              ],
+            ],
+            [
+              'crossing-river',
+              [
+                [
+                  [63, 0],
+                  [63, 48],
+                  [63, 50],
+                  [63, 52],
+                  [63, 100],
+                ] as Point[],
+              ],
+            ],
+          ]),
+        }),
+        shapes,
+      ),
+    ).not.toThrow();
+  });
+
+  it('ловит канал, идущий вдоль реки всей длиной', () => {
+    expect(() =>
+      validatePhysicalGeometry(
+        [river, canal],
+        physicalGeometry({
+          rivers: new Map([
+            ['straight-river', [line]],
+            [
+              'straight-canal',
+              [
+                [
+                  [10, 12],
+                  [90, 12],
+                ] as Point[],
+              ],
+            ],
+          ]),
+        }),
+        shapes,
+      ),
+    ).toThrow(/показать однозначно|свободн/i);
+  });
+
   /* Форма-квадрат: подпись у неё проверяется тем же правилом, что у настоящей. */
   const plateau: PhysicalFeature = {
     id: 'square-plateau',

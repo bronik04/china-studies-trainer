@@ -474,6 +474,12 @@ const FEATURE_PHOTOS: Readonly<Record<string, CollectionPhoto>> = {
     captionRu: 'Пустынное шоссе пересекает Тарим',
     place: 'Синьцзян',
   },
+  'grand-canal': {
+    id: 'feature-grand-canal',
+    subject: 'канал в городе',
+    captionRu: 'Великий канал с моста Гунчэнь',
+    place: 'Ханчжоу, Чжэцзян',
+  },
   'tibetan-plateau': {
     id: 'feature-tibetan-plateau',
     subject: 'нагорье',

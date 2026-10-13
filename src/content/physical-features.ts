@@ -33,6 +33,7 @@ export const PHYSICAL_KIND_LABELS: Readonly<Record<PhysicalKind, string>> = {
   point: 'Крайняя точка',
   marine: 'Море',
   gorge: 'Ущелье',
+  canal: 'Канал',
 };
 
 /**
@@ -72,6 +73,7 @@ const LANDFORMS = ['natural-earth-geography-regions-5.1.2'] as const;
 const LAKES = ['natural-earth-lakes-5.1.2'] as const;
 const POINTS = ['natural-earth-elevation-points-5.1.2'] as const;
 const MARINE = ['natural-earth-marine-polys-5.1.2'] as const;
+const CANALS = ['openstreetmap-grand-canal'] as const;
 
 function river(
   id: string,
@@ -926,6 +928,24 @@ const threeGorgesFacts: readonly Fact[] = [
   },
 ];
 
+const grandCanalFacts: readonly Fact[] = [
+  {
+    title: 'Самый длинный и самый древний',
+    body: 'Канал идёт от Пекина на севере до провинции Чжэцзян на юге. ЮНЕСКО называет его самым длинным и самым древним каналом в мире.',
+    sourceIds: ['unesco-grand-canal-1443'],
+  },
+  {
+    title: 'Дорога для зерна',
+    body: 'По каналу везли зерно и стратегическое сырьё, а также рис, чтобы кормить население: он был главной внутренней дорогой империи.',
+    sourceIds: ['unesco-grand-canal-1443'],
+  },
+  {
+    title: 'Строили веками',
+    body: 'Первые участки прорыли ещё в V веке до н. э., а в VII веке, при династии Суй, их впервые задумали как единый путь. К XIII веку в сети было больше двух тысяч километров рукотворных путей, и она связала пять речных бассейнов, среди них Хуанхэ и Янцзы.',
+    sourceIds: ['unesco-grand-canal-1443'],
+  },
+];
+
 const FACTS: Readonly<Record<string, readonly Fact[]>> = {
   'three-gorges': threeGorgesFacts,
   yangtze: yangtzeFacts,
@@ -934,6 +954,7 @@ const FACTS: Readonly<Record<string, readonly Fact[]>> = {
   'pearl-river': pearlRiverFacts,
   lancang: lancangFacts,
   tarim: tarimFacts,
+  'grand-canal': grandCanalFacts,
   'tibetan-plateau': tibetanPlateauFacts,
   'tarim-basin': tarimBasinFacts,
   'loess-plateau': loessPlateauFacts,
@@ -1019,6 +1040,21 @@ export const physicalFeatures: readonly PhysicalFeature[] = [
     'yunnan',
   ]),
   river('tarim', 'Тарим', '塔里木河', 'Tǎlǐmù Hé', [242, 349], ['xinjiang']),
+  /*
+   * Канал стоит за реками: он линия, нарисованная тем же пером, и читать
+   * справочник проще, когда линии рядом. Геометрия — из OpenStreetMap по
+   * номеру отношения во входах генератора (`scripts/data/canal-relations.ts`).
+   */
+  {
+    id: 'grand-canal',
+    kind: 'canal',
+    nameRu: 'Великий канал',
+    nameZh: '京杭大运河',
+    pinyin: 'Jīng-Háng Dà Yùnhé',
+    regionIds: ['beijing', 'tianjin', 'hebei', 'shandong', 'jiangsu', 'zhejiang'],
+    facts: FACTS['grand-canal'] ?? [],
+    sourceIds: CANALS,
+  },
 
   landform(
     'tibetan-plateau',

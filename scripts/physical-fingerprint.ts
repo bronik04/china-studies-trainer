@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { PhysicalFeature } from '../src/content/types';
 import { RELIEF_STEPS, SHAPE_FEATURE_IDS } from './data/relief-steps';
 import { GORGE_ENDPOINTS } from './data/gorge-endpoints';
+import { CANAL_RELATIONS } from './data/canal-relations';
 
 /**
  * Отпечаток входов генератора геометрии.
@@ -14,13 +15,14 @@ import { GORGE_ENDPOINTS } from './data/gorge-endpoints';
  *
  * В отпечаток входит всё, что меняет результат: состав целей и номера
  * отрезков, номера озёр, разметка ступеней, привязка форм к целям, концы
- * участков-ущелий и сама выжимка. Порядок
- * ключей фиксируется сортировкой — иначе отпечаток менялся бы от перестановки
- * строк в справочнике, ничего не меняя по существу.
+ * участков-ущелий, номер отношения канала, выжимка Natural Earth и выжимка
+ * OpenStreetMap. Порядок ключей фиксируется сортировкой — иначе отпечаток
+ * менялся бы от перестановки строк в справочнике, ничего не меняя по существу.
  */
 export function physicalInputsFingerprint(
   features: readonly PhysicalFeature[],
   sourceJson: string,
+  canalJson: string,
 ): string {
   const catalog = features
     .map((feature) => {
@@ -44,6 +46,10 @@ export function physicalInputsFingerprint(
         return `gorge:${feature.id}:${feature.partOf}`;
       }
 
+      if (feature.kind === 'canal') {
+        return `canal:${feature.id}`;
+      }
+
       return `landform:${feature.id}:${feature.step}`;
     })
     .sort();
@@ -65,8 +71,20 @@ export function physicalInputsFingerprint(
     .map(([id, at]) => `${id}=${at.from.join(',')}>${at.to.join(',')}`)
     .sort();
 
+  /*
+   * Номер отношения и выжимка канала — входы того же рода, что номера отрезков
+   * реки и выжимка Natural Earth.
+   */
+  const relations = Object.entries(CANAL_RELATIONS)
+    .map(([id, relation]) => `${id}=${relation}`)
+    .sort();
+
   return createHash('sha256')
-    .update([...catalog, ...steps, ...targets, ...ends, sourceJson].join('\n'))
+    .update(
+      [...catalog, ...steps, ...targets, ...ends, ...relations, sourceJson, canalJson].join(
+        '\n',
+      ),
+    )
     .digest('hex')
     .slice(0, 16);
 }

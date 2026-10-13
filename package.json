@@ -13,6 +13,7 @@
     "generate:neighbours": "tsx scripts/generate-region-neighbours.ts",
     "generate:hit-targets": "tsx scripts/generate-hit-targets.ts",
     "generate:fonts": "tsx scripts/generate-fonts.ts",
+    "extract:canal": "tsx scripts/extract-canal-source.ts",
     "extract:physical": "tsx scripts/extract-physical-source.ts",
     "extract:countries": "tsx scripts/extract-countries-source.ts",
     "extract:relief": "tsx scripts/extract-relief-source.ts",

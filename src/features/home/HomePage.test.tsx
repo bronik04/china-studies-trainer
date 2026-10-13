@@ -460,3 +460,21 @@ it('запускает игру про страны с главной', () => {
 
   expect(onStartCountryRound).toHaveBeenCalledWith('find-on-map', 'ru');
 });
+
+/*
+ * Линию Великого канала ученик видит и в раундах, а не только в атласе, где
+ * под картой стоит `MapAttribution`. ODbL требует, чтобы указание авторства
+ * доходило до того, кто видит карту, — главная с её «Источниками» и есть
+ * общая для всех раундов точка входа.
+ */
+it('в источниках названо авторство OpenStreetMap и лицензия ODbL', () => {
+  renderHome();
+
+  expect(
+    screen.getByRole('link', { name: 'участники OpenStreetMap' }),
+  ).toHaveAttribute('href', 'https://www.openstreetmap.org/copyright');
+  expect(screen.getByRole('link', { name: 'ODbL' })).toHaveAttribute(
+    'href',
+    'https://opendatacommons.org/licenses/odbl/1-0/',
+  );
+});

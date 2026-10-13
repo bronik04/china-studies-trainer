@@ -150,3 +150,32 @@ it('сразу за концом участка Янцзы снова стано
   expect(Math.hypot(beyond[0] - east[0], beyond[1] - east[1])).toBeLessThan(12);
   expect(physicalTargetAt(beyond[0], beyond[1], 1)).toBe('yangtze');
 });
+
+/*
+ * Канал попадает в цель так же, как река: средняя вершина северной части
+ * далека и от Хуанхэ, и от озёр.
+ */
+it('нажатие по каналу достаётся каналу', () => {
+  const canal = WATER_LINES.find((line) => line.featureId === 'grand-canal')!;
+  const north = parseMapPath(canal.d)[0];
+  const [x, y] = north[Math.floor(north.length / 2)];
+
+  expect(physicalTargetAt(x, y, 1)).toBe('grand-canal');
+});
+
+/* Канал идёт восточным берегом Хунцзэху, но знак озера по-прежнему его. */
+it('знак Хунцзэху канал не перехватывает', () => {
+  const hongze = lakeMarks(1).find((mark) => mark.featureId === 'hongze')!;
+
+  expect(physicalTargetAt(hongze.hitX, hongze.hitY, 1)).toBe('hongze');
+});
+
+/*
+ * Канал идёт и мимо Тайху: знак озера на опорном масштабе накрывает около
+ * десятой доли его длины, и правило «озеро побеждает линию» обязано держаться.
+ */
+it('знак Тайху канал не перехватывает', () => {
+  const taihu = lakeMarks(1).find((mark) => mark.featureId === 'taihu')!;
+
+  expect(physicalTargetAt(taihu.hitX, taihu.hitY, 1)).toBe('taihu');
+});

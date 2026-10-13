@@ -103,6 +103,15 @@
 - Оригинал: 1218×954
 - Ширины в репозитории: 1200, 640
 
+## feature-grand-canal
+
+- Файл: 20231122 Grand Canal from Gongchen Bridge.jpg
+- Автор: Windmemories
+- Лицензия: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0)
+- Страница: https://commons.wikimedia.org/wiki/File:20231122_Grand_Canal_from_Gongchen_Bridge.jpg
+- Оригинал: 1800×1200
+- Ширины в репозитории: 1200, 640
+
 ## feature-greater-khingan
 
 - Файл: Yalu river (nonni river tributary) in Greater Khingan range, Manchuria, China.JPG

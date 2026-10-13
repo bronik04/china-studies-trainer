@@ -50,10 +50,10 @@ function openAnswerList() {
   }
 }
 
-it('спрашивает тридцать девять объектов подряд', () => {
+it('спрашивает все объекты подряд', () => {
   renderRound('find-on-map');
 
-  expect(screen.getByText(/Вопрос 1 из 40/)).toBeInTheDocument();
+  expect(screen.getByText(/Вопрос 1 из 41/)).toBeInTheDocument();
 });
 
 it('в «найти» вопрос называет объект, а карта его не подписывает', () => {
@@ -73,11 +73,17 @@ it('в «назвать» даёт четыре имени того же вид�
   renderRound('name-target');
 
   const options = screen.getAllByTestId('choice-option');
-  const kinds = options.map(
-    (option) =>
-      physicalFeatures.find((feature) => feature.id === option.dataset.choiceId)!
-        .kind,
-  );
+  /*
+   * «Того же вида» — одной семьи, а не одного рода: река, её участок и канал
+   * нарисованы одним пером, и линию отвлекают линии.
+   */
+  const kinds = options.map((option) => {
+    const kind = physicalFeatures.find(
+      (feature) => feature.id === option.dataset.choiceId,
+    )!.kind;
+
+    return kind === 'gorge' || kind === 'canal' ? 'river' : kind;
+  });
 
   expect(options).toHaveLength(4);
   expect(new Set(kinds).size).toBe(1);
@@ -186,15 +192,15 @@ it('на 320 px список отвечает за все тридцать де�
   openAnswerList();
   const list = screen.getByRole('list', { name: 'Список объектов' });
 
-  expect(within(list).getAllByRole('button')).toHaveLength(40);
+  expect(within(list).getAllByRole('button')).toHaveLength(41);
 });
 
 it('каждый набор спрашивает свои цели ровно по разу', () => {
   for (const [set, length] of [
-    /* Ущелья входят с первого набора: они рядом со своей рекой. */
-    ['base', 20],
-    ['ranges', 27],
-    ['all', 40],
+    /* Ущелья входят с первого набора: они рядом со своей рекой. Канал — тоже: он линия, как реки. */
+    ['base', 21],
+    ['ranges', 28],
+    ['all', 41],
   ] as const) {
     const pool = physicalFeaturesUpTo(set);
     const round = createRound(

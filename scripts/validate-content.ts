@@ -16,7 +16,7 @@ import {
 
 validateCatalog(regions, sources, { expectedRegionCount: 34 });
 validateCities(cities, regions, sources);
-validatePhysicalFeatures(physicalFeatures, regions, sources, { expectedCount: 40 });
+validatePhysicalFeatures(physicalFeatures, regions, sources, { expectedCount: 41 });
 validateCollections(collections, sources);
 validateDynasties(dynasties, dynastyCapitals, rulers, cities, sources);
 console.info(

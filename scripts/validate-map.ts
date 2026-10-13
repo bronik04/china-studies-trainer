@@ -279,6 +279,7 @@ console.info(
 const expectedFingerprint = physicalInputsFingerprint(
   physicalFeatures,
   readFileSync(new URL('data/physical-source.json', import.meta.url), 'utf8'),
+  readFileSync(new URL('data/canal-source.json', import.meta.url), 'utf8'),
 );
 if (expectedFingerprint !== INPUTS_FINGERPRINT) {
   throw new Error(
@@ -513,8 +514,8 @@ for (const gorge of gorges) {
 
 console.info(
   `Проверено физических целей: ${physicalFeatures.length}, из них участков рек: ${gorges.length}. ` +
-    `Форм на подложке: ${RELIEF_SHAPES.length}. Свободная длина рек: ` +
+    `Форм на подложке: ${RELIEF_SHAPES.length}. Свободная длина линий: ` +
     [...physical.freeShare]
-      .map(([id, share]) => `${id} ${(100 * share).toFixed(0)} %`)
+      .map(([id, share]) => `${id} ${(100 * share).toFixed(1)} %`)
       .join(', '),
 );

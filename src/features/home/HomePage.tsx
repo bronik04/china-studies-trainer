@@ -124,7 +124,7 @@ const LANDMARK_SET_ORDER: readonly LandmarkSet[] = [
 ];
 
 const PHYSICAL_SETS: readonly (readonly [PhysicalSet, string])[] = [
-  ['base', 'Реки и формы'],
+  ['base', 'Реки, канал и формы'],
   ['ranges', 'И хребты'],
   ['all', 'И озёра, точки и моря'],
 ];
@@ -540,6 +540,14 @@ export function HomePage({
               Контур Тайваня:{' '}
               <a href="https://github.com/antvis/china-geojson">china-geojson</a>{' '}
               (AntV).
+            </li>
+            <li>
+              Линия Великого канала: ©{' '}
+              <a href="https://www.openstreetmap.org/copyright">
+                участники OpenStreetMap
+              </a>
+              ,{' '}
+              <a href="https://opendatacommons.org/licenses/odbl/1-0/">ODbL</a>.
             </li>
           </ul>
         </div>

@@ -92,6 +92,13 @@ export const PHOTO_CREDITS: Readonly<Record<string, PhotoCredit>> = {
     page: "https://commons.wikimedia.org/wiki/File:Sandduenen_in_der_Gobi.jpg",
     widths: [1200, 640],
   },
+  'feature-grand-canal': {
+    author: "Windmemories",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    page: "https://commons.wikimedia.org/wiki/File:20231122_Grand_Canal_from_Gongchen_Bridge.jpg",
+    widths: [1200, 640],
+  },
   'feature-greater-khingan': {
     author: "Heteroscedasticity",
     license: "CC BY-SA 3.0",

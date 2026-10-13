@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { cityById } from '../src/content/cities';
 import { WATER_LINES } from '../src/map/physical-geometry';
 import { distanceToPolylines } from '../src/map/polyline';
 import { projectLonLat } from '../src/map/projection';
@@ -61,4 +62,30 @@ it('концы отрезка стоят там, где названы коор�
     /* Полторы единицы — около десяти километров: генерализация линии. */
     expect(nearest).toBeLessThan(1.5);
   }
+});
+
+/*
+ * Канал рвётся у Хуанхэ: в OpenStreetMap у него нет звеньев через реку, и
+ * линия состоит из северной и южной частей. Третья часть значила бы, что
+ * выжимка уже другая, — это ловит и генератор, но здесь закреплено, что
+ * получилось на карте.
+ */
+it('канал нарисован двумя частями и доходит от Пекина до Ханчжоу', () => {
+  const canal = WATER_LINES.find((line) => line.featureId === 'grand-canal');
+
+  expect(canal).toBeDefined();
+
+  const parts = parseMapPath(canal!.d);
+  const ends = parts.flatMap((part) => [part[0], part[part.length - 1]]);
+  const nearest = (lon: number, lat: number) => {
+    const [x, y] = projectLonLat(lon, lat);
+
+    return Math.min(...ends.map(([ex, ey]) => Math.hypot(ex - x, ey - y)));
+  };
+  const beijing = cityById('beijing')!;
+  const hangzhou = cityById('hangzhou')!;
+
+  expect(parts).toHaveLength(2);
+  expect(nearest(beijing.lon, beijing.lat)).toBeLessThan(3);
+  expect(nearest(hangzhou.lon, hangzhou.lat)).toBeLessThan(3);
 });

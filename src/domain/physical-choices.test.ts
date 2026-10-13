@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { physicalFeatures } from '../content/physical-features';
+import { physicalFeatures, physicalKindLabel } from '../content/physical-features';
+import type { PhysicalFeature } from '../content/types';
 import { buildPhysicalChoices } from './physical-choices';
 import { createSeededRandom } from './random';
 
@@ -15,7 +16,7 @@ describe('buildPhysicalChoices', () => {
     expect(choices.map((choice) => choice.id)).toContain('yangtze');
   });
 
-  it('реку отвлекает реками', () => {
+  it('реку отвлекает линиями', () => {
     // Если к подсвеченной линии предложить «Гоби», ответ читается по форме
     // подсветки, а не по знанию: линия не может быть пустыней.
     for (const river of physicalFeatures.filter((f) => f.kind === 'river')) {
@@ -25,7 +26,9 @@ describe('buildPhysicalChoices', () => {
         createSeededRandom(2),
       );
 
-      expect(choices.every((choice) => choice.kind === 'river')).toBe(true);
+      expect(
+        choices.every((choice) => ['river', 'gorge', 'canal'].includes(choice.kind)),
+      ).toBe(true);
     }
   });
 
@@ -95,7 +98,7 @@ it('у участка реки четыре варианта, и все — ли
 
   expect(choices).toHaveLength(4);
   for (const choice of choices) {
-    expect(['river', 'gorge']).toContain(choice.kind);
+    expect(['river', 'gorge', 'canal']).toContain(choice.kind);
   }
 });
 
@@ -117,5 +120,51 @@ it('часть и целое не встречаются в одном вопр�
 
       expect(choices.map((choice) => choice.id)).not.toContain(forbidden);
     }
+  }
+});
+
+/*
+ * Канал — линия, нарисованная тем же пером, что река, и отвлекать его должны
+ * линии. Своего рода у него одна цель, и без семьи вариант остался бы один —
+ * он же ответ. Тот же довод, что у ущелий.
+ */
+const testCanal: PhysicalFeature = {
+  id: 'test-canal',
+  kind: 'canal',
+  nameRu: 'Проверочный канал',
+  nameZh: '测试运河',
+  pinyin: 'Cèshì Yùnhé',
+  regionIds: ['jiangsu'],
+  facts: [],
+  sourceIds: [],
+};
+
+it('у канала четыре варианта, и все — линии', () => {
+  const choices = buildPhysicalChoices(
+    [...physicalFeatures, testCanal],
+    'test-canal',
+    createSeededRandom(1),
+  );
+
+  expect(choices).toHaveLength(4);
+  for (const choice of choices) {
+    expect(['river', 'gorge', 'canal']).toContain(choice.kind);
+  }
+});
+
+it('род канала назван словом', () => {
+  expect(physicalKindLabel(testCanal)).toBe('Канал');
+});
+
+it('у настоящего канала варианты — линии', () => {
+  for (let seed = 1; seed <= 10; seed += 1) {
+    const choices = buildPhysicalChoices(
+      physicalFeatures,
+      'grand-canal',
+      createSeededRandom(seed),
+    );
+
+    expect(choices).toHaveLength(4);
+    expect(choices.every((choice) => ['river', 'gorge', 'canal'].includes(choice.kind))).toBe(true);
   }
 });

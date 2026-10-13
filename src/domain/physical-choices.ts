@@ -21,7 +21,9 @@ import { shuffle } from './random';
 type Family = 'line' | 'landform' | 'lake' | 'point' | 'marine';
 
 function familyOf(feature: PhysicalFeature): Family {
-  return feature.kind === 'river' || feature.kind === 'gorge'
+  return feature.kind === 'river' ||
+    feature.kind === 'gorge' ||
+    feature.kind === 'canal'
     ? 'line'
     : feature.kind;
 }
