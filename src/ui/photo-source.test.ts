@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { PHOTO_CREDITS } from '../content/photo-credits';
 import { photoSource, photoSourceSet } from './photo-source';
 
 /*
@@ -14,28 +15,36 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+/*
+ * Снимки берутся из каталога по признаку, а не по имени: ширины пишет
+ * `npm run fetch:photos`, и перекачка с другим оригиналом не должна ронять
+ * тест адресов.
+ */
+const credits = Object.entries(PHOTO_CREDITS);
+const [severalId, several] = credits.find(([, credit]) => credit.widths.length > 1)!;
+const [singleId, single] = credits.find(([, credit]) => credit.widths.length === 1)!;
+
+function file(photoId: string, width: number): string {
+  return `/china-studies-trainer/photos/${photoId}-${width}.webp`;
+}
+
 it('отдаёт самый широкий файл, какой есть', () => {
-  expect(photoSource('badaling')).toBe(
-    '/china-studies-trainer/photos/badaling-1200.webp',
-  );
+  expect(photoSource(severalId)).toBe(file(severalId, Math.max(...several.widths)));
 });
 
 it('обходится единственной шириной, когда другой нет', () => {
-  expect(photoSource('feature-qinghai-lake')).toBe(
-    '/china-studies-trainer/photos/feature-qinghai-lake-640.webp',
-  );
+  expect(photoSource(singleId)).toBe(file(singleId, single.widths[0]));
 });
 
 it('перечисляет в наборе все доступные ширины', () => {
-  expect(photoSourceSet('badaling')).toBe(
-    '/china-studies-trainer/photos/badaling-1200.webp 1200w, ' +
-      '/china-studies-trainer/photos/badaling-640.webp 640w',
+  expect(photoSourceSet(severalId)).toBe(
+    several.widths.map((width) => `${file(severalId, width)} ${width}w`).join(', '),
   );
 });
 
 it('в наборе из одной ширины обходится без запятой', () => {
-  expect(photoSourceSet('feature-qinghai-lake')).toBe(
-    '/china-studies-trainer/photos/feature-qinghai-lake-640.webp 640w',
+  expect(photoSourceSet(singleId)).toBe(
+    `${file(singleId, single.widths[0])} ${single.widths[0]}w`,
   );
 });
 
