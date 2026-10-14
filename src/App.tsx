@@ -65,12 +65,14 @@ import {
   prefetchScreens,
   RoundResultsPage,
 } from './screens';
+import { hasUnaskedTargets } from './features/results/has-unasked';
 import type { Landmark } from './content/landmarks';
 import { landmarksUpTo, type LandmarkSet } from './content/landmark-sets';
 import { countries, type Country } from './content/countries';
 import type { CountryExerciseType } from './features/exercise/exercise-modes';
 import { regionAnswerableLandmarks } from './domain/landmark-pool';
 import { ChinaMap } from './map/ChinaMap';
+import type { ReliefStyle } from './map/ReliefStyleToggle';
 import type { MapZoom } from './map/MapControls';
 import { SiteHeader, type SiteSection } from './ui/SiteHeader';
 
@@ -161,6 +163,12 @@ export default function App() {
   const store = useMemo(() => createProgressStore(), []);
   const [progress, setProgress] = useState(() => store.read());
   const [screen, setScreen] = useState<Screen>('home');
+  /*
+   * Вид рельефа — один на атлас и раунд: выбравший «тушью» в атласе не должен
+   * выбирать его заново в игре. Живёт до перезагрузки: это удобство показа,
+   * а не прогресс, и в хранилище прогресса ему не место.
+   */
+  const [reliefStyle, setReliefStyle] = useState<ReliefStyle>('color');
   const [roundPool, setRoundPool] = useState<readonly Region[]>(regions);
   const [cityPool, setCityPool] = useState<readonly City[]>([]);
   const [landmarkPool, setLandmarkPool] = useState<readonly Landmark[]>([]);
@@ -685,6 +693,8 @@ export default function App() {
           seed={seed}
           onFinish={finishTargetRound}
           onExit={goToModes}
+          reliefStyle={reliefStyle}
+          onReliefStyleChange={setReliefStyle}
         />
       </AppFrame>
     );
@@ -844,6 +854,7 @@ export default function App() {
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
           roundMap={roundMap}
+          hasUnasked={hasUnaskedTargets(lastAttempts, regions)}
           onRepeatMistakes={() => {
             if (isCityRound) {
               setCityPool(repeatCities);
@@ -979,6 +990,8 @@ export default function App() {
           onZoomChange={setZoom}
           onTrain={() => startRound('find-on-map', 'ru', null)}
           onOpenCollection={openCollection}
+          reliefStyle={reliefStyle}
+          onReliefStyleChange={setReliefStyle}
         />
       ) : activeScreen === 'collections' ? (
         <CollectionsPage regions={regions} onOpenCollection={openCollection} />

@@ -55,7 +55,7 @@ const PROGRESS_FILLS = [
 ] as const;
 
 /** Состояния, которые перекрашивают регион целиком. */
-const FILLED_STATES = ['--map-selected', '--map-correct'] as const;
+const FILLED_STATES = ['--map-selected', '--map-asked', '--map-correct'] as const;
 
 function expectAtLeast(
   foreground: string,
@@ -128,8 +128,16 @@ describe('текст', () => {
 });
 
 describe('границы и поверхности', () => {
-  it('бумага отделена от доски', () => {
-    expectAtLeast('--surface-paper', '--surface-ground', GRAPHIC_CONTRAST);
+  /*
+   * Доска с редизайна «Тушь и киноварь» сама бумажная (DECISIONS.md,
+   * 2026-10-14), и контраста поверхностей между ней и бумагой больше нет и не
+   * должно быть. Панель от фона отделяет линия тушью — она и проверяется на
+   * каждой из трёх бумаг, между которыми проходит.
+   */
+  it('панели на бумажной доске очерчены линией тушью', () => {
+    for (const surface of ['--surface-ground', '--surface-raised', '--surface-paper']) {
+      expectAtLeast('--line-on-ground', surface, GRAPHIC_CONTRAST);
+    }
   });
 
   it('линия на бумаге видна', () => {
@@ -224,15 +232,26 @@ describe('границы и поверхности', () => {
         color('--focus-on-paper'),
         color(surface),
       );
-      const onGround = contrastRatioRounded(
-        color('--focus-on-ground'),
+      const onDark = contrastRatioRounded(
+        color('--focus-on-dark'),
         color(surface),
       );
 
       expect(
-        Math.max(onPaper, onGround),
-        `фокус на ${surface} (${color(surface)}): тушь ${onPaper}:1, золото ${onGround}:1`,
+        Math.max(onPaper, onDark),
+        `фокус на ${surface} (${color(surface)}): тушь ${onPaper}:1, бумага ${onDark}:1`,
       ).toBeGreaterThanOrEqual(GRAPHIC_CONTRAST);
+    }
+  });
+
+  /*
+   * Тёмные заливки карты получают кольцо бумагой — правило в styles.css рядом
+   * с `data-answer-state='correct'`. Прежде здесь засчитывалось золото, которым
+   * карта фокус не рисовала.
+   */
+  it('кольцо фокуса на тёмной заливке карты рисуется бумагой', () => {
+    for (const state of FILLED_STATES) {
+      expectAtLeast('--focus-on-dark', state, GRAPHIC_CONTRAST);
     }
   });
 
@@ -242,9 +261,38 @@ describe('границы и поверхности', () => {
     }
   });
 
-  it('кольцо фокуса на доске рисуется золотом', () => {
+  /* Золото было кольцом тёмной доски; на бумажной оно не даёт 3:1. */
+  it('кольцо фокуса на доске рисуется тушью', () => {
+    expect(color('--focus-on-ground')).toBe(color('--c-ink-900'));
     expectAtLeast('--focus-on-ground', '--surface-ground', GRAPHIC_CONTRAST);
     expectAtLeast('--focus-on-ground', '--surface-raised', GRAPHIC_CONTRAST);
+  });
+});
+
+/*
+ * Состояния и второстепенные линии редизайна. Пары взяты с экрана: бумага на
+ * главной кнопке под рукой и в нажатии, тушь на нажатой второстепенной,
+ * описание игры и рамка варианта в окне старта, кольцо «впереди» в ходе.
+ */
+describe('состояния кнопок и второстепенные линии', () => {
+  it('подпись главной кнопки читается под рукой и в нажатии', () => {
+    expectAtLeast('--surface-paper-bright', '--accent-hover', TEXT_CONTRAST);
+    expectAtLeast('--surface-paper-bright', '--accent-pressed', TEXT_CONTRAST);
+  });
+
+  it('подпись нажатой второстепенной кнопки читается', () => {
+    expectAtLeast('--text-on-ground', '--surface-pressed', TEXT_CONTRAST);
+  });
+
+  it('описание игры читается на бумаге окна', () => {
+    expectAtLeast('--text-on-ground-secondary', '--surface-ground', TEXT_CONTRAST);
+  });
+
+  it('рамка варианта и кольцо хода — графика не ниже 3:1', () => {
+    for (const surface of ['--surface-ground', '--surface-raised'] as const) {
+      expectAtLeast('--line-on-ground-soft', surface, GRAPHIC_CONTRAST);
+      expectAtLeast('--line-on-ground-quiet', surface, GRAPHIC_CONTRAST);
+    }
   });
 });
 
@@ -432,9 +480,9 @@ describe('шкалы', () => {
   });
 
   it('семейства начинаются с наших шрифтов и сохраняют системный фолбэк', () => {
-    expect(resolve(tokens, '--t-family-display')).toMatch(/^'Prata'/);
+    expect(resolve(tokens, '--t-family-display')).toMatch(/^'Cormorant Garamond'/);
     expect(resolve(tokens, '--t-family-display')).toMatch(/serif$/);
-    expect(resolve(tokens, '--t-family-text')).toMatch(/^'Golos Text'/);
+    expect(resolve(tokens, '--t-family-text')).toMatch(/^'Onest'/);
     expect(resolve(tokens, '--t-family-han')).toMatch(/^'Noto Serif SC'/);
   });
 
@@ -450,10 +498,56 @@ describe('шкалы', () => {
   });
 });
 
+/*
+ * Вид «Рельеф: тушью» — та же шкала бумажными тонами. Поверх ложится всё то
+ * же, что на цветную; различать полосы ей нечем, кроме светлоты, поэтому
+ * каждая следующая темнее предыдущей с заметным шагом.
+ */
+describe('шкала высот тушью', () => {
+  const INK_BANDS = [
+    '--map-relief-ink-0',
+    '--map-relief-ink-200',
+    '--map-relief-ink-500',
+    '--map-relief-ink-1000',
+    '--map-relief-ink-2000',
+    '--map-relief-ink-3000',
+    '--map-relief-ink-4000',
+  ] as const;
+
+  it('река, граница, метки и выделение видны на каждой полосе', () => {
+    for (const band of INK_BANDS) {
+      expectAtLeast('--map-river', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-border-on-relief', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-correct-mark', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-incorrect-mark-relief', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-highlight', band, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('подпись объекта читается на каждой полосе', () => {
+    for (const band of INK_BANDS) {
+      expectAtLeast('--map-label', band, TEXT_CONTRAST);
+    }
+  });
+
+  it('каждая полоса темнее предыдущей с заметным шагом', () => {
+    for (let index = 1; index < INK_BANDS.length; index += 1) {
+      const lower = color(INK_BANDS[index - 1]);
+      const upper = color(INK_BANDS[index]);
+
+      expect(relativeLuminance(upper)).toBeLessThan(relativeLuminance(lower));
+      expect(
+        contrastRatioRounded(lower, upper),
+        `${INK_BANDS[index - 1]} против ${INK_BANDS[index]}`,
+      ).toBeGreaterThanOrEqual(1.15);
+    }
+  });
+});
+
 describe('игровая карта', () => {
   const OUTCOMES = ['--map-first-try', '--map-second-try', '--map-failed'] as const;
 
-  it('граница тушью видна на сером и на каждом исходе', () => {
+  it('граница тушью видна на несыгранном и на каждом исходе', () => {
     expectAtLeast('--map-border', '--map-unplayed', GRAPHIC_CONTRAST);
     for (const outcome of OUTCOMES) {
       expectAtLeast('--map-border', outcome, GRAPHIC_CONTRAST);
@@ -464,7 +558,7 @@ describe('игровая карта', () => {
     expectAtLeast('--map-border', '--map-sea', GRAPHIC_CONTRAST);
   });
 
-  it('каждый исход отличим от серого, иначе прогресс не виден', () => {
+  it('каждый исход отличим от несыгранного, иначе прогресс не виден', () => {
     for (const outcome of OUTCOMES) {
       expectAtLeast(outcome, '--map-unplayed', GRAPHIC_CONTRAST);
     }
@@ -478,8 +572,8 @@ describe('игровая карта', () => {
 
   /*
    * Попарного контраста между тремя исходами здесь нет намеренно: он
-   * недостижим. Обводка тушью требует светлоты не ниже 0.118, а серый при
-   * 3:1 сверху — не выше 0.153, и все три цвета живут в этой полосе.
+   * недостижим. Обводка тушью требует светлоты не ниже 0.118, подпись
+   * бумагой — не выше 0.18, и все три цвета живут в этой полосе.
    * Различает их узор, см. MapDefs.tsx.
    */
 });

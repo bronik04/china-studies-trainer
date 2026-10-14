@@ -82,9 +82,12 @@ it('показывает разбивку по исходам', () => {
 
   const breakdown = screen.getByTestId('fill-breakdown');
 
-  expect(breakdown).toHaveTextContent('С первого раза: 34');
-  expect(breakdown).toHaveTextContent('Со второго: 0');
-  expect(breakdown).toHaveTextContent('Не угадано: 0');
+  const value = (term: string) =>
+    within(breakdown).getByText(term).nextElementSibling?.textContent;
+
+  expect(value('С первого раза')).toBe('34');
+  expect(value('Со второго')).toBe('0');
+  expect(value('Не угадано')).toBe('0');
 });
 
 it('показывает заполненную карту', () => {

@@ -20,6 +20,7 @@ import {
   featuresWord,
   landmarksWord,
   photosWord,
+  regionsWord,
 } from '../../content/region-count';
 import {
   COLLECTION_GROUPS,
@@ -32,6 +33,7 @@ import type { Attempt, ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { SiteFooter } from '../../ui/SiteFooter';
 import {
+  CHAPTER_NUMERALS,
   MODE_CARDS,
   MODE_GROUPS,
   type CountryExerciseType,
@@ -94,6 +96,12 @@ type CollectionFilter = CollectionGroupId | 'all';
 const SHOWCASE_LIMIT = 4;
 
 /**
+ * Сколько ошибочных регионов строка повтора называет по имени. Остальные
+ * считаются числом: длинный перечень превратил бы строку в абзац.
+ */
+const REPEAT_NAMED = 3;
+
+/**
  * Главная. Отвечает на «что это такое» и «что делать дальше» одним экраном:
  * герой с картой и единственным призывом, затем игры, витрина коллекций и
  * происхождение содержания.
@@ -137,7 +145,7 @@ function setChoiceFor(card: ModeCard) {
       options: CITY_SETS.map(([value, label]) => {
         const count = citiesUpTo(value).length;
 
-        return [value, `${label} — ${count} ${citiesWord(count)}`] as const;
+        return { value, label, count, word: citiesWord(count) };
       }),
     };
   }
@@ -149,10 +157,12 @@ function setChoiceFor(card: ModeCard) {
       options: CULTURE_SET_ORDER.map((value) => {
         const count = cultureCollectionsUpTo(value).length;
 
-        return [
+        return {
           value,
-          `${CULTURE_SETS[value]} — ${count} ${photosWord(count)}`,
-        ] as const;
+          label: CULTURE_SETS[value],
+          count,
+          word: photosWord(count),
+        };
       }),
     };
   }
@@ -164,10 +174,12 @@ function setChoiceFor(card: ModeCard) {
       options: LANDMARK_SET_ORDER.map((value) => {
         const count = landmarksUpTo(value).length;
 
-        return [
+        return {
           value,
-          `${LANDMARK_SETS[value]} — ${count} ${landmarksWord(count)}`,
-        ] as const;
+          label: LANDMARK_SETS[value],
+          count,
+          word: landmarksWord(count),
+        };
       }),
     };
   }
@@ -179,7 +191,7 @@ function setChoiceFor(card: ModeCard) {
       options: PHYSICAL_SETS.map(([value, label]) => {
         const count = physicalFeaturesUpTo(value).length;
 
-        return [value, `${label} — ${count} ${featuresWord(count)}`] as const;
+        return { value, label, count, word: featuresWord(count) };
       }),
     };
   }
@@ -244,11 +256,23 @@ export function HomePage({
       ? collections
       : collections.filter((collection) => collection.groupId === filter);
 
+  const toRepeat =
+    step.regionIds === null
+      ? []
+      : step.regionIds
+          .map((id) => regions.find((region) => region.id === id))
+          .filter((region): region is Region => region !== undefined);
+
   return (
     <main className="site-main site-landing">
       <section className="landing-hero">
         <div className="landing-hero-text">
-          <p className="eyebrow">Тренажёр к уроку</p>
+          {/*
+            Длительность стоит в надзаголовке, а не в абзаце: это ответ на
+            «сколько займёт» — первый вопрос учителя перед уроком, — и в
+            абзаце он тонул среди перечня.
+          */}
+          <p className="eyebrow">Тренажёр к уроку · 5–15 минут</p>
           {/*
             Цель перехода по названию в шапке. Фокус переводится на заголовок,
             а не на весь герой: кольцо вокруг полосы во весь кадр читалось бы
@@ -260,15 +284,15 @@ export function HomePage({
           </h1>
           <p className="lead">
             34 единицы провинциального уровня, столицы, иероглифы, места и
-            явления. Короткий раунд на 5–15 минут, разбор после ошибки и повтор
-            того, что не запомнилось.
+            явления. Короткий раунд, разбор после ошибки и повтор того, что не
+            запомнилось.
           </p>
           {/*
             Главный шаг ведёт туда, где выбирают, а не запускает раунд сам.
             Прежде здесь стоял вычисленный шаг — «Повторить 2 региона»: он
             отвечает вернувшемуся ученику и молчит новому, а на первом экране
             «2 региона» читается как объём всего тренажёра. Сам повтор никуда
-            не делся — он стоит над карточками режимов, среди своих.
+            не делся — он стоит строкой под героем, над режимами.
           */}
           <div className="landing-hero-actions">
             <button type="button" className="primary" onClick={onGoToModes}>
@@ -283,146 +307,170 @@ export function HomePage({
               Исследовать карту →
             </button>
           </div>
-          <p className="status-note">
-            Без регистрации. Прогресс хранится на этом компьютере, работает без
-            интернета — в классе и дома.
-          </p>
         </div>
-        <div className="landing-hero-map">
-          {/*
-            Карта в герое — дверь в атлас: наведение называет область, нажатие
-            открывает её карточку. Прежде она была нарисована и не нажималась,
-            то есть не делала ничего.
+        <figure className="landing-hero-figure">
+          <div className="landing-hero-map">
+            {/*
+              Карта в герое — дверь в атлас: наведение называет область,
+              нажатие открывает её карточку.
 
-            Дверь, а не вторая интерактивная карта: области не получают фокус
-            и не выбираются здесь, поэтому второй равнозначный список на 34
-            пункта на этой странице не нужен — с клавиатуры в атлас ведёт
-            кнопка «Исследовать карту» слева.
+              Дверь, а не вторая интерактивная карта: области не получают фокус
+              и не выбираются здесь, поэтому второй равнозначный список на 34
+              пункта на этой странице не нужен — с клавиатуры в атлас ведёт
+              кнопка «Исследовать карту» слева.
 
-            Зума у неё нет. Управление показывает `ChinaMap` только тому, кто
-            передал `onZoomChange`, а разглядывают карту в атласе.
-          */}
-          <ChinaMap
-            regions={regions}
-            selectedRegionId={null}
-            onSelect={() => {}}
-            onClear={() => {}}
-            interactive={false}
-            usage="answer"
-            onOpenRegion={onOpenRegion}
-          />
+              Зума у неё нет. Управление показывает `ChinaMap` только тому, кто
+              передал `onZoomChange`, а разглядывают карту в атласе.
+            */}
+            <ChinaMap
+              regions={regions}
+              selectedRegionId={null}
+              onSelect={() => {}}
+              onClear={() => {}}
+              interactive={false}
+              usage="answer"
+              onOpenRegion={onOpenRegion}
+            />
+            <figcaption className="caption">
+              Нажмите на регион — откроется его карточка в атласе
+            </figcaption>
+          </div>
           {/*
-            Подпись зовёт, а не оправдывается. Про заливку — «цвет означает тип
-            единицы» — довод для того, кто уже играет, и место ему в атласе,
-            где карту разглядывают.
+            Вертикальная строка — подпись листа, как на свитке: полное имя
+            страны. Скрыта от читалки экрана: заголовок рядом уже называет,
+            о чём страница, и «чжунхуа жэньминь гунхэго» перед картой ничего не
+            добавило бы.
           */}
-          <p className="caption">
-            Нажмите единицу — откроется её карточка в атласе: имя, иероглифы,
-            пиньинь, административный центр и справка с источниками.
+          <p className="landing-hero-scroll" lang="zh-Hans" aria-hidden="true">
+            中华人民共和国
           </p>
-        </div>
+        </figure>
       </section>
+
+      {/*
+        Повтор ошибок отвечает вернувшемуся ученику, а новому сказать нечего —
+        `regionIds` пуст, и строки просто нет. Форма и язык те же, в которых
+        ошибались (`nextStep`).
+
+        Имена перечислены, а не только посчитаны: «2 региона» не говорят,
+        какие, и ученик не может решить, хочет ли он их сейчас.
+      */}
+      {step.regionIds === null ? null : (
+        <section className="repeat-strip" aria-labelledby="repeat-title">
+          <div className="repeat-strip-text">
+            <span className="seal seal-ring" lang="zh-Hans" aria-hidden="true">
+              复
+            </span>
+            <div>
+              <h2 id="repeat-title" className="repeat-strip-title">
+                Повторить ошибки
+              </h2>
+              <p className="repeat-strip-list">
+                {step.regionIds.length} {regionsWord(step.regionIds.length)}:{' '}
+                {toRepeat.slice(0, REPEAT_NAMED).map((region, index) => (
+                  <span key={region.id}>
+                    {index === 0 ? null : ', '}
+                    <span lang="zh-Hans">{region.nameZh}</span> {region.nameRu}
+                  </span>
+                ))}
+                {toRepeat.length > REPEAT_NAMED
+                  ? ` и ещё ${toRepeat.length - REPEAT_NAMED}`
+                  : null}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="secondary"
+            aria-describedby="repeat-title"
+            onClick={() =>
+              onStartRound(step.exerciseType, step.language, step.regionIds)
+            }
+          >
+            Начать повтор
+          </button>
+        </section>
+      )}
 
       {/*
         `tabIndex={-1}` — чтобы «Режимы» в шапке не только прокручивали
         страницу, но и переводили сюда фокус: иначе Tab после нажатия
         продолжился бы от шапки, а читалка экрана не сказала бы, куда попали.
       */}
-      <section className="landing-section raised" id="modes" tabIndex={-1}>
+      <section className="landing-section landing-modes" id="modes" tabIndex={-1}>
         <div className="landing-section-head landing-section-head-split">
-          <div>
-            <h2>Режимы</h2>
-            <p>
-              Карта — только начало. География, история и культура спрашиваются
-              по одним правилам: весь набор в каждом раунде, разбор ошибок на
-              итогах, повтор ошибок за последние 14 дней.
-            </p>
-          </div>
-          {/*
-            Повтор ошибок стоит здесь, а не в герое: он отвечает вернувшемуся
-            ученику, а новому сказать нечего — `regionIds` пуст, и строки
-            просто нет. Форма и язык те же, в которых ошибались (`nextStep`).
-          */}
-          {step.regionIds === null ? null : (
-            <button
-              type="button"
-              className="text"
-              onClick={() =>
-                onStartRound(step.exerciseType, step.language, step.regionIds)
-              }
-            >
-              {step.label} →
-            </button>
-          )}
+          <h2>Режимы</h2>
+          <p>Семь глав. Все открыты сразу — начинайте с любой.</p>
         </div>
         {/*
-          Игры разложены по предметам, а не одной сеткой на одиннадцать
-          карточек. Группы — те же справочники, из которых берутся цели:
-          ученик выбирает сначала предмет, а потом форму вопроса. Пока игр
-          было четыре, разница читалась и без этого; на одиннадцати между
-          «Заполнить карту» и «Найти город» не осталось видимой границы, хотя
-          это разные предметы.
+          Игры разложены по предметам — главам 一–七. Группы — те же
+          справочники, из которых берутся цели: ученик выбирает сначала
+          предмет, а потом форму вопроса.
 
-          Название группы — заголовок третьего уровня внутри «Режимов», а не
-          абзац покрупнее: порядок уровней на странице должен совпадать с
-          устройством раздела.
+          Игра — пилюля с одним названием (решение владельца, DECISIONS.md,
+          2026-10-14). Что за игра и сколько она идёт, ученик читает в окне
+          перед стартом: там он уже выбрал и спрашивает «как тут спрашивают»,
+          а двадцать одна карточка с абзацем и объёмом требовала прочитать всё,
+          чтобы выбрать.
+
+          Название главы — заголовок третьего уровня внутри «Режимов»: порядок
+          уровней на странице совпадает с устройством раздела.
         */}
-        {MODE_GROUPS.map((group) => (
-          <section key={group.id} className="mode-group">
-            <div className="mode-group-head">
-              <h3>{group.title}</h3>
-              <p>{group.note}</p>
-            </div>
-            <ul className="mode-card-grid">
-              {MODE_CARDS.filter((card) => card.groupId === group.id).map(
-                (card) => {
-                  const isPlanned = card.kind === 'planned';
+        <div className="mode-chapters">
+          {MODE_GROUPS.map((group, index) => (
+            <section key={group.id} className="mode-chapter">
+              <span
+                className="mode-chapter-numeral"
+                lang="zh-Hans"
+                aria-hidden="true"
+              >
+                {CHAPTER_NUMERALS[index]}
+              </span>
+              <div>
+                <h3>{group.title}</h3>
+                <p>{group.note}</p>
+                <ul className="mode-pills">
+                  {MODE_CARDS.filter((card) => card.groupId === group.id).map(
+                    (card) => {
+                      const isPlanned = card.kind === 'planned';
 
-                  return (
-                    <li
-                      key={card.id}
-                      className="mode-card"
-                      data-planned={isPlanned}
-                    >
-                      <button
-                        type="button"
-                        disabled={isPlanned}
-                        onClick={() => setStartingCard(card)}
-                      >
-                        <span className="mode-card-head">
-                          <span lang="zh-Hans" className="mode-card-mark">
-                            {card.mark}
-                          </span>
+                      return (
+                        <li key={card.id}>
                           {/*
-                            Строка справа отвечает, почему карточка не
-                            нажимается. Причина осталась одна — режим ещё не
-                            написан: заслужить игру нельзя, все открыты сразу.
-                            У работающих карточек строки нет: писать
-                            «доступно» на том, что и так нажимается, незачем.
+                            Ненаписанный режим не прячется, а выключается и
+                            говорит почему — словом в имени кнопки. Сейчас
+                            таких нет; приём остаётся для следующего.
                           */}
-                          {isPlanned ? (
-                            <span className="mode-card-status">Готовится</span>
-                          ) : null}
-                        </span>
-                        <span className="mode-card-title">{card.title}</span>
-                        {/*
-                          Абзаца с описанием на карточке больше нет: одиннадцать
-                          абзацев подряд — это одиннадцать абзацев, которые
-                          нужно прочитать, чтобы выбрать. Он переехал в окно
-                          перед стартом, где ученик уже решил играть именно в
-                          эту игру.
-                        */}
-                        <span className="mode-card-volume">{card.volume}</span>
-                      </button>
-                    </li>
-                  );
-                },
-              )}
-            </ul>
-          </section>
-        ))}
+                          <button
+                            type="button"
+                            className="mode-pill"
+                            disabled={isPlanned}
+                            onClick={() => setStartingCard(card)}
+                          >
+                            {card.title}
+                            {isPlanned ? (
+                              <span className="mode-pill-status">
+                                {' '}
+                                · готовится
+                              </span>
+                            ) : null}
+                          </button>
+                        </li>
+                      );
+                    },
+                  )}
+                </ul>
+              </div>
+            </section>
+          ))}
+        </div>
         {startingCard === null ? null : (
           <ModeStartDialog
+            mark={startingCard.mark}
+            group={
+              MODE_GROUPS.find((group) => group.id === startingCard.groupId)
+                ?.title ?? ''
+            }
             title={startingCard.title}
             summary={startingCard.summary}
             volume={startingCard.volume}
@@ -553,9 +601,14 @@ export function HomePage({
         </div>
       </section>
 
+      {/*
+        Обещание про регистрацию и интернет переехало из героя в подвал, как на
+        макете: это сведение для учителя, а не шаг обучения, и в герое оно
+        спорило с единственным призывом.
+      */}
       <SiteFooter
-        left="Тренажёр страноведения Китая · для школьников 12–18 лет и учителя"
-        right="Прогресс не выгружается наружу: персональных данных нет"
+        left="Без регистрации. Прогресс хранится на этом компьютере, работает без интернета — в классе и дома."
+        right="Тренажёр страноведения Китая · для школьников 12–18 лет и учителя"
       />
     </main>
   );

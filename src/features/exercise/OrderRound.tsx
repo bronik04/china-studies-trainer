@@ -13,6 +13,7 @@ import type { QuestionLanguage } from '../../domain/question-language';
 import { createSeededRandom } from '../../domain/random';
 import type { Attempt } from '../../domain/round';
 import { DynastyTimeline, type TimelineMark } from './DynastyTimeline';
+import { roundTitle } from './exercise-modes';
 import { RoundStage } from './RoundStage';
 
 /*
@@ -132,6 +133,7 @@ export function OrderRound({
 
   return (
     <RoundStage
+      title={roundTitle('history-order')}
       prompt={
         <>
           <p className="eyebrow">Расставьте по порядку</p>

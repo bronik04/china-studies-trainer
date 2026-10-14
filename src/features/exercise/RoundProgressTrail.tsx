@@ -6,7 +6,7 @@ export type RoundProgressTrailProps = {
 };
 
 /** Знак несёт исход сам, без цвета: лента читается и в оттенках серого. */
-const GLYPHS = { ahead: '○', correct: '✓', wrong: '●' } as const;
+const GLYPHS = { ahead: '○', current: '○', correct: '✓', wrong: '●' } as const;
 
 /**
  * Ход раунда одной лентой. Занимает колонку вопроса, которая иначе пустует: на
@@ -23,8 +23,19 @@ export function RoundProgressTrail({ total, attempts }: RoundProgressTrailProps)
     <p className="round-trail" aria-hidden="true">
       {Array.from({ length: total }, (_, index) => {
         const attempt = attempts[index];
+        /*
+         * Текущий вопрос — первый без попытки: кольцо толще, чем у остальных
+         * впереди (лист стиля макетов). Знак тот же: «сейчас» отличает форма,
+         * а не новый символ.
+         */
         const mark =
-          attempt === undefined ? 'ahead' : attempt.isCorrect ? 'correct' : 'wrong';
+          attempt === undefined
+            ? index === attempts.length
+              ? 'current'
+              : 'ahead'
+            : attempt.isCorrect
+              ? 'correct'
+              : 'wrong';
 
         return (
           <span key={index} data-mark={mark}>

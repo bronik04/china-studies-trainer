@@ -35,3 +35,21 @@ export function answerStatesFor(
 
   return states;
 }
+
+/**
+ * Исход только что данного ответа для печати 对/错 под вопросом. Пока раунд
+ * ждёт ответа, исхода нет. Одно правило на все игры: прежде одна и та же
+ * тернарная цепочка стояла в семи раундах.
+ */
+export function verdictOf(round: {
+  readonly status: string;
+  readonly attempts: readonly { readonly isCorrect: boolean }[];
+}): 'correct' | 'incorrect' | null {
+  const last = round.attempts.at(-1);
+
+  if (round.status !== 'feedback' || last === undefined) {
+    return null;
+  }
+
+  return last.isCorrect ? 'correct' : 'incorrect';
+}

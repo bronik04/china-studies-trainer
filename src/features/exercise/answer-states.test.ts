@@ -1,5 +1,5 @@
 import { regions } from '../../content/regions';
-import { answerStatesFor } from './answer-states';
+import { answerStatesFor, verdictOf } from './answer-states';
 
 it('до ответа не ограничивает выбор', () => {
   expect(answerStatesFor(regions, 'sichuan', null)).toEqual({});
@@ -23,4 +23,21 @@ it('закрывает остальные области после ответа
 
   expect(states.hebei).toBe('disabled');
   expect(Object.keys(states)).toHaveLength(34);
+});
+
+describe('verdictOf', () => {
+  const attempt = (isCorrect: boolean) => ({ isCorrect });
+
+  it('пока раунд ждёт ответа, исхода нет', () => {
+    expect(verdictOf({ status: 'ready', attempts: [attempt(false)] })).toBeNull();
+  });
+
+  it('после ответа называет исход последней попытки', () => {
+    expect(
+      verdictOf({ status: 'feedback', attempts: [attempt(false), attempt(true)] }),
+    ).toBe('correct');
+    expect(verdictOf({ status: 'feedback', attempts: [attempt(false)] })).toBe(
+      'incorrect',
+    );
+  });
 });

@@ -19,11 +19,16 @@ import {
   type Round,
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
+import { ReliefStyleToggle, type ReliefStyle } from '../../map/ReliefStyleToggle';
 import type { MapZoom } from '../../map/MapControls';
 import type { FeatureOutcome } from '../../map/PhysicalLayer';
-import { PHYSICAL_MODES } from './exercise-modes';
+import {
+  PHYSICAL_MODES,
+  roundTitle,
+} from './exercise-modes';
 import { PhysicalAnswerList } from './PhysicalAnswerList';
 import { RoundProgressTrail } from './RoundProgressTrail';
+import { verdictOf } from './answer-states';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
 import { useAutoAdvance } from './use-auto-advance';
@@ -50,6 +55,9 @@ export type PhysicalRoundProps = {
   readonly seed: number;
   readonly onFinish: (attempts: readonly Attempt[]) => void;
   readonly onExit: () => void;
+  /** Вид рельефа: держит `App`, чтобы выбор пережил смену экрана. */
+  readonly reliefStyle?: ReliefStyle;
+  readonly onReliefStyleChange?: (value: ReliefStyle) => void;
 };
 
 /**
@@ -70,6 +78,8 @@ export type PhysicalRoundProps = {
  * течением рек, ради которой режим и делается.
  */
 export function PhysicalRound({
+  reliefStyle = 'color',
+  onReliefStyleChange,
   features,
   exerciseType,
   language,
@@ -244,8 +254,19 @@ export function PhysicalRound({
 
   return (
     <RoundStage
+      tools={
+        onReliefStyleChange === undefined ? undefined : (
+          <ReliefStyleToggle
+            name="round-relief"
+            value={reliefStyle}
+            onChange={onReliefStyleChange}
+          />
+        )
+      }
+      title={roundTitle(exerciseType === 'find-on-map' ? 'find-physical' : 'name-physical')}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
+      verdict={verdictOf(round)}
       startedAt={startedAt}
       progress={
         <>
@@ -292,6 +313,7 @@ export function PhysicalRound({
         наведением курсора. Та же утечка, что у выносок Макао и Гонконга.
         Области при этом не отвечают: ответ здесь — объект, а не регион.
       */}
+      <div className="relief-scope" data-relief={reliefStyle}>
       <ChinaMap
         regions={regions}
         selectedRegionId={null}
@@ -307,6 +329,7 @@ export function PhysicalRound({
         showsPhysicalLabels={false}
         featureOutcomes={featureOutcomes}
       />
+      </div>
     </RoundStage>
   );
 }

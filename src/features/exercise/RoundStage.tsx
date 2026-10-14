@@ -10,9 +10,19 @@ import { RoundStopwatch } from './RoundStopwatch';
 import { useFullscreen } from '../../ui/use-fullscreen';
 
 export type RoundStageProps = {
+  /**
+   * Имя игры над ходом раунда: «Регионы · Найти на карте». Не передано —
+   * строки нет.
+   */
+  readonly title?: string;
   /** Содержимое плашки: вопрос или показ верного ответа после ошибки. */
   readonly prompt: ReactNode;
   readonly promptState: 'question' | 'answer';
+  /**
+   * Исход только что данного ответа — печать 对 или 错 со словом под
+   * вопросом. `null` или не передано — ответа ещё нет, печати нет.
+   */
+  readonly verdict?: 'correct' | 'incorrect' | null;
   /** Отметка `performance.now()` старта раунда — секундомеру строки. */
   readonly startedAt: number;
   /** Счёт и след раунда в служебной строке. */
@@ -21,37 +31,52 @@ export type RoundStageProps = {
   readonly choices?: ReactNode;
   /** Содержимое панели «Ответить из списка»; не передано — кнопки нет. */
   readonly answerList?: ReactNode;
+  /**
+   * Настройки показа карты — переключатель вида рельефа. Стоят в строке
+   * действий, а не на карте: любой угол листа в раунде занят целями
+   * (северо-восточный — Амуром и Хинганом).
+   */
+  readonly tools?: ReactNode;
   readonly onExit: () => void;
   /** Карта. */
   readonly children: ReactNode;
 };
 
 /**
- * Компоновка игрового экрана — одна на все четыре вида раундов (спек
- * RoundStage, 2026-08-17): плашка вопроса поверх карты, полоса вариантов и
- * служебная строка под ней. Порядок DOM — вопрос, карта, варианты, строка;
- * поверх карты плашку ставит только CSS.
+ * Компоновка игрового экрана — одна на все виды раундов. С редизайна «Тушь и
+ * киноварь» (DECISIONS.md, 2026-10-14) на широком экране это колонка вопроса
+ * слева — имя игры, ход, вопрос, печать исхода, варианты, время и действия —
+ * и карта справа. На узком экране всё идёт одной колонкой, вопрос — строкой
+ * над картой, а не плашкой поверх неё: плашка накрывала шапку раунда.
+ * Порядок DOM — шапка, вопрос, карта, варианты, строка; раскладку решает
+ * только CSS.
  *
- * Плашка — aria-live: смена вопроса и показ верного ответа объявляются
+ * Блок вопроса — aria-live: смена вопроса и показ верного ответа объявляются
  * читалке. Раньше это делал перевод фокуса на заголовок разбора — самого
  * разбора больше нет.
  *
  * Полноэкранная кнопка разворачивает корень оболочки: шапка сайта остаётся
  * вне полного экрана, решение 2026-08-05 о шапке не отменяется.
- *
- * `data-list-open` на корне — крючок для CSS: пока панель «Ответить из
- * списка» открыта, плашка вопроса должна снова принимать нажатия (см.
- * `.round-stage[data-list-open='true'] .stage-prompt` в styles.css) —
- * иначе тап по плашке на узком экране «проваливался» бы сквозь неё в
- * скрытую под ней кнопку списка.
  */
+/**
+ * Печать исхода. Иероглиф — знак, слово рядом — смысл: печать скрыта от
+ * читалки, а слово входит в живую область вопроса и объявляется.
+ */
+const VERDICTS = {
+  correct: { seal: '对', word: 'Верно' },
+  incorrect: { seal: '错', word: 'Неверно' },
+} as const;
+
 export function RoundStage({
+  title,
   prompt,
   promptState,
+  verdict = null,
   startedAt,
   progress,
   choices,
   answerList,
+  tools,
   onExit,
   children,
 }: RoundStageProps) {
@@ -86,9 +111,30 @@ export function RoundStage({
   }
 
   return (
-    <main className="round-stage" data-list-open={isListOpen} ref={stageRef}>
+    <main className="round-stage" ref={stageRef}>
+      {/*
+        Шапка раунда: имя игры и ход. На широком экране стоит наверху колонки
+        вопроса, на узком — строкой над картой.
+      */}
+      <div className="stage-head">
+        {title === undefined ? null : <p className="stage-title">{title}</p>}
+        {progress}
+      </div>
       <div className="stage-prompt" data-state={promptState} aria-live="polite">
         {prompt}
+        {verdict === null ? null : (
+          <p className="stage-verdict" data-verdict={verdict}>
+            <span
+              className="seal seal-solid"
+              data-tone={verdict === 'correct' ? 'correct' : undefined}
+              lang="zh-Hans"
+              aria-hidden="true"
+            >
+              {VERDICTS[verdict].seal}
+            </span>
+            {VERDICTS[verdict].word}
+          </p>
+        )}
       </div>
       <div className="stage-map">
         {children}
@@ -111,7 +157,7 @@ export function RoundStage({
       ) : null}
       <footer className="stage-strip">
         <RoundStopwatch startedAt={startedAt} />
-        {progress}
+        {tools === undefined ? null : <div className="stage-strip-tools">{tools}</div>}
         <div className="stage-strip-actions">
           {answerList !== undefined ? (
             <button

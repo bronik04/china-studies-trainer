@@ -7,13 +7,14 @@
  * скрытым `svg` — сам файл карты остаётся нетронутым.
  */
 /*
- * Идентификаторы образцов. Не экспортируются: ссылается на них только
- * `src/styles.css` литералами `url('#...')`, а импортировать их оттуда нельзя.
- * Переименование правится в двух местах — других потребителей нет.
+ * Идентификаторы образцов. На них ссылаются `src/styles.css` литералами
+ * `url('#...')` — импортировать их туда нельзя — и образцы обозначений на
+ * итогах (`OutcomeSwatch`) через экспорт. Переименование правится здесь и в
+ * styles.css; экспортированные проверит компилятор.
  */
 const INCORRECT_PATTERN_ID = 'map-hatch-incorrect';
-const SECOND_TRY_PATTERN_ID = 'map-hatch-second-try';
-const FAILED_PATTERN_ID = 'map-hatch-failed';
+export const SECOND_TRY_PATTERN_ID = 'map-hatch-second-try';
+export const FAILED_PATTERN_ID = 'map-hatch-failed';
 const IN_PROGRESS_PATTERN_ID = 'map-hatch-in-progress';
 const PHYSICAL_CORRECT_PATTERN_ID = 'map-hatch-physical-correct';
 const PHYSICAL_INCORRECT_PATTERN_ID = 'map-hatch-physical-incorrect';

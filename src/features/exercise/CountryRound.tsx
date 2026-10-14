@@ -21,9 +21,13 @@ import {
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { COUNTRY_FRAME_OUTSET } from '../../map/target-size';
-import { answerStatesFor } from './answer-states';
+import { answerStatesFor, verdictOf } from './answer-states';
 import { CountryAnswerList } from './CountryAnswerList';
-import { COUNTRY_MODES, type CountryExerciseType } from './exercise-modes';
+import {
+  COUNTRY_MODES,
+  type CountryExerciseType,
+  roundTitle,
+} from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
@@ -204,8 +208,10 @@ export function CountryRound({
 
   return (
     <RoundStage
+      title={roundTitle(exerciseType === 'find-on-map' ? 'find-country' : 'name-country')}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
+      verdict={verdictOf(round)}
       startedAt={startedAt}
       progress={
         <>

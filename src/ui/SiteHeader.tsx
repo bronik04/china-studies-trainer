@@ -111,7 +111,7 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
           {/*
             Печать — знак, а не слово: читалке экрана она сказала бы «чжун»
             перед подписью кнопки. Язык на ней всё равно помечен — иначе
-            иероглиф наберёт не тот шрифт (у Prata и Golos Text его нет).
+            иероглиф наберёт не тот шрифт (у Cormorant Garamond и Onest его нет).
           */}
           <span className="site-header-seal" lang="zh-Hans" aria-hidden="true">
             中

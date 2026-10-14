@@ -13,6 +13,11 @@
   font-family: var(--t-family-text);
   font-size: var(--t-size-body);
   font-synthesis: none;
+  /*
+   * Цифры прописные: у Cormorant Garamond по умолчанию старого стиля, и хвост
+   * «9» в «29 %» налезал на строку под ним, а «1» читалась как «I».
+   */
+  font-variant-numeric: lining-nums;
   line-height: var(--t-leading-body);
   /*
    * Переход по шапке доезжает, а не перепрыгивает: страница длинная, и без
@@ -21,15 +26,10 @@
   scroll-behavior: smooth;
 
   /*
-   * Лендинг листается по секциям. `proximity`, а не `mandatory`: на узком
-   * экране секция режимов выше кадра — шесть карточек в столбик, — и
-   * обязательная привязка не дала бы дочитать её до конца.
-   *
-   * Остановка считается от нижнего края шапки: она закреплена, и без отступа
-   * заголовок секции вставал бы под неё.
+   * Остановка прокрутки к якорю считается от нижнего края шапки: она
+   * закреплена, и без отступа заголовок секции вставал бы под неё.
    */
   scroll-padding-block-start: var(--header-height, 0px);
-  scroll-snap-type: y proximity;
 }
 
 /*
@@ -112,7 +112,7 @@ button {
 /*
  * Селектор без `:where` намеренно: у заголовков появилось семейство
  * дисплейного шрифта, и нулевая специфичность `:where` ему проиграла бы —
- * иероглифы в заголовке вопроса набирались бы Prata, где их нет.
+ * иероглифы в заголовке вопроса набирались бы Cormorant Garamond, где их нет.
  *
  * Пиньинь набирается тем же китайским шрифтом: только он несёт `ǎ ǔ ā ē ī ō ū`.
  */
@@ -126,20 +126,6 @@ h2,
 h3,
 p {
   margin-top: 0;
-}
-
-/* --- Оболочка ---------------------------------------------------------- */
-
-.app-shell {
-  margin: 0 auto;
-  padding-block: var(--s-6);
-  width: min(100% - 2 * var(--s-4), 1120px);
-}
-
-.hero {
-  border-bottom: var(--border-hair) solid var(--line-on-ground);
-  margin-bottom: var(--s-6);
-  padding-bottom: var(--s-5);
 }
 
 /* --- Экран раунда ------------------------------------------------------- */
@@ -159,21 +145,40 @@ p {
   margin-block-start: var(--s-5);
 }
 
-.round-trail span[data-mark='ahead'] {
-  color: var(--text-on-ground-muted);
+.round-trail span {
+  align-items: center;
+  block-size: 18px;
+  border: 1.5px solid var(--line-on-ground-quiet);
+  border-radius: 50%;
+  color: transparent;
+  display: inline-flex;
+  font-size: var(--t-size-trail-mark);
+  font-weight: var(--t-weight-bold);
+  inline-size: 18px;
+  justify-content: center;
 }
 
 /*
  * Знак набран нефритом для доски, а не заливкой карты: заливка даёт 2.78:1,
  * и лента — единственное, что показывает ход раунда без чтения строки —
- * читалась хуже всего в колонке вопроса.
+ * читалась хуже всего в колонке вопроса. Кружок залит, галочка — бумагой.
  */
 .round-trail span[data-mark='correct'] {
-  color: var(--state-correct-on-ground);
+  background: var(--state-correct-on-ground);
+  border-color: var(--state-correct-on-ground);
+  color: var(--surface-paper-bright);
 }
 
+/* Ошибка — кольцо и точка киноварью: не заливка, иначе спорит с верным. */
 .round-trail span[data-mark='wrong'] {
+  border-color: var(--accent-on-ground);
   color: var(--accent-on-ground);
+  font-size: var(--t-size-trail-dot);
+}
+
+/* «Сейчас» — кольцо тушью вдвое толще: форма, а не цвет. */
+.round-trail span[data-mark='current'] {
+  border: var(--border-focus) solid var(--text-on-ground-strong);
 }
 
 /* --- Атлас -------------------------------------------------------------- */
@@ -191,9 +196,20 @@ p {
   min-block-size: 0;
 }
 
+/*
+ * Имя региона крупно, иероглифы — своей строкой под ним, как на макете
+ * Ink-Atlas: два письма одного имени не спорят на одной строке.
+ */
 .atlas-region-card h1 {
-  font-size: var(--t-size-title);
-  margin-bottom: var(--s-1);
+  font-size: clamp(2.25rem, 3vw, 3rem);
+  line-height: 1;
+  margin-bottom: var(--s-2);
+}
+
+.atlas-region-card h1 [lang='zh-Hans'] {
+  display: block;
+  font-size: 0.75em;
+  margin-block-start: var(--s-2);
 }
 
 .atlas-region-card p {
@@ -223,7 +239,7 @@ p {
 
 .atlas-fact p {
   color: var(--text-on-ground);
-  font-size: 0.9375rem;
+  font-size: var(--t-size-small);
 }
 
 .atlas-sources {
@@ -348,6 +364,17 @@ p {
     gap: var(--s-5);
     grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
     min-block-size: 0;
+  }
+
+  /* Колонку от карты отделяет черта тушью — край листа, а не просвет. */
+  .atlas-shell:not([data-expanded='true']) .atlas-panel {
+    border-inline-end: var(--border-hair) solid var(--line-on-ground);
+    padding-inline-end: var(--s-5);
+  }
+
+  .atlas-shell:not([data-expanded='true']) .atlas-map .china-map {
+    border: none;
+    border-radius: 0;
   }
 
   /*
@@ -521,28 +548,23 @@ p {
 .eyebrow {
   color: var(--accent-on-ground);
   font-size: var(--t-size-caption);
-  font-weight: var(--t-weight-bold);
+  font-weight: var(--t-weight-semibold);
   letter-spacing: var(--t-tracking-eyebrow);
   margin: 0 0 var(--s-2);
   text-transform: uppercase;
 }
 
 /*
- * Заголовки набираются дисплейным шрифтом. Вес задан явно: у Prata одно
- * начертание, а `font-synthesis: none` не даст браузеру подделать жирное —
- * без этой строки браузерный `font-weight: bold` у `h1` попал бы в шрифт,
- * которому нечем на него ответить.
+ * Заголовки набираются дисплейным шрифтом, жирным: у Cormorant Garamond
+ * в подмножестве одно начертание, 700 (DECISIONS.md, 2026-10-14). Вес
+ * задан явно, чтобы заголовок не зависел от браузерного `bold` у `h1`.
  */
 h1 {
   font-family: var(--t-family-display);
   font-size: var(--t-size-title);
-  font-weight: var(--t-weight-regular);
+  font-weight: var(--t-weight-bold);
   line-height: var(--t-leading-tight);
   margin-bottom: var(--s-3);
-}
-
-.results-hero h1 {
-  font-size: var(--t-size-display);
 }
 
 .section-heading {
@@ -615,7 +637,7 @@ button.primary,
 button.secondary {
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-weight: var(--t-weight-medium);
+  font-weight: var(--t-weight-semibold);
   min-height: var(--target-min);
   padding: var(--s-2) var(--s-5);
   transition: background var(--duration-quick) var(--ease-out),
@@ -624,70 +646,63 @@ button.secondary {
 
 button.primary {
   background: var(--accent);
-  border: var(--border-solid) solid var(--accent);
+  border: var(--border-hair) solid var(--accent);
   color: var(--surface-paper-bright);
 }
 
 button.primary:hover:enabled {
-  background: var(--c-cinnabar-700);
-  border-color: var(--c-cinnabar-700);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
+button.primary:active:enabled {
+  background: var(--accent-pressed);
+  border-color: var(--accent-pressed);
+}
+
+/*
+ * Второстепенная — рамка тушью на светлой бумаге (лист стиля макетов). Тон
+ * наведения — бумага темнее, а не другой цвет рамки: рамка тушью и так самая
+ * тёмная линия на странице.
+ */
 button.secondary {
-  background: transparent;
-  border: var(--border-solid) solid var(--line-on-ground-strong);
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground-strong);
   color: var(--text-on-ground);
 }
 
 button.secondary:hover:enabled {
-  border-color: var(--text-on-ground-muted);
+  background: var(--surface-paper);
+}
+
+button.secondary:active:enabled {
+  background: var(--surface-pressed);
 }
 
 /*
  * Третий вес: переход, а не действие. Нужен там, где рядом уже стоит главная
  * кнопка и второй прямоугольник спорил бы с ней за внимание.
+ *
+ * Тушью и с подчёркиванием всегда, а не только под рукой: на бумаге без рамки
+ * и заливки подчёркивание — единственное, что отличает переход от подписи.
+ * Наведение меняет цвет на киноварь.
  */
 button.text {
   background: none;
   border: none;
-  color: var(--accent-on-ground);
+  color: var(--text-on-ground);
   cursor: pointer;
+  font-weight: var(--t-weight-semibold);
   min-height: var(--target-min);
   padding: 0;
   text-align: start;
+  text-decoration: underline;
+  text-decoration-thickness: var(--border-hair);
+  text-underline-offset: 6px;
 }
 
 button.text:hover:enabled {
-  text-decoration: underline;
-}
-
-.mode-actions,
-/*
- * Карта и разбор рядом: кнопка повтора стоит у списка, который она повторит.
- * Одна колонка до 1024 px — на телефоне карта и список идут друг под другом,
- * порядком разметки.
- */
-.results-split {
-  display: grid;
-  gap: var(--s-6);
-  margin-block-start: var(--s-5);
-}
-
-@media (min-width: 1024px) {
-  .results-split {
-    grid-template-columns: 1.15fr 1fr;
-  }
-
-  .results-map {
-    align-self: start;
-  }
-}
-
-.results-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3);
-  margin-top: var(--s-4);
+  color: var(--accent-on-ground);
 }
 
 .level-choice {
@@ -1142,6 +1157,16 @@ button.text:hover:enabled {
   fill: var(--map-selected);
 }
 
+/*
+ * В раунде (`.stage-map`) спрошенный регион заливается тушью, а не
+ * киноварью; в атласе выбранный остаётся киноварью. Только пока у региона
+ * нет исхода: верный ответ обязан остаться нефритовым.
+ */
+.stage-map .china-map [data-region-id][data-selected='true']:not([data-answer-state]),
+.stage-map .china-map .country[data-selected='true']:not([data-answer-state]) {
+  fill: var(--map-asked);
+}
+
 /* Цели нажатия для областей меньше 24 px: см. scripts/generate-hit-targets.ts */
 .china-map .map-hit {
   cursor: pointer;
@@ -1163,6 +1188,18 @@ button.text:hover:enabled {
   fill: var(--map-correct);
   stroke: var(--map-correct-ink);
   stroke-width: var(--map-border-width-strong);
+}
+
+/*
+ * Фокус на тёмной заливке — бумагой: тушь на киновари выбранного региона и
+ * на нефрите верного ответа не даёт 3:1 (см. `--focus-on-dark`).
+ */
+.china-map [data-region-id][data-selected='true']:focus-visible,
+.china-map [data-region-id][data-answer-state='correct']:focus-visible,
+.china-map .country[data-selected='true']:focus-visible,
+.china-map .country[data-answer-state='correct']:focus-visible {
+  stroke: var(--focus-on-dark);
+  stroke-width: 4;
 }
 
 /*
@@ -1866,15 +1903,262 @@ button.text:hover:enabled {
 
 /* --- Итоги -------------------------------------------------------------- */
 
-.review-list {
+/*
+ * Экран итога (макет Ink-Results): колонка счёта слева, отделённая чертой
+ * тушью, и тело справа — карта и список повтора. На узком экране части идут
+ * друг под другом.
+ */
+.results-page {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.results-score {
+  border-block-end: var(--border-hair) solid var(--line-on-ground);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  min-width: 0;
+  padding: var(--s-7) clamp(var(--s-4), 4vw, var(--s-7));
+}
+
+/*
+ * Колонки встают рядом в той же точке, где меняется черта между ними. Пока
+ * их разводил перенос гибкой строки, между 940 и 1023 px они стояли рядом с
+ * чертой снизу, как в столбике.
+ */
+@media (min-width: 1024px) {
+  .results-page {
+    flex-direction: row;
+  }
+
+  .results-score {
+    border-block-end: none;
+    border-inline-end: var(--border-hair) solid var(--line-on-ground);
+    flex: 0 1 480px;
+  }
+}
+
+.results-score-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.results-score-head .eyebrow {
+  margin: 0;
+}
+
+.results-percent {
+  font-size: clamp(6rem, 11vw, 10.5rem);
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+  margin: 0;
+}
+
+.results-percent-sign {
+  font-size: 0.52em;
+  margin-inline-start: 0.12em;
+}
+
+.results-count {
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-32);
+  font-weight: var(--t-weight-bold);
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* Время и рекорд — две клетки между чертами тушью. */
+.results-facts {
+  border-block: var(--border-hair) solid var(--line-on-ground);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.results-facts > div {
+  padding: var(--s-4) var(--s-4) var(--s-4) 0;
+}
+
+.results-facts > div + div {
+  border-inline-start: var(--border-hair) solid var(--line-on-ground);
+  padding-inline-start: var(--s-5);
+}
+
+.results-facts dt {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+}
+
+.results-facts dd {
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-32);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-weight: var(--t-weight-bold);
+  margin: 0;
+}
+
+.results-facts-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.results-review-subhead {
+  font-size: var(--t-size-caption);
+  font-weight: var(--t-weight-semibold);
+  letter-spacing: var(--t-tracking-eyebrow);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.review-list-note {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+}
+
+.results-saved {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: auto 0 0;
+}
+
+.results-body {
+  align-items: stretch;
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: var(--s-6) var(--s-7);
+  min-width: 0;
+  padding: var(--s-6) clamp(var(--s-4), 4vw, var(--s-7));
+}
+
+.results-map {
+  display: flex;
+  flex: 1 1 420px;
+  flex-direction: column;
+  gap: var(--s-3);
+  justify-content: center;
+  margin: 0;
+  min-width: 0;
+}
+
+.results-map .china-map {
+  border: none;
+  border-radius: 0;
+}
+
+.results-legend {
+  border-block-start: var(--border-hair) solid var(--line-on-ground);
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--t-size-caption);
+  gap: var(--s-2) var(--s-5);
   list-style: none;
-  margin: var(--s-2) 0 var(--s-4);
+  margin: 0;
+  padding: var(--s-3) 0 0;
+}
+
+.results-legend li {
+  align-items: center;
+  display: flex;
+  gap: var(--s-2);
+}
+
+/* Образец заливки — SVG с узором самой карты (`OutcomeSwatch`). */
+.results-swatch {
+  block-size: 14px;
+  border: var(--border-hair) solid var(--map-border);
+  flex: 0 0 auto;
+  inline-size: 14px;
+}
+
+.results-review {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: var(--s-5);
+  max-width: 420px;
+  min-width: 0;
+}
+
+.results-review h2 {
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-40);
+  font-weight: var(--t-weight-bold);
+  line-height: 1.05;
+  margin: 0;
+}
+
+/*
+ * Список повтора — строки оглавления: номер киноварью слева, имя крупно,
+ * иероглифы рядом. Номер — счётчик CSS, а не текст: читалке хватает того,
+ * что это нумерованный список.
+ */
+.review-list {
+  counter-reset: review;
+  list-style: none;
+  margin: 0;
   padding: 0;
 }
 
 .review-list li {
-  border-bottom: var(--border-hair) solid var(--line-on-ground);
-  padding: var(--s-2) 0;
+  align-items: baseline;
+  border-block-start: var(--border-hair) solid var(--line-on-ground);
+  counter-increment: review;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-3);
+  padding: var(--s-3) 0;
+}
+
+.review-list li:last-child {
+  border-block-end: var(--border-hair) solid var(--line-on-ground);
+}
+
+ol.review-list li::before {
+  color: var(--accent-on-ground);
+  content: counter(review);
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-24);
+  font-weight: var(--t-weight-bold);
+  inline-size: 2rem;
+}
+
+.review-list-name {
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-26);
+  font-weight: var(--t-weight-bold);
+  line-height: 1.1;
+}
+
+.review-list-han {
+  font-size: var(--t-size-20);
+  font-weight: var(--t-weight-bold);
+}
+
+.results-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: auto;
+}
+
+.results-actions button {
+  min-height: var(--target-comfortable);
+}
+
+.results-actions button.primary {
+  min-height: var(--target-large);
+}
+
+.results-actions-pair {
+  display: grid;
+  gap: var(--s-2);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .attempt-dots {
@@ -1883,24 +2167,10 @@ button.text:hover:enabled {
   margin: 0;
 }
 
-.round-stopwatch {
-  color: var(--text-on-ground-muted);
-  font-variant-numeric: tabular-nums;
-}
-
 .fill-status {
   color: var(--text-on-ground);
   margin: 0;
   min-height: var(--t-leading-body);
-}
-
-.fill-breakdown {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-5);
-  list-style: none;
-  margin: 0;
-  padding: 0;
 }
 
 /*
@@ -1909,9 +2179,13 @@ button.text:hover:enabled {
  * `.map-selection` внутри `.stage-map` — в кадре оболочки карта занимает всю
  * высоту, и абзац наезжал бы на служебную строку под ней; для читалки текст
  * остаётся.
+ *
+ * Им же скрыто слово «Рельеф» у переключателя в строке действий раунда: имя
+ * группы для читалки остаётся, а в колонку в 300 px пилюля без него влезает.
  */
 .visually-hidden,
-.stage-map .map-selection {
+.stage-map .map-selection,
+.stage-strip-tools .relief-toggle legend {
   clip-path: inset(50%);
   height: 1px;
   overflow: hidden;
@@ -1959,6 +2233,12 @@ button.text:hover:enabled {
   padding-block: var(--s-3);
 }
 
+@media (min-width: 1024px) {
+  .site-header-inner {
+    padding-block: var(--s-4);
+  }
+}
+
 /*
  * Название — кнопка на главную, но выглядит названием: ни рамки, ни заливки.
  * Кнопкой, а не ссылкой, по той же причине, что и пункты шапки: маршрутизатора
@@ -1972,7 +2252,7 @@ button.site-header-mark {
   cursor: pointer;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-2);
+  gap: var(--s-3);
   min-height: var(--target-min);
   padding: 0;
   text-align: start;
@@ -1995,7 +2275,9 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 .site-header-name {
   color: var(--text-on-ground-strong);
   font-family: var(--t-family-display);
-  font-size: 1.375rem;
+  font-size: var(--t-size-26);
+  font-weight: var(--t-weight-bold);
+  letter-spacing: 0.01em;
 }
 
 /*
@@ -2013,17 +2295,18 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   color: var(--surface-paper-bright);
   display: inline-flex;
   font-family: var(--t-family-han);
-  font-size: 1.0625rem;
-  height: 28px;
+  font-size: var(--t-size-26);
+  font-weight: var(--t-weight-bold);
+  height: 44px;
   justify-content: center;
   line-height: 1;
-  width: 28px;
+  width: 44px;
 }
 
 .site-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-4);
+  gap: var(--s-1) var(--s-6);
 }
 
 /*
@@ -2036,13 +2319,14 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   border-bottom: var(--border-solid) solid transparent;
   color: var(--text-on-ground);
   cursor: pointer;
-  font-size: 0.9375rem;
+  font-size: var(--t-size-16);
+  font-weight: var(--t-weight-medium);
   min-height: var(--target-min);
-  padding: 0 var(--s-1);
+  padding: 0;
 }
 
 .site-nav button:hover {
-  color: var(--text-on-ground-strong);
+  color: var(--accent-on-ground);
 }
 
 /*
@@ -2114,46 +2398,42 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 /* --- Главная ------------------------------------------------------------ */
 
 /*
- * Одна секция — один экран. Высота считается от кадра за вычетом закреплённой
- * шапки: она стоит поверх, и без вычета каждая секция была бы выше экрана ровно
- * на её высоту.
- *
- * `min-block-size`, а не `block-size`: секция режимов на 375 px выше кадра, и
- * жёсткая высота обрезала бы её. Правило висит на `.site-landing`, а не на
- * `.landing-section` вообще: тот же класс носит «Смотрите также» на странице
- * коллекции, и разворачивать её на весь экран незачем.
+ * Главная течёт одной страницей, а не листается по экранам: на макете под
+ * героем на первом же экране видна строка повтора, а растянутый на весь кадр
+ * герой прятал бы её за фальц.
  */
-.site-landing > .landing-hero,
-.site-landing > .landing-section {
-  min-block-size: calc(100dvh - var(--header-height, 0px));
-  scroll-snap-align: start;
-}
-
-/* Содержимое стоит по центру экрана, а не липнет к его верхней кромке. */
-.site-landing > .landing-section {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
 .landing-hero {
-  align-content: center;
   align-items: center;
   display: grid;
-  gap: var(--s-7);
-  padding: var(--s-7) 0 var(--s-8);
+  gap: var(--s-7) var(--s-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+  padding: var(--s-8) 0;
+}
+
+.landing-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.landing-hero-text .eyebrow {
+  margin: 0;
 }
 
 .landing-hero-text h1 {
   color: var(--text-on-ground-strong);
-  font-size: var(--t-size-display);
-  margin-bottom: var(--s-4);
-  text-wrap: pretty;
+  font-size: var(--t-size-hero);
+  letter-spacing: -0.01em;
+  line-height: 0.98;
+  margin: 0;
+  text-wrap: balance;
 }
 
 .lead {
+  color: var(--text-on-ground-muted);
   font-size: var(--t-size-lead);
-  max-width: 46ch;
+  margin: 0;
+  max-width: 34em;
   text-wrap: pretty;
 }
 
@@ -2161,31 +2441,59 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-3) var(--s-5);
-  margin-bottom: var(--s-6);
+  gap: var(--s-3) var(--s-6);
+  padding-top: var(--s-2);
+}
+
+.landing-hero-actions button.primary {
+  min-height: var(--target-large);
+  padding-inline: var(--s-6);
+}
+
+/*
+ * Карта и вертикальная подпись листа рядом. Подпись тянется по высоте карты,
+ * отделённая от неё чертой тушью, — как надпись на краю свитка.
+ */
+.landing-hero-figure {
+  align-items: stretch;
+  display: flex;
+  gap: var(--s-5);
+  margin: 0;
 }
 
 .landing-hero-map {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: var(--s-3);
+  min-width: 0;
 }
 
 /*
- * Карта в герое — лист, а не карточка.
- *
- * `DESIGN_SYSTEM.md` говорит: карта — главный предмет, а не иллюстрация к
- * тексту. Скруглённый прямоугольник в рамке рядом с абзацем читался ровно
- * иллюстрацией: у него был вид элемента интерфейса, а не бумаги на доске.
- *
- * Поэтому здесь снимаются оба признака коробки — рамка и скругление. Границей
- * листа работает его собственный край: море (#d5e2e4) стоит к доске (#17211f)
- * в 11.7:1, и обводить его линией нечем и незачем. В атласе и раунде рамка
- * остаётся: там карта живёт внутри колонки, а не выходит из неё.
+ * Карта в герое — рисунок тушью на бумаге страницы, а не карточка: ни рамки,
+ * ни скругления. Моря нет (`--map-sea` — та же бумага), берег держит обводка
+ * тушью; прежний голубой лист на бумажной доске давал 1.21:1 и читался
+ * пятном. В атласе и раунде рамка остаётся: там карта живёт внутри колонки.
  */
 .landing-hero-map .china-map {
   border: none;
   border-radius: 0;
+}
+
+.landing-hero-map .caption {
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  padding-top: var(--s-3);
+}
+
+.landing-hero-scroll {
+  border-left: var(--border-hair) solid var(--line-on-ground);
+  color: var(--accent-on-ground);
+  font-size: var(--t-size-22);
+  font-weight: var(--t-weight-semibold);
+  letter-spacing: 0.4em;
+  margin: 0;
+  padding-left: var(--s-3);
+  writing-mode: vertical-rl;
 }
 
 .caption {
@@ -2195,9 +2503,101 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 /*
- * Секции чередуют две поверхности доски. Отбивка задана только сверху и снизу
- * самой секции: горизонтальные поля держит `.site-main`, иначе поднятая
- * секция обрывалась бы по краям текста, а не по краям кадра.
+ * Строка повтора: плашка светлой бумаги, очерченная тушью. Стоит между героем
+ * и режимами — отвечает вернувшемуся ученику до того, как он начнёт выбирать.
+ */
+.repeat-strip {
+  align-items: center;
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4) var(--s-6);
+  justify-content: space-between;
+  padding: var(--s-5) var(--s-5);
+}
+
+.repeat-strip-text {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4) var(--s-5);
+}
+
+.repeat-strip-title {
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-26);
+  font-weight: var(--t-weight-bold);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.repeat-strip-list {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-small);
+  margin: 0;
+}
+
+.repeat-strip button.secondary {
+  min-height: var(--target-comfortable);
+}
+
+/*
+ * Печати: 对 верно, 错 неверно, 再 ещё попытка, 复 повторить, 中 знак сайта.
+ * Иероглиф на них — знак, а не слово: рядом всегда стоит слово, а сама
+ * печать скрыта от читалки экрана.
+ *
+ * `seal-solid` — оттиск: бумага на заливке. `seal-ring` — круглый оттиск
+ * контуром (повтор). Цвет задаёт состояние: киноварь по умолчанию, нефрит —
+ * у верного ответа.
+ */
+.seal {
+  --seal-color: var(--accent-on-ground);
+
+  align-items: center;
+  block-size: 48px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-family: var(--t-family-han);
+  font-size: var(--t-size-22);
+  font-weight: var(--t-weight-bold);
+  inline-size: 48px;
+  justify-content: center;
+  line-height: 1;
+}
+
+.seal[data-tone='correct'] {
+  --seal-color: var(--state-correct-on-ground);
+}
+
+.seal-solid {
+  background: var(--seal-color);
+  color: var(--surface-paper-bright);
+}
+
+.seal-outline {
+  border: var(--border-solid) solid var(--seal-color);
+  color: var(--seal-color);
+}
+
+.seal-ring {
+  border: var(--border-solid) solid var(--seal-color);
+  border-radius: 50%;
+  color: var(--seal-color);
+}
+
+.seal-large {
+  block-size: 64px;
+  font-size: var(--t-size-36);
+  inline-size: 64px;
+}
+
+/*
+ * Отбивка задана только сверху и снизу самой секции: горизонтальные поля
+ * держит `.site-main`, иначе поднятая секция обрывалась бы по краям текста, а
+ * не по краям кадра.
  */
 .landing-section {
   padding: var(--s-8) 0;
@@ -2217,10 +2617,10 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 .landing-section h2 {
   color: var(--text-on-ground-strong);
   font-family: var(--t-family-display);
-  font-size: var(--t-size-title);
-  font-weight: var(--t-weight-regular);
-  line-height: var(--t-leading-tight);
-  margin: 0 0 var(--s-3);
+  font-size: var(--t-size-section);
+  font-weight: var(--t-weight-bold);
+  line-height: 1;
+  margin: 0;
 }
 
 .landing-section-head {
@@ -2245,42 +2645,354 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   justify-content: space-between;
 }
 
-/* --- Карточки режимов --------------------------------------------------- */
-
-/*
- * Группа игр: название слева, карточки справа. Одиннадцать равных карточек
- * подряд читались одним полотном — порядок в них был, но ничем не назван.
- * Название группы стоит рельсой сбоку, а не строкой над сеткой: строка
- * добавила бы к разделу четыре высоты заголовка, а рельса занимает поле,
- * которое и так пустует слева от карточек.
- */
-.mode-group + .mode-group {
-  margin-top: var(--s-6);
+.landing-section-head-split > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
 }
 
-.mode-group-head h3 {
+.landing-modes {
+  padding-top: var(--s-8);
+}
+
+.landing-modes .landing-section-head {
+  margin-bottom: var(--s-2);
+}
+
+.landing-modes .landing-section-head p {
+  font-size: var(--t-size-small);
+}
+
+/* --- Главы режимов ------------------------------------------------------ */
+
+/*
+ * Семь глав в две колонки. Глава — номер иероглифом слева и игры пилюлями
+ * справа; главы отделяет черта тушью сверху, как строки оглавления.
+ */
+.mode-chapters {
+  column-gap: var(--s-8);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+}
+
+.mode-chapter {
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  display: grid;
+  gap: var(--s-5);
+  grid-template-columns: 72px minmax(0, 1fr);
+  padding: var(--s-6) 0;
+}
+
+.mode-chapter-numeral {
+  color: var(--accent-on-ground);
+  font-size: var(--t-size-52);
+  font-weight: var(--t-weight-bold);
+  line-height: 1;
+}
+
+/*
+ * Телефон: колонка номера в 72 px отнимала у пилюль пятую часть строки, и
+ * «Достопримечательность — регион» ломалась на две.
+ */
+@media (max-width: 519px) {
+  .mode-chapter,
+  .collection-group-head {
+    gap: var(--s-3);
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .mode-chapter-numeral {
+    font-size: var(--t-size-36);
+  }
+
+  .mode-chapter h3,
+  .collection-group-head h2 {
+    font-size: var(--t-size-28);
+  }
+}
+
+.mode-chapter h3 {
   color: var(--text-on-ground-strong);
   font-family: var(--t-family-display);
-  font-size: 1.1875rem;
-  font-weight: var(--t-weight-regular);
+  font-size: var(--t-size-32);
+  font-weight: var(--t-weight-bold);
   /*
-   * «Достопримечательности» длиннее рельсы в 200 px и без переносов уходила
-   * под карточки. Перенос по словарю, а не разрыв где попало: язык страницы
-   * объявлен, и браузер делит слово по-русски.
+   * «Достопримечательности» длиннее колонки на телефоне. Перенос по словарю,
+   * а не разрыв где попало: язык страницы объявлен, и браузер делит слово
+   * по-русски.
    */
   hyphens: auto;
-  line-height: var(--t-leading-tight);
+  line-height: 1.1;
   margin: 0;
   overflow-wrap: break-word;
 }
 
-.mode-group-head p {
+.mode-chapter p {
   color: var(--text-on-ground-muted);
-  font-size: var(--t-size-caption);
-  margin: var(--s-1) 0 var(--s-3);
+  font-size: var(--t-size-small);
+  margin: var(--s-1) 0 var(--s-4);
 }
 
-.mode-card-grid,
+.mode-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * Пилюля режима — единственная круглая кнопка на сайте: она запускает игру,
+ * а не действие на странице, и форма это различает. Наведение — киноварью,
+ * нажатие — заливкой тушью (лист стиля макетов).
+ */
+.mode-pill {
+  align-items: center;
+  background: transparent;
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-pill);
+  color: var(--text-on-ground);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--t-size-small);
+  font-weight: var(--t-weight-medium);
+  min-height: var(--target-min);
+  padding: 0 var(--s-4);
+  transition: border-color var(--duration-quick) var(--ease-out),
+    color var(--duration-quick) var(--ease-out);
+}
+
+.mode-pill:hover:enabled {
+  border-color: var(--accent-on-ground);
+  color: var(--accent-on-ground);
+}
+
+.mode-pill:active:enabled {
+  background: var(--text-on-ground);
+  border-color: var(--text-on-ground);
+  color: var(--surface-raised);
+}
+
+.mode-pill:disabled {
+  border-style: dashed;
+  color: var(--text-on-ground-muted);
+  cursor: default;
+}
+
+/* --- Окно перед стартом игры -------------------------------------------- */
+
+/*
+ * Выбор языка и набора стоит окном, а не переключателем на пилюле: кнопка
+ * внутри кнопки недостижима с клавиатуры. Окно — лист бумаги, очерченный
+ * тушью, на притенённой странице (макет Ink-Start).
+ */
+.mode-dialog {
+  background: none;
+  border: 0;
+  color: var(--text-on-ground);
+  max-block-size: calc(100dvh - 2 * var(--s-4));
+  padding: 0;
+}
+
+.mode-dialog::backdrop {
+  background: var(--backdrop);
+}
+
+.mode-dialog-body {
+  background: var(--surface-ground);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  inline-size: min(100vw - 2 * var(--s-4), 560px);
+  padding: var(--s-6) var(--s-6) var(--s-6);
+}
+
+@media (min-width: 640px) {
+  .mode-dialog-body {
+    padding: 36px 40px 32px;
+  }
+}
+
+.mode-dialog-head {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--s-5);
+}
+
+.mode-dialog-head .eyebrow {
+  margin: 0 0 var(--s-1);
+}
+
+.mode-dialog h2 {
+  color: var(--text-on-ground-strong);
+  font-family: var(--t-family-display);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: var(--t-weight-bold);
+  line-height: 1;
+  margin: 0;
+}
+
+/*
+ * Описание игры в окне перед стартом. Стояло на карточке, где одиннадцать
+ * таких абзацев подряд требовалось прочитать, чтобы выбрать.
+ */
+.mode-dialog-summary {
+  color: var(--text-on-ground-secondary);
+  margin: 0;
+}
+
+.mode-dialog-volume {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  margin: 0;
+}
+
+.mode-dialog-language,
+.mode-dialog-set {
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  min-inline-size: 0;
+  padding: 0;
+}
+
+.mode-dialog-language legend,
+.mode-dialog-set legend {
+  color: var(--text-on-ground);
+  font-size: var(--t-size-caption);
+  font-weight: var(--t-weight-semibold);
+  letter-spacing: var(--t-tracking-eyebrow);
+  padding: 0 0 var(--s-2);
+  text-transform: uppercase;
+}
+
+.mode-dialog-language-options {
+  display: grid;
+  gap: var(--s-2);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+}
+
+/*
+ * Строка выбора — цель нажатия во всю ширину: попасть в саму кнопку радио
+ * размером с букву на телефоне нельзя (WCAG 2.5.8). Выбранный язык обведён
+ * тушью вдвое толще и лежит на светлой бумаге — не только цветом.
+ */
+.mode-dialog-language label {
+  align-items: center;
+  background: transparent;
+  border: var(--border-hair) solid var(--line-on-ground-soft);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  font-weight: var(--t-weight-medium);
+  gap: var(--s-3);
+  min-height: var(--target-large);
+  padding: 0 var(--s-4);
+}
+
+.mode-dialog-language label:has(input:checked) {
+  background: var(--surface-raised);
+  border: var(--border-solid) solid var(--line-on-ground-strong);
+  padding-inline: calc(var(--s-4) - 1px);
+}
+
+.mode-dialog-language label [lang='zh-Hans'] {
+  font-size: var(--t-size-18);
+}
+
+/* Набор — строки оглавления: черта сверху, число справа. */
+.mode-dialog-set label {
+  align-items: center;
+  border-top: var(--border-hair) solid var(--line-on-ground);
+  cursor: pointer;
+  display: grid;
+  gap: var(--s-3);
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  min-height: var(--target-row);
+}
+
+.mode-dialog-set label:last-of-type {
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+}
+
+.mode-dialog-set label > span:first-of-type {
+  font-weight: var(--t-weight-medium);
+}
+
+.mode-dialog-set label:hover {
+  background: var(--surface-raised);
+}
+
+.mode-dialog-count {
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  white-space: nowrap;
+}
+
+.mode-dialog-count-number {
+  color: var(--text-on-ground-strong);
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-24);
+  font-weight: var(--t-weight-bold);
+}
+
+.mode-dialog-language label:has(input:focus-visible),
+.mode-dialog-set label:has(input:focus-visible) {
+  outline: var(--border-focus) solid var(--focus-on-paper);
+  outline-offset: var(--s-1);
+}
+
+/* Кольцо рисует строка целиком, поэтому у самой радиокнопки его нет. */
+.mode-dialog-language input:focus-visible,
+.mode-dialog-set input:focus-visible {
+  outline: none;
+}
+
+.mode-dialog-language input,
+.mode-dialog-set input {
+  accent-color: var(--accent);
+  block-size: 18px;
+  inline-size: 18px;
+  margin: 0 auto;
+}
+
+.mode-dialog-language input {
+  margin: 0;
+}
+
+.mode-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  padding-top: var(--s-1);
+}
+
+.mode-dialog-actions button {
+  min-height: var(--target-large);
+}
+
+.mode-dialog-actions button.primary {
+  flex: 1 1 200px;
+}
+
+.mode-dialog-actions button.secondary {
+  flex: 1 1 140px;
+  max-inline-size: 100%;
+}
+
+@media (min-width: 640px) {
+  .mode-dialog-actions button.secondary {
+    flex-grow: 0;
+  }
+}
+
+/* --- Витрина коллекций -------------------------------------------------- */
+
 .collection-grid {
   display: grid;
   gap: var(--s-4);
@@ -2291,21 +3003,14 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 /*
- * Запуск игры — одна кнопка во всю карточку: цель нажатия совпадает с тем, что
- * видно, и целиться в мелкое слово «подробнее» не приходится. Переключатель
- * языка стоит рядом с ней, а не внутри: кнопка в кнопке недостижима с
- * клавиатуры.
+ * Карточка коллекции — одна кнопка во всю карточку: цель нажатия совпадает с
+ * тем, что видно. Без рамки (макет Ink-Collections): снимок, под ним черта
+ * тушью, имя крупно и иероглифы киноварью.
  */
-.mode-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.mode-card button,
 .collection-card button {
-  background: var(--surface-paper);
-  border: var(--border-solid) solid transparent;
-  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  border-radius: 0;
   color: var(--text-on-paper);
   cursor: pointer;
   display: flex;
@@ -2317,200 +3022,15 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   width: 100%;
 }
 
-.mode-card button {
-  flex: 1;
-  gap: var(--s-2);
-  padding: var(--s-4);
+.collection-card button:hover .collection-card-title {
+  text-decoration: underline;
+  text-decoration-thickness: var(--border-hair);
+  text-underline-offset: 4px;
 }
 
-.mode-card button:hover:enabled,
-.collection-card button:hover {
-  border-color: var(--accent);
-}
-
-.mode-card button:focus-visible,
 .collection-card button:focus-visible {
   outline-color: var(--focus-on-paper);
 }
-
-/*
- * Недоступная карточка не гасится до нечитаемости: причина написана словами
- * внутри неё, и прочесть её должно быть можно.
- *
- * Бумага остаётся. Прежде `background: none` снимал материал, и от карточки
- * оставалась пунктирная рамка в 1.77:1 к поднятой поверхности. На первом
- * заходе открыт только первый уровень — недоступны четыре карточки из шести,
- * — и полоса «Режимы», главная витрина страницы, встречала ученика четырьмя
- * почти невидимыми прямоугольниками.
- *
- * Отличают такую карточку три канала, и ни один из них не оттенок заливки:
- * пунктирная рамка вместо сплошной, иероглиф тушью вместо киновари и строка
- * «Готовится» / «Откроется на уровне N» внутри.
- */
-.mode-card button:disabled {
-  border-color: var(--line-on-paper);
-  border-style: dashed;
-  cursor: default;
-}
-
-.mode-card-head {
-  align-items: baseline;
-  display: flex;
-  gap: var(--s-4);
-  justify-content: space-between;
-}
-
-.mode-card-mark {
-  color: var(--accent);
-  font-size: 1.875rem;
-  line-height: 1;
-}
-
-/* Киноварь означает, что режим работает. У недоступного иероглиф тушью. */
-.mode-card button:disabled .mode-card-mark {
-  color: var(--text-on-paper-muted);
-}
-
-.mode-card-status {
-  color: var(--text-on-paper-muted);
-  font-size: var(--t-size-caption);
-}
-
-/* --- Окно перед стартом игры -------------------------------------------- */
-
-/*
- * Выбор языка стоит окном, а не переключателем на карточке: переключатель
- * приходилось выносить из кнопки запуска — кнопка внутри кнопки недостижима с
- * клавиатуры, — и он оказывался на доске, тёмным по тёмному. Окно ставит его
- * на бумагу.
- */
-.mode-dialog {
-  background: none;
-  border: 0;
-  color: var(--text-on-paper);
-  padding: 0;
-}
-
-.mode-dialog::backdrop {
-  background: rgb(0 0 0 / 60%);
-}
-
-.mode-dialog-body {
-  background: var(--surface-paper-bright);
-  border-radius: var(--radius-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  max-inline-size: min(100vw - 2 * var(--s-4), 26rem);
-  padding: var(--s-6);
-}
-
-.mode-dialog h2 {
-  color: var(--text-on-paper);
-  font-family: var(--t-family-display);
-  font-size: var(--t-size-title);
-  line-height: var(--t-leading-tight);
-}
-
-.mode-dialog-volume {
-  color: var(--text-on-paper-muted);
-  font-size: var(--t-size-caption);
-}
-
-.mode-dialog-language {
-  border: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  margin: 0;
-  padding: 0;
-}
-
-.mode-dialog-language legend {
-  color: var(--text-on-paper-muted);
-  font-size: var(--t-size-caption);
-  padding: 0 0 var(--s-2);
-}
-
-/*
- * Строка выбора — цель нажатия во всю ширину окна: попасть в саму кнопку
- * радио размером с букву на телефоне нельзя (WCAG 2.5.8).
- */
-.mode-dialog-language label {
-  align-items: center;
-  border: var(--border-solid) solid var(--line-on-paper);
-  border-radius: var(--radius-sm);
-  color: var(--text-on-paper);
-  cursor: pointer;
-  display: flex;
-  gap: var(--s-3);
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--target-min);
-  padding: var(--s-2) var(--s-4);
-}
-
-.mode-dialog-language label:has(input:checked) {
-  border-color: var(--accent);
-}
-
-.mode-dialog-language label:has(input:focus-visible) {
-  outline: var(--border-focus) solid var(--focus-on-paper);
-  outline-offset: var(--s-1);
-}
-
-/* Кольцо рисует строка целиком, поэтому у самой радиокнопки его нет. */
-.mode-dialog-language input:focus-visible {
-  outline: none;
-}
-
-.mode-dialog-language input {
-  accent-color: var(--accent);
-  block-size: var(--s-4);
-  inline-size: var(--s-4);
-  margin: 0;
-}
-
-.mode-dialog-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--s-4);
-  padding-top: var(--s-2);
-}
-
-/* Отмена стоит на бумаге, а не на доске: киноварь доски здесь не читается. */
-.mode-dialog-actions button.text {
-  color: var(--accent);
-}
-
-/*
- * Описание игры в окне перед стартом. Стояло на карточке, где одиннадцать
- * таких абзацев подряд требовалось прочитать, чтобы выбрать.
- */
-.mode-dialog-summary {
-  color: var(--text-on-paper);
-  margin: 0 0 var(--s-2);
-}
-
-/*
- * Кегль меньше прежнего: карточка сузилась с 437 до 268 px, и «Найти на
- * физической карте» в 21 px разваливалось на три строки.
- */
-.mode-card-title {
-  color: inherit;
-  font-family: var(--t-family-display);
-  font-size: 1.125rem;
-  line-height: var(--t-leading-tight);
-}
-
-.mode-card-volume {
-  color: var(--text-on-paper-muted);
-  font-size: var(--t-size-caption);
-  margin-top: auto;
-  padding-top: var(--s-2);
-}
-
-/* --- Витрина коллекций -------------------------------------------------- */
 
 .collection-filters {
   display: flex;
@@ -2559,10 +3079,12 @@ button.chip[aria-pressed='true'] {
 }
 
 .collection-card-body {
+  border-top: var(--border-hair) solid var(--line-on-ground);
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
-  padding: var(--s-4);
+  margin-top: var(--s-3);
+  padding: var(--s-3) 0 0;
 }
 
 .collection-card-group {
@@ -2575,8 +3097,14 @@ button.chip[aria-pressed='true'] {
 
 .collection-card-title {
   font-family: var(--t-family-display);
-  font-size: 1.1875rem;
-  line-height: var(--t-leading-tight);
+  font-size: var(--t-size-26);
+  font-weight: var(--t-weight-bold);
+  line-height: 1.1;
+}
+
+.collection-card-title [lang='zh-Hans'] {
+  color: var(--accent-on-ground);
+  font-size: 0.7em;
 }
 
 .collection-card-subtitle {
@@ -2647,7 +3175,8 @@ button.chip[aria-pressed='true'] {
 }
 
 .collection-photo[data-photo-height='card'] {
-  height: 10.5rem;
+  aspect-ratio: 4 / 3;
+  height: auto;
 }
 
 .collection-photo[data-photo-height='hero'] {
@@ -2680,7 +3209,7 @@ button.chip[aria-pressed='true'] {
 
 .photo-slot-label {
   color: var(--text-on-paper);
-  font-size: 0.9375rem;
+  font-size: var(--t-size-small);
 }
 
 .photo-slot-note {
@@ -2733,14 +3262,91 @@ button.chip[aria-pressed='true'] {
   text-wrap: pretty;
 }
 
+.page-head-aside {
+  align-items: stretch;
+  display: flex;
+  gap: var(--s-5);
+}
+
 .page-head-count {
   color: var(--text-on-ground-muted);
+  display: flex;
+  flex-direction: column;
+  font-size: var(--t-size-small);
+  justify-content: flex-end;
   margin: 0;
+  text-align: end;
+}
+
+.page-head-number {
+  color: var(--text-on-ground-strong);
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-72);
+  font-weight: var(--t-weight-bold);
+  line-height: 0.9;
+}
+
+/* Вертикальная подпись раздела — тот же приём, что у карты на главной. */
+.page-head-scroll {
+  border-left: var(--border-hair) solid var(--line-on-ground);
+  color: var(--accent-on-ground);
+  font-size: var(--t-size-20);
+  font-weight: var(--t-weight-semibold);
+  letter-spacing: 0.4em;
+  margin: 0;
+  padding-left: var(--s-3);
+  writing-mode: vertical-rl;
+}
+
+/* Пилюля-переход: та же форма, что у режимов на главной. */
+.chip-pill {
+  align-items: center;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  font-size: var(--t-size-small);
+  font-weight: var(--t-weight-medium);
+  gap: var(--s-2);
+  padding-inline: 18px;
+}
+
+.chip-numeral {
+  color: var(--accent-on-ground);
+  font-weight: var(--t-weight-bold);
+}
+
+.chip-count {
+  color: var(--text-on-ground-muted);
+}
+
+.collection-group-head {
+  align-items: end;
+  border-bottom: var(--border-hair) solid var(--line-on-ground);
+  display: grid;
+  gap: var(--s-5);
+  grid-template-columns: 72px minmax(0, 1fr);
+  margin-bottom: var(--s-6);
+  padding-bottom: var(--s-5);
+}
+
+.collection-group-head > div {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-5);
+  justify-content: space-between;
+}
+
+.collection-group-head h2 {
+  font-size: var(--t-size-44);
+}
+
+.collection-group {
+  padding-block: var(--s-7) 0;
 }
 
 .group-hint {
   color: var(--text-on-ground-muted);
-  font-size: 0.875rem;
+  font-size: var(--t-size-caption);
   margin: 0;
 }
 
@@ -2751,7 +3357,7 @@ button.chip[aria-pressed='true'] {
   color: var(--text-on-ground-muted);
   display: flex;
   flex-wrap: wrap;
-  font-size: 0.875rem;
+  font-size: var(--t-size-caption);
   gap: var(--s-1);
   padding: var(--s-4) 0;
 }
@@ -2778,7 +3384,9 @@ button.chip[aria-pressed='true'] {
 }
 
 .collection-name-zh {
-  font-size: 1.625rem;
+  color: var(--accent-on-ground);
+  font-size: var(--t-size-32);
+  font-weight: var(--t-weight-bold);
   margin-bottom: var(--s-1);
 }
 
@@ -2825,8 +3433,9 @@ button.chip[aria-pressed='true'] {
  * рамкой: это сведения о странице, а не её предмет.
  */
 .paper-panel {
-  background: var(--surface-paper);
-  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-sm);
   color: var(--text-on-paper);
   display: flex;
   flex-direction: column;
@@ -2836,7 +3445,7 @@ button.chip[aria-pressed='true'] {
 
 .outline-panel {
   border: var(--border-hair) solid var(--line-on-ground);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
@@ -3073,7 +3682,7 @@ button.chip[aria-pressed='true'] {
 .relief-scale-ticks {
   display: grid;
   grid-template-rows: repeat(7, 1.15em);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
   text-align: end;
 }
 
@@ -3130,7 +3739,6 @@ button.chip[aria-pressed='true'] {
 }
 
 @media (min-width: 720px) {
-  .mode-card-grid,
   .collection-grid,
   .photo-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3138,23 +3746,6 @@ button.chip[aria-pressed='true'] {
 }
 
 @media (min-width: 1024px) {
-  .landing-hero {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 50%);
-  }
-
-  /*
-   * Лист уходит за край страницы: поле `.site-main` гасится тем же способом,
-   * каким его гасит поднятая полоса, — из одной переменной, иначе бумага
-   * вылезла бы за кадр. Уходящий за край лист нельзя прочитать как карточку:
-   * у карточки видны все четыре стороны.
-   *
-   * Поле снимается у самой карты, а не у колонки: подпись под ней —
-   * по-прежнему текст страницы и кончается там же, где кончается текст.
-   */
-  .landing-hero-map .map-section {
-    margin-inline-end: calc(-1 * var(--s-7));
-  }
-
   /* «Содержание» и «Источники» равнозначны: колонки одинаковые. */
   .landing-provenance {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3162,26 +3753,6 @@ button.chip[aria-pressed='true'] {
 
   .collection-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  /*
-   * У режимов колонок четыре, а не три: в самой большой группе ровно четыре
-   * игры, и она укладывается в один ряд. Карточки при этом одной ширины во
-   * всех группах — ряды не разъезжаются.
-   */
-  .mode-card-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .mode-group {
-    align-items: start;
-    display: grid;
-    gap: var(--s-5);
-    grid-template-columns: 200px minmax(0, 1fr);
-  }
-
-  .mode-group-head p {
-    margin-bottom: 0;
   }
 
   .photo-grid {
@@ -3252,9 +3823,9 @@ button.chip[aria-pressed='true'] {
 /* --- Экран раунда: оболочка RoundStage ---------------------------------- */
 
 /*
- * Кадр раунда: карта забирает остаток колонки, плашка вопроса плавает поверх
- * неё, полоса вариантов и служебная строка стоят под картой и её не
- * перекрывают (спек RoundStage, 2026-08-17).
+ * Кадр раунда: карта забирает остаток кадра. На узком экране шапка раунда и
+ * вопрос стоят над ней, варианты и служебная строка — под ней; на широком
+ * всё это уходит в колонку слева (см. медиазапрос «Колонка вопроса»).
  */
 .round-stage {
   display: flex;
@@ -3323,8 +3894,11 @@ button.chip[aria-pressed='true'] {
   inset: 0;
   justify-content: center;
   overflow: hidden;
-  padding: clamp(var(--s-7), 11vh, calc(var(--s-8) + var(--s-5))) var(--s-6)
-    var(--s-5);
+  /*
+   * Запаса сверху под плашку вопроса больше нет: вопрос стоит в потоке над
+   * кадром (редизайн, 2026-10-14).
+   */
+  padding: var(--s-5) var(--s-6);
   position: absolute;
 }
 
@@ -3362,9 +3936,7 @@ button.chip[aria-pressed='true'] {
 
 /*
  * Место карты в режиме «История» занимает лента времени. Она не карта: у неё
- * нет ни увеличения, ни выбора. Верхнее поле большое намеренно — плашка
- * вопроса стоит поверх кадра, и лента обязана начинаться ниже неё, иначе
- * вопрос закрывает как раз ту часть ленты, о которой спрашивает.
+ * нет ни увеличения, ни выбора.
  */
 .history-stage {
   align-items: center;
@@ -3388,14 +3960,21 @@ button.chip[aria-pressed='true'] {
    * позиционирован, и `inset: 0` держит ленту ровно в его границах.
    */
   inset: 0;
-  justify-content: center;
-  overflow: hidden;
   /*
-   * Верхнее поле — под плашку вопроса: она стоит поверх кадра абсолютом, и
-   * без запаса лента начинается прямо под ней, а вопрос закрывает как раз ту
-   * часть ленты, о которой спрашивает.
+   * Змейка в четыре строки выше прежней ленты в одну, и на низком кадре
+   * (телефон) она не помещается. Тогда кадр прокручивается, а не режет
+   * крайние строки: обрезанная лента врёт о времени. `safe` прижимает её к
+   * верху, когда места не хватает, — иначе центровка увела бы начало ленты
+   * за верхний край, куда прокрутка не достаёт.
    */
-  padding: calc(var(--s-8) + var(--s-5)) var(--s-6) var(--s-5);
+  justify-content: safe center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /*
+   * Запаса сверху под плашку вопроса больше нет: вопрос стоит в потоке над
+   * кадром (редизайн, 2026-10-14).
+   */
+  padding: var(--s-5) var(--s-6);
   position: absolute;
 }
 
@@ -3542,6 +4121,119 @@ button.chip[aria-pressed='true'] {
   outline-offset: calc(-1 * var(--border-focus));
 }
 
+/* --- змейка --- */
+
+/*
+ * Лента змейкой: строки по тысяче лет, между ними повороты. Высоты строк
+ * заданы переменными, потому что поворот обязан дотянуться от полосы этой
+ * строки до полосы следующей, а разметкой их не связать.
+ */
+.dynasty-timeline[data-layout='snake'] {
+  --timeline-turn: 40px;
+  --timeline-scale-height: 1.5rem;
+  --timeline-band-height: clamp(1.75rem, 4.5vh, 2.5rem);
+  /*
+   * Строка имён вмещает подпись в две строки — имя и срок верного ответа:
+   * 2 × 1.25 × 15 px и отступ. Ниже подпись со сроком налезала на шкалу
+   * следующей строки змейки.
+   */
+  --timeline-names-height: 2.75rem;
+
+  box-sizing: border-box;
+  padding-inline: var(--timeline-turn);
+}
+
+.dynasty-timeline[data-layout='snake'] .timeline-row {
+  position: relative;
+}
+
+.dynasty-timeline[data-layout='snake'] .timeline-scale {
+  block-size: var(--timeline-scale-height);
+}
+
+.dynasty-timeline[data-layout='snake'] .timeline-band {
+  block-size: var(--timeline-band-height);
+}
+
+.dynasty-timeline[data-layout='snake'] .timeline-names {
+  block-size: var(--timeline-names-height);
+}
+
+.dynasty-timeline[data-layout='snake'] .timeline-gap {
+  block-size: auto;
+}
+
+/*
+ * Поворот — подкова толщиной в полосу: верх продолжает полосу этой строки,
+ * низ — полосу следующей. Внутри пусто: там подписи и шкала.
+ */
+.timeline-turn {
+  block-size: calc(
+    var(--timeline-scale-height) + 2 * var(--timeline-band-height) +
+      var(--timeline-names-height)
+  );
+  border: var(--timeline-band-height) solid var(--timeline-turn-empty);
+  box-sizing: border-box;
+  inline-size: var(--timeline-turn);
+  inset-block-start: var(--timeline-scale-height);
+  pointer-events: none;
+  position: absolute;
+}
+
+.timeline-turn[data-side='end'] {
+  border-inline-start: none;
+  border-radius: 0 var(--timeline-band-height) var(--timeline-band-height) 0;
+  inset-inline-end: calc(-1 * var(--timeline-turn));
+}
+
+.timeline-turn[data-side='start'] {
+  border-inline-end: none;
+  border-radius: var(--timeline-band-height) 0 0 var(--timeline-band-height);
+  inset-inline-start: calc(-1 * var(--timeline-turn));
+}
+
+/* Через поворот идёт династия — он её тона и её исхода. */
+.timeline-turn[data-turn-dynasty-id] {
+  border-color: var(--timeline-span);
+}
+
+.timeline-turn[data-mark='correct'],
+.timeline-turn[data-mark='taken'] {
+  border-color: var(--timeline-span-correct);
+}
+
+.timeline-turn[data-mark='wrong'] {
+  border-color: var(--timeline-span-wrong);
+}
+
+/*
+ * Наведение — как у полосы: светлая заливка и кайма киноварью. Без каймы
+ * светлый поворот на бумажном кадре пропадал, и лента рвалась ровно там, где
+ * время «не прерывается».
+ */
+.timeline-turn[data-mark='hover'] {
+  border-color: var(--surface-paper-bright);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Телефон: змейка плотнее — поворот уже, полосы ниже. */
+@media (max-width: 719px) {
+  .dynasty-timeline[data-layout='snake'] {
+    --timeline-turn: 24px;
+    --timeline-scale-height: 1.25rem;
+    --timeline-band-height: 1.5rem;
+  }
+}
+
+.timeline-name-han {
+  font-weight: var(--t-weight-bold);
+}
+
+.dynasty-timeline[data-layout='snake'] .timeline-name {
+  font-size: var(--t-size-small);
+  line-height: 1.25;
+}
+
 /* Строка под лентой: подсказка, срок наведённой полосы или разбор. */
 .timeline-hint {
   min-block-size: 1.5rem;
@@ -3586,17 +4278,6 @@ button.chip[aria-pressed='true'] {
  * Прятать соседей пришлось бы измерением ширины текста, а бумага под подписью
  * решает то же самое разметкой.
  */
-/*
- * Крайние подписи прижимаются к своему краю: подпись Ся начинается у нуля
- * ленты, и центрированная уезжала бы за обрез наполовину.
- */
-.timeline-name[data-edge='start'] {
-  transform: none;
-}
-
-.timeline-name[data-edge='end'] {
-  transform: translateX(-100%);
-}
 
 .timeline-name[data-mark='correct'],
 .timeline-name[data-mark='asked'],
@@ -3639,44 +4320,22 @@ button.chip[aria-pressed='true'] {
   background: var(--surface-ground);
 }
 
-.stage-prompt {
-  background: var(--surface-raised);
-  border: var(--border-hair) solid var(--line-on-ground);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-float);
-  inset-block-start: var(--s-3);
-  inset-inline-start: 50%;
-  max-inline-size: min(90%, 40rem);
-  padding: var(--s-2) var(--s-5) var(--s-3);
-  position: absolute;
-  text-align: center;
-  transform: translateX(-50%);
-  /* Плашка — только текст; нажатия сквозь неё уходят карте. */
-  pointer-events: none;
-  /*
-   * Выше панели «Ответить из списка» (z-index: 3): на узком экране панель
-   * занимает нижние 60 % карты, а вопрос должен остаться виден поверх неё.
-   */
-  z-index: 4;
-}
-
 /*
- * Открытая панель списка — исключение из «плашка сквозная»: на узком кадре
- * (740×380 и уже) плашка нависает над верхней кнопкой панели, и тап по её
- * тёмному фону при `pointer-events: none` проваливался бы сквозь неё прямо
- * в невидимую кнопку под ней — а фокус-кольцо кнопки при этом частично
- * перекрыто плашкой (WCAG 2.2 2.4.11). Пока панель открыта, поле ответа —
- * список, а не карта под плашкой, так что твёрдая плашка не мешает: клик
- * в неё просто ничего не делает, вместо того чтобы улетать в кнопку.
+ * Вопрос стоит строкой в потоке — между шапкой раунда и картой, а не плашкой
+ * поверх карты. Плавающая плашка накрывала шапку раунда, когда та появилась
+ * (редизайн, 2026-10-14), а на телефоне — заодно и север карты. На широком
+ * экране вопрос уходит в колонку слева (медиазапрос ниже).
  */
-.round-stage[data-list-open='true'] .stage-prompt {
-  pointer-events: auto;
+.stage-prompt {
+  background: var(--surface-ground);
+  border-block-end: var(--border-hair) solid var(--line-on-ground);
+  padding: var(--s-2) var(--s-4) var(--s-3);
 }
 
 /*
- * Надзаголовок вопроса — приглушённым тоном, а не киноварью: красный на
- * плашке читался знаком ошибки, хотя это просто имя игры. Киноварь на тёмном
- * фоне остаётся отметке «стоит повторить» — там она и означает промах.
+ * Надзаголовок вопроса — приглушённым тоном, а не киноварью: красный над
+ * вопросом читался знаком ошибки, хотя это просто подводка. Киноварь
+ * остаётся отметке «стоит повторить» — там она и означает промах.
  */
 .stage-prompt .eyebrow {
   color: var(--text-on-ground-muted);
@@ -3703,8 +4362,8 @@ button.chip[aria-pressed='true'] {
 
 /*
  * Короткий кадр (телефон лёжа и похожие): `--t-size-question` — до 40 px, а
- * высоты кадра там едва хватает на саму карту. На 500 px высоты плашка с
- * заголовком такого размера выходила 113 px при карте 203 px — почти
+ * высоты кадра там едва хватает на саму карту. На 500 px высоты блок вопроса
+ * с заголовком такого размера выходил 113 px при карте 203 px — почти
  * половина кадра под текст. `--t-size-lead` вдвое компактнее и всё ещё
  * крупнее обычного текста.
  */
@@ -3744,6 +4403,9 @@ button.chip[aria-pressed='true'] {
 
 .stage-map .china-map {
   block-size: 100%;
+  /* Карта в раунде — рисунок на бумаге: рамку заменяют черты вокруг листа. */
+  border: none;
+  border-radius: 0;
 }
 
 .stage-map .china-map svg {
@@ -3765,8 +4427,8 @@ button.chip[aria-pressed='true'] {
 }
 
 /*
- * Узкий экран: панель во всю ширину закрывала бы плашку вопроса. Нижние 60 %
- * карты оставляют вопрос читаемым сверху.
+ * Узкий экран: панель во всю высоту закрыла бы карту целиком. Нижние 60 %
+ * оставляют видным спрошенное место на карте.
  */
 @media (max-width: 1023px) {
   .stage-answer-panel {
@@ -3881,27 +4543,6 @@ button.chip[aria-pressed='true'] {
   padding: var(--s-2) var(--s-4);
 }
 
-.stage-strip .exercise-progress,
-.stage-strip .fill-status {
-  margin: 0;
-}
-
-.stage-strip .round-trail {
-  margin-block-start: 0;
-}
-
-/*
- * Телефон: лента `aria-hidden` и декоративна — «Вопрос N из M» рядом несёт
- * тот же факт словами. На 375×700 строка ленты занимала 145 px (21 % кадра)
- * и отбирала их у карты; на телефоне высота дороже, а каждый отвоёванный
- * пиксель к тому же расширяет и панель списка (60 % высоты карты).
- */
-@media (max-width: 719px) {
-  .stage-strip .round-trail {
-    display: none;
-  }
-}
-
 .stage-strip-actions {
   align-items: center;
   display: flex;
@@ -3922,4 +4563,386 @@ button.chip[aria-pressed='true'] {
 
 .stage-strip-button:hover {
   border-color: var(--accent-on-ground);
+}
+
+/* --- Колонка вопроса (редизайн «Тушь и киноварь») ----------------------- */
+
+.stage-head {
+  align-items: center;
+  background: var(--surface-ground);
+  border-block-end: var(--border-hair) solid var(--line-on-ground);
+  color: var(--text-on-ground-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--t-size-caption);
+  gap: var(--s-2) var(--s-4);
+  padding: var(--s-2) var(--s-4);
+}
+
+.stage-head .exercise-progress,
+.stage-head .fill-status {
+  margin: 0;
+}
+
+.stage-head .round-trail {
+  margin-block-start: 0;
+}
+
+/*
+ * Телефон: лента `aria-hidden` и декоративна — «Вопрос N из M» рядом несёт
+ * тот же факт словами, а высота на телефоне дороже.
+ */
+@media (max-width: 719px) {
+  .stage-head .round-trail {
+    display: none;
+  }
+}
+
+.stage-title {
+  color: var(--accent-on-ground);
+  font-size: var(--t-size-caption);
+  font-weight: var(--t-weight-semibold);
+  letter-spacing: var(--t-tracking-eyebrow);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.round-stopwatch::before {
+  content: 'Время ';
+}
+
+.round-stopwatch {
+  color: var(--text-on-ground-muted);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Печать исхода и слово рядом: 对 Верно, 错 Неверно. */
+.stage-verdict {
+  align-items: center;
+  color: var(--text-on-ground-strong);
+  display: flex;
+  font-family: var(--t-family-display);
+  font-size: var(--t-size-28);
+  font-weight: var(--t-weight-bold);
+  gap: var(--s-3);
+  justify-content: center;
+  line-height: 1.1;
+  margin: var(--s-2) 0 0;
+}
+
+.stage-verdict .seal {
+  block-size: 40px;
+  font-size: var(--t-size-20);
+  inline-size: 40px;
+}
+
+/*
+ * Широкий экран: колонка вопроса слева, карта справа (макет Ink-Round).
+ * Колонка — четыре строки: шапка, вопрос, варианты, время и действия;
+ * карта занимает все четыре справа. Черта тушью между ними — край листа.
+ */
+@media (min-width: 1024px) {
+  .round-stage {
+    display: grid;
+    grid-template-areas:
+      'head map'
+      'prompt map'
+      'choices map'
+      'strip map';
+    grid-template-columns: clamp(300px, 26vw, 400px) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+
+  .stage-head {
+    align-items: flex-start;
+    border-block-end: none;
+    border-inline-end: var(--border-hair) solid var(--line-on-ground);
+    flex-direction: column;
+    gap: var(--s-2);
+    grid-area: head;
+    padding: var(--s-5) var(--s-5) 0;
+  }
+
+  .stage-head::after {
+    border-block-end: var(--border-hair) solid var(--line-on-ground);
+    content: '';
+    inline-size: 100%;
+    padding-block-start: var(--s-3);
+  }
+
+  .stage-head .round-trail {
+    gap: 6px;
+  }
+
+  .stage-prompt {
+    border-block-end: none;
+    border-inline-end: var(--border-hair) solid var(--line-on-ground);
+    grid-area: prompt;
+    padding: var(--s-4) var(--s-5);
+  }
+
+  .stage-prompt[data-state='answer'] {
+    border-inline-start: none;
+  }
+
+  .stage-prompt .eyebrow {
+    margin-bottom: var(--s-2);
+  }
+
+  .stage-target {
+    font-size: clamp(2rem, 2.8vw, 2.75rem);
+    hyphens: auto;
+    line-height: 1.05;
+    overflow-wrap: break-word;
+  }
+
+  /* Вопрос иероглифами — крупно, как на макете: 四川 во всю колонку. */
+  .stage-target[lang='zh-Hans'] {
+    color: var(--text-on-ground-strong);
+    font-size: clamp(3.5rem, 6vw, 6rem);
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+
+  .stage-verdict {
+    border-block-start: var(--border-hair) solid var(--line-on-ground);
+    justify-content: flex-start;
+    margin-block-start: var(--s-4);
+    padding-block-start: var(--s-4);
+  }
+
+  .stage-map {
+    grid-area: map;
+  }
+
+
+  .stage-choices-band {
+    border-block-start: none;
+    border-inline-end: var(--border-hair) solid var(--line-on-ground);
+    grid-area: choices;
+    overflow-y: auto;
+    padding: 0 var(--s-5) var(--s-4);
+  }
+
+  /* Колонка без вариантов всё равно держит черту до низа кадра. */
+  .round-stage::before {
+    border-inline-end: var(--border-hair) solid var(--line-on-ground);
+    content: '';
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .stage-choices-band .stage-choices,
+  .stage-choices-band .order-tiles {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .stage-choices-band .stage-choices button {
+    inline-size: 100%;
+    min-block-size: var(--target-large);
+    padding-inline: var(--s-3) var(--s-4);
+    text-align: start;
+  }
+
+  .stage-strip {
+    align-items: flex-start;
+    border-block-start: var(--border-hair) solid var(--line-on-ground);
+    border-inline-end: var(--border-hair) solid var(--line-on-ground);
+    flex-direction: column;
+    gap: var(--s-3);
+    grid-area: strip;
+    padding: var(--s-4) var(--s-5);
+  }
+
+  .stage-strip-actions {
+    flex-wrap: wrap;
+    margin-inline-start: 0;
+    max-inline-size: 100%;
+  }
+
+}
+
+/* --- Рельеф: в цвете / тушью --------------------------------------------- */
+
+/*
+ * Вид «тушью» переопределяет заливку полос и шкалы по `data-relief` на
+ * обёртке карты. Реки, границы и метки остаются теми же: их контраст к
+ * полосам тушью проверен отдельно (scripts/validate-tokens.test.ts).
+ */
+[data-relief='ink'] .china-map .physical-layer .relief-band[data-band='0'],
+[data-relief='ink'] .relief-scale-bar span[data-band='0'],
+.relief-toggle-sample[data-relief='ink'] span[data-band='0'] {
+  fill: var(--map-relief-ink-0);
+  background: var(--map-relief-ink-0);
+}
+
+[data-relief='ink'] .china-map .physical-layer .relief-band[data-band='200'],
+[data-relief='ink'] .relief-scale-bar span[data-band='200'],
+.relief-toggle-sample[data-relief='ink'] span[data-band='200'] {
+  fill: var(--map-relief-ink-200);
+  background: var(--map-relief-ink-200);
+}
+
+[data-relief='ink'] .china-map .physical-layer .relief-band[data-band='500'],
+[data-relief='ink'] .relief-scale-bar span[data-band='500'],
+.relief-toggle-sample[data-relief='ink'] span[data-band='500'] {
+  fill: var(--map-relief-ink-500);
+  background: var(--map-relief-ink-500);
+}
+
+[data-relief='ink'] .china-map .physical-layer .relief-band[data-band='1000'],
+[data-relief='ink'] .relief-scale-bar span[data-band='1000'],
+.relief-toggle-sample[data-relief='ink'] span[data-band='1000'] {
+  fill: var(--map-relief-ink-1000);
+  background: var(--map-relief-ink-1000);
+}
+
+[data-relief='ink'] .china-map .physical-layer .relief-band[data-band='2000'],
+[data-relief='ink'] .relief-scale-bar span[data-band='2000'],
+.relief-toggle-sample[data-relief='ink'] span[data-band='2000'] {
+  fill: var(--map-relief-ink-2000);
+  background: var(--map-relief-ink-2000);
+}
+
+[data-relief='ink'] .china-map .physical-layer .relief-band[data-band='3000'],
+[data-relief='ink'] .relief-scale-bar span[data-band='3000'],
+.relief-toggle-sample[data-relief='ink'] span[data-band='3000'] {
+  fill: var(--map-relief-ink-3000);
+  background: var(--map-relief-ink-3000);
+}
+
+[data-relief='ink'] .china-map .physical-layer .relief-band[data-band='4000'],
+[data-relief='ink'] .relief-scale-bar span[data-band='4000'],
+.relief-toggle-sample[data-relief='ink'] span[data-band='4000'] {
+  fill: var(--map-relief-ink-4000);
+  background: var(--map-relief-ink-4000);
+}
+
+.relief-toggle-sample[data-relief='color'] span[data-band='0'] {
+  background: var(--map-relief-band-0);
+}
+
+.relief-toggle-sample[data-relief='color'] span[data-band='1000'] {
+  background: var(--map-relief-band-1000);
+}
+
+.relief-toggle-sample[data-relief='color'] span[data-band='4000'] {
+  background: var(--map-relief-band-4000);
+}
+
+/*
+ * Переключатель — пилюля из двух половин, выбранная залита тушью. Подпись
+ * «Рельеф» стоит слева от пилюли и входит в имя группы.
+ */
+.relief-toggle {
+  align-items: center;
+  background: var(--surface-ground);
+  border: 0;
+  display: flex;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+}
+
+.relief-toggle legend {
+  float: left;
+  font-size: var(--t-size-caption);
+  font-weight: var(--t-weight-semibold);
+  margin-inline-end: var(--s-3);
+  padding: 0;
+}
+
+.relief-toggle-options {
+  border: var(--border-hair) solid var(--line-on-ground);
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  overflow: hidden;
+}
+
+.relief-toggle label {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--t-size-small);
+  font-weight: var(--t-weight-medium);
+  gap: var(--s-2);
+  min-height: var(--target-min);
+  padding: 0 18px;
+  position: relative;
+}
+
+.relief-toggle label:has(input:checked) {
+  background: var(--text-on-ground-strong);
+  color: var(--surface-raised);
+}
+
+.relief-toggle label:has(input:focus-visible) {
+  outline: var(--border-focus) solid var(--focus-on-paper);
+  outline-offset: calc(-1 * var(--border-focus) - 2px);
+}
+
+.relief-toggle label:has(input:checked:focus-visible) {
+  outline-color: var(--focus-on-dark);
+}
+
+.relief-toggle input {
+  block-size: 1px;
+  inline-size: 1px;
+  opacity: 0;
+  position: absolute;
+}
+
+.relief-toggle-sample {
+  border: var(--border-hair) solid currentColor;
+  display: inline-flex;
+}
+
+.relief-toggle-sample span {
+  block-size: 12px;
+  inline-size: 6px;
+}
+
+/* Обёртка вида рельефа не участвует в раскладке: она только несёт признак. */
+.relief-scope {
+  display: contents;
+}
+
+/* В атласе переключатель стоит под переключателем вида карты. */
+.atlas-map .relief-toggle {
+  inset-block-start: calc(var(--s-3) + var(--target-min) + var(--s-3));
+  inset-inline-start: var(--s-3);
+  position: absolute;
+  z-index: 2;
+}
+
+/*
+ * В раунде переключатель стоит в строке действий, а не на листе: любой угол
+ * карты там занят целями, и в правом верхнем он закрывал Амур.
+ */
+.stage-strip-tools {
+  display: flex;
+  max-inline-size: 100%;
+}
+
+/*
+ * В строке действий переключатель компактный: слово «Рельеф» остаётся только
+ * для читалки (имя группы; скрыто правилом `.visually-hidden`), поля пилюли
+ * уже. Иначе он не помещался в колонку
+ * в 300 px и выталкивал кнопки на карту, а на узком экране добавлял строке
+ * действий лишний ряд за счёт карты.
+ */
+.stage-strip-tools .relief-toggle label {
+  padding: 0 var(--s-3);
+}
+
+/*
+ * Узкий кадр: образцы шкалы в пилюле — лишние 56 px, из-за которых строка
+ * действий на телефоне лёжа уходила во второй ряд и отнимала у карты половину
+ * высоты. Подписи «В цвете / Тушью» остаются.
+ */
+@media (max-width: 1023px) {
+  .stage-strip-tools .relief-toggle-sample {
+    display: none;
+  }
 }

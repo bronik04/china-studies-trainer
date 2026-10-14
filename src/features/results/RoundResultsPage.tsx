@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { regionsWord } from '../../content/region-count';
 import type { RoundSummary } from '../../domain/progress-rules';
 import { formatDuration } from './format-duration';
+import { OutcomeSwatch } from './OutcomeSwatch';
 
 /**
  * Всё, что экрану итогов нужно от цели: назвать её. Регион и город подходят
@@ -27,6 +28,8 @@ export type RoundResultsPageProps = {
    * городам исход по точке карта пока не показывает.
    */
   readonly roundMap?: ReactNode;
+  /** Есть ли на карте итога регионы, о которых не спрашивали. */
+  readonly hasUnasked?: boolean;
   /** Как склонять число в подписи «Повторить ошибки». */
   readonly countWord?: (count: number) => string;
   readonly onRepeatMistakes: () => void;
@@ -34,8 +37,9 @@ export type RoundResultsPageProps = {
   readonly onExit: () => void;
 };
 
-function formatPercent(value: number): string {
-  return `${Math.round(value * 100)}%`;
+/** Процент без знака: знак набирается отдельно, мельче числа. */
+function percentOf(value: number): number {
+  return Math.round(value * 100);
 }
 
 export function RoundResultsPage({
@@ -44,6 +48,7 @@ export function RoundResultsPage({
   bestAccuracy,
   isProgressSaved,
   roundMap,
+  hasUnasked = false,
   countWord = regionsWord,
   onRepeatMistakes,
   onNewRound,
@@ -60,56 +65,99 @@ export function RoundResultsPage({
    */
   const repeatCount = reviewTargets.length;
 
+  /*
+   * Раскладка макета Ink-Results: слева счёт — число крупно, время и рекорд
+   * строкой из двух клеток, под ними сохранение прогресса; справа карта с
+   * обозначениями и список «Стоит повторить» с кнопками. На узком экране
+   * части идут друг под другом тем же порядком, что в разметке.
+   */
   return (
-    <main className="app-shell">
-      <header className="hero results-hero">
-        <p className="eyebrow">Итог раунда</p>
-        <h1>{formatPercent(summary.accuracy)}</h1>
-        <p>
-          {summary.correct} из {summary.total}
-        </p>
-      </header>
-      <section aria-labelledby="results-heading">
-        <div className="section-heading">
-          <h2 id="results-heading">Что получилось</h2>
-          <p>Личный рекорд: {formatPercent(bestAccuracy)}</p>
+    <main className="results-page">
+      <section className="results-score" aria-labelledby="results-score">
+        <div className="results-score-head">
+          <p className="eyebrow">Итог раунда</p>
+          <h1 id="results-score" className="results-percent">
+            {percentOf(summary.accuracy)}
+            <span className="results-percent-sign">%</span>
+          </h1>
+          <p className="results-count">
+            {summary.correct} из {summary.total}
+          </p>
         </div>
-        <p>Время: {formatDuration(summary.durationMs)}</p>
-        {isProgressSaved ? null : (
+        <dl className="results-facts">
+          <div>
+            <dt>Время</dt>
+            <dd>{formatDuration(summary.durationMs)}</dd>
+          </div>
+          <div>
+            <dt>Личный рекорд</dt>
+            <dd>{percentOf(bestAccuracy)}%</dd>
+          </div>
+        </dl>
+        {isProgressSaved ? (
+          <p className="results-saved">Прогресс сохранён на этом компьютере.</p>
+        ) : (
           <p className="status-note" role="status">
             Прогресс не сохранится: хранилище недоступно.
           </p>
         )}
-        {/*
-          Карта слева, разбор справа: кнопка повтора стоит у списка, который
-          она повторит. На узком экране колонки складываются в одну — карта,
-          затем разбор, затем действия, тем же порядком, что и в разметке.
-        */}
-        <div className="results-split">
-          {roundMap === undefined ? null : (
-            <div className="results-map">{roundMap}</div>
+      </section>
+      <section className="results-body" aria-labelledby="results-heading">
+        {roundMap === undefined ? null : (
+          <figure className="results-map">
+            {roundMap}
+            {/*
+              Обозначения словами и числом: три заливки карты различаются и
+              цветом, и узором, но что значит каждая — должно быть написано.
+            */}
+            <figcaption>
+              <ul className="results-legend" aria-label="Обозначения">
+                <li>
+                  <OutcomeSwatch outcome="first-try" />
+                  верно · {summary.correct}
+                </li>
+                <li>
+                  <OutcomeSwatch outcome="failed" />
+                  ошибка · {summary.total - summary.correct}
+                </li>
+                {/*
+                  «Не спрашивали» бывает только у суженного раунда — повтора
+                  ошибок или регионов коллекции. После полного раунда такой
+                  заливки на карте нет, и строка обозначала бы пустоту.
+                */}
+                {hasUnasked ? (
+                  <li>
+                    <OutcomeSwatch />
+                    не спрашивали
+                  </li>
+                ) : null}
+              </ul>
+            </figcaption>
+          </figure>
+        )}
+        <div className="results-review">
+          <h2 id="results-heading">
+            {reviewTargets.length === 0 ? 'Ошибок нет' : 'Стоит повторить'}
+          </h2>
+          {reviewTargets.length === 0 ? null : (
+            <ol className="review-list">
+              {reviewTargets.map((target) => (
+                <li key={target.id}>
+                  <span className="review-list-name">{target.nameRu}</span>{' '}
+                  <span lang="zh-Hans" className="review-list-han">
+                    {target.nameZh}
+                  </span>
+                </li>
+              ))}
+            </ol>
           )}
-          <div className="results-review">
-            {reviewTargets.length === 0 ? (
-              <p>Ошибок нет.</p>
-            ) : (
-              <>
-                <h3>Стоит повторить</h3>
-                <ul className="review-list">
-                  {reviewTargets.map((target) => (
-                    <li key={target.id}>
-                      {target.nameRu} <span lang="zh-Hans">{target.nameZh}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
+          <div className="results-actions">
+            {reviewTargets.length === 0 ? null : (
+              <button type="button" className="primary" onClick={onRepeatMistakes}>
+                Повторить ошибки: {repeatCount} {countWord(repeatCount)}
+              </button>
             )}
-            <div className="results-actions">
-              {reviewTargets.length === 0 ? null : (
-                <button type="button" className="primary" onClick={onRepeatMistakes}>
-                  Повторить ошибки: {repeatCount} {countWord(repeatCount)}
-                </button>
-              )}
+            <div className="results-actions-pair">
               <button type="button" className="secondary" onClick={onNewRound}>
                 Новый раунд
               </button>

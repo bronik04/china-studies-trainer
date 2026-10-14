@@ -106,21 +106,49 @@ it('без колбэка полос-кнопок нет', () => {
 });
 
 /*
- * Найдено проверкой в браузере: подпись Ся центрируется по полосе у самого
- * нуля ленты, и половина её уезжает за обрез.
+ * Лента идёт змейкой: на поворотах — Шан, Хань и Тан. Помеченная династия на
+ * повороте красит и сам поворот: время через рубеж не прерывается.
  */
-it('крайняя подпись прижата к краю, а не центрирована', () => {
-  render(
+it('поворот змейки несёт метку династии, которая через него идёт', () => {
+  const { container } = render(
     <DynastyTimeline
       dynasties={dynasties}
-      marks={[{ dynastyId: 'xia', kind: 'correct' }]}
+      marks={[{ dynastyId: 'tang', kind: 'correct' }]}
       showsNames
     />,
   );
 
-  const name = screen.getByText('Ся').closest('.timeline-name') as HTMLElement;
+  const turns = [...container.querySelectorAll('.timeline-turn')] as HTMLElement[];
 
-  expect(name.dataset.edge).toBe('start');
+  expect(turns.map((turn) => turn.dataset.turnDynastyId)).toEqual([
+    'shang',
+    'han',
+    'tang',
+  ]);
+  expect(turns[2].dataset.mark).toBe('correct');
+  expect(turns[0].dataset.mark).toBeUndefined();
+});
+
+/*
+ * Династия, разрезанная поворотом, — одна цель: кнопка с её сроком одна, а
+ * второй отрезок нажимается, но скрыт от читалки.
+ */
+it('у династии на повороте одна кнопка с её сроком', () => {
+  const onAnswer = vi.fn();
+  const { container } = render(
+    <DynastyTimeline dynasties={dynasties} showsNames={false} onAnswer={onAnswer} />,
+  );
+
+  const han = dynasties.find((dynasty) => dynasty.id === 'han')!;
+
+  expect(screen.getAllByRole('button', { name: spanLabel(han) })).toHaveLength(1);
+
+  const hidden = container.querySelector(
+    "[data-hit-dynasty-id='han'][aria-hidden='true']",
+  ) as HTMLElement;
+  fireEvent.click(hidden);
+
+  expect(onAnswer).toHaveBeenCalledWith('han');
 });
 
 /*
@@ -164,4 +192,36 @@ it('занятая полоса подписана и не нажимается'
   fireEvent.click(screen.getByRole('button', { name: spanLabel(tang) }));
 
   expect(onAnswer).not.toHaveBeenCalled();
+});
+
+/*
+ * Подпись ставится, только если под неё хватает пикселей, а не доли строки:
+ * на телефоне строка — 260 px, и «Троецарствие» в 60 лет закрывало «Хань».
+ * jsdom раскладки не знает, поэтому ширина строки подменяется.
+ */
+function renderAtRowWidth(width: number) {
+  const original = Element.prototype.getBoundingClientRect;
+  const spy = vi
+    .spyOn(Element.prototype, 'getBoundingClientRect')
+    .mockImplementation(function (this: Element) {
+      return this.classList.contains('timeline-band')
+        ? ({ width } as DOMRect)
+        : original.call(this);
+    });
+
+  render(<DynastyTimeline dynasties={dynasties} showsNames />);
+  spy.mockRestore();
+}
+
+it('на узкой строке короткие династии не подписаны — имена не налезают', () => {
+  renderAtRowWidth(260);
+
+  expect(screen.getByText('Хань')).toBeInTheDocument();
+  expect(screen.queryByText('Троецарствие')).toBeNull();
+});
+
+it('на широкой строке подписано и короткое Троецарствие', () => {
+  renderAtRowWidth(1200);
+
+  expect(screen.getByText('Троецарствие')).toBeInTheDocument();
 });
