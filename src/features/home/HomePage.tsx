@@ -33,6 +33,7 @@ import type { Attempt, ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { SiteFooter } from '../../ui/SiteFooter';
 import {
+  CHAPTER_NUMERALS,
   MODE_CARDS,
   MODE_GROUPS,
   type CountryExerciseType,
@@ -93,9 +94,6 @@ export type HomePageProps = {
 type CollectionFilter = CollectionGroupId | 'all';
 
 const SHOWCASE_LIMIT = 4;
-
-/** Номера глав «Режимов»: семь групп игр, по порядку `MODE_GROUPS`. */
-const CHAPTER_NUMERALS = ['一', '二', '三', '四', '五', '六', '七'] as const;
 
 /**
  * Сколько ошибочных регионов строка повтора называет по имени. Остальные

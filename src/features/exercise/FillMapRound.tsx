@@ -13,6 +13,7 @@ import { createSeededRandom } from '../../domain/random';
 import { labelOf, langOf, type QuestionLanguage } from '../../domain/question-language';
 import { ChinaMap, type MapHighlight } from '../../map/ChinaMap';
 import { RegionAnswerList } from '../../map/RegionAnswerList';
+import { roundTitle } from './exercise-modes';
 import { RoundStage } from './RoundStage';
 
 /**
@@ -208,7 +209,7 @@ export function FillMapRound({
 
   return (
     <RoundStage
-      title="Регионы · Заполнить карту"
+      title={roundTitle('fill-map')}
       prompt={prompt}
       // Показ неугаданного региона идёт на карте (`mapHighlight`); плашка уже
       // задаёт следующий вопрос, и метить её кромкой ответа было бы неверно.

@@ -40,8 +40,11 @@ import {
   HISTORY_MODE,
   HISTORY_RULER_MODE,
   HISTORY_YEAR_MODE,
+  roundTitle,
+  HISTORY_CARD_IDS,
 } from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
+import { verdictOf } from './answer-states';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
 import { useAutoAdvance } from './use-auto-advance';
@@ -393,16 +396,10 @@ export function HistoryRound({
 
   return (
     <RoundStage
-      title={mode.title.replace('История: ', 'История · ')}
+      title={roundTitle(HISTORY_CARD_IDS[kind])}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
-      verdict={
-        round.status === 'feedback' && lastAttempt !== undefined
-          ? lastAttempt.isCorrect
-            ? 'correct'
-            : 'incorrect'
-          : null
-      }
+      verdict={verdictOf(round)}
       startedAt={startedAt}
       progress={
         <>

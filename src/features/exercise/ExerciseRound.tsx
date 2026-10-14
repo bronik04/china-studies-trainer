@@ -18,8 +18,11 @@ import {
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { RegionAnswerList } from '../../map/RegionAnswerList';
-import { answerStatesFor } from './answer-states';
-import { EXERCISE_MODES } from './exercise-modes';
+import { answerStatesFor, verdictOf } from './answer-states';
+import {
+  EXERCISE_MODES,
+  roundTitle,
+} from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
@@ -223,16 +226,10 @@ export function ExerciseRound({
 
   return (
     <RoundStage
-      title={`Регионы · ${mode.title}`}
+      title={roundTitle(question.exerciseType)}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
-      verdict={
-        round.status === 'feedback' && lastAttempt !== undefined
-          ? lastAttempt.isCorrect
-            ? 'correct'
-            : 'incorrect'
-          : null
-      }
+      verdict={verdictOf(round)}
       startedAt={startedAt}
       progress={
         <>

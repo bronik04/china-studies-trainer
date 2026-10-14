@@ -165,7 +165,38 @@ it('под картой итога — обозначения словами и 
 
   expect(legend).toHaveTextContent('верно · 30');
   expect(legend).toHaveTextContent('ошибка · 4');
-  expect(legend).toHaveTextContent('не спрашивали');
+  /* Полный раунд: несыгранных регионов на карте нет, и строки о них тоже. */
+  expect(legend).not.toHaveTextContent('не спрашивали');
+});
+
+it('после суженного раунда обозначения называют и несыгранные регионы', () => {
+  renderResults({ roundMap: <p>карта</p>, hasUnasked: true });
+
+  expect(screen.getByRole('list', { name: 'Обозначения' })).toHaveTextContent(
+    'не спрашивали',
+  );
+});
+
+/* Образец несёт узор карты, а не свой: иначе легенду не прочесть без цвета. */
+it('образец ошибки залит тем же узором, что карта', () => {
+  const { container } = render(
+    <RoundResultsPage
+      summary={SUMMARY}
+      targets={regions}
+      bestAccuracy={0.9}
+      isProgressSaved
+      roundMap={<p>карта</p>}
+      onRepeatMistakes={() => {}}
+      onNewRound={() => {}}
+      onExit={() => {}}
+    />,
+  );
+
+  const fills = [...container.querySelectorAll('.results-swatch rect')].map(
+    (rect) => rect.getAttribute('fill'),
+  );
+
+  expect(fills).toContain('url(#map-hatch-failed)');
 });
 
 it('без карты нет и обозначений', () => {

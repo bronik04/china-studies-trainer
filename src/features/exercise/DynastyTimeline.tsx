@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { spanLabel, TIMELINE_TO } from '../../content/dynasties';
 import type { Dynasty } from '../../content/types';
 import { rowShare, snakeRows, snakeSegments, snakeTurns } from './snake-layout';
@@ -30,19 +30,6 @@ import { hitAreas, minHitShare } from './timeline-hit';
 
 /** Доля ширины, ниже которой подпись не помещается. */
 const LABEL_MIN_SHARE = 0.055;
-
-/**
- * Насколько близко к краю ленты подпись перестаёт центрироваться. Ширина
- * подписи «Ся ок. 2070–ок. 1600 до н. э.» — около десятой доли ленты, и
- * половина её уезжает за обрез, если центрировать по полосе у самого края.
- */
-const EDGE_SHARE = 0.06;
-
-/**
- * Ширина поворота в пикселях — та же, что у `--timeline-turn` в styles.css.
- * Строка уже ленты на два поворота, и порогу целей нажатия нужна её ширина.
- */
-const TURN_PX = 40;
 
 function tickLabel(year: number): string {
   if (year === 0) {
@@ -99,7 +86,15 @@ function useRibbonWidth() {
       return;
     }
 
-    const apply = () => setWidth(node.getBoundingClientRect().width);
+    /*
+     * Меряется строка, а не вся лента: строка уже ленты на два поворота, а
+     * ширина поворота на телефоне другая (`--timeline-turn` в styles.css).
+     */
+    const apply = () =>
+      setWidth(
+        (node.querySelector('.timeline-band') ?? node).getBoundingClientRect()
+          .width,
+      );
 
     apply();
     const observer = new ResizeObserver(apply);
@@ -158,14 +153,27 @@ export function DynastyTimeline({
   const markOf = (dynastyId: string) =>
     marks.find((mark) => mark.dynastyId === dynastyId)?.kind;
 
+  /* Ширина одной строки змейки — её меряет `useRibbonWidth`. */
   const [ribbonRef, ribbonWidth] = useRibbonWidth();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const answers = onAnswer !== undefined;
 
-  const segments = snakeSegments(dynasties, ROWS);
-  const turns = snakeTurns(dynasties, ROWS);
-  const gaps = gapsBetween(dynasties);
-  const rowWidth = Math.max(ribbonWidth - 2 * TURN_PX, 0);
+  /*
+   * Раскладка зависит только от справочника, а перерисовка идёт на каждое
+   * наведение — считать её заново незачем.
+   */
+  const { segments, turns, gaps } = useMemo(
+    () => ({
+      segments: snakeSegments(dynasties, ROWS),
+      turns: snakeTurns(dynasties, ROWS),
+      gaps: gapsBetween(dynasties),
+    }),
+    [dynasties],
+  );
+  const byId = useMemo(
+    () => new Map(dynasties.map((dynasty) => [dynasty.id, dynasty])),
+    [dynasties],
+  );
 
   /*
    * Наведение живёт только пока лента отвечает. Иначе после ответа строка
@@ -210,7 +218,7 @@ export function DynastyTimeline({
                 left: segment.left,
                 width: segment.width,
               })),
-              rowWidth === 0 ? 0 : minHitShare(rowWidth, inRow.length),
+              ribbonWidth === 0 ? 0 : minHitShare(ribbonWidth, inRow.length),
             );
         const turn = turns.find((item) => item.afterRow === row.index);
 
@@ -293,7 +301,7 @@ export function DynastyTimeline({
               {answers ? (
                 <div className="timeline-hits">
                   {hits.map((hit) => {
-                    const dynasty = dynasties.find((item) => item.id === hit.id)!;
+                    const dynasty = byId.get(hit.id)!;
                     const isPrimary =
                       inRow.find((segment) => segment.dynastyId === hit.id)
                         ?.primary ?? true;
@@ -338,9 +346,7 @@ export function DynastyTimeline({
               {inRow
                 .filter((segment) => segment.primary)
                 .map((segment) => {
-                  const dynasty = dynasties.find(
-                    (item) => item.id === segment.dynastyId,
-                  )!;
+                  const dynasty = byId.get(segment.dynastyId)!;
                   /*
                    * Выделенная подпись со сроком — только у верной полосы.
                    * Выбранную по ошибке называет строка разбора: две
@@ -369,8 +375,9 @@ export function DynastyTimeline({
                   }
 
                   /*
-                   * Крайние подписи прижимаются к своему краю, а не
-                   * центрируются по полосе: иначе половина уезжала за обрез.
+                   * Прижимать подпись к краю, как у прежней ленты в одну
+                   * полосу, незачем: в змейке ни один главный отрезок не
+                   * стоит у края строки (центры от 0.13 до 0.86).
                    */
                   const centre = segment.left + segment.width / 2;
 
@@ -379,13 +386,6 @@ export function DynastyTimeline({
                       key={dynasty.id}
                       className="timeline-name"
                       data-mark={isAnswer || isAsked ? mark : undefined}
-                      data-edge={
-                        centre < EDGE_SHARE
-                          ? 'start'
-                          : centre > 1 - EDGE_SHARE
-                            ? 'end'
-                            : undefined
-                      }
                       style={{ left: percent(centre) }}
                     >
                       <span lang="zh-Hans" className="timeline-name-han">

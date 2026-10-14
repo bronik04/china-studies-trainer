@@ -531,3 +531,45 @@ export const MODE_CARDS: readonly ModeCard[] = [
     groupId: 'culture',
   },
 ];
+
+/**
+ * Номера глав — семи групп игр по порядку `MODE_GROUPS`. Те же знаки
+ * нумеруют группы на странице коллекций.
+ */
+export const CHAPTER_NUMERALS = ['一', '二', '三', '四', '五', '六', '七'] as const;
+
+/**
+ * Имя игры над ходом раунда: «Регионы · Найти на карте». Собирается из
+ * карточки и её группы, а не пишется в раунде заново: переименованная группа
+ * иначе осталась бы старой в шапке раунда.
+ */
+export function roundTitle(cardId: string): string {
+  const card = MODE_CARDS.find((item) => item.id === cardId);
+  const group = MODE_GROUPS.find((item) => item.id === card?.groupId);
+
+  return card === undefined || group === undefined
+    ? ''
+    : `${group.title} · ${card.title}`;
+}
+
+/** Карточки игр по городам и достопримечательностям — по форме вопроса. */
+export const CITY_CARD_IDS: Readonly<Record<ExerciseType, string>> = {
+  'find-on-map': 'find-city',
+  'name-target': 'name-city',
+  'match-pair': 'city-region',
+};
+
+export const LANDMARK_CARD_IDS: Readonly<Record<ExerciseType, string>> = {
+  'find-on-map': 'find-landmark',
+  'name-target': 'name-landmark',
+  'match-pair': 'landmark-region',
+};
+
+/** Карточки игр по истории — по тому, что спрашивают. */
+export const HISTORY_CARD_IDS = {
+  when: 'history',
+  who: 'history-year',
+  capital: 'history-capital',
+  ruler: 'history-ruler',
+  order: 'history-order',
+} as const;

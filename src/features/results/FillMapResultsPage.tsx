@@ -3,6 +3,7 @@ import { regionsWord } from '../../content/region-count';
 import { summariseFillRound, type FillRound } from '../../domain/fill-round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { formatDuration } from './format-duration';
+import { OutcomeSwatch } from './OutcomeSwatch';
 
 export type FillMapResultsPageProps = {
   readonly round: FillRound;
@@ -90,15 +91,15 @@ export function FillMapResultsPage({
           <figcaption>
             <ul className="results-legend" aria-label="Обозначения">
               <li>
-                <span className="results-swatch" data-outcome="first-try" aria-hidden="true" />
+                <OutcomeSwatch outcome="first-try" />
                 с первого раза · {summary.firstTry}
               </li>
               <li>
-                <span className="results-swatch" data-outcome="second-try" aria-hidden="true" />
+                <OutcomeSwatch outcome="second-try" />
                 со второго · {summary.secondTry}
               </li>
               <li>
-                <span className="results-swatch" data-outcome="failed" aria-hidden="true" />
+                <OutcomeSwatch outcome="failed" />
                 не угадано · {summary.failed}
               </li>
             </ul>

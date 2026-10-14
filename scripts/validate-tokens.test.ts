@@ -269,6 +269,33 @@ describe('границы и поверхности', () => {
   });
 });
 
+/*
+ * Состояния и второстепенные линии редизайна. Пары взяты с экрана: бумага на
+ * главной кнопке под рукой и в нажатии, тушь на нажатой второстепенной,
+ * описание игры и рамка варианта в окне старта, кольцо «впереди» в ходе.
+ */
+describe('состояния кнопок и второстепенные линии', () => {
+  it('подпись главной кнопки читается под рукой и в нажатии', () => {
+    expectAtLeast('--surface-paper-bright', '--accent-hover', TEXT_CONTRAST);
+    expectAtLeast('--surface-paper-bright', '--accent-pressed', TEXT_CONTRAST);
+  });
+
+  it('подпись нажатой второстепенной кнопки читается', () => {
+    expectAtLeast('--text-on-ground', '--surface-pressed', TEXT_CONTRAST);
+  });
+
+  it('описание игры читается на бумаге окна', () => {
+    expectAtLeast('--text-on-ground-secondary', '--surface-ground', TEXT_CONTRAST);
+  });
+
+  it('рамка варианта и кольцо хода — графика не ниже 3:1', () => {
+    for (const surface of ['--surface-ground', '--surface-raised'] as const) {
+      expectAtLeast('--line-on-ground-soft', surface, GRAPHIC_CONTRAST);
+      expectAtLeast('--line-on-ground-quiet', surface, GRAPHIC_CONTRAST);
+    }
+  });
+});
+
 describe('карта', () => {
   it('граница провинции видна на любой заливке (MAP_SPEC.md: не ниже 3:1)', () => {
     for (const fill of [...MAP_FILLS, ...PROGRESS_FILLS]) {

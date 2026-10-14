@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { regionsWord } from '../../content/region-count';
 import type { RoundSummary } from '../../domain/progress-rules';
 import { formatDuration } from './format-duration';
+import { OutcomeSwatch } from './OutcomeSwatch';
 
 /**
  * Всё, что экрану итогов нужно от цели: назвать её. Регион и город подходят
@@ -27,6 +28,8 @@ export type RoundResultsPageProps = {
    * городам исход по точке карта пока не показывает.
    */
   readonly roundMap?: ReactNode;
+  /** Есть ли на карте итога регионы, о которых не спрашивали. */
+  readonly hasUnasked?: boolean;
   /** Как склонять число в подписи «Повторить ошибки». */
   readonly countWord?: (count: number) => string;
   readonly onRepeatMistakes: () => void;
@@ -45,6 +48,7 @@ export function RoundResultsPage({
   bestAccuracy,
   isProgressSaved,
   roundMap,
+  hasUnasked = false,
   countWord = regionsWord,
   onRepeatMistakes,
   onNewRound,
@@ -109,17 +113,24 @@ export function RoundResultsPage({
             <figcaption>
               <ul className="results-legend" aria-label="Обозначения">
                 <li>
-                  <span className="results-swatch" data-outcome="first-try" aria-hidden="true" />
+                  <OutcomeSwatch outcome="first-try" />
                   верно · {summary.correct}
                 </li>
                 <li>
-                  <span className="results-swatch" data-outcome="failed" aria-hidden="true" />
+                  <OutcomeSwatch outcome="failed" />
                   ошибка · {summary.total - summary.correct}
                 </li>
-                <li>
-                  <span className="results-swatch" aria-hidden="true" />
-                  не спрашивали
-                </li>
+                {/*
+                  «Не спрашивали» бывает только у суженного раунда — повтора
+                  ошибок или регионов коллекции. После полного раунда такой
+                  заливки на карте нет, и строка обозначала бы пустоту.
+                */}
+                {hasUnasked ? (
+                  <li>
+                    <OutcomeSwatch />
+                    не спрашивали
+                  </li>
+                ) : null}
               </ul>
             </figcaption>
           </figure>

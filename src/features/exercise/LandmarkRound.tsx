@@ -22,8 +22,12 @@ import {
 import { ChinaMap } from '../../map/ChinaMap';
 import { colocatedLandmarkIds } from '../../map/landmark-points';
 import type { MapZoom } from '../../map/MapControls';
-import { answerStatesFor } from './answer-states';
-import { LANDMARK_MODES } from './exercise-modes';
+import { answerStatesFor, verdictOf } from './answer-states';
+import {
+  LANDMARK_MODES,
+  roundTitle,
+  LANDMARK_CARD_IDS,
+} from './exercise-modes';
 import { LandmarkAnswerList } from './LandmarkAnswerList';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
@@ -236,16 +240,10 @@ export function LandmarkRound({
 
   return (
     <RoundStage
-      title={`Достопримечательности · ${mode.title}`}
+      title={roundTitle(LANDMARK_CARD_IDS[exerciseType])}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
-      verdict={
-        round.status === 'feedback' && lastAttempt !== undefined
-          ? lastAttempt.isCorrect
-            ? 'correct'
-            : 'incorrect'
-          : null
-      }
+      verdict={verdictOf(round)}
       startedAt={startedAt}
       progress={
         <>

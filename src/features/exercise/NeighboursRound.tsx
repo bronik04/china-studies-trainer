@@ -19,6 +19,7 @@ import { ChinaMap } from '../../map/ChinaMap';
 import type { NeighbourState } from '../../map/outcome-labels';
 import { RegionAnswerList } from '../../map/RegionAnswerList';
 import { CORRECT_PAUSE_MS, WRONG_PAUSE_MS } from './round-pace';
+import { roundTitle } from './exercise-modes';
 import { RoundStage } from './RoundStage';
 
 export type NeighboursRoundProps = {
@@ -210,7 +211,7 @@ export function NeighboursRound({
 
   return (
     <RoundStage
-      title="Регионы · Соседи региона"
+      title={roundTitle('neighbours')}
       prompt={prompt}
       promptState={verdict !== null && !verdict.isCorrect ? 'answer' : 'question'}
       verdict={

@@ -128,20 +128,6 @@ p {
   margin-top: 0;
 }
 
-/* --- Оболочка ---------------------------------------------------------- */
-
-.app-shell {
-  margin: 0 auto;
-  padding-block: var(--s-6);
-  width: min(100% - 2 * var(--s-4), 1120px);
-}
-
-.hero {
-  border-bottom: var(--border-hair) solid var(--line-on-ground);
-  margin-bottom: var(--s-6);
-  padding-bottom: var(--s-5);
-}
-
 /* --- Экран раунда ------------------------------------------------------- */
 
 /*
@@ -162,11 +148,11 @@ p {
 .round-trail span {
   align-items: center;
   block-size: 18px;
-  border: 1.5px solid var(--c-ink-300);
+  border: 1.5px solid var(--line-on-ground-quiet);
   border-radius: 50%;
   color: transparent;
   display: inline-flex;
-  font-size: 0.6875rem;
+  font-size: var(--t-size-trail-mark);
   font-weight: var(--t-weight-bold);
   inline-size: 18px;
   justify-content: center;
@@ -187,7 +173,7 @@ p {
 .round-trail span[data-mark='wrong'] {
   border-color: var(--accent-on-ground);
   color: var(--accent-on-ground);
-  font-size: 0.5rem;
+  font-size: var(--t-size-trail-dot);
 }
 
 /* «Сейчас» — кольцо тушью вдвое толще: форма, а не цвет. */
@@ -253,7 +239,7 @@ p {
 
 .atlas-fact p {
   color: var(--text-on-ground);
-  font-size: 0.9375rem;
+  font-size: var(--t-size-small);
 }
 
 .atlas-sources {
@@ -581,10 +567,6 @@ h1 {
   margin-bottom: var(--s-3);
 }
 
-.results-hero h1 {
-  font-size: var(--t-size-display);
-}
-
 .section-heading {
   align-items: baseline;
   display: flex;
@@ -669,13 +651,13 @@ button.primary {
 }
 
 button.primary:hover:enabled {
-  background: var(--c-cinnabar-700);
-  border-color: var(--c-cinnabar-700);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 button.primary:active:enabled {
-  background: var(--c-cinnabar-800);
-  border-color: var(--c-cinnabar-800);
+  background: var(--accent-pressed);
+  border-color: var(--accent-pressed);
 }
 
 /*
@@ -694,7 +676,7 @@ button.secondary:hover:enabled {
 }
 
 button.secondary:active:enabled {
-  background: var(--c-paper-300);
+  background: var(--surface-pressed);
 }
 
 /*
@@ -721,28 +703,6 @@ button.text {
 
 button.text:hover:enabled {
   color: var(--accent-on-ground);
-}
-
-.mode-actions,
-/*
- * Карта и разбор рядом: кнопка повтора стоит у списка, который она повторит.
- * Одна колонка до 1024 px — на телефоне карта и список идут друг под другом,
- * порядком разметки.
- */
-.results-split {
-  display: grid;
-  gap: var(--s-6);
-  margin-block-start: var(--s-5);
-}
-
-@media (min-width: 1024px) {
-  .results-split {
-    grid-template-columns: 1.15fr 1fr;
-  }
-
-  .results-map {
-    align-self: start;
-  }
 }
 
 .level-choice {
@@ -1951,25 +1911,33 @@ button.text:hover:enabled {
 .results-page {
   display: flex;
   flex: 1 1 auto;
-  flex-wrap: wrap;
+  flex-direction: column;
 }
 
 .results-score {
   border-block-end: var(--border-hair) solid var(--line-on-ground);
   box-sizing: border-box;
   display: flex;
-  flex: 1 1 380px;
   flex-direction: column;
   gap: var(--s-6);
   min-width: 0;
   padding: var(--s-7) clamp(var(--s-4), 4vw, var(--s-7));
 }
 
+/*
+ * Колонки встают рядом в той же точке, где меняется черта между ними. Пока
+ * их разводил перенос гибкой строки, между 940 и 1023 px они стояли рядом с
+ * чертой снизу, как в столбике.
+ */
 @media (min-width: 1024px) {
+  .results-page {
+    flex-direction: row;
+  }
+
   .results-score {
     border-block-end: none;
     border-inline-end: var(--border-hair) solid var(--line-on-ground);
-    max-width: 480px;
+    flex: 0 1 480px;
   }
 }
 
@@ -1997,7 +1965,7 @@ button.text:hover:enabled {
 
 .results-count {
   font-family: var(--t-family-display);
-  font-size: 2rem;
+  font-size: var(--t-size-32);
   font-weight: var(--t-weight-bold);
   line-height: 1.2;
   margin: 0;
@@ -2027,7 +1995,7 @@ button.text:hover:enabled {
 
 .results-facts dd {
   font-family: var(--t-family-display);
-  font-size: 2rem;
+  font-size: var(--t-size-32);
   font-variant-numeric: lining-nums tabular-nums;
   font-weight: var(--t-weight-bold);
   margin: 0;
@@ -2060,7 +2028,7 @@ button.text:hover:enabled {
   align-items: stretch;
   box-sizing: border-box;
   display: flex;
-  flex: 999 1 560px;
+  flex: 1 1 auto;
   flex-wrap: wrap;
   gap: var(--s-6) var(--s-7);
   min-width: 0;
@@ -2100,28 +2068,12 @@ button.text:hover:enabled {
   gap: var(--s-2);
 }
 
-/* Образцы заливок карты: тот же цвет и тот же узор, что на самой карте. */
+/* Образец заливки — SVG с узором самой карты (`OutcomeSwatch`). */
 .results-swatch {
-  background: var(--map-unplayed);
   block-size: 14px;
   border: var(--border-hair) solid var(--map-border);
+  flex: 0 0 auto;
   inline-size: 14px;
-}
-
-.results-swatch[data-outcome='first-try'] {
-  background: var(--map-first-try);
-}
-
-.results-swatch[data-outcome='second-try'] {
-  background: var(--map-second-try);
-}
-
-.results-swatch[data-outcome='failed'] {
-  background: repeating-linear-gradient(
-    45deg,
-    var(--map-failed) 0 2px,
-    var(--map-unplayed) 2px 4px
-  );
 }
 
 .results-review {
@@ -2135,7 +2087,7 @@ button.text:hover:enabled {
 
 .results-review h2 {
   font-family: var(--t-family-display);
-  font-size: 2.5rem;
+  font-size: var(--t-size-40);
   font-weight: var(--t-weight-bold);
   line-height: 1.05;
   margin: 0;
@@ -2171,20 +2123,20 @@ ol.review-list li::before {
   color: var(--accent-on-ground);
   content: counter(review);
   font-family: var(--t-family-display);
-  font-size: 1.5rem;
+  font-size: var(--t-size-24);
   font-weight: var(--t-weight-bold);
   inline-size: 2rem;
 }
 
 .review-list-name {
   font-family: var(--t-family-display);
-  font-size: 1.625rem;
+  font-size: var(--t-size-26);
   font-weight: var(--t-weight-bold);
   line-height: 1.1;
 }
 
 .review-list-han {
-  font-size: 1.25rem;
+  font-size: var(--t-size-20);
   font-weight: var(--t-weight-bold);
 }
 
@@ -2196,11 +2148,11 @@ ol.review-list li::before {
 }
 
 .results-actions button {
-  min-height: 48px;
+  min-height: var(--target-comfortable);
 }
 
 .results-actions button.primary {
-  min-height: 52px;
+  min-height: var(--target-large);
 }
 
 .results-actions-pair {
@@ -2215,24 +2167,10 @@ ol.review-list li::before {
   margin: 0;
 }
 
-.round-stopwatch {
-  color: var(--text-on-ground-muted);
-  font-variant-numeric: lining-nums tabular-nums;
-}
-
 .fill-status {
   color: var(--text-on-ground);
   margin: 0;
   min-height: var(--t-leading-body);
-}
-
-.fill-breakdown {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-5);
-  list-style: none;
-  margin: 0;
-  padding: 0;
 }
 
 /*
@@ -2333,7 +2271,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 .site-header-name {
   color: var(--text-on-ground-strong);
   font-family: var(--t-family-display);
-  font-size: 1.625rem;
+  font-size: var(--t-size-26);
   font-weight: var(--t-weight-bold);
   letter-spacing: 0.01em;
 }
@@ -2353,7 +2291,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   color: var(--surface-paper-bright);
   display: inline-flex;
   font-family: var(--t-family-han);
-  font-size: 1.625rem;
+  font-size: var(--t-size-26);
   font-weight: var(--t-weight-bold);
   height: 44px;
   justify-content: center;
@@ -2377,7 +2315,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   border-bottom: var(--border-solid) solid transparent;
   color: var(--text-on-ground);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: var(--t-size-16);
   font-weight: var(--t-weight-medium);
   min-height: var(--target-min);
   padding: 0;
@@ -2504,7 +2442,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 .landing-hero-actions button.primary {
-  min-height: 52px;
+  min-height: var(--target-large);
   padding-inline: var(--s-6);
 }
 
@@ -2546,7 +2484,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 .landing-hero-scroll {
   border-left: var(--border-hair) solid var(--line-on-ground);
   color: var(--accent-on-ground);
-  font-size: 1.375rem;
+  font-size: var(--t-size-22);
   font-weight: var(--t-weight-semibold);
   letter-spacing: 0.4em;
   margin: 0;
@@ -2585,7 +2523,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 
 .repeat-strip-title {
   font-family: var(--t-family-display);
-  font-size: 1.625rem;
+  font-size: var(--t-size-26);
   font-weight: var(--t-weight-bold);
   line-height: 1.2;
   margin: 0;
@@ -2598,7 +2536,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 .repeat-strip button.secondary {
-  min-height: 48px;
+  min-height: var(--target-comfortable);
 }
 
 /*
@@ -2619,7 +2557,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   display: inline-flex;
   flex: 0 0 auto;
   font-family: var(--t-family-han);
-  font-size: 1.375rem;
+  font-size: var(--t-size-22);
   font-weight: var(--t-weight-bold);
   inline-size: 48px;
   justify-content: center;
@@ -2648,7 +2586,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 
 .seal-large {
   block-size: 64px;
-  font-size: 2.25rem;
+  font-size: var(--t-size-36);
   inline-size: 64px;
 }
 
@@ -2743,7 +2681,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 
 .mode-chapter-numeral {
   color: var(--accent-on-ground);
-  font-size: 3.25rem;
+  font-size: var(--t-size-52);
   font-weight: var(--t-weight-bold);
   line-height: 1;
 }
@@ -2760,19 +2698,19 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   }
 
   .mode-chapter-numeral {
-    font-size: 2.25rem;
+    font-size: var(--t-size-36);
   }
 
   .mode-chapter h3,
   .collection-group-head h2 {
-    font-size: 1.75rem;
+    font-size: var(--t-size-28);
   }
 }
 
 .mode-chapter h3 {
   color: var(--text-on-ground-strong);
   font-family: var(--t-family-display);
-  font-size: 2rem;
+  font-size: var(--t-size-32);
   font-weight: var(--t-weight-bold);
   /*
    * «Достопримечательности» длиннее колонки на телефоне. Перенос по словарю,
@@ -2854,7 +2792,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 .mode-dialog::backdrop {
-  background: color-mix(in srgb, var(--c-ink-900) 55%, transparent);
+  background: var(--backdrop);
 }
 
 .mode-dialog-body {
@@ -2899,7 +2837,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
  * таких абзацев подряд требовалось прочитать, чтобы выбрать.
  */
 .mode-dialog-summary {
-  color: var(--c-ink-700);
+  color: var(--text-on-ground-secondary);
   margin: 0;
 }
 
@@ -2943,13 +2881,13 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 .mode-dialog-language label {
   align-items: center;
   background: transparent;
-  border: var(--border-hair) solid var(--c-ink-500);
+  border: var(--border-hair) solid var(--line-on-ground-soft);
   border-radius: var(--radius-sm);
   cursor: pointer;
   display: flex;
   font-weight: var(--t-weight-medium);
   gap: var(--s-3);
-  min-height: 52px;
+  min-height: var(--target-large);
   padding: 0 var(--s-4);
 }
 
@@ -2960,7 +2898,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 .mode-dialog-language label [lang='zh-Hans'] {
-  font-size: 1.125rem;
+  font-size: var(--t-size-18);
 }
 
 /* Набор — строки оглавления: черта сверху, число справа. */
@@ -2971,7 +2909,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   display: grid;
   gap: var(--s-3);
   grid-template-columns: 40px minmax(0, 1fr) auto;
-  min-height: 56px;
+  min-height: var(--target-row);
 }
 
 .mode-dialog-set label:last-of-type {
@@ -2995,7 +2933,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 .mode-dialog-count-number {
   color: var(--text-on-ground-strong);
   font-family: var(--t-family-display);
-  font-size: 1.5rem;
+  font-size: var(--t-size-24);
   font-weight: var(--t-weight-bold);
 }
 
@@ -3031,7 +2969,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 .mode-dialog-actions button {
-  min-height: 52px;
+  min-height: var(--target-large);
 }
 
 .mode-dialog-actions button.primary {
@@ -3155,7 +3093,7 @@ button.chip[aria-pressed='true'] {
 
 .collection-card-title {
   font-family: var(--t-family-display);
-  font-size: 1.625rem;
+  font-size: var(--t-size-26);
   font-weight: var(--t-weight-bold);
   line-height: 1.1;
 }
@@ -3267,7 +3205,7 @@ button.chip[aria-pressed='true'] {
 
 .photo-slot-label {
   color: var(--text-on-paper);
-  font-size: 0.9375rem;
+  font-size: var(--t-size-small);
 }
 
 .photo-slot-note {
@@ -3339,7 +3277,7 @@ button.chip[aria-pressed='true'] {
 .page-head-number {
   color: var(--text-on-ground-strong);
   font-family: var(--t-family-display);
-  font-size: 4.5rem;
+  font-size: var(--t-size-72);
   font-weight: var(--t-weight-bold);
   line-height: 0.9;
 }
@@ -3348,7 +3286,7 @@ button.chip[aria-pressed='true'] {
 .page-head-scroll {
   border-left: var(--border-hair) solid var(--line-on-ground);
   color: var(--accent-on-ground);
-  font-size: 1.25rem;
+  font-size: var(--t-size-20);
   font-weight: var(--t-weight-semibold);
   letter-spacing: 0.4em;
   margin: 0;
@@ -3395,7 +3333,7 @@ button.chip[aria-pressed='true'] {
 }
 
 .collection-group-head h2 {
-  font-size: 2.75rem;
+  font-size: var(--t-size-44);
 }
 
 .collection-group {
@@ -3404,7 +3342,7 @@ button.chip[aria-pressed='true'] {
 
 .group-hint {
   color: var(--text-on-ground-muted);
-  font-size: 0.875rem;
+  font-size: var(--t-size-caption);
   margin: 0;
 }
 
@@ -3415,7 +3353,7 @@ button.chip[aria-pressed='true'] {
   color: var(--text-on-ground-muted);
   display: flex;
   flex-wrap: wrap;
-  font-size: 0.875rem;
+  font-size: var(--t-size-caption);
   gap: var(--s-1);
   padding: var(--s-4) 0;
 }
@@ -3443,7 +3381,7 @@ button.chip[aria-pressed='true'] {
 
 .collection-name-zh {
   color: var(--accent-on-ground);
-  font-size: 2rem;
+  font-size: var(--t-size-32);
   font-weight: var(--t-weight-bold);
   margin-bottom: var(--s-1);
 }
@@ -3881,9 +3819,9 @@ button.chip[aria-pressed='true'] {
 /* --- Экран раунда: оболочка RoundStage ---------------------------------- */
 
 /*
- * Кадр раунда: карта забирает остаток колонки, плашка вопроса плавает поверх
- * неё, полоса вариантов и служебная строка стоят под картой и её не
- * перекрывают (спек RoundStage, 2026-08-17).
+ * Кадр раунда: карта забирает остаток кадра. На узком экране шапка раунда и
+ * вопрос стоят над ней, варианты и служебная строка — под ней; на широком
+ * всё это уходит в колонку слева (см. медиазапрос «Колонка вопроса»).
  */
 .round-stage {
   display: flex;
@@ -3952,8 +3890,11 @@ button.chip[aria-pressed='true'] {
   inset: 0;
   justify-content: center;
   overflow: hidden;
-  padding: clamp(var(--s-7), 11vh, calc(var(--s-8) + var(--s-5))) var(--s-6)
-    var(--s-5);
+  /*
+   * Запаса сверху под плашку вопроса больше нет: вопрос стоит в потоке над
+   * кадром (редизайн, 2026-10-14).
+   */
+  padding: var(--s-5) var(--s-6);
   position: absolute;
 }
 
@@ -3991,9 +3932,7 @@ button.chip[aria-pressed='true'] {
 
 /*
  * Место карты в режиме «История» занимает лента времени. Она не карта: у неё
- * нет ни увеличения, ни выбора. Верхнее поле большое намеренно — плашка
- * вопроса стоит поверх кадра, и лента обязана начинаться ниже неё, иначе
- * вопрос закрывает как раз ту часть ленты, о которой спрашивает.
+ * нет ни увеличения, ни выбора.
  */
 .history-stage {
   align-items: center;
@@ -4017,14 +3956,21 @@ button.chip[aria-pressed='true'] {
    * позиционирован, и `inset: 0` держит ленту ровно в его границах.
    */
   inset: 0;
-  justify-content: center;
-  overflow: hidden;
   /*
-   * Верхнее поле — под плашку вопроса: она стоит поверх кадра абсолютом, и
-   * без запаса лента начинается прямо под ней, а вопрос закрывает как раз ту
-   * часть ленты, о которой спрашивает.
+   * Змейка в четыре строки выше прежней ленты в одну, и на низком кадре
+   * (телефон) она не помещается. Тогда кадр прокручивается, а не режет
+   * крайние строки: обрезанная лента врёт о времени. `safe` прижимает её к
+   * верху, когда места не хватает, — иначе центровка увела бы начало ленты
+   * за верхний край, куда прокрутка не достаёт.
    */
-  padding: calc(var(--s-8) + var(--s-5)) var(--s-6) var(--s-5);
+  justify-content: safe center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /*
+   * Запаса сверху под плашку вопроса больше нет: вопрос стоит в потоке над
+   * кадром (редизайн, 2026-10-14).
+   */
+  padding: var(--s-5) var(--s-6);
   position: absolute;
 }
 
@@ -4182,6 +4128,11 @@ button.chip[aria-pressed='true'] {
   --timeline-turn: 40px;
   --timeline-scale-height: 1.5rem;
   --timeline-band-height: clamp(1.75rem, 4.5vh, 2.5rem);
+  /*
+   * Строка имён вмещает подпись в две строки — имя и срок верного ответа:
+   * 2 × 1.25 × 15 px и отступ. Ниже подпись со сроком налезала на шкалу
+   * следующей строки змейки.
+   */
   --timeline-names-height: 2.75rem;
 
   box-sizing: border-box;
@@ -4217,7 +4168,7 @@ button.chip[aria-pressed='true'] {
     var(--timeline-scale-height) + 2 * var(--timeline-band-height) +
       var(--timeline-names-height)
   );
-  border: var(--timeline-band-height) solid var(--c-paper-300);
+  border: var(--timeline-band-height) solid var(--timeline-turn-empty);
   box-sizing: border-box;
   inline-size: var(--timeline-turn);
   inset-block-start: var(--timeline-scale-height);
@@ -4251,12 +4202,32 @@ button.chip[aria-pressed='true'] {
   border-color: var(--timeline-span-wrong);
 }
 
+/*
+ * Наведение — как у полосы: светлая заливка и кайма киноварью. Без каймы
+ * светлый поворот на бумажном кадре пропадал, и лента рвалась ровно там, где
+ * время «не прерывается».
+ */
 .timeline-turn[data-mark='hover'] {
   border-color: var(--surface-paper-bright);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Телефон: змейка плотнее — поворот уже, полосы ниже. */
+@media (max-width: 719px) {
+  .dynasty-timeline[data-layout='snake'] {
+    --timeline-turn: 24px;
+    --timeline-scale-height: 1.25rem;
+    --timeline-band-height: 1.5rem;
+  }
 }
 
 .timeline-name-han {
   font-weight: var(--t-weight-bold);
+}
+
+.dynasty-timeline[data-layout='snake'] .timeline-name {
+  font-size: var(--t-size-small);
+  line-height: 1.25;
 }
 
 /* Строка под лентой: подсказка, срок наведённой полосы или разбор. */
@@ -4303,17 +4274,6 @@ button.chip[aria-pressed='true'] {
  * Прятать соседей пришлось бы измерением ширины текста, а бумага под подписью
  * решает то же самое разметкой.
  */
-/*
- * Крайние подписи прижимаются к своему краю: подпись Ся начинается у нуля
- * ленты, и центрированная уезжала бы за обрез наполовину.
- */
-.timeline-name[data-edge='start'] {
-  transform: none;
-}
-
-.timeline-name[data-edge='end'] {
-  transform: translateX(-100%);
-}
 
 .timeline-name[data-mark='correct'],
 .timeline-name[data-mark='asked'],
@@ -4369,9 +4329,9 @@ button.chip[aria-pressed='true'] {
 }
 
 /*
- * Надзаголовок вопроса — приглушённым тоном, а не киноварью: красный на
- * плашке читался знаком ошибки, хотя это просто имя игры. Киноварь на тёмном
- * фоне остаётся отметке «стоит повторить» — там она и означает промах.
+ * Надзаголовок вопроса — приглушённым тоном, а не киноварью: красный над
+ * вопросом читался знаком ошибки, хотя это просто подводка. Киноварь
+ * остаётся отметке «стоит повторить» — там она и означает промах.
  */
 .stage-prompt .eyebrow {
   color: var(--text-on-ground-muted);
@@ -4398,8 +4358,8 @@ button.chip[aria-pressed='true'] {
 
 /*
  * Короткий кадр (телефон лёжа и похожие): `--t-size-question` — до 40 px, а
- * высоты кадра там едва хватает на саму карту. На 500 px высоты плашка с
- * заголовком такого размера выходила 113 px при карте 203 px — почти
+ * высоты кадра там едва хватает на саму карту. На 500 px высоты блок вопроса
+ * с заголовком такого размера выходил 113 px при карте 203 px — почти
  * половина кадра под текст. `--t-size-lead` вдвое компактнее и всё ещё
  * крупнее обычного текста.
  */
@@ -4463,8 +4423,8 @@ button.chip[aria-pressed='true'] {
 }
 
 /*
- * Узкий экран: панель во всю ширину закрывала бы плашку вопроса. Нижние 60 %
- * карты оставляют вопрос читаемым сверху.
+ * Узкий экран: панель во всю высоту закрыла бы карту целиком. Нижние 60 %
+ * оставляют видным спрошенное место на карте.
  */
 @media (max-width: 1023px) {
   .stage-answer-panel {
@@ -4658,7 +4618,7 @@ button.chip[aria-pressed='true'] {
   color: var(--text-on-ground-strong);
   display: flex;
   font-family: var(--t-family-display);
-  font-size: 1.75rem;
+  font-size: var(--t-size-28);
   font-weight: var(--t-weight-bold);
   gap: var(--s-3);
   justify-content: center;
@@ -4668,7 +4628,7 @@ button.chip[aria-pressed='true'] {
 
 .stage-verdict .seal {
   block-size: 40px;
-  font-size: 1.25rem;
+  font-size: var(--t-size-20);
   inline-size: 40px;
 }
 
@@ -4776,7 +4736,7 @@ button.chip[aria-pressed='true'] {
 
   .stage-choices-band .stage-choices button {
     inline-size: 100%;
-    min-block-size: 52px;
+    min-block-size: var(--target-large);
     padding-inline: var(--s-3) var(--s-4);
     text-align: start;
   }
@@ -4796,14 +4756,6 @@ button.chip[aria-pressed='true'] {
     margin-inline-start: 0;
   }
 
-  /*
-   * Плашка вопроса ушла в колонку, и запас сверху под неё у ленты и снимка
-   * больше не нужен: он только сжимал их по высоте.
-   */
-  .history-stage,
-  .culture-stage {
-    padding-block-start: var(--s-6);
-  }
 }
 
 /* --- Рельеф: в цвете / тушью --------------------------------------------- */
@@ -4959,10 +4911,10 @@ button.chip[aria-pressed='true'] {
   z-index: 2;
 }
 
-/* В раунде переключатель лежит на карте, в верхнем правом углу листа. */
-.stage-map .relief-toggle {
-  inset-block-start: var(--s-3);
-  inset-inline-end: var(--s-3);
-  position: absolute;
-  z-index: 2;
+/*
+ * В раунде переключатель стоит в строке действий, а не на листе: любой угол
+ * карты там занят целями, и в правом верхнем он закрывал Амур.
+ */
+.stage-strip-tools {
+  display: flex;
 }

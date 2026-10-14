@@ -853,6 +853,10 @@ export default function App() {
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
           roundMap={roundMap}
+          hasUnasked={
+            new Set(lastAttempts.map((attempt) => attempt.target.id)).size <
+            regions.length
+          }
           onRepeatMistakes={() => {
             if (isCityRound) {
               setCityPool(repeatCities);

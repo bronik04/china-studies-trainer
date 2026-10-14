@@ -142,3 +142,11 @@ it('верный исход — печать 对 нефритом', () => {
   expect(screen.getByText('Верно')).toBeTruthy();
   expect(screen.getByText('对')).toHaveAttribute('data-tone', 'correct');
 });
+
+/* Настройки показа стоят в строке действий, а не на карте: углы карты — цели. */
+it('слот настроек стоит в строке действий, а не на карте', () => {
+  const { container } = renderStage({ tools: <p>рельеф</p> });
+
+  expect(screen.getByText('рельеф').closest('.stage-strip')).not.toBeNull();
+  expect(container.querySelector('.stage-map')).not.toHaveTextContent('рельеф');
+});

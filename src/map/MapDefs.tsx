@@ -12,8 +12,8 @@
  * Переименование правится в двух местах — других потребителей нет.
  */
 const INCORRECT_PATTERN_ID = 'map-hatch-incorrect';
-const SECOND_TRY_PATTERN_ID = 'map-hatch-second-try';
-const FAILED_PATTERN_ID = 'map-hatch-failed';
+export const SECOND_TRY_PATTERN_ID = 'map-hatch-second-try';
+export const FAILED_PATTERN_ID = 'map-hatch-failed';
 const IN_PROGRESS_PATTERN_ID = 'map-hatch-in-progress';
 const PHYSICAL_CORRECT_PATTERN_ID = 'map-hatch-physical-correct';
 const PHYSICAL_INCORRECT_PATTERN_ID = 'map-hatch-physical-incorrect';

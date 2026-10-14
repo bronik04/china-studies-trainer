@@ -7,10 +7,8 @@ import {
 import { collectionsWord } from '../../content/region-count';
 import type { Region } from '../../content/types';
 import { SiteFooter } from '../../ui/SiteFooter';
+import { CHAPTER_NUMERALS } from '../exercise/exercise-modes';
 import { CollectionCard } from '../home/CollectionCard';
-
-/** Номера групп — те же главы иероглифами, что у режимов на главной. */
-const GROUP_NUMERALS = ['一', '二', '三', '四', '五'] as const;
 
 export type CollectionsPageProps = {
   readonly regions: readonly Region[];
@@ -69,7 +67,7 @@ export function CollectionsPage({
         {COLLECTION_GROUPS.map((group, index) => (
           <a key={group.id} className="chip chip-pill" href={`#group-${group.id}`}>
             <span className="chip-numeral" lang="zh-Hans" aria-hidden="true">
-              {GROUP_NUMERALS[index]}
+              {CHAPTER_NUMERALS[index]}
             </span>
             {group.title}{' '}
             <span className="chip-count">
@@ -94,7 +92,7 @@ export function CollectionsPage({
                 lang="zh-Hans"
                 aria-hidden="true"
               >
-                {GROUP_NUMERALS[index]}
+                {CHAPTER_NUMERALS[index]}
               </span>
               <div>
                 <h2>{group.title}</h2>

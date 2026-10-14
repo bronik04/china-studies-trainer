@@ -22,9 +22,13 @@ import { ChinaMap } from '../../map/ChinaMap';
 import { ReliefStyleToggle, type ReliefStyle } from '../../map/ReliefStyleToggle';
 import type { MapZoom } from '../../map/MapControls';
 import type { FeatureOutcome } from '../../map/PhysicalLayer';
-import { PHYSICAL_MODES } from './exercise-modes';
+import {
+  PHYSICAL_MODES,
+  roundTitle,
+} from './exercise-modes';
 import { PhysicalAnswerList } from './PhysicalAnswerList';
 import { RoundProgressTrail } from './RoundProgressTrail';
+import { verdictOf } from './answer-states';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
 import { useAutoAdvance } from './use-auto-advance';
@@ -250,18 +254,19 @@ export function PhysicalRound({
 
   return (
     <RoundStage
-      title={`Физическая карта · ${
-        exerciseType === 'find-on-map' ? 'Найти объект' : mode.title
-      }`}
+      tools={
+        onReliefStyleChange === undefined ? undefined : (
+          <ReliefStyleToggle
+            name="round-relief"
+            value={reliefStyle}
+            onChange={onReliefStyleChange}
+          />
+        )
+      }
+      title={roundTitle(exerciseType === 'find-on-map' ? 'find-physical' : 'name-physical')}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
-      verdict={
-        round.status === 'feedback' && lastAttempt !== undefined
-          ? lastAttempt.isCorrect
-            ? 'correct'
-            : 'incorrect'
-          : null
-      }
+      verdict={verdictOf(round)}
       startedAt={startedAt}
       progress={
         <>
@@ -323,15 +328,6 @@ export function PhysicalRound({
         onSelectFeature={showsChoices ? undefined : handleFeatureSelect}
         showsPhysicalLabels={false}
         featureOutcomes={featureOutcomes}
-        mapInset={
-          onReliefStyleChange === undefined ? undefined : (
-            <ReliefStyleToggle
-              name="round-relief"
-              value={reliefStyle}
-              onChange={onReliefStyleChange}
-            />
-          )
-        }
       />
       </div>
     </RoundStage>

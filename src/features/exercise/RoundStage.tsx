@@ -31,6 +31,12 @@ export type RoundStageProps = {
   readonly choices?: ReactNode;
   /** Содержимое панели «Ответить из списка»; не передано — кнопки нет. */
   readonly answerList?: ReactNode;
+  /**
+   * Настройки показа карты — переключатель вида рельефа. Стоят в строке
+   * действий, а не на карте: любой угол листа в раунде занят целями
+   * (северо-восточный — Амуром и Хинганом).
+   */
+  readonly tools?: ReactNode;
   readonly onExit: () => void;
   /** Карта. */
   readonly children: ReactNode;
@@ -40,11 +46,12 @@ export type RoundStageProps = {
  * Компоновка игрового экрана — одна на все виды раундов. С редизайна «Тушь и
  * киноварь» (DECISIONS.md, 2026-10-14) на широком экране это колонка вопроса
  * слева — имя игры, ход, вопрос, печать исхода, варианты, время и действия —
- * и карта справа. На узком экране плашка вопроса по-прежнему стоит поверх
- * карты (спек RoundStage, 2026-08-17). Порядок DOM — шапка, вопрос, карта,
- * варианты, строка; раскладку решает только CSS.
+ * и карта справа. На узком экране всё идёт одной колонкой, вопрос — строкой
+ * над картой, а не плашкой поверх неё: плашка накрывала шапку раунда.
+ * Порядок DOM — шапка, вопрос, карта, варианты, строка; раскладку решает
+ * только CSS.
  *
- * Плашка — aria-live: смена вопроса и показ верного ответа объявляются
+ * Блок вопроса — aria-live: смена вопроса и показ верного ответа объявляются
  * читалке. Раньше это делал перевод фокуса на заголовок разбора — самого
  * разбора больше нет.
  *
@@ -69,6 +76,7 @@ export function RoundStage({
   progress,
   choices,
   answerList,
+  tools,
   onExit,
   children,
 }: RoundStageProps) {
@@ -149,6 +157,7 @@ export function RoundStage({
       ) : null}
       <footer className="stage-strip">
         <RoundStopwatch startedAt={startedAt} />
+        {tools === undefined ? null : <div className="stage-strip-tools">{tools}</div>}
         <div className="stage-strip-actions">
           {answerList !== undefined ? (
             <button

@@ -18,9 +18,13 @@ import {
 } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import type { MapZoom } from '../../map/MapControls';
-import { answerStatesFor } from './answer-states';
+import { answerStatesFor, verdictOf } from './answer-states';
 import { CityAnswerList } from './CityAnswerList';
-import { CITY_MODES } from './exercise-modes';
+import {
+  CITY_MODES,
+  roundTitle,
+  CITY_CARD_IDS,
+} from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
@@ -235,16 +239,10 @@ export function CityRound({
 
   return (
     <RoundStage
-      title={`Города · ${mode.title}`}
+      title={roundTitle(CITY_CARD_IDS[exerciseType])}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
-      verdict={
-        round.status === 'feedback' && lastAttempt !== undefined
-          ? lastAttempt.isCorrect
-            ? 'correct'
-            : 'incorrect'
-          : null
-      }
+      verdict={verdictOf(round)}
       startedAt={startedAt}
       progress={
         <>

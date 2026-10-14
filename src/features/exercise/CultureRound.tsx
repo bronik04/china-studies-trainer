@@ -20,8 +20,12 @@ import {
   type Round,
 } from '../../domain/round';
 import { CollectionImage } from '../../ui/CollectionImage';
-import { CULTURE_MODE } from './exercise-modes';
+import {
+  CULTURE_MODE,
+  roundTitle,
+} from './exercise-modes';
 import { RoundProgressTrail } from './RoundProgressTrail';
+import { verdictOf } from './answer-states';
 import { RoundStage } from './RoundStage';
 import { StageChoices, type StageChoice } from './StageChoices';
 import { useAutoAdvance } from './use-auto-advance';
@@ -218,16 +222,10 @@ export function CultureRound({
 
   return (
     <RoundStage
-      title={CULTURE_MODE.title.replace('Культура: ', 'Культура · ')}
+      title={roundTitle('culture')}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
-      verdict={
-        round.status === 'feedback' && lastAttempt !== undefined
-          ? lastAttempt.isCorrect
-            ? 'correct'
-            : 'incorrect'
-          : null
-      }
+      verdict={verdictOf(round)}
       startedAt={roundStartedAt}
       progress={
         <>
