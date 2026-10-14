@@ -1166,6 +1166,18 @@ button.text:hover:enabled {
 }
 
 /*
+ * Фокус на тёмной заливке — бумагой: тушь на киновари выбранного региона и
+ * на нефрите верного ответа не даёт 3:1 (см. `--focus-on-dark`).
+ */
+.china-map [data-region-id][data-selected='true']:focus-visible,
+.china-map [data-region-id][data-answer-state='correct']:focus-visible,
+.china-map .country[data-selected='true']:focus-visible,
+.china-map .country[data-answer-state='correct']:focus-visible {
+  stroke: var(--focus-on-dark);
+  stroke-width: 4;
+}
+
+/*
  * Ошибка помечается штриховкой и пунктиром, а не сплошной заливкой другого
  * цвета. Различие с верным ответом категориальное — сплошное против
  * штрихованного, — поэтому читается и в оттенках серого, и при дальтонизме,

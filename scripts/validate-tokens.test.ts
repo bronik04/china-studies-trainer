@@ -128,8 +128,16 @@ describe('текст', () => {
 });
 
 describe('границы и поверхности', () => {
-  it('бумага отделена от доски', () => {
-    expectAtLeast('--surface-paper', '--surface-ground', GRAPHIC_CONTRAST);
+  /*
+   * Доска с редизайна «Тушь и киноварь» сама бумажная (DECISIONS.md,
+   * 2026-10-14), и контраста поверхностей между ней и бумагой больше нет и не
+   * должно быть. Панель от фона отделяет линия тушью — она и проверяется на
+   * каждой из трёх бумаг, между которыми проходит.
+   */
+  it('панели на бумажной доске очерчены линией тушью', () => {
+    for (const surface of ['--surface-ground', '--surface-raised', '--surface-paper']) {
+      expectAtLeast('--line-on-ground', surface, GRAPHIC_CONTRAST);
+    }
   });
 
   it('линия на бумаге видна', () => {
@@ -224,15 +232,26 @@ describe('границы и поверхности', () => {
         color('--focus-on-paper'),
         color(surface),
       );
-      const onGround = contrastRatioRounded(
-        color('--focus-on-ground'),
+      const onDark = contrastRatioRounded(
+        color('--focus-on-dark'),
         color(surface),
       );
 
       expect(
-        Math.max(onPaper, onGround),
-        `фокус на ${surface} (${color(surface)}): тушь ${onPaper}:1, золото ${onGround}:1`,
+        Math.max(onPaper, onDark),
+        `фокус на ${surface} (${color(surface)}): тушь ${onPaper}:1, бумага ${onDark}:1`,
       ).toBeGreaterThanOrEqual(GRAPHIC_CONTRAST);
+    }
+  });
+
+  /*
+   * Тёмные заливки карты получают кольцо бумагой — правило в styles.css рядом
+   * с `data-answer-state='correct'`. Прежде здесь засчитывалось золото, которым
+   * карта фокус не рисовала.
+   */
+  it('кольцо фокуса на тёмной заливке карты рисуется бумагой', () => {
+    for (const state of FILLED_STATES) {
+      expectAtLeast('--focus-on-dark', state, GRAPHIC_CONTRAST);
     }
   });
 
@@ -242,7 +261,9 @@ describe('границы и поверхности', () => {
     }
   });
 
-  it('кольцо фокуса на доске рисуется золотом', () => {
+  /* Золото было кольцом тёмной доски; на бумажной оно не даёт 3:1. */
+  it('кольцо фокуса на доске рисуется тушью', () => {
+    expect(color('--focus-on-ground')).toBe(color('--c-ink-900'));
     expectAtLeast('--focus-on-ground', '--surface-ground', GRAPHIC_CONTRAST);
     expectAtLeast('--focus-on-ground', '--surface-raised', GRAPHIC_CONTRAST);
   });
