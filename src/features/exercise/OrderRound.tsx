@@ -132,6 +132,7 @@ export function OrderRound({
 
   return (
     <RoundStage
+      title="История · Расставить по порядку"
       prompt={
         <>
           <p className="eyebrow">Расставьте по порядку</p>

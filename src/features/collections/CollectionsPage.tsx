@@ -9,6 +9,9 @@ import type { Region } from '../../content/types';
 import { SiteFooter } from '../../ui/SiteFooter';
 import { CollectionCard } from '../home/CollectionCard';
 
+/** Номера групп — те же главы иероглифами, что у режимов на главной. */
+const GROUP_NUMERALS = ['一', '二', '三', '四', '五'] as const;
+
 export type CollectionsPageProps = {
   readonly regions: readonly Region[];
   readonly onOpenCollection: (collectionId: string) => void;
@@ -36,10 +39,23 @@ export function CollectionsPage({
             сразу собрать раунд по её регионам.
           </p>
         </div>
-        <p className="page-head-count">
-          {collections.length} {collectionsWord(collections.length)} ·{' '}
-          {COLLECTION_GROUPS.length} группы
-        </p>
+        <div className="page-head-aside">
+          <p className="page-head-count">
+            <span className="page-head-number">{collections.length}</span>
+            <span>
+              {collectionsWord(collections.length)} · {COLLECTION_GROUPS.length}{' '}
+              группы
+            </span>
+          </p>
+          {/*
+            Подпись раздела по-китайски — «достопримечательности и местные
+            явления». Знак, а не текст: скрыта от читалки, заголовок слева
+            уже назвал раздел.
+          */}
+          <p className="page-head-scroll" lang="zh-Hans" aria-hidden="true">
+            名胜与风物
+          </p>
+        </div>
       </div>
 
       {/*
@@ -50,23 +66,42 @@ export function CollectionsPage({
         нужно не отсеять, а попасть.
       */}
       <nav className="group-jump" aria-label="Группы коллекций">
-        {COLLECTION_GROUPS.map((group) => (
-          <a key={group.id} className="chip" href={`#group-${group.id}`}>
-            {group.title} {collectionsInGroup(group.id).length}
+        {COLLECTION_GROUPS.map((group, index) => (
+          <a key={group.id} className="chip chip-pill" href={`#group-${group.id}`}>
+            <span className="chip-numeral" lang="zh-Hans" aria-hidden="true">
+              {GROUP_NUMERALS[index]}
+            </span>
+            {group.title}{' '}
+            <span className="chip-count">
+              {collectionsInGroup(group.id).length}
+            </span>
           </a>
         ))}
       </nav>
 
-      {COLLECTION_GROUPS.map((group) => {
+      {COLLECTION_GROUPS.map((group, index) => {
         const inGroup = collectionsInGroup(group.id);
 
         return (
-          <section key={group.id} className="landing-section" id={`group-${group.id}`}>
-            <div className="landing-section-head">
-              <h2>{group.title}</h2>
-              <p className="group-hint">
-                {group.hint} · {inGroup.length}
-              </p>
+          <section
+            key={group.id}
+            className="landing-section collection-group"
+            id={`group-${group.id}`}
+          >
+            <div className="collection-group-head">
+              <span
+                className="mode-chapter-numeral"
+                lang="zh-Hans"
+                aria-hidden="true"
+              >
+                {GROUP_NUMERALS[index]}
+              </span>
+              <div>
+                <h2>{group.title}</h2>
+                <p className="group-hint">
+                  {group.hint} · {inGroup.length}
+                </p>
+              </div>
             </div>
             <ul className="collection-grid">
               {inGroup.map((collection) => (

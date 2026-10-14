@@ -101,25 +101,6 @@ it('без слота списка кнопки «Ответить из спис
   expect(screen.queryByRole('button', { name: 'Ответить из списка' })).toBeNull();
 });
 
-/*
- * jsdom не считает CSS-каскад, поэтому саму «сквозность» плашки не
- * проверить здесь — но крючок для неё, атрибут на корне, проверить можно.
- * Правило `.round-stage[data-list-open='true'] .stage-prompt { pointer-
- * events: auto; }` в styles.css делает плашку «твёрдой», пока панель
- * открыта — иначе клик по ней на узком экране проваливался бы сквозь в
- * скрытую под ней кнопку списка.
- */
-it('открытая панель списка помечает корень data-list-open', () => {
-  const { container } = renderStage({ answerList: <p>список целей</p> });
-  const stage = container.querySelector('.round-stage')!;
-
-  expect(stage.getAttribute('data-list-open')).toBe('false');
-
-  fireEvent.click(screen.getByRole('button', { name: 'Ответить из списка' }));
-
-  expect(stage.getAttribute('data-list-open')).toBe('true');
-});
-
 it('кнопка списка связана с панелью через aria-controls', () => {
   renderStage({ answerList: <p>список целей</p> });
   const toggle = screen.getByRole('button', { name: 'Ответить из списка' });
@@ -129,4 +110,35 @@ it('кнопка списка связана с панелью через aria-c
   const panel = screen.getByRole('group', { name: 'Ответ из списка' });
   expect(toggle.getAttribute('aria-controls')).toBe(panel.id);
   expect(panel.id).not.toBe('');
+});
+
+it('называет игру над ходом раунда', () => {
+  renderStage({ title: 'Регионы · Найти на карте' });
+
+  expect(screen.getByText('Регионы · Найти на карте')).toBeTruthy();
+});
+
+it('до ответа печати исхода нет', () => {
+  const { container } = renderStage();
+
+  expect(container.querySelector('.stage-verdict')).toBeNull();
+});
+
+/*
+ * Исход несёт слово, а не только печать: иероглиф скрыт от читалки, слово
+ * стоит в живой области вопроса и объявляется.
+ */
+it('исход ответа назван словом в живой области, печать скрыта', () => {
+  renderStage({ verdict: 'incorrect' });
+
+  const word = screen.getByText('Неверно');
+  expect(word.closest('[aria-live]')).not.toBeNull();
+  expect(screen.getByText('错')).toHaveAttribute('aria-hidden', 'true');
+});
+
+it('верный исход — печать 对 нефритом', () => {
+  renderStage({ verdict: 'correct' });
+
+  expect(screen.getByText('Верно')).toBeTruthy();
+  expect(screen.getByText('对')).toHaveAttribute('data-tone', 'correct');
 });

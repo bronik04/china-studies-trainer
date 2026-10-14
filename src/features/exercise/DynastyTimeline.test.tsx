@@ -106,21 +106,49 @@ it('без колбэка полос-кнопок нет', () => {
 });
 
 /*
- * Найдено проверкой в браузере: подпись Ся центрируется по полосе у самого
- * нуля ленты, и половина её уезжает за обрез.
+ * Лента идёт змейкой: на поворотах — Шан, Хань и Тан. Помеченная династия на
+ * повороте красит и сам поворот: время через рубеж не прерывается.
  */
-it('крайняя подпись прижата к краю, а не центрирована', () => {
-  render(
+it('поворот змейки несёт метку династии, которая через него идёт', () => {
+  const { container } = render(
     <DynastyTimeline
       dynasties={dynasties}
-      marks={[{ dynastyId: 'xia', kind: 'correct' }]}
+      marks={[{ dynastyId: 'tang', kind: 'correct' }]}
       showsNames
     />,
   );
 
-  const name = screen.getByText('Ся').closest('.timeline-name') as HTMLElement;
+  const turns = [...container.querySelectorAll('.timeline-turn')] as HTMLElement[];
 
-  expect(name.dataset.edge).toBe('start');
+  expect(turns.map((turn) => turn.dataset.turnDynastyId)).toEqual([
+    'shang',
+    'han',
+    'tang',
+  ]);
+  expect(turns[2].dataset.mark).toBe('correct');
+  expect(turns[0].dataset.mark).toBeUndefined();
+});
+
+/*
+ * Династия, разрезанная поворотом, — одна цель: кнопка с её сроком одна, а
+ * второй отрезок нажимается, но скрыт от читалки.
+ */
+it('у династии на повороте одна кнопка с её сроком', () => {
+  const onAnswer = vi.fn();
+  const { container } = render(
+    <DynastyTimeline dynasties={dynasties} showsNames={false} onAnswer={onAnswer} />,
+  );
+
+  const han = dynasties.find((dynasty) => dynasty.id === 'han')!;
+
+  expect(screen.getAllByRole('button', { name: spanLabel(han) })).toHaveLength(1);
+
+  const hidden = container.querySelector(
+    "[data-hit-dynasty-id='han'][aria-hidden='true']",
+  ) as HTMLElement;
+  fireEvent.click(hidden);
+
+  expect(onAnswer).toHaveBeenCalledWith('han');
 });
 
 /*

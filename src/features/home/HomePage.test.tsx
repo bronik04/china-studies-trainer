@@ -75,11 +75,14 @@ it('главная кнопка ведёт в раздел режимов, а н
   expect(onStartRound).not.toHaveBeenCalled();
 });
 
-/* Повтор ошибок не пропал вместе с кнопкой героя — он переехал к режимам. */
-it('повтор ошибок стоит в разделе режимов и запускает те же цели', () => {
+/* Повтор ошибок не пропал вместе с кнопкой героя — он стоит строкой под ним. */
+it('строка повтора называет ошибочные регионы и запускает те же цели', () => {
   const { onStartRound } = renderHome([mistake('hunan'), mistake('hubei')]);
 
-  fireEvent.click(screen.getByRole('button', { name: /Повторить 2 региона/ }));
+  const strip = screen.getByRole('region', { name: 'Повторить ошибки' });
+  expect(strip).toHaveTextContent('2 региона: 湖南省 Хунань, 湖北省 Хубэй');
+
+  fireEvent.click(within(strip).getByRole('button', { name: 'Начать повтор' }));
 
   expect(onStartRound).toHaveBeenCalledWith('find-on-map', 'ru', [
     'hunan',
@@ -87,10 +90,22 @@ it('повтор ошибок стоит в разделе режимов и з�
   ]);
 });
 
+/* Длинный перечень превратил бы строку в абзац: по имени — первые три. */
+it('строка повтора называет по имени не больше трёх регионов', () => {
+  renderHome(['hunan', 'hubei', 'henan', 'hebei', 'shanxi'].map(mistake));
+
+  const strip = screen.getByRole('region', { name: 'Повторить ошибки' });
+
+  expect(strip).toHaveTextContent('5 регионов:');
+  expect(strip).toHaveTextContent('и ещё 2');
+  expect(strip).not.toHaveTextContent('Хэбэй');
+});
+
 it('без ошибок строки повтора нет вовсе', () => {
   renderHome();
 
-  expect(screen.queryByRole('button', { name: /Повторить/ })).toBeNull();
+  expect(screen.queryByRole('region', { name: 'Повторить ошибки' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Начать повтор' })).toBeNull();
 });
 
 it('карточка открытого режима запускает свой раунд', () => {
@@ -129,13 +144,13 @@ it('все объявленные режимы написаны и запуск�
 
   const cards = screen
     .getAllByRole('button')
-    .filter((button) => button.closest('.mode-card') !== null);
+    .filter((button) => button.classList.contains('mode-pill'));
 
   expect(cards).toHaveLength(MODE_CARDS.length);
   for (const card of cards) {
     expect(card, card.textContent ?? '').toBeEnabled();
   }
-  expect(screen.queryByText('Готовится')).not.toBeInTheDocument();
+  expect(screen.queryByText(/готовится/)).not.toBeInTheDocument();
 });
 
 it('заполнение карты идёт своим раундом, а не упражнением', () => {
@@ -285,13 +300,13 @@ it('игры разложены по семи предметам, и кажда�
     ).toBeInTheDocument();
   }
 
-  const grids = document.querySelectorAll('.mode-group .mode-card-grid');
-  const cards = [...grids].flatMap((grid) => [
-    ...grid.querySelectorAll('.mode-card'),
+  const chapters = document.querySelectorAll('.mode-chapter');
+  const pills = [...chapters].flatMap((chapter) => [
+    ...chapter.querySelectorAll('.mode-pill'),
   ]);
 
-  expect(grids).toHaveLength(MODE_GROUPS.length);
-  expect(cards).toHaveLength(MODE_CARDS.length);
+  expect(chapters).toHaveLength(MODE_GROUPS.length);
+  expect(pills).toHaveLength(MODE_CARDS.length);
 });
 
 /*

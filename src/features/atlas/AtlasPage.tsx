@@ -11,6 +11,7 @@ import { ChinaMap } from '../../map/ChinaMap';
 import { CardFacts, RegionReference } from '../../ui/RegionReference';
 import { MapAttribution } from '../../map/MapAttribution';
 import type { MapZoom } from '../../map/MapControls';
+import { ReliefStyleToggle, type ReliefStyle } from '../../map/ReliefStyleToggle';
 import { useFullscreen } from '../../ui/use-fullscreen';
 
 /**
@@ -46,6 +47,9 @@ export type AtlasPageProps = {
   readonly onZoomChange: (zoom: MapZoom) => void;
   readonly onTrain: () => void;
   readonly onOpenCollection: (collectionId: string) => void;
+  /** Вид рельефа на физической карте: держит `App`, общий с раундом. */
+  readonly reliefStyle?: ReliefStyle;
+  readonly onReliefStyleChange?: (value: ReliefStyle) => void;
 };
 
 /**
@@ -57,6 +61,8 @@ export type AtlasPageProps = {
  * между атласом и тренировкой, и карта не должна прыгать со стороны на сторону.
  */
 export function AtlasPage({
+  reliefStyle = 'color',
+  onReliefStyleChange,
   regions,
   selectedRegionId,
   onSelect,
@@ -199,6 +205,13 @@ export function AtlasPage({
           </label>
         ))}
       </fieldset>
+      {mapKind === 'physical' && onReliefStyleChange !== undefined ? (
+        <ReliefStyleToggle
+          name="atlas-relief"
+          value={reliefStyle}
+          onChange={onReliefStyleChange}
+        />
+      ) : null}
       {reliefScale}
     </>
   );
@@ -345,7 +358,7 @@ export function AtlasPage({
           строка выбора и вложенный список здесь только удвоили бы панель.
           О выбранном регионе рассказывает карточка слева.
         */}
-        <div className="atlas-map">
+        <div className="atlas-map" data-relief={reliefStyle}>
           <ChinaMap
             regions={regions}
             selectedRegionId={selectedRegionId}

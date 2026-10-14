@@ -311,3 +311,28 @@ it('в списке «Три ущелья» не засчитываются за
     vi.useRealTimers();
   }
 });
+
+/* Вид рельефа выбирается прямо на карте раунда и уходит в `App`. */
+it('рисует рельеф в выбранном виде и даёт его сменить', () => {
+  const onReliefStyleChange = vi.fn();
+  const { container } = render(
+    <PhysicalRound
+      features={physicalFeatures}
+      exerciseType="find-on-map"
+      language="ru"
+      roundId="r1"
+      seed={11}
+      onFinish={() => {}}
+      onExit={() => {}}
+      reliefStyle="ink"
+      onReliefStyleChange={onReliefStyleChange}
+    />,
+  );
+
+  expect(container.querySelector('[data-relief="ink"] .china-map')).not.toBeNull();
+  expect(screen.getByRole('radio', { name: 'Тушью' })).toBeChecked();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'В цвете' }));
+
+  expect(onReliefStyleChange).toHaveBeenCalledWith('color');
+});

@@ -51,6 +51,13 @@ function subset(source: Buffer, text: string, flavor: 'woff2' | 'ttf'): Buffer {
       [
         input,
         `--text=${text}`,
+        /*
+         * Прописные и моноширинные цифры. По умолчанию pyftsubset выбрасывает
+         * `lnum` и `tnum` вместе с их глифами, и у Cormorant Garamond остаются
+         * только цифры старого стиля: хвост «9» в «29 %» налезал на строку
+         * под ним.
+         */
+        '--layout-features+=lnum,tnum',
         ...(flavor === 'woff2' ? ['--flavor=woff2'] : []),
         `--output-file=${output}`,
       ],

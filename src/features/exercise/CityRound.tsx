@@ -235,8 +235,16 @@ export function CityRound({
 
   return (
     <RoundStage
+      title={`Города · ${mode.title}`}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
+      verdict={
+        round.status === 'feedback' && lastAttempt !== undefined
+          ? lastAttempt.isCorrect
+            ? 'correct'
+            : 'incorrect'
+          : null
+      }
       startedAt={startedAt}
       progress={
         <>

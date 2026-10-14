@@ -9,9 +9,10 @@
 | Onest | Dmitri Voloshin, Ilya Ruderman (CSTM Fonts) | https://fonts.google.com/specimen/Onest | 400, 500, 600, 700 |
 | Noto Serif SC | Google | https://fonts.google.com/noto/specimen/Noto+Serif+SC | 400, 700 |
 
-Дата получения: 2026-10-14. Файлы: `src/assets/fonts/`, суммарно 247.6 КБ:
-Cormorant Garamond 18.9 КБ, Onest по 12.8–13.1 КБ, Noto Serif SC 87.1 и
-89.8 КБ.
+Дата получения: 2026-10-14. Файлы: `src/assets/fonts/`, суммарно 252.7 КБ:
+Cormorant Garamond 20.0 КБ, Onest по 13.1–13.6 КБ, Noto Serif SC 88.1 и
+90.8 КБ. Последняя перенарезка — под знаки раскладок редизайна: печати 对 错
+复, номера глав 一–七, подпись 名胜与风物 и стрелка ← на ленте династий.
 
 Семейства сменены редизайном «Тушь и киноварь» (DECISIONS.md, 2026-10-14):
 до него заголовки набирались Prata 400, текст — Golos Text 400/500/700, а
@@ -26,7 +27,8 @@ npm run generate:fonts
 ```
 
 Скрипт скачивает файл с Google Fonts, режет его локально `pyftsubset` под знаки
-приложения, проверяет покрытие разбором таблицы `cmap` вырезанного файла и
+приложения (с функциями `lnum` и `tnum`: без них у Cormorant Garamond остаются
+только цифры старого стиля), проверяет покрытие разбором таблицы `cmap` вырезанного файла и
 кладёт woff2 в `src/assets/fonts/`. Нужен интернет и `pyftsubset` с woff2
 (`pipx install fonttools && pipx inject fonttools brotli`); само приложение и
 сборка без них работают.

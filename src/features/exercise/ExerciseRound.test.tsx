@@ -82,7 +82,11 @@ it('переводит к следующему вопросу сам, без к�
     answerCorrectly();
 
     expect(screen.queryByRole('button', { name: 'Далее' })).toBeNull();
-    expect(screen.queryByText('Верно')).toBeNull();
+    /*
+     * На паузу встаёт печать 对 со словом (редизайн, 2026-10-14) — это
+     * отметка исхода, а не разбор: кнопки нет, раунд едет сам.
+     */
+    expect(screen.getByText('Верно')).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(CORRECT_PAUSE_MS);

@@ -1,10 +1,13 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { spanLabel, TIMELINE_FROM, TIMELINE_TO } from '../../content/dynasties';
+import { spanLabel, TIMELINE_TO } from '../../content/dynasties';
 import type { Dynasty } from '../../content/types';
+import { rowShare, snakeRows, snakeSegments, snakeTurns } from './snake-layout';
 import { hitAreas, minHitShare } from './timeline-hit';
 
 /**
- * Лента династий: четыре тысячи лет одной полосой.
+ * Лента династий: четыре тысячи лет змейкой — строка на тысячу лет, туда и
+ * обратно (DECISIONS.md, 2026-10-14; раскладку считает `snake-layout.ts`).
+ * Прежде лента шла одной полосой, и в ней Цинь занимала 3.6 px.
  *
  * Полоса пропорциональна времени, а не равным долям. Это и есть то, чему
  * режим учит помимо дат: Чжоу правила восемь веков, Цинь — четырнадцать лет, и
@@ -35,8 +38,11 @@ const LABEL_MIN_SHARE = 0.055;
  */
 const EDGE_SHARE = 0.06;
 
-/** Метки шкалы: круглые даты, по которым глаз находит место на ленте. */
-const TICKS = [-2000, -1000, 0, 1000, 2000] as const;
+/**
+ * Ширина поворота в пикселях — та же, что у `--timeline-turn` в styles.css.
+ * Строка уже ленты на два поворота, и порогу целей нажатия нужна её ширина.
+ */
+const TURN_PX = 40;
 
 function tickLabel(year: number): string {
   if (year === 0) {
@@ -49,6 +55,8 @@ function tickLabel(year: number): string {
 function percent(value: number): string {
   return `${value * 100}%`;
 }
+
+const ROWS = snakeRows(TIMELINE_TO);
 
 /** Наименьший разрыв, который стоит подписывать: короче — надпись не влезет. */
 const GAP_MIN_YEARS = 200;
@@ -147,8 +155,6 @@ export function DynastyTimeline({
   onAnswer,
   hint,
 }: DynastyTimelineProps) {
-  const span = TIMELINE_TO - TIMELINE_FROM;
-  const shareOf = (year: number) => (year - TIMELINE_FROM) / span;
   const markOf = (dynastyId: string) =>
     marks.find((mark) => mark.dynastyId === dynastyId)?.kind;
 
@@ -156,29 +162,16 @@ export function DynastyTimeline({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const answers = onAnswer !== undefined;
 
-  /*
-   * Цели есть, как только лента отвечает, — и до первого измерения тоже: без
-   * ширины их нельзя расширить, но нельзя и не показать. Пока ширина
-   * неизвестна (нулевая до первого кадра), порог нулевой и цель совпадает с
-   * полосой; после замера цели расширяются и разъезжаются.
-   */
-  const hits = !answers
-    ? []
-    : hitAreas(
-        dynasties.map((dynasty) => ({
-          id: dynasty.id,
-          left: shareOf(dynasty.from),
-          width: shareOf(dynasty.to) - shareOf(dynasty.from),
-        })),
-        ribbonWidth === 0 ? 0 : minHitShare(ribbonWidth, dynasties.length),
-      );
+  const segments = snakeSegments(dynasties, ROWS);
+  const turns = snakeTurns(dynasties, ROWS);
+  const gaps = gapsBetween(dynasties);
+  const rowWidth = Math.max(ribbonWidth - 2 * TURN_PX, 0);
 
   /*
    * Наведение живёт только пока лента отвечает. Иначе после ответа строка
    * разбора оставалась бы подменённой сроком: курсор со сданной полосы никуда
    * не делся, а цели под ним уже нет.
-   */
-  /*
+   *
    * Занятая полоса из наведения выпадает: её кнопка выключена, а выключенная
    * не шлёт `pointerleave` — иначе `hoveredId` застревал бы на ней навсегда, и
    * строка под лентой продолжала бы показывать её срок (ревью 2026-08-28).
@@ -189,170 +182,244 @@ export function DynastyTimeline({
           dynasty.id === hoveredId && markOf(dynasty.id) !== 'taken',
       )
     : undefined;
+  const spanMark = (dynastyId: string) =>
+    markOf(dynastyId) ?? (hovered?.id === dynastyId ? 'hover' : undefined);
 
   return (
     <div
       className="dynasty-timeline"
+      data-layout="snake"
       ref={ribbonRef}
       aria-hidden={answers ? undefined : true}
     >
-      <div className="timeline-scale">
-        {TICKS.map((year) => (
-          <span
-            key={year}
-            className="timeline-tick"
-            style={{ left: percent(shareOf(year)) }}
-            /*
-             * Крайние метки прижимаются к своему краю, а не центрируются по
-             * штриху: «2000 до н. э.» на левом конце иначе наполовину уезжает
-             * за кадр.
-             */
-            data-edge={year === TICKS[0] ? 'start' : year === TICKS.at(-1) ? 'end' : undefined}
+      {ROWS.map((row) => {
+        const inRow = segments
+          .filter((segment) => segment.row === row.index)
+          .sort((a, b) => a.left - b.left);
+        /*
+         * Цели нажатия считаются по строке: в ней свои двенадцать или меньше
+         * полос, и порог 44 px делится на ширину строки, а не всей ленты.
+         * Пока ширина неизвестна (нулевая до первого кадра), порог нулевой и
+         * цель совпадает с полосой.
+         */
+        const hits = !answers
+          ? []
+          : hitAreas(
+              inRow.map((segment) => ({
+                id: segment.dynastyId,
+                left: segment.left,
+                width: segment.width,
+              })),
+              rowWidth === 0 ? 0 : minHitShare(rowWidth, inRow.length),
+            );
+        const turn = turns.find((item) => item.afterRow === row.index);
+
+        return (
+          <div
+            key={row.index}
+            className="timeline-row"
+            data-reversed={row.reversed}
           >
-            {tickLabel(year)}
-          </span>
-        ))}
-
-        {/*
-          Разрыв между династиями — не пропущенная полоса, а четыре века, когда
-          единой державы не было. Без подписи пустота читается как недостача
-          данных, и объяснять её пришлось бы каждому.
-
-          Подпись стоит над разрывом, в строке шкалы, а не внутри него: сам
-          разрыв — 301 год из четырёх тысяч, на широком экране слово помещается
-          в него впритык, а на узком уже налезло бы на соседние полосы. Разрывы
-          считаются по самим династиям: подпись и лента обязаны говорить об
-          одном и том же промежутке.
-        */}
-        {showsNames
-          ? gapsBetween(dynasties).map((gap) => (
+            <div className="timeline-scale">
+              {/*
+                Год начала строки — у её начала: слева у прямой строки, справа
+                у обратной. Стрелка говорит, куда идёт время.
+              */}
               <span
-                key={gap.from}
-                className="timeline-gap"
-                style={{ left: percent(shareOf((gap.from + gap.to) / 2)) }}
+                className="timeline-tick"
+                data-edge={row.reversed ? 'end' : 'start'}
+                style={{ left: percent(row.reversed ? 1 : 0) }}
               >
-                раздробленность
+                {row.reversed ? '← ' : ''}
+                {tickLabel(row.from)}
+                {row.reversed ? '' : ' →'}
               </span>
-            ))
-          : null}
-      </div>
-
-      <div className="timeline-band">
-        {dynasties.map((dynasty) => {
-          const left = shareOf(dynasty.from);
-          const width = shareOf(dynasty.to) - left;
-
-          return (
-            <div
-              key={dynasty.id}
-              className="timeline-span"
-              data-dynasty-id={dynasty.id}
-              data-mark={
-                markOf(dynasty.id) ??
-                (hovered?.id === dynasty.id ? 'hover' : undefined)
-              }
-              style={{ left: percent(left), width: percent(width) }}
-            />
-          );
-        })}
-
-        {/*
-          Слой целей нажатия поверх полос. Полоса нарисована честно, по годам,
-          а нажимают её пальцем: у Цинь она 3.6 px на ленте в 1024. Цель имеет
-          своё положение и своё имя — срок, — и потому она кнопка, а полоса
-          остаётся рисунком.
-        */}
-        {answers ? (
-          <div className="timeline-hits">
-            {hits.map((hit) => {
-              const dynasty = dynasties.find((item) => item.id === hit.id)!;
-
-              return (
-                <button
-                  key={hit.id}
-                  type="button"
-                  className="timeline-hit"
-                  data-hit-dynasty-id={hit.id}
-                  /*
-                   * Занятая полоса выключена, а не просто молчит: выключенная
-                   * кнопка сама выпадает из обхода клавиатурой, и читалка
-                   * экрана называет её недоступной.
-                   */
-                  disabled={markOf(hit.id) === 'taken'}
-                  style={{ left: percent(hit.left), width: percent(hit.width) }}
-                  onPointerEnter={() => setHoveredId(hit.id)}
-                  onPointerLeave={() => setHoveredId(null)}
-                  onFocus={() => setHoveredId(hit.id)}
-                  onBlur={() => setHoveredId(null)}
-                  onClick={() => onAnswer?.(hit.id)}
+              {row.index === ROWS.length - 1 ? (
+                <span
+                  className="timeline-tick"
+                  data-edge={row.reversed ? 'start' : 'end'}
+                  style={{ left: percent(row.reversed ? 0 : 1) }}
                 >
-                  <span className="visually-hidden">{spanLabel(dynasty)}</span>
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="timeline-names">
-        {dynasties.map((dynasty) => {
-          const left = shareOf(dynasty.from);
-          const width = shareOf(dynasty.to) - left;
-          /*
-           * Выделенная подпись со сроком — только у верной полосы. Выбранную
-           * по ошибке называет строка разбора: две выделенные подписи рядом
-           * налезали бы друг на друга, а у Тан и Сун они рядом.
-           */
-          const mark = markOf(dynasty.id);
-          const isAnswer = mark === 'correct';
-          /*
-           * Спрошенная и занятая подписаны и тогда, когда лента в целом
-           * молчит: первая называет, о ком речь, вторая — что место закрыто.
-           */
-          const isAsked = mark === 'asked' || mark === 'taken';
-
-          if (!showsNames && !isAsked) {
-            return null;
-          }
-
-          /*
-           * Имя ставится там, где помещается, — либо у помеченной династии,
-           * где бы она ни была. У Цинь полоса в четырнадцать лет: подпись под
-           * ней налезла бы на соседей, и вместо ленты вышла бы каша.
-           */
-          if (!isAnswer && !isAsked && width < LABEL_MIN_SHARE) {
-            return null;
-          }
-
-          /*
-           * Крайние подписи прижимаются к своему краю, а не центрируются по
-           * полосе: подпись Ся начинается у нуля ленты, и половина её уезжала
-           * за обрез. Тот же приём, что у крайних меток шкалы.
-           */
-          const centre = left + width / 2;
-
-          return (
-            <span
-              key={dynasty.id}
-              className="timeline-name"
-              data-mark={isAnswer || isAsked ? mark : undefined}
-              data-edge={
-                centre < EDGE_SHARE
-                  ? 'start'
-                  : centre > 1 - EDGE_SHARE
-                    ? 'end'
-                    : undefined
-              }
-              style={{ left: percent(centre) }}
-            >
-              {dynasty.nameRu}
-              {isAnswer ? (
-                <span className="timeline-name-years">{spanLabel(dynasty)}</span>
+                  {tickLabel(row.to)}
+                </span>
               ) : null}
-            </span>
-          );
-        })}
-      </div>
+
+              {/*
+                Разрыв между династиями — не пропущенная полоса, а четыре века,
+                когда единой державы не было. Подпись стоит над разрывом, в
+                строке шкалы: сам разрыв для слова узок.
+              */}
+              {showsNames
+                ? gaps
+                    .filter((gap) => {
+                      const middle = (gap.from + gap.to) / 2;
+                      return middle >= row.from && middle < row.to;
+                    })
+                    .map((gap) => (
+                      <span
+                        key={gap.from}
+                        className="timeline-gap"
+                        style={{
+                          left: percent(rowShare(row, (gap.from + gap.to) / 2)),
+                        }}
+                      >
+                        раздробленность
+                      </span>
+                    ))
+                : null}
+            </div>
+
+            <div className="timeline-band">
+              {inRow.map((segment) => (
+                <div
+                  key={segment.dynastyId}
+                  className="timeline-span"
+                  data-dynasty-id={segment.dynastyId}
+                  data-mark={spanMark(segment.dynastyId)}
+                  style={{
+                    left: percent(segment.left),
+                    width: percent(segment.width),
+                  }}
+                />
+              ))}
+
+              {/*
+                Слой целей нажатия поверх полос. Полоса нарисована честно, по
+                годам, а нажимают её пальцем: у Цинь она 14 лет из тысячи.
+                Кнопку с именем несёт главный отрезок династии; второй, за
+                поворотом, тоже нажимается, но скрыт от читалки и от Tab —
+                двух одинаковых кнопок на одну династию быть не должно.
+              */}
+              {answers ? (
+                <div className="timeline-hits">
+                  {hits.map((hit) => {
+                    const dynasty = dynasties.find((item) => item.id === hit.id)!;
+                    const isPrimary =
+                      inRow.find((segment) => segment.dynastyId === hit.id)
+                        ?.primary ?? true;
+
+                    return (
+                      <button
+                        key={hit.id}
+                        type="button"
+                        className="timeline-hit"
+                        data-hit-dynasty-id={hit.id}
+                        /*
+                         * Занятая полоса выключена, а не просто молчит:
+                         * выключенная кнопка сама выпадает из обхода
+                         * клавиатурой, и читалка называет её недоступной.
+                         */
+                        disabled={markOf(hit.id) === 'taken'}
+                        aria-hidden={isPrimary ? undefined : true}
+                        tabIndex={isPrimary ? undefined : -1}
+                        style={{
+                          left: percent(hit.left),
+                          width: percent(hit.width),
+                        }}
+                        onPointerEnter={() => setHoveredId(hit.id)}
+                        onPointerLeave={() => setHoveredId(null)}
+                        onFocus={() => setHoveredId(hit.id)}
+                        onBlur={() => setHoveredId(null)}
+                        onClick={() => onAnswer?.(hit.id)}
+                      >
+                        {isPrimary ? (
+                          <span className="visually-hidden">
+                            {spanLabel(dynasty)}
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="timeline-names">
+              {inRow
+                .filter((segment) => segment.primary)
+                .map((segment) => {
+                  const dynasty = dynasties.find(
+                    (item) => item.id === segment.dynastyId,
+                  )!;
+                  /*
+                   * Выделенная подпись со сроком — только у верной полосы.
+                   * Выбранную по ошибке называет строка разбора: две
+                   * выделенные подписи рядом налезали бы друг на друга.
+                   */
+                  const mark = markOf(dynasty.id);
+                  const isAnswer = mark === 'correct';
+                  /*
+                   * Спрошенная и занятая подписаны и тогда, когда лента в
+                   * целом молчит: первая называет, о ком речь, вторая — что
+                   * место закрыто.
+                   */
+                  const isAsked = mark === 'asked' || mark === 'taken';
+
+                  if (!showsNames && !isAsked) {
+                    return null;
+                  }
+
+                  /*
+                   * Имя ставится там, где помещается, — либо у помеченной
+                   * династии, где бы она ни была: у Цинь полоса в 14 лет, и
+                   * подпись под ней налезла бы на соседей.
+                   */
+                  if (!isAnswer && !isAsked && segment.width < LABEL_MIN_SHARE) {
+                    return null;
+                  }
+
+                  /*
+                   * Крайние подписи прижимаются к своему краю, а не
+                   * центрируются по полосе: иначе половина уезжала за обрез.
+                   */
+                  const centre = segment.left + segment.width / 2;
+
+                  return (
+                    <span
+                      key={dynasty.id}
+                      className="timeline-name"
+                      data-mark={isAnswer || isAsked ? mark : undefined}
+                      data-edge={
+                        centre < EDGE_SHARE
+                          ? 'start'
+                          : centre > 1 - EDGE_SHARE
+                            ? 'end'
+                            : undefined
+                      }
+                      style={{ left: percent(centre) }}
+                    >
+                      <span lang="zh-Hans" className="timeline-name-han">
+                        {dynasty.nameZh}
+                      </span>{' '}
+                      {dynasty.nameRu}
+                      {isAnswer ? (
+                        <span className="timeline-name-years">
+                          {spanLabel(dynasty)}
+                        </span>
+                      ) : null}
+                    </span>
+                  );
+                })}
+            </div>
+
+            {/*
+              Поворот змейки. Если через рубеж идёт династия — он её цвета и
+              продолжает её полосу: время на повороте не прерывается.
+            */}
+            {turn === undefined ? null : (
+              <span
+                className="timeline-turn"
+                data-side={turn.side}
+                data-turn-dynasty-id={turn.dynastyId ?? undefined}
+                data-mark={
+                  turn.dynastyId === null ? undefined : spanMark(turn.dynastyId)
+                }
+                aria-hidden="true"
+              />
+            )}
+          </div>
+        );
+      })}
 
       {/*
         Строка под лентой. Наведение и фокус подменяют её сроком полосы: на

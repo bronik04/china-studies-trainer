@@ -204,8 +204,16 @@ export function CountryRound({
 
   return (
     <RoundStage
+      title={`Соседние государства · ${mode.title}`}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
+      verdict={
+        round.status === 'feedback' && lastAttempt !== undefined
+          ? lastAttempt.isCorrect
+            ? 'correct'
+            : 'incorrect'
+          : null
+      }
       startedAt={startedAt}
       progress={
         <>

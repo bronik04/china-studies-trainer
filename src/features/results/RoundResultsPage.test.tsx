@@ -35,14 +35,16 @@ function renderResults(
 it('показывает точность и число верных ответов', () => {
   renderResults();
 
-  expect(screen.getByText('88%')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('88%');
   expect(screen.getByText('30 из 34')).toBeInTheDocument();
 });
 
 it('показывает время без оценки', () => {
   renderResults();
 
-  expect(screen.getByText('Время: 4 мин 5 с')).toBeInTheDocument();
+  expect(screen.getByText('Время').nextElementSibling).toHaveTextContent(
+    '4 мин 5 с',
+  );
 });
 
 it('называет темы для повторения', () => {
@@ -55,7 +57,9 @@ it('называет темы для повторения', () => {
 it('показывает личный рекорд', () => {
   renderResults();
 
-  expect(screen.getByText('Личный рекорд: 90%')).toBeInTheDocument();
+  expect(screen.getByText('Личный рекорд').nextElementSibling).toHaveTextContent(
+    '90%',
+  );
 });
 
 it('предлагает повторить ошибки', () => {
@@ -73,7 +77,9 @@ it('не предлагает повторить ошибки, когда их �
   });
 
   expect(screen.queryByRole('button', { name: /^Повторить ошибки/ })).toBeNull();
-  expect(screen.getByText('Ошибок нет.')).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { level: 2, name: 'Ошибок нет' }),
+  ).toBeInTheDocument();
 });
 
 it('подпись кнопки повтора считается из того же списка, что и на экране', () => {
@@ -140,4 +146,30 @@ it('начинает новый раунд и возвращает к режим
 
   expect(newRound).toHaveBeenCalledOnce();
   expect(exit).toHaveBeenCalledOnce();
+});
+
+it('говорит, что прогресс сохранён, когда хранилище доступно', () => {
+  renderResults();
+
+  expect(
+    screen.getByText('Прогресс сохранён на этом компьютере.'),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('status')).toBeNull();
+});
+
+/* Заливки карты различаются цветом и узором, но смысл каждой написан словом. */
+it('под картой итога — обозначения словами и числом', () => {
+  renderResults({ roundMap: <p>карта</p> });
+
+  const legend = screen.getByRole('list', { name: 'Обозначения' });
+
+  expect(legend).toHaveTextContent('верно · 30');
+  expect(legend).toHaveTextContent('ошибка · 4');
+  expect(legend).toHaveTextContent('не спрашивали');
+});
+
+it('без карты нет и обозначений', () => {
+  renderResults();
+
+  expect(screen.queryByRole('list', { name: 'Обозначения' })).toBeNull();
 });

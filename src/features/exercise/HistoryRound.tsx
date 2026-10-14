@@ -393,8 +393,16 @@ export function HistoryRound({
 
   return (
     <RoundStage
+      title={mode.title.replace('История: ', 'История · ')}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
+      verdict={
+        round.status === 'feedback' && lastAttempt !== undefined
+          ? lastAttempt.isCorrect
+            ? 'correct'
+            : 'incorrect'
+          : null
+      }
       startedAt={startedAt}
       progress={
         <>

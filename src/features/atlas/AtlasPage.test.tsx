@@ -191,6 +191,39 @@ it('показывает шкалу высот под физической ка�
   expect(within(scale).getByText('нагорье')).toBeInTheDocument();
 });
 
+/*
+ * Вид рельефа — только у физической карты, и выбор уходит наверх: его держит
+ * `App`, чтобы раунд открылся в том же виде.
+ */
+it('на физической карте предлагает рельеф в цвете или тушью', () => {
+  const onReliefStyleChange = vi.fn();
+  const { container } = render(
+    <AtlasPage
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      zoom={1}
+      onZoomChange={() => {}}
+      onTrain={() => {}}
+      onOpenCollection={() => {}}
+      reliefStyle="color"
+      onReliefStyleChange={onReliefStyleChange}
+    />,
+  );
+
+  expect(screen.queryByRole('group', { name: 'Рельеф' })).toBeNull();
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Физическая' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Тушью' }));
+
+  expect(onReliefStyleChange).toHaveBeenCalledWith('ink');
+  expect(container.querySelector('.atlas-map')).toHaveAttribute(
+    'data-relief',
+    'color',
+  );
+});
+
 it('не показывает шкалу на политической карте', () => {
   renderAtlas();
 

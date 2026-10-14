@@ -60,6 +60,15 @@
   --c-land-locked: #ded7c9; /* один тон вместо четырёх: выбор закрыт */
 
   /*
+   * Суша «тушью» (редизайн, DECISIONS.md, 2026-10-14): два бумажных тона
+   * вместо четырёх цветных. Регион от соседа отделяет граница тушью, а не
+   * заливка; второй, чуть темнее, — автономные районы, как на макетах.
+   * Цветные `--c-land-*` остались у карты освоенности.
+   */
+  --c-land-paper: #f1ebdd;
+  --c-land-paper-deep: #e6ddcb;
+
+  /*
    * Гипсометрическая шкала: семь полос по высоте вместо трёх ступеней.
    *
    * Светлота идёт не в одну сторону, и это не оплошность, а сама условность
@@ -77,6 +86,20 @@
   --c-relief-2000: #c9ac78;
   --c-relief-3000: #b6955e;
   --c-relief-4000: #a8874e;
+
+  /*
+   * Та же шкала тушью — вид «Рельеф: тушью» (DECISIONS.md, 2026-10-14).
+   * Тон один, сепия бумаги; полосы различает только светлота, поэтому шаг
+   * ровный — 1.19:1 между соседями. Самая тёмная держит реку на 3.18:1 и
+   * ошибку на 3.37:1; макетная #98805c давала реке 2.71 и была осветлена.
+   */
+  --c-relief-ink-0: #f6f0e3;
+  --c-relief-ink-200: #e8ddc6;
+  --c-relief-ink-500: #dbcaac;
+  --c-relief-ink-1000: #cdb995;
+  --c-relief-ink-2000: #c0a981;
+  --c-relief-ink-3000: #b39a72;
+  --c-relief-ink-4000: #a58c65;
 
   /*
    * Вода: реки и озёра.
@@ -154,11 +177,20 @@
   --t-family-han:
     'Noto Serif SC', 'Songti SC', SimSun, STSong, 'Source Han Serif SC', serif;
 
-  --t-size-caption: 0.8125rem; /* 13px */
-  --t-size-body: 1rem; /* 16px */
-  --t-size-lead: 1.125rem; /* 18px */
-  --t-size-title: clamp(1.375rem, 3vw, 1.75rem);
-  --t-size-display: clamp(2rem, 6vw, 3rem);
+  /*
+   * Шкала листа стиля макетов (DECISIONS.md, 2026-10-14): подписи 14, мелкий
+   * текст и пилюли 15, основной 17, вводный абзац 19. Onest крупнее Golos на
+   * том же кегле не выглядит, а на бумаге без плашек тексту нужен воздух.
+   */
+  --t-size-caption: 0.875rem; /* 14px */
+  --t-size-small: 0.9375rem; /* 15px */
+  --t-size-body: 1.0625rem; /* 17px */
+  --t-size-lead: 1.1875rem; /* 19px */
+  --t-size-title: clamp(1.5rem, 3vw, 2rem);
+  --t-size-display: clamp(2.25rem, 6vw, 3.5rem);
+  /* Заголовок раздела главной («Режимы») и героя. */
+  --t-size-section: clamp(2.5rem, 5vw, 3.5rem);
+  --t-size-hero: clamp(3rem, 6vw, 5.25rem);
   /*
    * Слово-вопрос. Меньше `--t-size-display`, потому что живёт в колонке
    * 300–380 px: 48 px разорвали бы «Синьцзян-Уйгурский автономный район»
@@ -175,13 +207,18 @@
   --t-leading-tight: 1.15;
   --t-leading-body: 1.5;
 
-  --t-tracking-eyebrow: 0.08em;
+  --t-tracking-eyebrow: 0.14em;
 
   /* --- 1. Примитивы: форма, движение ------------------------------------- */
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  /*
+   * Углы почти прямые: тушь и бумага, а не плашки интерфейса. Круглая только
+   * пилюля режима — она одна и должна выглядеть иначе, чем кнопка действия.
+   */
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-pill: 999px;
 
   /* Тень плавающих плашек поверх карты: чернила с прозрачностью. */
   --shadow-float: 0 4px 18px color-mix(in srgb, var(--c-ink-900) 35%, transparent);
@@ -268,7 +305,12 @@
 
   /* --- 3. Карта ---------------------------------------------------------- */
 
-  --map-sea: var(--c-sea-100);
+  /*
+   * Моря нет: суша лежит прямо на бумаге страницы, берег держит обводка
+   * тушью (редизайн, DECISIONS.md, 2026-10-14). Прежний голубой лист рядом с
+   * бумажной доской давал 1.21:1 и читался не листом, а пятном.
+   */
+  --map-sea: var(--c-paper-100);
   --map-coast: var(--c-ink-900);
 
   /*
@@ -315,20 +357,27 @@
   --map-member: var(--c-cinnabar-600);
   --map-outside: var(--c-land-locked);
 
-  --map-unplayed: var(--c-grey-unplayed);
+  /*
+   * Ещё не сыгранный регион — та же бумага, что и суша: «пусто» на бумажной
+   * карте значит «не закрашено» (макеты редизайна, 2026-10-14). Исходы
+   * остались тёмными — к бумаге у каждого не меньше 3:1.
+   */
+  --map-unplayed: var(--c-land-paper);
   --map-first-try: var(--c-jade-500);
   --map-second-try: var(--c-amber-700);
   --map-failed: var(--c-clay-600);
   --map-outcome-ink: var(--c-paper-100);
 
   /*
-   * Справочная карта: цвет означает тип единицы, а не конкретный регион.
+   * Справочная карта: тон означает тип единицы, а не конкретный регион.
    * Поэтому по нему нельзя опознать провинцию и выучить её «по цвету».
+   * После редизайна тонов два — бумага и бумага темнее для автономных
+   * районов; тип по-прежнему назван словом в карточке атласа.
    */
-  --map-kind-province: var(--c-land-1);
-  --map-kind-autonomous-region: var(--c-land-2);
-  --map-kind-municipality: var(--c-land-3);
-  --map-kind-sar: var(--c-land-4);
+  --map-kind-province: var(--c-land-paper);
+  --map-kind-autonomous-region: var(--c-land-paper-deep);
+  --map-kind-municipality: var(--c-land-paper);
+  --map-kind-sar: var(--c-land-paper);
 
   /*
    * Физическая карта. Заливка означает ступень рельефа, а не тип региона:
@@ -343,6 +392,14 @@
   --map-relief-band-2000: var(--c-relief-2000);
   --map-relief-band-3000: var(--c-relief-3000);
   --map-relief-band-4000: var(--c-relief-4000);
+
+  --map-relief-ink-0: var(--c-relief-ink-0);
+  --map-relief-ink-200: var(--c-relief-ink-200);
+  --map-relief-ink-500: var(--c-relief-ink-500);
+  --map-relief-ink-1000: var(--c-relief-ink-1000);
+  --map-relief-ink-2000: var(--c-relief-ink-2000);
+  --map-relief-ink-3000: var(--c-relief-ink-3000);
+  --map-relief-ink-4000: var(--c-relief-ink-4000);
 
   /*
    * Граница региона на физическом виде. На политической карте граница —
@@ -377,6 +434,13 @@
    */
   --map-selected: var(--c-cinnabar-600);
   --map-selected-ink: var(--c-paper-100);
+  /*
+   * Регион, о котором вопрос, в раунде — тушью (макеты редизайна): киноварь
+   * в игре значит ошибку, и красная подсветка спрошенного читалась бы
+   * промахом ещё до ответа. В атласе выбранный регион остаётся киноварью.
+   */
+  --map-asked: var(--c-ink-700);
+  --map-asked-ink: var(--c-paper-100);
   --map-correct: var(--c-jade-700);
   --map-correct-ink: var(--c-paper-100);
   --map-incorrect-mark: var(--c-cinnabar-600);

@@ -218,8 +218,16 @@ export function CultureRound({
 
   return (
     <RoundStage
+      title={CULTURE_MODE.title.replace('Культура: ', 'Культура · ')}
       prompt={prompt}
       promptState={showsAnswer ? 'answer' : 'question'}
+      verdict={
+        round.status === 'feedback' && lastAttempt !== undefined
+          ? lastAttempt.isCorrect
+            ? 'correct'
+            : 'incorrect'
+          : null
+      }
       startedAt={roundStartedAt}
       progress={
         <>

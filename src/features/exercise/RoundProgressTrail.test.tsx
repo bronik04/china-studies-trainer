@@ -24,16 +24,16 @@ it('ставит по отметке на вопрос', () => {
   expect(container.querySelectorAll('[data-mark]')).toHaveLength(5);
 });
 
-it('различает верно, неверно и впереди', () => {
+it('различает верно, неверно, текущий и впереди', () => {
   const { container } = render(
-    <RoundProgressTrail total={3} attempts={[attempt(true), attempt(false)]} />,
+    <RoundProgressTrail total={4} attempts={[attempt(true), attempt(false)]} />,
   );
 
   const marks = [...container.querySelectorAll('[data-mark]')].map((node) =>
     node.getAttribute('data-mark'),
   );
 
-  expect(marks).toEqual(['correct', 'wrong', 'ahead']);
+  expect(marks).toEqual(['correct', 'wrong', 'current', 'ahead']);
 });
 
 it('несёт смысл знаком, а не только цветом', () => {

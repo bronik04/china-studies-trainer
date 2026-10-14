@@ -55,7 +55,7 @@ const PROGRESS_FILLS = [
 ] as const;
 
 /** Состояния, которые перекрашивают регион целиком. */
-const FILLED_STATES = ['--map-selected', '--map-correct'] as const;
+const FILLED_STATES = ['--map-selected', '--map-asked', '--map-correct'] as const;
 
 function expectAtLeast(
   foreground: string,
@@ -471,10 +471,56 @@ describe('шкалы', () => {
   });
 });
 
+/*
+ * Вид «Рельеф: тушью» — та же шкала бумажными тонами. Поверх ложится всё то
+ * же, что на цветную; различать полосы ей нечем, кроме светлоты, поэтому
+ * каждая следующая темнее предыдущей с заметным шагом.
+ */
+describe('шкала высот тушью', () => {
+  const INK_BANDS = [
+    '--map-relief-ink-0',
+    '--map-relief-ink-200',
+    '--map-relief-ink-500',
+    '--map-relief-ink-1000',
+    '--map-relief-ink-2000',
+    '--map-relief-ink-3000',
+    '--map-relief-ink-4000',
+  ] as const;
+
+  it('река, граница, метки и выделение видны на каждой полосе', () => {
+    for (const band of INK_BANDS) {
+      expectAtLeast('--map-river', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-border-on-relief', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-correct-mark', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-incorrect-mark-relief', band, GRAPHIC_CONTRAST);
+      expectAtLeast('--map-highlight', band, GRAPHIC_CONTRAST);
+    }
+  });
+
+  it('подпись объекта читается на каждой полосе', () => {
+    for (const band of INK_BANDS) {
+      expectAtLeast('--map-label', band, TEXT_CONTRAST);
+    }
+  });
+
+  it('каждая полоса темнее предыдущей с заметным шагом', () => {
+    for (let index = 1; index < INK_BANDS.length; index += 1) {
+      const lower = color(INK_BANDS[index - 1]);
+      const upper = color(INK_BANDS[index]);
+
+      expect(relativeLuminance(upper)).toBeLessThan(relativeLuminance(lower));
+      expect(
+        contrastRatioRounded(lower, upper),
+        `${INK_BANDS[index - 1]} против ${INK_BANDS[index]}`,
+      ).toBeGreaterThanOrEqual(1.15);
+    }
+  });
+});
+
 describe('игровая карта', () => {
   const OUTCOMES = ['--map-first-try', '--map-second-try', '--map-failed'] as const;
 
-  it('граница тушью видна на сером и на каждом исходе', () => {
+  it('граница тушью видна на несыгранном и на каждом исходе', () => {
     expectAtLeast('--map-border', '--map-unplayed', GRAPHIC_CONTRAST);
     for (const outcome of OUTCOMES) {
       expectAtLeast('--map-border', outcome, GRAPHIC_CONTRAST);
@@ -485,7 +531,7 @@ describe('игровая карта', () => {
     expectAtLeast('--map-border', '--map-sea', GRAPHIC_CONTRAST);
   });
 
-  it('каждый исход отличим от серого, иначе прогресс не виден', () => {
+  it('каждый исход отличим от несыгранного, иначе прогресс не виден', () => {
     for (const outcome of OUTCOMES) {
       expectAtLeast(outcome, '--map-unplayed', GRAPHIC_CONTRAST);
     }
@@ -499,8 +545,8 @@ describe('игровая карта', () => {
 
   /*
    * Попарного контраста между тремя исходами здесь нет намеренно: он
-   * недостижим. Обводка тушью требует светлоты не ниже 0.118, а серый при
-   * 3:1 сверху — не выше 0.153, и все три цвета живут в этой полосе.
+   * недостижим. Обводка тушью требует светлоты не ниже 0.118, подпись
+   * бумагой — не выше 0.18, и все три цвета живут в этой полосе.
    * Различает их узор, см. MapDefs.tsx.
    */
 });

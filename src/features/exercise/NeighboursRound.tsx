@@ -210,8 +210,12 @@ export function NeighboursRound({
 
   return (
     <RoundStage
+      title="Регионы · Соседи региона"
       prompt={prompt}
       promptState={verdict !== null && !verdict.isCorrect ? 'answer' : 'question'}
+      verdict={
+        verdict === null ? null : verdict.isCorrect ? 'correct' : 'incorrect'
+      }
       startedAt={startedAt}
       progress={
         <>
@@ -225,16 +229,14 @@ export function NeighboursRound({
         </>
       }
       choices={
-        <div className="stage-choices-band">
-          <button
-            type="button"
-            className="primary"
-            onClick={handleDone}
-            disabled={verdict !== null || finished}
-          >
-            Готово
-          </button>
-        </div>
+        <button
+          type="button"
+          className="primary"
+          onClick={handleDone}
+          disabled={verdict !== null || finished}
+        >
+          Готово
+        </button>
       }
       answerList={
         <RegionAnswerList

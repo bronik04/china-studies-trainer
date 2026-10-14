@@ -208,6 +208,7 @@ export function FillMapRound({
 
   return (
     <RoundStage
+      title="Регионы · Заполнить карту"
       prompt={prompt}
       // Показ неугаданного региона идёт на карте (`mapHighlight`); плашка уже
       // задаёт следующий вопрос, и метить её кромкой ответа было бы неверно.

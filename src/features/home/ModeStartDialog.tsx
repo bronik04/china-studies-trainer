@@ -1,7 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import type { QuestionLanguage } from '../../domain/question-language';
 
+/** Строка набора: название слева, число целей справа. */
+export type SetOption = {
+  readonly value: string;
+  readonly label: string;
+  readonly count: number;
+  /** Слово при числе в нужной форме: «объект», «города». */
+  readonly word: string;
+};
+
 export type ModeStartDialogProps = {
+  /** Знак режима на печати: 地, 山, 史… */
+  readonly mark: string;
+  /** Глава, к которой относится игра: «Физическая карта». */
+  readonly group: string;
   readonly title: string;
   /**
    * Чем эта игра отличается от соседней. С карточки описание ушло сюда: там
@@ -20,7 +33,7 @@ export type ModeStartDialogProps = {
    */
   readonly setChoice?: {
     readonly legend: string;
-    readonly options: readonly (readonly [string, string])[];
+    readonly options: readonly SetOption[];
     readonly value: string;
   } | null;
   readonly onStart: (language: QuestionLanguage, set: string) => void;
@@ -45,6 +58,8 @@ const LANGUAGES: readonly (readonly [QuestionLanguage, string])[] = [
  * верхний слой, Esc, возврат фокуса и недоступность остальной страницы.
  */
 export function ModeStartDialog({
+  mark,
+  group,
   title,
   summary,
   volume,
@@ -86,37 +101,61 @@ export function ModeStartDialog({
       }}
     >
       <div className="mode-dialog-body">
-        <h2 id="mode-dialog-title">{title}</h2>
+        <div className="mode-dialog-head">
+          {/*
+            Печать режима — та же метка, что отличала карточки до пилюль. Знак,
+            а не слово: читалке экрана его не читать.
+          */}
+          <span className="seal seal-solid seal-large" lang="zh-Hans" aria-hidden="true">
+            {mark}
+          </span>
+          <div>
+            <p className="eyebrow">{group}</p>
+            <h2 id="mode-dialog-title">{title}</h2>
+          </div>
+        </div>
         <p className="mode-dialog-summary">{summary}</p>
         <p className="mode-dialog-volume">{volume}</p>
         <fieldset className="mode-dialog-language">
           <legend>Чем спрашивать</legend>
-          {LANGUAGES.map(([value, label]) => (
-            <label key={value}>
-              <input
-                type="radio"
-                name="mode-dialog-language"
-                value={value}
-                checked={language === value}
-                onChange={() => setLanguage(value)}
-              />
-              <span lang={value === 'zh' ? 'zh-Hans' : undefined}>{label}</span>
-            </label>
-          ))}
-        </fieldset>
-        {setChoice === null ? null : (
-          <fieldset className="mode-dialog-language">
-            <legend>{setChoice.legend}</legend>
-            {setChoice.options.map(([value, label]) => (
+          <div className="mode-dialog-language-options">
+            {LANGUAGES.map(([value, label]) => (
               <label key={value}>
                 <input
                   type="radio"
-                  name="mode-dialog-set"
+                  name="mode-dialog-language"
                   value={value}
-                  checked={set === value}
-                  onChange={() => setSet(value)}
+                  checked={language === value}
+                  onChange={() => setLanguage(value)}
                 />
-                <span>{label}</span>
+                <span lang={value === 'zh' ? 'zh-Hans' : undefined}>{label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        {setChoice === null ? null : (
+          <fieldset className="mode-dialog-set">
+            <legend>{setChoice.legend}</legend>
+            {setChoice.options.map((option) => (
+              <label key={option.value}>
+                <input
+                  type="radio"
+                  name="mode-dialog-set"
+                  value={option.value}
+                  checked={set === option.value}
+                  onChange={() => setSet(option.value)}
+                />
+                <span>{option.label}</span>{' '}
+                {/*
+                  Число крупно, слово мелко — объём набора читается взглядом
+                  по столбцу. Тире скрыто от глаза, но входит в имя кнопки:
+                  без него читалка склеила бы «И хребты 28 объектов».
+                */}
+                <span className="mode-dialog-count">
+                  <span className="visually-hidden">—</span>{' '}
+                  <span className="mode-dialog-count-number">{option.count}</span>{' '}
+                  {option.word}
+                </span>
               </label>
             ))}
           </fieldset>
@@ -132,7 +171,7 @@ export function ModeStartDialog({
           </button>
           <button
             type="button"
-            className="text"
+            className="secondary"
             onClick={() => dialogRef.current?.close()}
           >
             Отмена
