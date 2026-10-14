@@ -139,14 +139,17 @@
    * Системный 宋体 есть только в macOS и Windows, а на ChromeOS и Linux
    * иероглифы отдавались гротеску.
    *
-   * Пиньинь и значки `● ○ ✓ → ≈` набирает китайский шрифт: у Prata нет всей
-   * диакритики пиньиня, у Golos Text нет `ǎ ǔ`, значков нет ни у одного из
-   * двух. Проверено разбором cmap, см. scripts/generate-fonts.ts.
+   * Пиньинь и значки `● ○ ✓ → ≈` набирает китайский шрифт: его латиница
+   * нарисована под тональные знаки, а в подмножества латинских шрифтов они не
+   * входят — см. scripts/font-manifest.ts.
+   *
+   * Семейства — по редизайну «Тушь и киноварь» (DECISIONS.md, 2026-10-14):
+   * Cormorant Garamond вместо Prata, Onest вместо Golos Text.
    */
   --t-family-display:
-    'Prata', 'Noto Serif SC', Georgia, 'Times New Roman', serif;
+    'Cormorant Garamond', 'Noto Serif SC', Georgia, 'Times New Roman', serif;
   --t-family-text:
-    'Golos Text', 'Noto Serif SC', ui-sans-serif, system-ui, -apple-system,
+    'Onest', 'Noto Serif SC', ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --t-family-han:
     'Noto Serif SC', 'Songti SC', SimSun, STSong, 'Source Han Serif SC', serif;
@@ -165,6 +168,8 @@
 
   --t-weight-regular: 400;
   --t-weight-medium: 500;
+  /* Кнопки и надзаголовки макетов: между средним и жирным. */
+  --t-weight-semibold: 600;
   --t-weight-bold: 700;
 
   --t-leading-tight: 1.15;

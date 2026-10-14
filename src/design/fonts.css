@@ -7,35 +7,47 @@
  * пустого экрана на медленной машине.
  */
 
+/*
+ * У Cormorant Garamond одно начертание: заголовки редизайна только жирные.
+ * Запрос другого веса браузер сведёт к ближайшему — к этому же файлу.
+ */
 @font-face {
-  font-family: 'Prata';
-  font-style: normal;
-  font-weight: 400;
-  src: url('../assets/fonts/prata-400.woff2') format('woff2');
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Golos Text';
-  font-style: normal;
-  font-weight: 400;
-  src: url('../assets/fonts/golos-text-400.woff2') format('woff2');
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Golos Text';
-  font-style: normal;
-  font-weight: 500;
-  src: url('../assets/fonts/golos-text-500.woff2') format('woff2');
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Golos Text';
+  font-family: 'Cormorant Garamond';
   font-style: normal;
   font-weight: 700;
-  src: url('../assets/fonts/golos-text-700.woff2') format('woff2');
+  src: url('../assets/fonts/cormorant-garamond-700.woff2') format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../assets/fonts/onest-400.woff2') format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 500;
+  src: url('../assets/fonts/onest-500.woff2') format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 600;
+  src: url('../assets/fonts/onest-600.woff2') format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../assets/fonts/onest-700.woff2') format('woff2');
   font-display: swap;
 }
 
@@ -44,5 +56,14 @@
   font-style: normal;
   font-weight: 400;
   src: url('../assets/fonts/noto-serif-sc-400.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* Жирный китайский — крупный иероглиф вопроса и знаки глав. */
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../assets/fonts/noto-serif-sc-700.woff2') format('woff2');
   font-display: swap;
 }

@@ -453,9 +453,9 @@ describe('шкалы', () => {
   });
 
   it('семейства начинаются с наших шрифтов и сохраняют системный фолбэк', () => {
-    expect(resolve(tokens, '--t-family-display')).toMatch(/^'Prata'/);
+    expect(resolve(tokens, '--t-family-display')).toMatch(/^'Cormorant Garamond'/);
     expect(resolve(tokens, '--t-family-display')).toMatch(/serif$/);
-    expect(resolve(tokens, '--t-family-text')).toMatch(/^'Golos Text'/);
+    expect(resolve(tokens, '--t-family-text')).toMatch(/^'Onest'/);
     expect(resolve(tokens, '--t-family-han')).toMatch(/^'Noto Serif SC'/);
   });
 
