@@ -13,7 +13,7 @@ it('после повтора ошибок несыгранные есть', () 
   expect(hasUnaskedTargets([asked('hunan'), asked('hubei')], regions)).toBe(true);
 });
 
-/* Три попытки по одной цели — одна цель, а не три. */
+/* Две попытки по одной цели — одна цель, а не две. */
 it('считает цели, а не попытки', () => {
   const tries = regions.slice(0, 33).flatMap((region) => [
     asked(region.id),

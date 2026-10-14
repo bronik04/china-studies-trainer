@@ -193,3 +193,35 @@ it('занятая полоса подписана и не нажимается'
 
   expect(onAnswer).not.toHaveBeenCalled();
 });
+
+/*
+ * Подпись ставится, только если под неё хватает пикселей, а не доли строки:
+ * на телефоне строка — 260 px, и «Троецарствие» в 60 лет закрывало «Хань».
+ * jsdom раскладки не знает, поэтому ширина строки подменяется.
+ */
+function renderAtRowWidth(width: number) {
+  const original = Element.prototype.getBoundingClientRect;
+  const spy = vi
+    .spyOn(Element.prototype, 'getBoundingClientRect')
+    .mockImplementation(function (this: Element) {
+      return this.classList.contains('timeline-band')
+        ? ({ width } as DOMRect)
+        : original.call(this);
+    });
+
+  render(<DynastyTimeline dynasties={dynasties} showsNames />);
+  spy.mockRestore();
+}
+
+it('на узкой строке короткие династии не подписаны — имена не налезают', () => {
+  renderAtRowWidth(260);
+
+  expect(screen.getByText('Хань')).toBeInTheDocument();
+  expect(screen.queryByText('Троецарствие')).toBeNull();
+});
+
+it('на широкой строке подписано и короткое Троецарствие', () => {
+  renderAtRowWidth(1200);
+
+  expect(screen.getByText('Троецарствие')).toBeInTheDocument();
+});

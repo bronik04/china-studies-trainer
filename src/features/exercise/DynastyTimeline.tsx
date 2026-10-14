@@ -32,11 +32,13 @@ import { hitAreas, minHitShare } from './timeline-hit';
 const LABEL_MIN_SHARE = 0.055;
 
 /**
- * Та же мера в пикселях: подпись «汉 Хань» шириной около 64 px. На телефоне
- * строка — 260 px, и доля 0.055 давала 14 px полосы под подпись в 140 —
- * «Троецарствие» целиком закрывало «Хань».
+ * Та же мера в долях корневого кегля: подпись «汉 Хань» — около 4 rem (64 px
+ * при 16). На телефоне строка — 260 px, и доля 0.055 давала 14 px полосы под
+ * подпись в 140 — «Троецарствие» целиком закрывало «Хань». В rem, а не в
+ * пикселях: при увеличенном шрифте браузера подписи шире, и порог растёт с
+ * ними.
  */
-const LABEL_MIN_PX = 64;
+const LABEL_MIN_REM = 4;
 
 function tickLabel(year: number): string {
   if (year === 0) {
@@ -78,14 +80,16 @@ function gapsBetween(
 }
 
 /**
- * Ширина ленты в пикселях. Нужна одному — порогу целей нажатия: на узком
- * экране 44 px не помещаются двенадцать раз, и порог обязан это знать.
+ * Ширина строки ленты в пикселях и корневой кегль. Нужны двум порогам: целей
+ * нажатия (на узком экране 44 px не помещаются двенадцать раз) и подписей
+ * (`LABEL_MIN_REM`: без него имена на телефоне налезают друг на друга).
  * `ResizeObserver`, а не разовый замер: ленту тянет ширина кадра, и при смене
- * ширины цели надо развести заново.
+ * ширины цели и подписи надо развести заново.
  */
 function useRibbonWidth() {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
+  const [remPx, setRemPx] = useState(16);
 
   useLayoutEffect(() => {
     const node = ref.current;
@@ -97,11 +101,16 @@ function useRibbonWidth() {
      * Меряется строка, а не вся лента: строка уже ленты на два поворота, а
      * ширина поворота на телефоне другая (`--timeline-turn` в styles.css).
      */
-    const apply = () =>
+    const apply = () => {
       setWidth(
         (node.querySelector('.timeline-band') ?? node).getBoundingClientRect()
           .width,
       );
+      setRemPx(
+        Number.parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+          16,
+      );
+    };
 
     apply();
     const observer = new ResizeObserver(apply);
@@ -110,7 +119,7 @@ function useRibbonWidth() {
     return () => observer.disconnect();
   }, []);
 
-  return [ref, width] as const;
+  return [ref, width, remPx] as const;
 }
 
 /**
@@ -161,7 +170,7 @@ export function DynastyTimeline({
     marks.find((mark) => mark.dynastyId === dynastyId)?.kind;
 
   /* Ширина одной строки змейки — её меряет `useRibbonWidth`. */
-  const [ribbonRef, ribbonWidth] = useRibbonWidth();
+  const [ribbonRef, ribbonWidth, remPx] = useRibbonWidth();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const answers = onAnswer !== undefined;
 
@@ -379,7 +388,7 @@ export function DynastyTimeline({
                    */
                   const labelMinShare = Math.max(
                     LABEL_MIN_SHARE,
-                    ribbonWidth === 0 ? 0 : LABEL_MIN_PX / ribbonWidth,
+                    ribbonWidth === 0 ? 0 : (LABEL_MIN_REM * remPx) / ribbonWidth,
                   );
                   if (!isAnswer && !isAsked && segment.width < labelMinShare) {
                     return null;
