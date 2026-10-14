@@ -65,6 +65,7 @@ import {
   prefetchScreens,
   RoundResultsPage,
 } from './screens';
+import { hasUnaskedTargets } from './features/results/has-unasked';
 import type { Landmark } from './content/landmarks';
 import { landmarksUpTo, type LandmarkSet } from './content/landmark-sets';
 import { countries, type Country } from './content/countries';
@@ -853,10 +854,7 @@ export default function App() {
           bestAccuracy={bestAccuracy(progress.attempts)}
           isProgressSaved={store.isAvailable}
           roundMap={roundMap}
-          hasUnasked={
-            new Set(lastAttempts.map((attempt) => attempt.target.id)).size <
-            regions.length
-          }
+          hasUnasked={hasUnaskedTargets(lastAttempts, regions)}
           onRepeatMistakes={() => {
             if (isCityRound) {
               setCityPool(repeatCities);

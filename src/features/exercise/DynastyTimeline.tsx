@@ -28,8 +28,15 @@ import { hitAreas, minHitShare } from './timeline-hit';
  * точнее.
  */
 
-/** Доля ширины, ниже которой подпись не помещается. */
+/** Доля строки, ниже которой подпись не помещается и на широком экране. */
 const LABEL_MIN_SHARE = 0.055;
+
+/**
+ * Та же мера в пикселях: подпись «汉 Хань» шириной около 64 px. На телефоне
+ * строка — 260 px, и доля 0.055 давала 14 px полосы под подпись в 140 —
+ * «Троецарствие» целиком закрывало «Хань».
+ */
+const LABEL_MIN_PX = 64;
 
 function tickLabel(year: number): string {
   if (year === 0) {
@@ -370,7 +377,11 @@ export function DynastyTimeline({
                    * династии, где бы она ни была: у Цинь полоса в 14 лет, и
                    * подпись под ней налезла бы на соседей.
                    */
-                  if (!isAnswer && !isAsked && segment.width < LABEL_MIN_SHARE) {
+                  const labelMinShare = Math.max(
+                    LABEL_MIN_SHARE,
+                    ribbonWidth === 0 ? 0 : LABEL_MIN_PX / ribbonWidth,
+                  );
+                  if (!isAnswer && !isAsked && segment.width < labelMinShare) {
                     return null;
                   }
 

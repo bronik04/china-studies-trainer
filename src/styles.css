@@ -2181,7 +2181,8 @@ ol.review-list li::before {
  * остаётся.
  */
 .visually-hidden,
-.stage-map .map-selection {
+.stage-map .map-selection,
+.stage-strip-tools .relief-toggle legend {
   clip-path: inset(50%);
   height: 1px;
   overflow: hidden;
@@ -4754,6 +4755,7 @@ button.chip[aria-pressed='true'] {
   .stage-strip-actions {
     flex-wrap: wrap;
     margin-inline-start: 0;
+    max-inline-size: 100%;
   }
 
 }
@@ -4917,4 +4919,27 @@ button.chip[aria-pressed='true'] {
  */
 .stage-strip-tools {
   display: flex;
+  max-inline-size: 100%;
+}
+
+/*
+ * В строке действий переключатель компактный: слово «Рельеф» остаётся только
+ * для читалки (имя группы; скрыто правилом `.visually-hidden`), поля пилюли
+ * уже. Иначе он не помещался в колонку
+ * в 300 px и выталкивал кнопки на карту, а на узком экране добавлял строке
+ * действий лишний ряд за счёт карты.
+ */
+.stage-strip-tools .relief-toggle label {
+  padding: 0 var(--s-3);
+}
+
+/*
+ * Узкий кадр: образцы шкалы в пилюле — лишние 56 px, из-за которых строка
+ * действий на телефоне лёжа уходила во второй ряд и отнимала у карты половину
+ * высоты. Подписи «В цвете / Тушью» остаются.
+ */
+@media (max-width: 1023px) {
+  .stage-strip-tools .relief-toggle-sample {
+    display: none;
+  }
 }
