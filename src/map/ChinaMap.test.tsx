@@ -168,6 +168,40 @@ it('отмечает область состоянием ответа', () => {
   expect(document.querySelector('#hebei')).not.toHaveAttribute('data-answer-state');
 });
 
+/*
+ * У мелкой области верный ответ рисуется кольцом вокруг её цели нажатия:
+ * сам контур Пекина меньше точки, и нефритовая заливка терялась рядом со
+ * штриховкой промаха.
+ */
+it('цель нажатия мелкой области несёт исход своей области', () => {
+  const { rerender } = render(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+      answerStates={{ beijing: 'correct', xinjiang: 'incorrect' }}
+    />,
+  );
+
+  const hit = document.querySelector('[data-hit-region-id="beijing"]');
+  expect(hit).toHaveAttribute('data-answer-state', 'correct');
+  expect(
+    document.querySelector('[data-hit-region-id="shanghai"]'),
+  ).not.toHaveAttribute('data-answer-state');
+
+  rerender(
+    <ChinaMap
+      regions={regions}
+      selectedRegionId={null}
+      onSelect={() => {}}
+      onClear={() => {}}
+    />,
+  );
+
+  expect(hit).not.toHaveAttribute('data-answer-state');
+});
+
 it('помечает недоступную область для вспомогательных технологий', () => {
   render(
     <ChinaMap

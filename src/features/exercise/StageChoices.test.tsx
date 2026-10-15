@@ -35,6 +35,25 @@ it('цифра с клавиатуры отвечает тем же вариан
   expect(onChoose).toHaveBeenCalledWith('guizhou');
 });
 
+/*
+ * Слушатель стоит на документе, и под окном «Прервать раунд и перейти…?»
+ * цифра отвечала бы на вопрос, которого ученик за окном не видит.
+ */
+it('под открытым окном цифра не отвечает', () => {
+  const onChoose = vi.fn();
+  render(<StageChoices choices={CHOICES} disabled={false} onChoose={onChoose} />);
+  const dialog = document.createElement('dialog');
+  dialog.setAttribute('open', '');
+  document.body.append(dialog);
+
+  fireEvent.keyDown(document, { key: '2' });
+  expect(onChoose).not.toHaveBeenCalled();
+
+  dialog.remove();
+  fireEvent.keyDown(document, { key: '2' });
+  expect(onChoose).toHaveBeenCalledWith('hunan');
+});
+
 it('цифра без варианта и не-цифра игнорируются', () => {
   const onChoose = vi.fn();
   render(<StageChoices choices={CHOICES} disabled={false} onChoose={onChoose} />);

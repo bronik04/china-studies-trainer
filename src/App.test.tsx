@@ -88,7 +88,7 @@ it('открывается главной, а не сразу раундом', (
   render(<App />);
 
   expect(
-    screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
+    screen.getByRole('heading', { name: 'Где Сычуань, а где Цзянси?' }),
   ).toBeInTheDocument();
 });
 
@@ -115,7 +115,7 @@ it('ведёт с главной в атлас и обратно', async () => {
    */
   fireEvent.click(screen.getByRole('button', { name: /Страноведение/ }));
   expect(
-    screen.getByRole('heading', { name: 'Китай на карте, а не в списке' }),
+    screen.getByRole('heading', { name: 'Где Сычуань, а где Цзянси?' }),
   ).toBeInTheDocument();
 });
 
@@ -219,6 +219,49 @@ it('карточка режима запускает раунд и возвра�
 
   expect(screen.getByRole('heading', { name: 'Режимы' })).toBeInTheDocument();
   expect(document.activeElement).toHaveAttribute('id', 'modes');
+});
+
+/*
+ * Переход по шапке посреди раунда стирал сыгранное без единого слова: ответы
+ * сохраняются только в конце. Теперь шапка спрашивает, а по умолчанию —
+ * остаться.
+ */
+it('шапка посреди раунда спрашивает, прежде чем уйти', async () => {
+  render(<App />);
+
+  startFindOnMap();
+  await settle();
+
+  const nav = screen.getByRole('navigation', { name: 'Разделы сайта' });
+  fireEvent.click(within(nav).getByRole('button', { name: 'Атлас' }));
+
+  const dialog = screen.getByRole('dialog', {
+    name: 'Прервать раунд и перейти в атлас?',
+  });
+  const stay = within(dialog).getByRole('button', { name: 'Продолжить раунд' });
+  expect(document.activeElement).toBe(stay);
+
+  fireEvent.click(stay);
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(screen.getByText(/Вопрос 1 из 34/)).toBeInTheDocument();
+
+  fireEvent.click(within(nav).getByRole('button', { name: 'Атлас' }));
+  fireEvent.click(
+    within(screen.getByRole('dialog')).getByRole('button', { name: 'Перейти' }),
+  );
+  await settle();
+  expect(screen.getByTestId('atlas-region-card')).toBeInTheDocument();
+});
+
+it('вне раунда шапка переходит сразу', async () => {
+  render(<App />);
+
+  const nav = screen.getByRole('navigation', { name: 'Разделы сайта' });
+  fireEvent.click(within(nav).getByRole('button', { name: 'Атлас' }));
+  await settle();
+
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(screen.getByTestId('atlas-region-card')).toBeInTheDocument();
 });
 
 /**
@@ -528,7 +571,7 @@ it('итог игры про страны считает страны, а не �
 it('новый раунд после достопримечательностей — снова достопримечательности', async () => {
   render(<App />);
   fireEvent.click(
-    screen.getByRole('button', { name: /Назвать достопримечательность/ }),
+    screen.getByRole('button', { name: /Назвать место/ }),
   );
   fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
   await settle();

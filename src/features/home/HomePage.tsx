@@ -33,7 +33,6 @@ import type { Attempt, ExerciseType } from '../../domain/round';
 import { ChinaMap } from '../../map/ChinaMap';
 import { SiteFooter } from '../../ui/SiteFooter';
 import {
-  CHAPTER_NUMERALS,
   MODE_CARDS,
   MODE_GROUPS,
   type CountryExerciseType,
@@ -268,32 +267,31 @@ export function HomePage({
       <section className="landing-hero">
         <div className="landing-hero-text">
           {/*
-            Длительность стоит в надзаголовке, а не в абзаце: это ответ на
-            «сколько займёт» — первый вопрос учителя перед уроком, — и в
-            абзаце он тонул среди перечня.
-          */}
-          <p className="eyebrow">Тренажёр к уроку · 5–15 минут</p>
-          {/*
+            Заголовок — вопрос самой игры, на настоящих именах: что здесь
+            делают, видно раньше, чем прочитан абзац. Прежний «Китай на карте,
+            а не в списке» говорил о подходе, а не о занятии.
+
             Цель перехода по названию в шапке. Фокус переводится на заголовок,
             а не на весь герой: кольцо вокруг полосы во весь кадр читалось бы
-            как ошибка вёрстки, а вокруг заголовка — как индикатор фокуса. Он
-            же и называет, куда попали.
+            как ошибка вёрстки, а вокруг заголовка — как индикатор фокуса.
+
+            Вторая половина вопроса не разрывается: «а» в конце строки висела
+            бы отдельно от своего вопроса.
           */}
           <h1 id="top" tabIndex={-1}>
-            Китай на карте, а не в списке
+            Где Сычуань,{' '}
+            <span className="landing-hero-line">а где Цзянси?</span>
           </h1>
-          <p className="lead">
-            34 единицы провинциального уровня, столицы, иероглифы, места и
-            явления. Короткий раунд, разбор после ошибки и повтор того, что не
-            запомнилось.
-          </p>
           {/*
-            Главный шаг ведёт туда, где выбирают, а не запускает раунд сам.
-            Прежде здесь стоял вычисленный шаг — «Повторить 2 региона»: он
-            отвечает вернувшемуся ученику и молчит новому, а на первом экране
-            «2 региона» читается как объём всего тренажёра. Сам повтор никуда
-            не делся — он стоит строкой под героем, над режимами.
+            Длительность — в абзаце, а не надзаголовком капсом: это ответ на
+            «сколько займёт», первый вопрос учителя перед уроком, и он стоит
+            последней фразой, где его ищут.
           */}
+          <p className="lead">
+            Тренажёр страноведения Китая: 34&nbsp;региона, их центры и
+            иероглифы, реки и горы, памятники и династии. Раунд занимает
+            5–15&nbsp;минут, а ошибки возвращаются в повтор.
+          </p>
           <div className="landing-hero-actions">
             <button type="button" className="primary" onClick={onGoToModes}>
               Выбрать режим
@@ -304,7 +302,7 @@ export function HomePage({
               указателя, и потому её нельзя убирать вслед за подписью.
             */}
             <button type="button" className="text" onClick={onOpenAtlas}>
-              Исследовать карту →
+              Исследовать карту
             </button>
           </div>
         </div>
@@ -348,51 +346,6 @@ export function HomePage({
       </section>
 
       {/*
-        Повтор ошибок отвечает вернувшемуся ученику, а новому сказать нечего —
-        `regionIds` пуст, и строки просто нет. Форма и язык те же, в которых
-        ошибались (`nextStep`).
-
-        Имена перечислены, а не только посчитаны: «2 региона» не говорят,
-        какие, и ученик не может решить, хочет ли он их сейчас.
-      */}
-      {step.regionIds === null ? null : (
-        <section className="repeat-strip" aria-labelledby="repeat-title">
-          <div className="repeat-strip-text">
-            <span className="seal seal-ring" lang="zh-Hans" aria-hidden="true">
-              复
-            </span>
-            <div>
-              <h2 id="repeat-title" className="repeat-strip-title">
-                Повторить ошибки
-              </h2>
-              <p className="repeat-strip-list">
-                {step.regionIds.length} {regionsWord(step.regionIds.length)}:{' '}
-                {toRepeat.slice(0, REPEAT_NAMED).map((region, index) => (
-                  <span key={region.id}>
-                    {index === 0 ? null : ', '}
-                    <span lang="zh-Hans">{region.nameZh}</span> {region.nameRu}
-                  </span>
-                ))}
-                {toRepeat.length > REPEAT_NAMED
-                  ? ` и ещё ${toRepeat.length - REPEAT_NAMED}`
-                  : null}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="secondary"
-            aria-describedby="repeat-title"
-            onClick={() =>
-              onStartRound(step.exerciseType, step.language, step.regionIds)
-            }
-          >
-            Начать повтор
-          </button>
-        </section>
-      )}
-
-      {/*
         `tabIndex={-1}` — чтобы «Режимы» в шапке не только прокручивали
         страницу, но и переводили сюда фокус: иначе Tab после нажатия
         продолжился бы от шапки, а читалка экрана не сказала бы, куда попали.
@@ -400,10 +353,59 @@ export function HomePage({
       <section className="landing-section landing-modes" id="modes" tabIndex={-1}>
         <div className="landing-section-head landing-section-head-split">
           <h2>Режимы</h2>
-          <p>Семь глав. Все открыты сразу — начинайте с любой.</p>
+          <p>Семь тем, начинайте с любой.</p>
         </div>
         {/*
-          Игры разложены по предметам — главам 一–七. Группы — те же
+          Повтор ошибок отвечает вернувшемуся ученику, а новому сказать нечего —
+          `regionIds` пуст, и строки просто нет. Форма и язык те же, в которых
+          ошибались (`nextStep`).
+
+          Имена перечислены, а не только посчитаны: «2 региона» не говорят,
+          какие, и ученик не может решить, хочет ли он их сейчас.
+
+          Стоит первой строкой раздела «Режимы», а не под героем: герой занимает
+          весь первый экран, и «Выбрать режим» приводит вернувшегося ученика
+          сразу к повтору.
+        */}
+        {step.regionIds === null ? null : (
+          <section className="repeat-strip" aria-labelledby="repeat-title">
+            <div className="repeat-strip-text">
+              <span className="seal seal-ring" lang="zh-Hans" aria-hidden="true">
+                复
+              </span>
+              <div>
+                <h3 id="repeat-title" className="repeat-strip-title">
+                  Повторить ошибки
+                </h3>
+                <p className="repeat-strip-list">
+                  {step.regionIds.length} {regionsWord(step.regionIds.length)}:{' '}
+                  {toRepeat.slice(0, REPEAT_NAMED).map((region, index) => (
+                    <span key={region.id}>
+                      {index === 0 ? null : ', '}
+                      <span lang="zh-Hans">{region.nameZh}</span> {region.nameRu}
+                    </span>
+                  ))}
+                  {toRepeat.length > REPEAT_NAMED
+                    ? ` и ещё ${toRepeat.length - REPEAT_NAMED}`
+                    : null}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="secondary"
+              aria-describedby="repeat-title"
+              onClick={() =>
+                onStartRound(step.exerciseType, step.language, step.regionIds)
+              }
+            >
+              Начать повтор
+            </button>
+          </section>
+        )}
+
+        {/*
+          Игры разложены по темам, у каждой свой знак. Группы — те же
           справочники, из которых берутся цели: ученик выбирает сначала
           предмет, а потом форму вопроса.
 
@@ -413,18 +415,18 @@ export function HomePage({
           а двадцать одна карточка с абзацем и объёмом требовала прочитать всё,
           чтобы выбрать.
 
-          Название главы — заголовок третьего уровня внутри «Режимов»: порядок
+          Название темы — заголовок третьего уровня внутри «Режимов»: порядок
           уровней на странице совпадает с устройством раздела.
         */}
         <div className="mode-chapters">
-          {MODE_GROUPS.map((group, index) => (
+          {MODE_GROUPS.map((group) => (
             <section key={group.id} className="mode-chapter">
               <span
-                className="mode-chapter-numeral"
+                className="mode-chapter-mark"
                 lang="zh-Hans"
                 aria-hidden="true"
               >
-                {CHAPTER_NUMERALS[index]}
+                {group.mark}
               </span>
               <div>
                 <h3>{group.title}</h3>
@@ -498,7 +500,7 @@ export function HomePage({
             </p>
           </div>
           <button type="button" className="text" onClick={onOpenCollections}>
-            Все коллекции →
+            Все коллекции
           </button>
         </div>
         <div className="collection-filters">
@@ -547,10 +549,10 @@ export function HomePage({
 
       <section className="landing-section landing-provenance">
         <div>
-          <h2>Содержание</h2>
+          <h2 className="landing-provenance-title">Содержание</h2>
           <ul className="rule-list">
             <li>
-              34 единицы провинциального уровня: провинции, автономные районы,
+              34 региона провинциального уровня: провинции, автономные районы,
               города центрального подчинения и специальные административные
               районы.
             </li>
@@ -569,7 +571,7 @@ export function HomePage({
           </ul>
         </div>
         <div>
-          <h2>Источники</h2>
+          <h2 className="landing-provenance-title">Источники</h2>
           <ul className="rule-list">
             <li>Административное деление КНР, 2022.</li>
             <li>China Internet Information Center, справочник регионов.</li>
@@ -608,7 +610,7 @@ export function HomePage({
       */}
       <SiteFooter
         left="Без регистрации. Прогресс хранится на этом компьютере, работает без интернета — в классе и дома."
-        right="Тренажёр страноведения Китая · для школьников 12–18 лет и учителя"
+        right="Тренажёр страноведения Китая для школьников 12–18 лет и учителя"
       />
     </main>
   );

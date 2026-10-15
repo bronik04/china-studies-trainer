@@ -36,7 +36,7 @@ it('охват без привязки к регионам берётся из �
  */
 it('подпись карточки региона не повторяет её заголовок', () => {
   expect(collectionCardSubtitle(byId('region-yunnan'), regions)).toBe(
-    'Провинция · центр Куньмин',
+    'Провинция, центр Куньмин',
   );
 });
 
@@ -46,10 +46,10 @@ it('подпись карточки региона не повторяет её 
  */
 it('подпись карточки объекта называет род и охват', () => {
   expect(collectionCardSubtitle(byId('feature-yangtze'), regions)).toBe(
-    'Река · семь регионов',
+    'Река, семь регионов',
   );
   expect(collectionCardSubtitle(byId('feature-taihu'), regions)).toBe(
-    'Озеро · два региона',
+    'Озеро, два региона',
   );
 });
 
@@ -61,7 +61,7 @@ it('подпись карточки прямо говорит, что фотог
   };
 
   expect(collectionCardSubtitle(draft, regions)).toBe(
-    'Девять регионов · фотографий пока нет',
+    'Девять регионов, фотографий пока нет',
   );
 });
 
@@ -69,7 +69,7 @@ it('подпись карточки не обещает снимков боль�
   const wall = byId('great-wall');
 
   expect(collectionCardSubtitle(wall, regions)).toBe(
-    `Девять регионов · снимков: ${wall.photos.length}`,
+    `Девять регионов, снимков: ${wall.photos.length}`,
   );
 });
 

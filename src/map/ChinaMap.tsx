@@ -510,7 +510,7 @@ export function ChinaMap({
      * относятся маркеры, не называя их.
      *
      * Условие по `usage`, а не по `variant`: утечка одинакова и в игре, и в
-     * «найти на карте», где карта раскрашена по типу региона. Прежняя проверка
+     * «найти на карте». Прежняя проверка
      * по `variant === 'fill'` закрывала только игру.
      *
      * Витрина из условия исключена: она тоже идёт с `usage="answer"` — ни
@@ -531,6 +531,22 @@ export function ChinaMap({
       ?.querySelectorAll<SVGElement>('.map-callout text')
       .forEach((label) => {
         label.style.setProperty('display', hidesCalloutLabels ? 'none' : '');
+      });
+
+    /*
+     * Цель нажатия мелкой области несёт исход своей области: вокруг неё
+     * рисуется кольцо верного ответа. Сама цель прозрачна и скрыта от
+     * читалки — слово «верно» по-прежнему говорит контур.
+     */
+    mapRef.current
+      ?.querySelectorAll<SVGElement>('[data-hit-region-id]')
+      .forEach((hit) => {
+        const answerState = answerStates[hit.dataset.hitRegionId ?? ''];
+        if (answerState) {
+          hit.dataset.answerState = answerState;
+        } else {
+          delete hit.dataset.answerState;
+        }
       });
 
     const areas = mapRef.current?.querySelectorAll<SVGElement>('[data-region-id]');

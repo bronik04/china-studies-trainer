@@ -88,7 +88,7 @@ export function CollectionsPage({
           >
             <div className="collection-group-head">
               <span
-                className="mode-chapter-numeral"
+                className="mode-chapter-mark"
                 lang="zh-Hans"
                 aria-hidden="true"
               >

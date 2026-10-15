@@ -74,7 +74,7 @@ export function collectionCardSubtitle(
     const capital = cityById(about.capitalCityId);
     const kind = REGION_KIND_LABELS[about.kind];
 
-    return capital === undefined ? kind : `${kind} · центр ${capital.nameRu}`;
+    return capital === undefined ? kind : `${kind}, центр ${capital.nameRu}`;
   }
 
   /*
@@ -88,12 +88,12 @@ export function collectionCardSubtitle(
       ? undefined
       : physicalFeatureById(collection.aboutFeatureId);
   if (feature !== undefined) {
-    return `${physicalKindLabel(feature)} · ${collectionScope(collection, regions).toLowerCase()}`;
+    return `${physicalKindLabel(feature)}, ${collectionScope(collection, regions).toLowerCase()}`;
   }
 
   const scope = collectionScope(collection, regions);
 
   return collection.photos.length === 0
-    ? `${scope} · фотографий пока нет`
-    : `${scope} · снимков: ${collection.photos.length}`;
+    ? `${scope}, фотографий пока нет`
+    : `${scope}, снимков: ${collection.photos.length}`;
 }

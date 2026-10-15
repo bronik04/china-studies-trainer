@@ -185,33 +185,40 @@ export function AtlasPage({
    * Подпись группы скрыта от глаза, но не от читалки экрана: два слова
    * рядом с зумом и так читаются видами карты, а группе нужно имя.
    */
+  /*
+   * Вид карты и вид рельефа стоят одним рядом и одной формой — плашками на
+   * бумаге. Прежде рельеф висел чёрной пилюлей под видом карты, налезал на него
+   * и читался его частью, хотя меняет только раскраску физической карты.
+   */
   const mapOverlay = (
     <>
-      <fieldset className="atlas-map-kind">
-        <legend className="visually-hidden">Вид карты</legend>
-        {MAP_KINDS.map(([value, label]) => (
-          <label key={value}>
-            <input
-              type="radio"
-              name="atlas-map-kind"
-              value={value}
-              checked={mapKind === value}
-              onChange={() => {
-                setMapKind(value);
-                setSelectedFeatureId(null);
-              }}
-            />
-            <span>{label}</span>
-          </label>
-        ))}
-      </fieldset>
-      {mapKind === 'physical' && onReliefStyleChange !== undefined ? (
-        <ReliefStyleToggle
-          name="atlas-relief"
-          value={reliefStyle}
-          onChange={onReliefStyleChange}
-        />
-      ) : null}
+      <div className="atlas-map-tools">
+        <fieldset className="atlas-map-kind">
+          <legend className="visually-hidden">Вид карты</legend>
+          {MAP_KINDS.map(([value, label]) => (
+            <label key={value}>
+              <input
+                type="radio"
+                name="atlas-map-kind"
+                value={value}
+                checked={mapKind === value}
+                onChange={() => {
+                  setMapKind(value);
+                  setSelectedFeatureId(null);
+                }}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </fieldset>
+        {mapKind === 'physical' && onReliefStyleChange !== undefined ? (
+          <ReliefStyleToggle
+            name="atlas-relief"
+            value={reliefStyle}
+            onChange={onReliefStyleChange}
+          />
+        ) : null}
+      </div>
       {reliefScale}
     </>
   );
@@ -395,7 +402,7 @@ export function AtlasPage({
       */}
       <footer className="atlas-footer">
         <button type="button" className="primary" onClick={onTrain}>
-          Тренировать
+          Проверить себя на карте
         </button>
         {/*
           Разворот стоит в подвале, теми же словами, что и в раунде: приём в
