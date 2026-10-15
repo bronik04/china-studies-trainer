@@ -171,9 +171,6 @@ export function RoundStage({
               Ответить из списка
             </button>
           ) : null}
-          <button type="button" className="stage-strip-button" onClick={onExit}>
-            Прервать раунд
-          </button>
           {fullscreen.isAvailable ? (
             <button
               type="button"
@@ -183,6 +180,18 @@ export function RoundStage({
               {fullscreen.isFullscreen ? 'Свернуть' : 'Во весь экран'}
             </button>
           ) : null}
+          {/*
+            Выход — последним и тише остальных: переходом, а не рамкой.
+            Набранный так же, как «Во весь экран», он весил столько же, хотя
+            стирает раунд, а не меняет показ.
+          */}
+          <button
+            type="button"
+            className="stage-strip-button stage-strip-exit"
+            onClick={onExit}
+          >
+            Прервать раунд
+          </button>
         </div>
       </footer>
     </main>

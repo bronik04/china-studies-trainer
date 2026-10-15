@@ -160,7 +160,9 @@ it('выбор области карты отдаётся наверх тем ж
 it('зовёт в тренировку и не повторяет шапку кнопкой выхода', () => {
   const { onTrain } = renderAtlas();
 
-  fireEvent.click(screen.getByRole('button', { name: /Тренировать/ }));
+  fireEvent.click(
+    screen.getByRole('button', { name: /Проверить себя на карте/ }),
+  );
 
   expect(onTrain).toHaveBeenCalled();
   expect(screen.queryByRole('button', { name: /кабинет|главную/i })).toBeNull();

@@ -110,6 +110,21 @@ button {
 }
 
 /*
+ * Ссылка — тушью с подчёркиванием, как переход-кнопка `button.text`. Без
+ * этого правила ссылки источников на главной оставались синими браузерными:
+ * единственное место на сайте мимо токенов.
+ */
+a {
+  color: inherit;
+  text-decoration-thickness: var(--border-hair);
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  color: var(--accent-on-ground);
+}
+
+/*
  * Селектор без `:where` намеренно: у заголовков появилось семейство
  * дисплейного шрифта, и нулевая специфичность `:where` ему проиграла бы —
  * иероглифы в заголовке вопроса набирались бы Cormorant Garamond, где их нет.
@@ -326,12 +341,17 @@ p {
   padding-block-start: var(--s-4);
 }
 
+/*
+ * Атрибуция — условие лицензий, а не содержание: мелким кеглем и одной
+ * строкой там, где хватает ширины. Прежде она занимала четыре строки и
+ * весила больше кнопок рядом.
+ */
 .atlas-footer .map-attribution {
   color: var(--text-on-ground-muted);
-  font-size: var(--t-size-caption);
+  flex: 1 1 24rem;
+  font-size: var(--t-size-fine);
   margin: 0;
-  margin-inline-start: auto;
-  max-inline-size: 48ch;
+  text-align: end;
 }
 
 /*
@@ -545,13 +565,17 @@ p {
  * достаются от `h2`: иначе один и тот же надзаголовок выглядел бы по-разному
  * в зависимости от того, каким узлом его набрали.
  */
+/*
+ * Строчными и без разрядки, приглушённой тушью. Капс с разрядкой киноварью
+ * стоял над каждым заголовком сайта и был шаблоном, а не сведением; киноварь
+ * же в игре значит ошибку, и над вопросом раунда читалась промахом. Цвет
+ * остаётся надзаголовку «стоит повторить» — там он и означает промах.
+ */
 .eyebrow {
-  color: var(--accent-on-ground);
+  color: var(--text-on-ground-muted);
   font-size: var(--t-size-caption);
   font-weight: var(--t-weight-semibold);
-  letter-spacing: var(--t-tracking-eyebrow);
   margin: 0 0 var(--s-2);
-  text-transform: uppercase;
 }
 
 /*
@@ -919,6 +943,18 @@ button.text:hover:enabled {
 }
 
 /*
+ * В раунде тип единицы не красится. Тон автономных районов темнее, и на
+ * вопрос «Гуанси-Чжуанский автономный район» выбор сужался с 34 областей до
+ * пяти тёмных — подсказка цветом, которой игра обещала не давать.
+ *
+ * Специфичность равна правилам состояний ниже (выбран, верно, закрыт), и они
+ * стоят позже по файлу — поэтому побеждают, как и должны.
+ */
+.stage-map .china-map [data-region-kind] {
+  fill: var(--map-unplayed);
+}
+
+/*
  * Игровой режим: цвет не должен подсказывать, какой регион перед тобой,
  * поэтому вся карта стартует одним серым. Селектор с двумя атрибутами
  * намеренно специфичнее правил типа региона выше.
@@ -1042,7 +1078,7 @@ button.text:hover:enabled {
  * Соседи. Игра начинается серой по тому же доводу, что и заполнение карты:
  * цвет — это ответ, и до ответа его быть не должно.
  *
- * Отмеченная область показана тем же киноварным тоном, каким выбранная область
+ * Отмеченная область показана тем же тоном тушью, каким выбранная область
  * показана везде в приложении: ученик уже знает этот знак по атласу, и заводить
  * ради одной игры второй язык выбора незачем. Исход приходит на её место после
  * «Готово» и различается узором, а не только цветом: сплошная заливка у
@@ -1158,9 +1194,8 @@ button.text:hover:enabled {
 }
 
 /*
- * В раунде (`.stage-map`) спрошенный регион заливается тушью, а не
- * киноварью; в атласе выбранный остаётся киноварью. Только пока у региона
- * нет исхода: верный ответ обязан остаться нефритовым.
+ * В раунде (`.stage-map`) спрошенный регион заливается своим токеном — пока
+ * у него нет исхода: верный ответ обязан остаться нефритовым.
  */
 .stage-map .china-map [data-region-id][data-selected='true']:not([data-answer-state]),
 .stage-map .china-map .country[data-selected='true']:not([data-answer-state]) {
@@ -1215,6 +1250,30 @@ button.text:hover:enabled {
   stroke-width: var(--map-border-width-strong);
 }
 
+/*
+ * Верный ответ после ошибки — то, что надо запомнить, а у Пекина, Шанхая,
+ * Тяньцзиня, Тайваня и выносок Гонконга с Макао он был самым мелким пятном на
+ * экране, рядом с огромной штриховкой промаха. Кольцо нефритом вокруг цели
+ * нажатия делает его вдвое крупнее, не трогая сам контур.
+ */
+/*
+ * Радиус кольца больше цели нажатия, чтобы между контуром и кольцом был
+ * просвет: вплотную кольцо сливалось с нефритовой заливкой в одно пятно.
+ * Браузер без `r` в стилях нарисует кольцо по самой цели — тоже видно.
+ */
+.china-map .map-hit[data-answer-state='correct'] {
+  fill: none;
+  r: 15px;
+  stroke: var(--map-correct);
+  stroke-width: 2.5;
+}
+
+.china-map .map-callout circle[data-answer-state='correct'] {
+  stroke: var(--map-correct);
+  stroke-width: 5;
+  paint-order: stroke;
+}
+
 .china-map .map-callout line {
   stroke: var(--map-border);
   stroke-width: 1;
@@ -1233,7 +1292,7 @@ button.text:hover:enabled {
 .china-map .map-callout text {
   fill: var(--map-label);
   font-family: var(--t-family-text);
-  font-size: 11px;
+  font-size: var(--t-size-fine);
   font-weight: var(--t-weight-bold);
 }
 
@@ -2008,9 +2067,7 @@ button.text:hover:enabled {
 .results-review-subhead {
   font-size: var(--t-size-caption);
   font-weight: var(--t-weight-semibold);
-  letter-spacing: var(--t-tracking-eyebrow);
   margin: 0;
-  text-transform: uppercase;
 }
 
 .review-list-note {
@@ -2398,9 +2455,13 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 /* --- Главная ------------------------------------------------------------ */
 
 /*
- * Главная течёт одной страницей, а не листается по экранам: на макете под
- * героем на первом же экране видна строка повтора, а растянутый на весь кадр
- * герой прятал бы её за фальц.
+ * Герой — весь первый экран под шапкой (решение владельца, DECISIONS.md,
+ * 2026-10-15): «Режимы» — следующий раздел и на первом экране не
+ * выглядывают, туда плавно ведёт «Выбрать режим». Строка повтора переехала
+ * первой строкой в «Режимы».
+ *
+ * Карта забирает две трети ширины и растёт, пока помещается по высоте.
+ * Телефон этой правки не касается: там герой течёт, как прежде.
  */
 .landing-hero {
   align-items: center;
@@ -2408,6 +2469,43 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   gap: var(--s-7) var(--s-8);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
   padding: var(--s-8) 0;
+}
+
+@media (min-width: 1024px) {
+  .landing-hero {
+    --hero-pad: var(--s-6);
+
+    gap: var(--s-7);
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    min-block-size: calc(100dvh - var(--header-height, 0px));
+    padding-block: var(--hero-pad);
+  }
+
+  /*
+   * Ширина карты ограничена высотой кадра: лист 806×601, под ним подпись в
+   * две строки кегля 14. Иначе на низком широком экране карта уходила бы под
+   * фальц, а герой переставал быть одним экраном.
+   */
+  .landing-hero .landing-hero-map {
+    margin-inline: auto;
+    max-inline-size: calc(
+      (100dvh - var(--header-height, 0px) - 2 * var(--hero-pad) - 4rem) *
+        var(--map-aspect)
+    );
+    width: 100%;
+  }
+
+  .landing-hero .landing-hero-actions {
+    padding-top: var(--s-6);
+  }
+
+  /*
+   * Колонка текста — треть ширины, и кегль считается от неё: в полные 84 px
+   * «а где Цзянси?» не помещалась и вылезала под карту.
+   */
+  .landing-hero .landing-hero-text h1 {
+    font-size: clamp(3rem, 4.6vw, 4.75rem);
+  }
 }
 
 .landing-hero-text {
@@ -2427,6 +2525,10 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   line-height: 0.98;
   margin: 0;
   text-wrap: balance;
+}
+
+.landing-hero-line {
+  white-space: nowrap;
 }
 
 .lead {
@@ -2623,6 +2725,15 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   margin: 0;
 }
 
+/*
+ * «Содержание» и «Источники» — сноски страницы, а не её разделы: тем же
+ * кеглем, что «Режимы» и «Коллекции», они спорили с ними за внимание.
+ */
+.landing-section .landing-provenance-title {
+  font-size: var(--t-size-32);
+  margin-block-end: var(--s-3);
+}
+
 .landing-section-head {
   display: flex;
   flex-direction: column;
@@ -2659,6 +2770,10 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   margin-bottom: var(--s-2);
 }
 
+.landing-modes .repeat-strip {
+  margin-block: var(--s-4) var(--s-5);
+}
+
 .landing-modes .landing-section-head p {
   font-size: var(--t-size-small);
 }
@@ -2666,8 +2781,8 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 /* --- Главы режимов ------------------------------------------------------ */
 
 /*
- * Семь глав в две колонки. Глава — номер иероглифом слева и игры пилюлями
- * справа; главы отделяет черта тушью сверху, как строки оглавления.
+ * Семь тем в две колонки. Тема — её знак слева и игры пилюлями справа; темы
+ * отделяет черта тушью сверху, как строки оглавления.
  */
 .mode-chapters {
   column-gap: var(--s-8);
@@ -2683,7 +2798,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   padding: var(--s-6) 0;
 }
 
-.mode-chapter-numeral {
+.mode-chapter-mark {
   color: var(--accent-on-ground);
   font-size: var(--t-size-52);
   font-weight: var(--t-weight-bold);
@@ -2701,7 +2816,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
     grid-template-columns: 44px minmax(0, 1fr);
   }
 
-  .mode-chapter-numeral {
+  .mode-chapter-mark {
     font-size: var(--t-size-36);
   }
 
@@ -2866,9 +2981,7 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   color: var(--text-on-ground);
   font-size: var(--t-size-caption);
   font-weight: var(--t-weight-semibold);
-  letter-spacing: var(--t-tracking-eyebrow);
   padding: 0 0 var(--s-2);
-  text-transform: uppercase;
 }
 
 .mode-dialog-language-options {
@@ -3088,11 +3201,9 @@ button.chip[aria-pressed='true'] {
 }
 
 .collection-card-group {
-  color: var(--accent);
-  font-size: 0.75rem;
-  font-weight: var(--t-weight-bold);
-  letter-spacing: var(--t-tracking-eyebrow);
-  text-transform: uppercase;
+  color: var(--text-on-ground-muted);
+  font-size: var(--t-size-caption);
+  font-weight: var(--t-weight-semibold);
 }
 
 .collection-card-title {
@@ -3198,9 +3309,9 @@ button.chip[aria-pressed='true'] {
  * так же, как на тёмной стене.
  */
 .collection-photo figcaption {
-  background: rgb(0 0 0 / 60%);
+  background: var(--photo-credit-ground);
   bottom: 0;
-  color: #fff;
+  color: var(--photo-credit-ink);
   font-size: var(--t-size-caption);
   inset-inline: 0;
   padding: var(--s-1) var(--s-2);
@@ -3455,9 +3566,7 @@ button.chip[aria-pressed='true'] {
 .panel-title {
   font-size: var(--t-size-caption);
   font-weight: var(--t-weight-bold);
-  letter-spacing: var(--t-tracking-eyebrow);
   margin: 0;
-  text-transform: uppercase;
 }
 
 .paper-panel .panel-title {
@@ -3524,17 +3633,32 @@ button.chip[aria-pressed='true'] {
  * кнопок масштаба: в кнопку радио размером с букву на телефоне не попасть
  * (WCAG 2.5.8).
  */
-.atlas-map-kind {
+/*
+ * Ряд управления показом в верхнем левом углу листа: вид карты и, на
+ * физической, вид рельефа. Одной строкой и одной формой — до этого рельеф
+ * стоял под видом карты чёрной пилюлей и налезал на него.
+ */
+.atlas-map-tools {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  inset-block-start: var(--s-3);
+  inset-inline-start: var(--s-3);
+  max-inline-size: calc(100% - 2 * var(--s-3) - var(--target-min) - var(--s-3));
+  position: absolute;
+  z-index: 2;
+}
+
+.atlas-map-kind,
+.atlas-map-tools .relief-toggle-options {
   background: var(--surface-paper-bright);
   border: var(--border-hair) solid var(--line-on-paper);
   border-radius: var(--radius-sm);
   display: flex;
   gap: var(--s-1);
-  inset-block-start: var(--s-3);
-  inset-inline-start: var(--s-3);
   margin: 0;
   padding: var(--s-1);
-  position: absolute;
 }
 
 .atlas-map-kind label {
@@ -4565,6 +4689,20 @@ button.chip[aria-pressed='true'] {
   border-color: var(--accent-on-ground);
 }
 
+.stage-strip-exit {
+  border-color: transparent;
+  color: var(--text-on-ground-muted);
+  padding-inline: 0;
+  text-decoration: underline;
+  text-decoration-thickness: var(--border-hair);
+  text-underline-offset: 0.2em;
+}
+
+.stage-strip-exit:hover {
+  border-color: transparent;
+  color: var(--accent-on-ground);
+}
+
 /* --- Колонка вопроса (редизайн «Тушь и киноварь») ----------------------- */
 
 .stage-head {
@@ -4599,12 +4737,10 @@ button.chip[aria-pressed='true'] {
 }
 
 .stage-title {
-  color: var(--accent-on-ground);
+  color: var(--text-on-ground);
   font-size: var(--t-size-caption);
   font-weight: var(--t-weight-semibold);
-  letter-spacing: var(--t-tracking-eyebrow);
   margin: 0;
-  text-transform: uppercase;
 }
 
 .round-stopwatch::before {
@@ -4908,12 +5044,36 @@ button.chip[aria-pressed='true'] {
   display: contents;
 }
 
-/* В атласе переключатель стоит под переключателем вида карты. */
-.atlas-map .relief-toggle {
-  inset-block-start: calc(var(--s-3) + var(--target-min) + var(--s-3));
-  inset-inline-start: var(--s-3);
-  position: absolute;
-  z-index: 2;
+/*
+ * В атласе рельеф набран так же, как вид карты рядом: бумага, волосяная
+ * рамка, выбранное залито тушью. Подпись «Рельеф» — тихая, как подпись к
+ * плашке, а не кнопка.
+ */
+.atlas-map-tools .relief-toggle {
+  background: none;
+  gap: var(--s-2);
+}
+
+.atlas-map-tools .relief-toggle legend {
+  color: var(--text-on-paper-muted);
+  font-weight: var(--t-weight-regular);
+  margin-inline-end: var(--s-2);
+}
+
+.atlas-map-tools .relief-toggle label {
+  border-radius: var(--radius-sm);
+  color: var(--text-on-paper-muted);
+  font-size: var(--t-size-caption);
+  padding-inline: var(--s-3);
+}
+
+.atlas-map-tools .relief-toggle label:hover:not(:has(input:checked)) {
+  color: var(--text-on-paper);
+}
+
+.atlas-map-tools .relief-toggle label:has(input:checked) {
+  background: var(--text-on-paper);
+  color: var(--surface-paper-bright);
 }
 
 /*

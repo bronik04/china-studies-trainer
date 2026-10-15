@@ -533,6 +533,22 @@ export function ChinaMap({
         label.style.setProperty('display', hidesCalloutLabels ? 'none' : '');
       });
 
+    /*
+     * Цель нажатия мелкой области несёт исход своей области: вокруг неё
+     * рисуется кольцо верного ответа. Сама цель прозрачна и скрыта от
+     * читалки — слово «верно» по-прежнему говорит контур.
+     */
+    mapRef.current
+      ?.querySelectorAll<SVGElement>('[data-hit-region-id]')
+      .forEach((hit) => {
+        const answerState = answerStates[hit.dataset.hitRegionId ?? ''];
+        if (answerState) {
+          hit.dataset.answerState = answerState;
+        } else {
+          delete hit.dataset.answerState;
+        }
+      });
+
     const areas = mapRef.current?.querySelectorAll<SVGElement>('[data-region-id]');
     const labelsByMapAreaId = new Map(
       regions.map((region) => [

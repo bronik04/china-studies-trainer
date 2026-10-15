@@ -74,6 +74,7 @@ import { regionAnswerableLandmarks } from './domain/landmark-pool';
 import { ChinaMap } from './map/ChinaMap';
 import type { ReliefStyle } from './map/ReliefStyleToggle';
 import type { MapZoom } from './map/MapControls';
+import { LeaveRoundDialog } from './ui/LeaveRoundDialog';
 import { SiteHeader, type SiteSection } from './ui/SiteHeader';
 
 type RoundRequest = ExerciseType;
@@ -110,21 +111,42 @@ type Screen =
  * оболочка внутри берёт естественную и строка `1fr` под карту не разрешается
  * (см. `.app-frame` в styles.css). Итоги и прокручиваемые поверхности признака
  * не получают: список ошибок бывает длиннее кадра.
+ *
+ * `guardsLeave` — идёт раунд: переход по шапке сначала спрашивает (см.
+ * `LeaveRoundDialog`). Признак ставится у каждого возврата раунда отдельно,
+ * как и `fillsFrame`, а не выводится из списка экранов.
  */
 function AppFrame({
   fillsFrame,
+  guardsLeave = false,
   current,
   onNavigate,
   children,
 }: {
   readonly fillsFrame: boolean;
+  readonly guardsLeave?: boolean;
   readonly current: SiteSection | null;
   readonly onNavigate: (section: SiteSection) => void;
   readonly children: ReactNode;
 }) {
+  const [leavingTo, setLeavingTo] = useState<SiteSection | null>(null);
+
   return (
     <div className="app-frame" data-fills-frame={fillsFrame}>
-      <SiteHeader current={current} onNavigate={onNavigate} />
+      <SiteHeader
+        current={current}
+        onNavigate={guardsLeave ? setLeavingTo : onNavigate}
+      />
+      {leavingTo === null ? null : (
+        <LeaveRoundDialog
+          destination={SECTION_DESTINATIONS[leavingTo]}
+          onLeave={() => {
+            setLeavingTo(null);
+            onNavigate(leavingTo);
+          }}
+          onStay={() => setLeavingTo(null)}
+        />
+      )}
       {/*
         Ожидание куска экрана. Оболочка и шапка уже нарисованы, поэтому
         подменяется только содержимое — страница не прыгает. Видно это редко:
@@ -142,6 +164,17 @@ function AppFrame({
     </div>
   );
 }
+
+/**
+ * Куда ведёт раздел, с предлогом, — для вопроса перед уходом из раунда:
+ * «Прервать раунд и перейти в атлас?».
+ */
+const SECTION_DESTINATIONS: Readonly<Record<SiteSection, string>> = {
+  home: 'на главную',
+  modes: 'к режимам',
+  atlas: 'в атлас',
+  collections: 'в коллекции',
+};
 
 /**
  * Какой пункт шапки отмечен открытым. Главная отмечается на названии слева, а
@@ -568,7 +601,7 @@ export default function App() {
 
   if (screen === 'neighbours-exercise') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <NeighboursRound
           regions={regions}
           askedPool={neighboursPool}
@@ -584,7 +617,7 @@ export default function App() {
 
   if (screen === 'country-exercise') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <CountryRound
           countries={countryPool}
           exerciseType={countryExerciseType}
@@ -600,7 +633,7 @@ export default function App() {
 
   if (screen === 'fill') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <FillMapRound
           regions={regions}
           language={language}
@@ -636,7 +669,7 @@ export default function App() {
 
   if (screen === 'exercise') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <ExerciseRound
           regions={roundPool}
           exerciseTypes={exerciseTypes}
@@ -652,7 +685,7 @@ export default function App() {
 
   if (screen === 'city-exercise') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <CityRound
           cities={cityPool}
           exerciseType={exerciseTypes[0]}
@@ -668,7 +701,7 @@ export default function App() {
 
   if (screen === 'landmark-exercise') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <LandmarkRound
           landmarks={landmarkPool}
           exerciseType={exerciseTypes[0]}
@@ -684,7 +717,7 @@ export default function App() {
 
   if (screen === 'physical-exercise') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <PhysicalRound
           features={physicalPool}
           exerciseType={exerciseTypes[0] as 'find-on-map' | 'name-target'}
@@ -702,7 +735,7 @@ export default function App() {
 
   if (screen === 'order-exercise') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <OrderRound
           dynasties={historyPool}
           language={language}
@@ -722,7 +755,7 @@ export default function App() {
    */
   if (screen === 'history-exercise' && historyKind !== 'order') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <HistoryRound
           kind={historyKind}
           dynasties={historyPool}
@@ -738,7 +771,7 @@ export default function App() {
 
   if (screen === 'culture-exercise') {
     return (
-      <AppFrame fillsFrame current={null} onNavigate={navigate}>
+      <AppFrame fillsFrame guardsLeave current={null} onNavigate={navigate}>
         <CultureRound
           collections={culturePool}
           language={language}
