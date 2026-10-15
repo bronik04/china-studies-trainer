@@ -120,7 +120,11 @@ a {
   text-underline-offset: 0.2em;
 }
 
-a:hover {
+/*
+ * Нулевая специфичность: ссылка, оформленная классом (чип перехода к группе
+ * на странице коллекций), сама решает, как ей выглядеть под рукой.
+ */
+:where(a:hover) {
   color: var(--accent-on-ground);
 }
 
@@ -994,7 +998,7 @@ button.text:hover:enabled {
  * Страны за границей Китая. Заливка нейтральная: это фон вопроса, а не ответ,
  * — и по тому же доводу, по которому игровая карта начинается серой.
  *
- * Выбранная страна берёт тот же киноварный тон, что и выбранный регион: язык
+ * Выбранная страна берёт тот же тон тушью, что и выбранный регион: язык
  * выбора на карте должен остаться один, иначе ученику придётся держать в
  * голове два.
  */
@@ -1226,10 +1230,12 @@ button.text:hover:enabled {
 }
 
 /*
- * Фокус на тёмной заливке — бумагой: тушь на киновари выбранного региона и
- * на нефрите верного ответа не даёт 3:1 (см. `--focus-on-dark`).
+ * Фокус на тёмной заливке — бумагой: тушь на туши выбранного региона и
+ * отмеченного соседа и на нефрите верного ответа не даёт 3:1 (см.
+ * `--focus-on-dark`).
  */
 .china-map [data-region-id][data-selected='true']:focus-visible,
+.china-map [data-region-id][data-neighbour-state='marked']:focus-visible,
 .china-map [data-region-id][data-answer-state='correct']:focus-visible,
 .china-map .country[data-selected='true']:focus-visible,
 .china-map .country[data-answer-state='correct']:focus-visible {
@@ -2486,8 +2492,13 @@ button.site-header-mark[aria-current='page'] .site-header-name {
    * две строки кегля 14. Иначе на низком широком экране карта уходила бы под
    * фальц, а герой переставал быть одним экраном.
    */
+  /*
+   * Прижата к вертикальной подписи справа, а не по центру: когда ширину
+   * ограничивает высота кадра, центрированная карта отъезжала бы от строки
+   * 中华人民共和国, а подпись листа должна стоять у его края.
+   */
   .landing-hero .landing-hero-map {
-    margin-inline: auto;
+    margin-inline-start: auto;
     max-inline-size: calc(
       (100dvh - var(--header-height, 0px) - 2 * var(--hero-pad) - 4rem) *
         var(--map-aspect)
@@ -2512,10 +2523,6 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
-}
-
-.landing-hero-text .eyebrow {
-  margin: 0;
 }
 
 .landing-hero-text h1 {
@@ -2605,8 +2612,8 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 /*
- * Строка повтора: плашка светлой бумаги, очерченная тушью. Стоит между героем
- * и режимами — отвечает вернувшемуся ученику до того, как он начнёт выбирать.
+ * Строка повтора: плашка светлой бумаги, очерченная тушью. Стоит первой в
+ * «Режимах» — отвечает вернувшемуся ученику до того, как он начнёт выбирать.
  */
 .repeat-strip {
   align-items: center;
@@ -2806,8 +2813,8 @@ button.site-header-mark[aria-current='page'] .site-header-name {
 }
 
 /*
- * Телефон: колонка номера в 72 px отнимала у пилюль пятую часть строки, и
- * «Достопримечательность — регион» ломалась на две.
+ * Телефон: колонка знака в 72 px отнимала у пилюль пятую часть строки, и
+ * длинное имя игры ломалось на две.
  */
 @media (max-width: 519px) {
   .mode-chapter,
@@ -5054,10 +5061,18 @@ button.chip[aria-pressed='true'] {
   gap: var(--s-2);
 }
 
+/*
+ * Подпись лежит на бумажной плашке, как и сами кнопки: под левым верхним
+ * углом физической карты бывает рельеф, и контраст подписи без подложки
+ * зависел бы от того, что оказалось под ней.
+ */
 .atlas-map-tools .relief-toggle legend {
+  background: var(--surface-paper-bright);
+  border-radius: var(--radius-sm);
   color: var(--text-on-paper-muted);
   font-weight: var(--t-weight-regular);
   margin-inline-end: var(--s-2);
+  padding: var(--s-1) var(--s-2);
 }
 
 .atlas-map-tools .relief-toggle label {

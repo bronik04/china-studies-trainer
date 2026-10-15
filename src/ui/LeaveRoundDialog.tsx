@@ -15,8 +15,9 @@ export type LeaveRoundDialogProps = {
  * Спрашивает только шапка. Кнопка «Прервать раунд» в колонке уже названа тем,
  * что делает, и второй вопрос после неё был бы лишним.
  *
- * Тот же лист бумаги, что окно старта игры: `<dialog>` даёт модальность, Esc
- * и возврат фокуса без своей обвязки. Фокус по умолчанию — на «Остаться»:
+ * Тот же лист бумаги, что окно старта игры, и закрывается так же — Esc или
+ * нажатием мимо листа: `<dialog>` даёт модальность и возврат фокуса без своей
+ * обвязки. Фокус по умолчанию — на «Остаться»:
  * Enter по привычке не должен стирать раунд.
  */
 export function LeaveRoundDialog({
@@ -39,6 +40,11 @@ export function LeaveRoundDialog({
       aria-labelledby="leave-round-title"
       aria-describedby="leave-round-note"
       onClose={onStay}
+      onClick={(event) => {
+        if (event.target === dialogRef.current) {
+          dialogRef.current?.close();
+        }
+      }}
     >
       <div className="mode-dialog-body">
         <h2 id="leave-round-title">Прервать раунд и перейти {destination}?</h2>

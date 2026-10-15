@@ -22,7 +22,7 @@ export type ModeStartDialogProps = {
    * уже выбрал игру и спрашивает, как в ней спрашивают.
    */
   readonly summary: string;
-  /** «34 региона · около 7 минут» — то же, что на карточке. */
+  /** «34 региона, около 7 минут» — то же, что на карточке. */
   readonly volume: string;
   readonly defaultLanguage: QuestionLanguage;
   /**

@@ -127,7 +127,7 @@ export type ModeCard = {
    * именно в эту игру и спрашивает «а как тут спрашивают».
    */
   readonly summary: string;
-  /** Что спрашивают и сколько: «34 региона · около 7 минут». */
+  /** Что спрашивают и сколько: «34 региона, около 7 минут». */
   readonly volume: string;
   readonly groupId: ModeGroupId;
 } & (

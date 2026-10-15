@@ -50,6 +50,15 @@ export function StageChoices({ choices, disabled, onChoose }: StageChoicesProps)
         return;
       }
 
+      /*
+       * Под открытым окном (вопрос перед уходом из раунда) цифра — не ответ:
+       * слушатель стоит на документе, и без этой проверки «2» отвечала бы на
+       * вопрос, которого ученик за окном не видит.
+       */
+      if (document.querySelector('dialog[open]') !== null) {
+        return;
+      }
+
       const index = Number.parseInt(event.key, 10) - 1;
       const choice = Number.isNaN(index) ? undefined : choicesRef.current[index];
       if (choice !== undefined) {

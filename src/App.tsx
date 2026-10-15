@@ -131,6 +131,17 @@ function AppFrame({
 }) {
   const [leavingTo, setLeavingTo] = useState<SiteSection | null>(null);
 
+  /*
+   * Кадр — один экземпляр на все экраны, и вопрос пережил бы раунд: ученик
+   * нажал «Атлас» во время показа последнего ответа, раунд закончился сам, а
+   * окно «ответы не сохранятся» осталось над итогами, где они уже сохранены.
+   * Раунд кончился — вопрос снимается. Сброс на отрисовке, а не эффектом:
+   * эффект успел бы показать окно над итогами на один кадр.
+   */
+  if (!guardsLeave && leavingTo !== null) {
+    setLeavingTo(null);
+  }
+
   return (
     <div className="app-frame" data-fills-frame={fillsFrame}>
       <SiteHeader
