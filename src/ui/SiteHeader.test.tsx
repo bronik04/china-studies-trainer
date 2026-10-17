@@ -91,5 +91,7 @@ it('печать помечена языком, но скрыта от чита�
   const seal = container.querySelector('[lang="zh-Hans"]');
 
   expect(seal).toHaveTextContent('天下');
+  // Печать двойная: каждый знак — отдельный оттиск, а не два знака в одном.
+  expect([...seal!.children].map((stamp) => stamp.textContent)).toEqual(['天', '下']);
   expect(seal).toHaveAttribute('aria-hidden', 'true');
 });
