@@ -113,7 +113,7 @@ it('ведёт с главной в атлас и обратно', async () => {
    * Обратно — через марку в шапке: собственной кнопки выхода у атласа нет, и
    * этот путь единственный, каким ученик возвращается на главную.
    */
-  fireEvent.click(screen.getByRole('button', { name: /Страноведение/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Поднебесная/ }));
   expect(
     screen.getByRole('heading', { name: 'Где Сычуань, а где Цзянси?' }),
   ).toBeInTheDocument();

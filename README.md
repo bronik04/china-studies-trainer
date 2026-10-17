@@ -1,8 +1,8 @@
-# China Studies Trainer — документация проекта
+# Поднебесная · 天下 — документация проекта
 
-[![Проверки](https://github.com/bronik04/china-studies-trainer/actions/workflows/checks.yml/badge.svg)](https://github.com/bronik04/china-studies-trainer/actions/workflows/checks.yml)
+[![Проверки](https://github.com/bronik04/podnebesnaya/actions/workflows/checks.yml/badge.svg)](https://github.com/bronik04/podnebesnaya/actions/workflows/checks.yml)
 
-**Приложение:** https://bronik04.github.io/china-studies-trainer/
+**Приложение:** https://bronik04.github.io/podnebesnaya/
 
 Стартовый комплект документации для веб-приложения, которое помогает школьникам изучать страноведение Китая: административное деление, города, географию, историю и культуру.
 

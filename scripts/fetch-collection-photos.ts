@@ -25,7 +25,7 @@ import { join } from 'node:path';
  * открытом коде ни к чему.
  */
 const AGENT =
-  'china-studies-trainer/0.3.0 (educational; https://github.com/bronik04/china-studies-trainer)';
+  'podnebesnaya/0.3.0 (educational; https://github.com/bronik04/podnebesnaya)';
 const API = 'https://commons.wikimedia.org/w/api.php';
 const OUTPUT_DIR = 'public/photos';
 const CREDITS_FILE = 'src/content/photo-credits.ts';

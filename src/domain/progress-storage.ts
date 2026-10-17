@@ -1,6 +1,12 @@
 import { EMPTY_PROGRESS, type Progress } from './progress';
 import { isCurrentVersion, migrateProgress } from './progress-migration';
 
+/*
+ * Ключи носят прежнее имя проекта намеренно. Сайт переименован в «Поднебесную»
+ * (DECISIONS.md, 2026-10-17), но домен bronik04.github.io остался тем же, а
+ * localStorage делится по домену, а не по пути: новый ключ оставил бы весь
+ * сохранённый прогресс за бортом.
+ */
 export const PROGRESS_KEY = 'china-studies-trainer/progress';
 export const BACKUP_KEY = 'china-studies-trainer/progress-backup';
 

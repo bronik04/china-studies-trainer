@@ -20,7 +20,7 @@ vi.mock('../content/photo-credits', () => ({
  * адрес, записанный от корня, прошёл бы тесты и сломался бы только на сайте.
  */
 beforeEach(() => {
-  vi.stubEnv('BASE_URL', '/china-studies-trainer/');
+  vi.stubEnv('BASE_URL', '/podnebesnaya/');
 });
 
 afterEach(() => {
@@ -28,23 +28,23 @@ afterEach(() => {
 });
 
 it('отдаёт самый широкий файл, какой есть', () => {
-  expect(photoSource('wide')).toBe('/china-studies-trainer/photos/wide-1200.webp');
+  expect(photoSource('wide')).toBe('/podnebesnaya/photos/wide-1200.webp');
 });
 
 it('обходится единственной шириной, когда другой нет', () => {
-  expect(photoSource('narrow')).toBe('/china-studies-trainer/photos/narrow-640.webp');
+  expect(photoSource('narrow')).toBe('/podnebesnaya/photos/narrow-640.webp');
 });
 
 it('перечисляет в наборе все доступные ширины', () => {
   expect(photoSourceSet('wide')).toBe(
-    '/china-studies-trainer/photos/wide-1200.webp 1200w, ' +
-      '/china-studies-trainer/photos/wide-640.webp 640w',
+    '/podnebesnaya/photos/wide-1200.webp 1200w, ' +
+      '/podnebesnaya/photos/wide-640.webp 640w',
   );
 });
 
 it('в наборе из одной ширины обходится без запятой', () => {
   expect(photoSourceSet('narrow')).toBe(
-    '/china-studies-trainer/photos/narrow-640.webp 640w',
+    '/podnebesnaya/photos/narrow-640.webp 640w',
   );
 });
 

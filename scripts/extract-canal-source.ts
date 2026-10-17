@@ -22,7 +22,7 @@ import { CANAL_RELATIONS } from './data/canal-relations';
 
 /* Только ASCII: заголовок запроса кириллицу не принимает. */
 const AGENT =
-  'china-studies-trainer/0.3.0 (educational; https://github.com/bronik04/china-studies-trainer)';
+  'podnebesnaya/0.3.0 (educational; https://github.com/bronik04/podnebesnaya)';
 const API = 'https://api.openstreetmap.org/api/0.6';
 const OUT = new URL('data/canal-source.json', import.meta.url);
 const PRECISION = 5;

@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Команды
 
 ```bash
-npm run dev                      # Vite, разработка: localhost:5173/china-studies-trainer/ (корень перебрасывает туда)
+npm run dev                      # Vite, разработка: localhost:5173/podnebesnaya/ (корень перебрасывает туда)
 npm test                         # vitest run — весь набор
 npx vitest run src/domain/round.test.ts        # один файл
 npx vitest run -t 'название теста'             # один тест по имени

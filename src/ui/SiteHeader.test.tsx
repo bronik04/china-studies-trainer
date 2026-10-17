@@ -47,7 +47,7 @@ it('марка ведёт на главную', () => {
   const onNavigate = vi.fn();
   render(<SiteHeader current="atlas" onNavigate={onNavigate} />);
 
-  fireEvent.click(screen.getByRole('button', { name: /^Страноведение/ }));
+  fireEvent.click(screen.getByRole('button', { name: /^Поднебесная/ }));
 
   expect(onNavigate).toHaveBeenCalledWith('home');
 });
@@ -58,7 +58,7 @@ it('марка говорит, что она делает, и не теряет 
   // WCAG 2.5.3: доступное имя содержит видимую подпись целиком.
   expect(
     screen.getByRole('button', {
-      name: 'Страноведение — на главную',
+      name: 'Поднебесная — на главную',
     }),
   ).toBeInTheDocument();
 });
@@ -66,7 +66,7 @@ it('марка говорит, что она делает, и не теряет 
 it('открытая главная помечена на марке, а не на «Режимах»', () => {
   render(<SiteHeader current="home" onNavigate={vi.fn()} />);
 
-  expect(screen.getByRole('button', { name: /^Страноведение/ })).toHaveAttribute(
+  expect(screen.getByRole('button', { name: /^Поднебесная/ })).toHaveAttribute(
     'aria-current',
     'page',
   );
@@ -83,13 +83,13 @@ it('навигация названа: на странице она не еди�
 
 /*
  * Печать — знак сайта, а не слово в подписи кнопки: читалка экрана прочла бы
- * её как «чжун» перед «Страноведение». Язык на ней при этом помечен, иначе
+ * её как «тянь ся» перед «Поднебесная». Язык на ней при этом помечен, иначе
  * иероглиф наберёт не тот шрифт — у Cormorant Garamond и Onest его нет.
  */
 it('печать помечена языком, но скрыта от читалки экрана', () => {
   const { container } = render(<SiteHeader current={null} onNavigate={vi.fn()} />);
   const seal = container.querySelector('[lang="zh-Hans"]');
 
-  expect(seal).toHaveTextContent('中');
+  expect(seal).toHaveTextContent('天下');
   expect(seal).toHaveAttribute('aria-hidden', 'true');
 });
