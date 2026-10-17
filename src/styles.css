@@ -2350,8 +2350,8 @@ button.site-header-mark[aria-current='page'] .site-header-name {
  * проверена в scripts/validate-tokens.test.ts.
  *
  * Квадрат, а не круг, и скруглён едва: настоящая печать — оттиск камня.
- * Два знака 天下 идут столбиком, сверху вниз, как режут на печатях; кегль
- * меньше прежнего одиночного 中, чтобы оба уместились в тот же квадрат.
+ * Печать двойная: два знака 天下 стоят в строку, каждый в своём квадрате
+ * прежней величины, поэтому печать вдвое шире, а кегль остался тем же.
  */
 .site-header-seal {
   align-items: center;
@@ -2359,13 +2359,15 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   border-radius: var(--radius-sm);
   color: var(--surface-paper-bright);
   display: inline-flex;
-  flex-direction: column;
   font-family: var(--t-family-han);
-  font-size: var(--t-size-18);
+  font-size: var(--t-size-26);
   font-weight: var(--t-weight-bold);
   height: 44px;
-  justify-content: center;
   line-height: 1;
+}
+
+.site-header-seal > span {
+  text-align: center;
   width: 44px;
 }
 
