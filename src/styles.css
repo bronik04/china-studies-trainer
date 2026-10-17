@@ -2350,8 +2350,15 @@ button.site-header-mark[aria-current='page'] .site-header-name {
  * проверена в scripts/validate-tokens.test.ts.
  *
  * Квадрат, а не круг, и скруглён едва: настоящая печать — оттиск камня.
+ * Печать двойная: 天 и 下 — два оттиска прежней величины рядом, с узким
+ * просветом бумаги между ними, а не одна широкая плашка.
  */
 .site-header-seal {
+  display: inline-flex;
+  gap: var(--s-1);
+}
+
+.site-header-seal > span {
   align-items: center;
   background: var(--accent);
   border-radius: var(--radius-sm);
@@ -2360,10 +2367,10 @@ button.site-header-mark[aria-current='page'] .site-header-name {
   font-family: var(--t-family-han);
   font-size: var(--t-size-26);
   font-weight: var(--t-weight-bold);
-  height: 44px;
+  height: var(--target-min);
   justify-content: center;
   line-height: 1;
-  width: 44px;
+  width: var(--target-min);
 }
 
 .site-nav {
